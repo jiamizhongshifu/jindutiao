@@ -1,0 +1,22 @@
+{
+    "daily_records": {
+        "2025-10-30": {
+            "date": "2025-10-30",
+            "tasks": {},
+            "summary": {
+                "total_tasks": 0,
+                "completed_tasks": 0,
+                "in_progress_tasks": 0,
+                "not_started_tasks": 0,
+                "total_planned_minutes": 0,
+                "total_completed_minutes": 0,
+                "completion_rate": 0.0
+            }
+        }
+    },
+    "task_history": {},
+    "metadata": {
+        "created_at": "2025-10-30T13:15:00.303688",
+        "last_updated": "2025-10-30T13:15:00.303688"
+    }
+}

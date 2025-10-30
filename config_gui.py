@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, QTime, Signal
 from PySide6.QtGui import QColor, QIcon
+from timeline_editor import TimelineEditor
 
 
 class ConfigManager(QMainWindow):
@@ -426,6 +427,21 @@ class ConfigManager(QMainWindow):
 
         layout.addLayout(top_layout)
 
+        # 可视化时间轴编辑器
+        timeline_group = QGroupBox("🎨 可视化时间轴编辑器")
+        timeline_layout = QVBoxLayout()
+
+        timeline_hint = QLabel("💡 提示：拖动色块边缘可调整任务时长")
+        timeline_hint.setStyleSheet("color: #FFD700; font-style: italic; padding: 5px;")
+        timeline_layout.addWidget(timeline_hint)
+
+        self.timeline_editor = TimelineEditor()
+        self.timeline_editor.task_time_changed.connect(self.on_timeline_task_changed)
+        timeline_layout.addWidget(self.timeline_editor)
+
+        timeline_group.setLayout(timeline_layout)
+        layout.addWidget(timeline_group)
+
         # 任务表格
         self.tasks_table = QTableWidget()
         self.tasks_table.setColumnCount(5)
@@ -610,6 +626,84 @@ class ConfigManager(QMainWindow):
         layout.addStretch()
         return widget
 
+    def on_timeline_task_changed(self, task_index, new_start_minutes, new_end_minutes):
+        """时间轴任务时间改变时更新表格"""
+        if 0 <= task_index < len(self.timeline_editor.tasks):
+            # 更新表格中的时间
+            if task_index < self.tasks_table.rowCount():
+                # 获取时间控件
+                start_widget = self.tasks_table.cellWidget(task_index, 0)
+                end_widget = self.tasks_table.cellWidget(task_index, 1)
+
+                if start_widget and end_widget:
+                    # 转换分钟为 QTime
+                    start_hours = new_start_minutes // 60
+                    start_mins = new_start_minutes % 60
+                    end_hours = new_end_minutes // 60
+                    end_mins = new_end_minutes % 60
+
+                    start_widget.setTime(QTime(start_hours, start_mins))
+                    end_widget.setTime(QTime(end_hours, end_mins))
+
+            # 如果有相邻任务也被影响，同步更新
+            # 更新下一个任务
+            if task_index + 1 < len(self.timeline_editor.tasks):
+                next_task = self.timeline_editor.tasks[task_index + 1]
+                next_start_min = self.timeline_editor.time_to_minutes(next_task['start'])
+                next_end_min = self.timeline_editor.time_to_minutes(next_task['end'])
+
+                if task_index + 1 < self.tasks_table.rowCount():
+                    next_start_widget = self.tasks_table.cellWidget(task_index + 1, 0)
+                    next_end_widget = self.tasks_table.cellWidget(task_index + 1, 1)
+
+                    if next_start_widget and next_end_widget:
+                        next_start_widget.setTime(QTime(next_start_min // 60, next_start_min % 60))
+                        next_end_widget.setTime(QTime(next_end_min // 60, next_end_min % 60))
+
+            # 更新上一个任务
+            if task_index > 0:
+                prev_task = self.timeline_editor.tasks[task_index - 1]
+                prev_start_min = self.timeline_editor.time_to_minutes(prev_task['start'])
+                prev_end_min = self.timeline_editor.time_to_minutes(prev_task['end'])
+
+                prev_start_widget = self.tasks_table.cellWidget(task_index - 1, 0)
+                prev_end_widget = self.tasks_table.cellWidget(task_index - 1, 1)
+
+                if prev_start_widget and prev_end_widget:
+                    prev_start_widget.setTime(QTime(prev_start_min // 60, prev_start_min % 60))
+                    prev_end_widget.setTime(QTime(prev_end_min // 60, prev_end_min % 60))
+
+    def refresh_timeline_from_table(self):
+        """从表格刷新时间轴"""
+        tasks = []
+        for row in range(self.tasks_table.rowCount()):
+            start_widget = self.tasks_table.cellWidget(row, 0)
+            end_widget = self.tasks_table.cellWidget(row, 1)
+            name_item = self.tasks_table.item(row, 2)
+            color_widget = self.tasks_table.cellWidget(row, 3)
+
+            if start_widget and end_widget and name_item and color_widget:
+                color_input = color_widget.findChild(QLineEdit)
+
+                start_time = start_widget.time().toString("HH:mm")
+                end_time = end_widget.time().toString("HH:mm")
+
+                # 处理 24:00
+                if end_widget.property("is_midnight"):
+                    end_time = "24:00"
+                elif end_time == "00:00" and row == self.tasks_table.rowCount() - 1:
+                    end_time = "24:00"
+
+                task = {
+                    "start": start_time,
+                    "end": end_time,
+                    "task": name_item.text(),
+                    "color": color_input.text() if color_input else "#4CAF50"
+                }
+                tasks.append(task)
+
+        self.timeline_editor.set_tasks(tasks)
+
     def load_tasks_to_table(self):
         """加载任务到表格"""
         self.tasks_table.setRowCount(len(self.tasks))
@@ -672,6 +766,9 @@ class ConfigManager(QMainWindow):
             self.tasks_table.setCellWidget(row, 4, delete_btn)
 
         self.tasks_table.resizeColumnsToContents()
+
+        # 刷新时间轴编辑器
+        self.timeline_editor.set_tasks(self.tasks)
 
     def add_task(self):
         """添加新任务,自动接续上一个任务的结束时间"""
@@ -744,6 +841,9 @@ class ConfigManager(QMainWindow):
         delete_btn.setStyleSheet("QPushButton { background-color: #f44336; color: white; }")
         self.tasks_table.setCellWidget(row, 4, delete_btn)
 
+        # 刷新时间轴
+        self.refresh_timeline_from_table()
+
     def delete_task(self, row):
         """删除任务"""
         reply = QMessageBox.question(
@@ -761,6 +861,9 @@ class ConfigManager(QMainWindow):
                     delete_btn.clicked.disconnect()
                     delete_btn.clicked.connect(lambda checked, row=r: self.delete_task(row))
 
+            # 刷新时间轴
+            self.refresh_timeline_from_table()
+
     def clear_all_tasks(self):
         """清空所有任务"""
         reply = QMessageBox.question(
@@ -771,6 +874,8 @@ class ConfigManager(QMainWindow):
 
         if reply == QMessageBox.Yes:
             self.tasks_table.setRowCount(0)
+            # 刷新时间轴
+            self.timeline_editor.set_tasks([])
             QMessageBox.information(self, "提示", "所有任务已清空\n\n记得点击【保存所有设置】按钮来保存更改")
 
     def load_default_template(self):
@@ -906,6 +1011,9 @@ class ConfigManager(QMainWindow):
                 self.tasks = template_tasks
                 self.load_tasks_to_table()
 
+                # 刷新时间轴
+                self.timeline_editor.set_tasks(template_tasks)
+
                 QMessageBox.information(
                     self,
                     "加载成功",
@@ -949,6 +1057,9 @@ class ConfigManager(QMainWindow):
                 # 加载模板任务
                 self.tasks = template_tasks
                 self.load_tasks_to_table()
+
+                # 刷新时间轴
+                self.timeline_editor.set_tasks(template_tasks)
 
                 QMessageBox.information(
                     self,

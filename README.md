@@ -6,8 +6,11 @@
 
 [![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/PySide6-6.5+-green.svg)](https://pypi.org/project/PySide6/)
+[![Version](https://img.shields.io/badge/version-1.2.0-brightgreen.svg)](https://github.com)
 [![License](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com)
+
+**当前版本: v1.2.0** | 最后更新: 2025-10-30
 
 </div>
 
@@ -26,6 +29,9 @@
 - 🎛️ **可视化配置** - 功能完善的 GUI 配置管理器,无需手动编辑 JSON
 - 📑 **预设模板** - 8 种内置作息模板(工作日、学生、自由职业等),一键加载
 - 🖼️ **多样时间标记** - 支持线条、静态图片、动画 GIF 三种时间标记样式
+- 🍅 **番茄钟集成** - 内置番茄钟计时器,支持拖拽定位和可视化配置
+- 🔔 **智能通知** - 任务提醒和番茄钟通知,支持免打扰时段
+- 📈 **任务统计报告** - 自动跟踪任务完成情况,提供多维度统计分析和数据导出
 
 ## 📸 效果预览
 
@@ -134,7 +140,27 @@
     "screen_index": 0,             // 显示器索引(0=主显示器)
     "update_interval": 1000,       // 更新间隔(毫秒)
     "enable_shadow": true,         // 是否启用阴影效果
-    "corner_radius": 0             // 圆角半径(0=直角)
+    "corner_radius": 0,            // 圆角半径(0=直角)
+    "notification": {              // 通知配置
+        "enabled": true,           // 通知总开关
+        "before_start_minutes": [5], // 任务开始前N分钟提醒
+        "on_start": true,          // 任务开始时提醒
+        "before_end_minutes": [],  // 任务结束前N分钟提醒
+        "on_end": false,           // 任务结束时提醒
+        "sound_enabled": true,     // 声音开关
+        "sound_file": "",          // 自定义提示音路径
+        "quiet_hours": {           // 免打扰时段
+            "enabled": false,
+            "start": "22:00",
+            "end": "08:00"
+        }
+    },
+    "pomodoro": {                  // 番茄钟配置
+        "work_duration": 1500,     // 工作时长(秒,默认25分钟)
+        "short_break": 300,        // 短休息时长(秒,默认5分钟)
+        "long_break": 900,         // 长休息时长(秒,默认15分钟)
+        "long_break_interval": 4   // 长休息间隔(默认每4个番茄钟)
+    }
 }
 ```
 
@@ -175,10 +201,12 @@
 
 右键点击系统托盘图标(任务栏右下角)可以:
 
-- **打开配置** - 启动 GUI 配置管理器
-- **重载配置** - 重新加载 `config.json` 和 `tasks.json`
-- **切换位置** - 在屏幕顶部和底部之间切换
-- **退出** - 关闭程序
+- **⚙️ 打开配置** - 启动 GUI 配置管理器
+- **🍅 启动番茄钟** - 打开番茄钟面板开始工作
+- **🔔 通知功能** - 发送测试通知和查看通知历史
+- **🔄 重载配置** - 重新加载 `config.json` 和 `tasks.json`
+- **↕️ 切换位置** - 在屏幕顶部和底部之间切换
+- **❌ 退出** - 关闭程序
 
 ### 悬停提示
 
@@ -207,6 +235,93 @@
 - 设置 `"marker_type": "gif"`
 - 指定 `"marker_image_path"` 为 GIF 文件路径
 - 支持透明背景和循环播放
+
+### 番茄钟功能 🍅
+
+**启动番茄钟:**
+1. 右键点击系统托盘图标
+2. 选择"🍅 启动番茄钟"
+3. 番茄钟面板将显示在进度条上方
+
+**番茄钟面板功能:**
+- **▶/⏸ 按钮** - 开始/暂停番茄钟
+- **⚙ 设置按钮** - 打开配置对话框,可调整:
+  - 工作时长(1-120分钟,默认25分钟)
+  - 短休息时长(1-60分钟,默认5分钟)
+  - 长休息时长(1-120分钟,默认15分钟)
+  - 长休息间隔(1-10个番茄钟,默认4个)
+- **✕ 关闭按钮** - 停止并关闭番茄钟
+- **拖拽支持** - 点击面板空白区域可拖动到屏幕任意位置
+
+### 任务统计报告 📊
+
+**打开统计报告:**
+1. 右键点击系统托盘图标
+2. 选择"📊 统计报告"
+3. 统计窗口将显示详细的任务分析
+
+**统计功能特性:**
+
+**📅 今日统计标签页:**
+- 今日任务摘要卡片(总任务数、已完成、进行中、未开始)
+- 圆形进度条显示今日完成率
+- 任务详情表格(显示每个任务的时间和状态)
+
+**📊 本周统计标签页:**
+- 本周汇总数据(任务数、完成数、总时长)
+- 本周完成率圆形进度条
+- 每日趋势表格(星期、任务数、完成率等)
+
+**📈 本月统计标签页:**
+- 本月累计统计
+- 月度完成率可视化
+- 每日统计明细
+
+**📋 任务分类标签页:**
+- 按任务名称分类的历史统计
+- 显示每个任务的完成次数和总时长
+- 颜色标记便于识别
+
+**数据管理:**
+- **🔄 刷新按钮** - 实时更新统计数据
+- **📥 导出CSV** - 将统计数据导出为CSV文件用于进一步分析
+- **自动跟踪** - 任务状态每分钟自动更新(在每分钟的第0秒)
+- **数据持久化** - 统计数据保存在`statistics.json`,程序重启不丢失
+- **数据清理** - 自动保留最近90天的数据,旧数据可手动清理
+
+**统计数据包含:**
+- 每日任务完成记录
+- 任务时长和完成时间
+- 任务完成率计算
+- 按任务名称分类的历史累计
+- 支持日期范围查询
+
+**工作流程:**
+1. 点击开始按钮,开始25分钟工作
+2. 工作完成后自动进入5分钟短休息
+3. 完成4个番茄钟后自动进入15分钟长休息
+4. 休息结束后手动点击开始按钮继续下一个番茄钟
+
+**通知提醒:**
+- 工作完成时显示通知
+- 休息结束时提醒开始新的番茄钟
+- 面板颜色随状态变化(工作=红色,休息=绿色,暂停=灰色)
+
+### 通知管理 🔔
+
+**配置任务提醒:**
+在 `config.json` 的 `notification` 部分配置:
+- `enabled` - 开启/关闭通知功能
+- `before_start_minutes` - 任务开始前N分钟提醒(支持多个时间点)
+- `on_start` - 任务开始时提醒
+- `before_end_minutes` - 任务结束前N分钟提醒
+- `on_end` - 任务结束时提醒
+
+**免打扰时段:**
+设置 `quiet_hours.enabled: true` 并配置起止时间,在此时段内不会发送通知。
+
+**测试通知:**
+右键托盘图标 → 通知功能 → 发送测试通知
 
 ### 开机自启动
 
@@ -238,20 +353,61 @@ systemctl --user start pydaybar.service
 
 使用 PyInstaller 打包成独立的 `.exe` 文件(无需 Python 环境):
 
+### 打包步骤
+
 ```bash
-# 安装 PyInstaller
+# 1. 安装 PyInstaller
 pip install pyinstaller
 
-# 打包主程序
+# 2. 清理旧文件(可选)
+# Windows PowerShell:
+Remove-Item -Recurse -Force build, dist
+
+# 3. 打包主程序
 pyinstaller PyDayBar.spec
 
-# 打包配置管理器(可选)
-pyinstaller PyDayBar-Config.spec
-
-# 生成的文件在 dist/ 目录中
+# 4. 生成的文件在 dist/ 目录中
 ```
 
-**⚠️ 重要提示:** 确保 `PyDayBar.spec` 文件中包含所有模板文件。详细打包说明请参考 [CLAUDE.md](CLAUDE.md#⚠️-important-packaging-with-template-files)。
+### 打包配置说明
+
+`PyDayBar.spec` 文件已配置包含以下内容:
+
+**数据文件 (datas):**
+- 8个任务模板文件 (`tasks_template_*.json`)
+
+**隐藏导入 (hiddenimports):**
+- `statistics_manager` - 统计数据管理器
+- `statistics_gui` - 统计报告GUI
+- `PySide6.QtCore`, `PySide6.QtGui`, `PySide6.QtWidgets` - Qt子模块
+
+### 打包结果
+
+- **文件大小**: 约 46.5 MB
+- **生成位置**: `dist\PyDayBar.exe`
+- **运行方式**: 双击exe即可运行,无需Python环境
+
+### 首次运行自动生成文件
+
+exe首次运行时会在同目录自动创建:
+- `config.json` - 配置文件
+- `tasks.json` - 任务文件(从模板加载)
+- `statistics.json` - 统计数据文件
+- `pydaybar.log` - 运行日志
+
+### 打包配置管理器(可选)
+
+```bash
+pyinstaller PyDayBar-Config.spec
+```
+
+配置管理器也可以通过主程序的托盘菜单打开,不需要单独打包。
+
+**⚠️ 重要提示:**
+
+1. **必须使用 `.spec` 文件打包**,不要直接运行 `pyinstaller main.py`,否则模板文件和新模块不会被包含
+2. 每次添加新的模板文件或Python模块后,需要更新 `PyDayBar.spec` 中的 `datas` 或 `hiddenimports` 列表
+3. 详细打包说明请参考 [CLAUDE.md](CLAUDE.md#⚠️-important-packaging-with-template-files)
 
 ## 🛠️ 开发指南
 
@@ -259,7 +415,10 @@ pyinstaller PyDayBar-Config.spec
 
 ```
 PyDayBar/
-├── main.py                       # 主程序入口 (1012 行)
+├── main.py                       # 主程序入口 (1900+ 行)
+│                                 # 包含: 番茄钟、通知管理、进度条、统计追踪
+├── statistics_manager.py         # 统计数据管理器
+├── statistics_gui.py              # 统计报告GUI窗口
 ├── config_gui.py                 # GUI 配置管理器 (1123 行)
 ├── config.json                   # 运行时配置文件
 ├── tasks.json                    # 当前任务安排
@@ -270,6 +429,7 @@ PyDayBar/
 ├── CLAUDE.md                     # Claude Code 项目指导
 ├── jindutiao.md                  # 详细开发文档
 ├── tasks_template_*.json         # 8 个预设模板
+├── statistics.json               # 统计数据文件
 └── pydaybar.log                  # 运行日志
 ```
 
@@ -362,11 +522,31 @@ PyDayBar/
 - 重新运行 `pyinstaller PyDayBar.spec`
 - 详细说明请参考 [CLAUDE.md 打包说明](CLAUDE.md#⚠️-important-packaging-with-template-files)
 
+### Q7: 统计报告窗口打不开?
+
+**原因:** 可能是统计模块未正确打包或权限问题。
+
+**解决方案:**
+- 检查 `statistics.json` 是否可以正常创建
+- 查看 `pydaybar.log` 日志文件中的错误信息
+- 确保 `PyDayBar.spec` 的 `hiddenimports` 包含 `statistics_manager` 和 `statistics_gui`
+- 以管理员权限运行程序
+
+### Q8: 统计数据不更新?
+
+**原因:** 任务状态跟踪每分钟更新一次。
+
+**解决方案:**
+- 等待至少1分钟后查看统计数据
+- 点击统计窗口的"🔄 刷新"按钮手动刷新
+- 确保任务时间设置正确(当前时间在任务时间范围内)
+- 检查系统时间是否准确
+
 更多问题请参考 [jindutiao.md 常见问题部分](jindutiao.md#常见问题与解决方案-faq) 或查看 `pydaybar.log` 日志文件。
 
 ## 🎯 路线图
 
-### 当前版本 (v1.0) ✅ 已完成
+### 当前版本 (v1.1) ✅ 已完成
 - [x] 基础进度条显示
 - [x] 任务可视化(紧凑模式)
 - [x] 配置文件支持
@@ -382,20 +562,59 @@ PyDayBar/
 - [x] 时间冲突检测
 - [x] 完整日志系统
 - [x] PyInstaller 打包支持
+- [x] **番茄钟集成** - 可拖拽面板,可视化配置
+- [x] **任务提醒通知** - 支持多种提醒时间点和免打扰时段
+- [x] **番茄钟通知** - 工作/休息完成提醒
 
-### 计划中 (v1.1)
-- [ ] 任务提醒通知
-- [ ] 任务统计报告
+### 当前版本 (v1.2) ✅ 新增功能
+- [x] **任务统计报告** - 完整的统计分析系统
+  - 今日/本周/本月统计摘要
+  - 任务完成率可视化(圆形进度条)
+  - 任务分类统计和历史记录
+  - CSV导出功能
+  - 自动任务状态跟踪
+
+### 计划中 (v1.3)
 - [ ] 主题切换(深色/浅色)
 - [ ] 国际化支持(英文)
-- [ ] 任务完成度跟踪
+- [ ] 番茄钟统计和历史记录
+- [ ] 数据可视化图表增强
 
 ### 未来计划 (v2.0)
 - [ ] 周视图/月视图
 - [ ] 任务拖拽编辑
 - [ ] 云同步支持
-- [ ] 番茄钟集成
 - [ ] 任务分类和标签
+- [ ] 更丰富的数据可视化图表
+
+## 📝 更新日志
+
+### v1.2.0 (2025-10-30)
+**新增功能:**
+- ✨ 任务统计报告系统
+  - 今日/本周/本月多维度统计
+  - 圆形进度条可视化
+  - 任务分类历史记录
+  - CSV数据导出功能
+  - 自动任务状态跟踪
+
+**改进:**
+- 🔧 优化打包配置,支持统计模块
+- 📝 完善文档和使用说明
+- 🐛 修复已知问题
+
+### v1.1.0 (2025-10-28)
+**新增功能:**
+- 🍅 番茄钟集成
+- 🔔 智能通知系统
+- 📑 8种预设模板
+
+### v1.0.0 (2025-10-25)
+**首次发布:**
+- 🎯 基础进度条功能
+- 🎨 可视化配置管理器
+- 🖼️ 多样时间标记
+- 🔄 热重载支持
 
 ## 📄 许可证
 
