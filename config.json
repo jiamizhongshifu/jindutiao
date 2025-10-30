@@ -1,0 +1,29 @@
+{
+    "bar_height": 10,
+    "position": "bottom",
+    "background_color": "#505050",
+    "background_opacity": 180,
+    "marker_color": "#FF0000",
+    "marker_width": 2,
+    "marker_type": "gif",
+    "marker_image_path": "C:/Users/Sats/Downloads/FtYZNfMhlJj8DTmU9-LtGNjmzxYx.webp",
+    "marker_size": 50,
+    "screen_index": 0,
+    "update_interval": 1000,
+    "enable_shadow": true,
+    "corner_radius": 0,
+    "notification": {
+        "enabled": true,
+        "before_start_minutes": [5],
+        "on_start": true,
+        "before_end_minutes": [],
+        "on_end": false,
+        "sound_enabled": true,
+        "sound_file": "",
+        "quiet_hours": {
+            "enabled": false,
+            "start": "22:00",
+            "end": "08:00"
+        }
+    }
+}
