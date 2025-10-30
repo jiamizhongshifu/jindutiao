@@ -13,9 +13,30 @@ from PySide6.QtWidgets import (
     QComboBox, QCheckBox, QTableWidget, QTableWidgetItem, QHeaderView,
     QMessageBox, QTimeEdit, QGroupBox, QFormLayout, QFileDialog
 )
-from PySide6.QtCore import Qt, QTime, Signal
+from PySide6.QtCore import Qt, QTime, Signal, QThread
 from PySide6.QtGui import QColor, QIcon
 from timeline_editor import TimelineEditor
+from ai_client import PyDayBarAIClient
+
+
+class AIWorker(QThread):
+    """AI请求工作线程,防止阻塞UI"""
+    # 定义信号
+    finished = Signal(object)  # 完成信号,传递结果
+    error = Signal(str)  # 错误信号,传递错误消息
+
+    def __init__(self, ai_client, user_input):
+        super().__init__()
+        self.ai_client = ai_client
+        self.user_input = user_input
+
+    def run(self):
+        """在后台线程中执行AI请求"""
+        try:
+            result = self.ai_client.plan_tasks(self.user_input, parent_widget=None)
+            self.finished.emit(result)
+        except Exception as e:
+            self.error.emit(str(e))
 
 
 class ConfigManager(QMainWindow):
@@ -55,6 +76,10 @@ class ConfigManager(QMainWindow):
         # 如果任务为空,默认加载24小时模板
         if not self.tasks:
             self.load_default_template()
+
+        # 初始化AI客户端
+        self.ai_client = PyDayBarAIClient()
+        self.ai_worker = None  # AI工作线程
 
         self.init_ui()
 
@@ -300,19 +325,33 @@ class ConfigManager(QMainWindow):
         # 初始化时更新按钮状态
         self.update_marker_size_preset_buttons()
 
+        # 标记图片 X 轴偏移
+        self.marker_x_offset_spin = QSpinBox()
+        self.marker_x_offset_spin.setRange(-100, 100)
+        self.marker_x_offset_spin.setValue(self.config.get('marker_x_offset', 0))
+        self.marker_x_offset_spin.setSuffix(" px")
+        self.marker_x_offset_spin.setMaximumWidth(100)
+        x_offset_hint = QLabel("(正值向右,负值向左)")
+        x_offset_hint.setStyleSheet("color: #666; font-size: 9pt;")
+        x_offset_layout = QHBoxLayout()
+        x_offset_layout.addWidget(self.marker_x_offset_spin)
+        x_offset_layout.addWidget(x_offset_hint)
+        x_offset_layout.addStretch()
+        color_layout.addRow("标记图片 X 偏移:", x_offset_layout)
+
         # 标记图片 Y 轴偏移
         self.marker_y_offset_spin = QSpinBox()
         self.marker_y_offset_spin.setRange(-100, 100)
         self.marker_y_offset_spin.setValue(self.config.get('marker_y_offset', 0))
         self.marker_y_offset_spin.setSuffix(" px")
         self.marker_y_offset_spin.setMaximumWidth(100)
-        offset_hint = QLabel("(正值向上,负值向下)")
-        offset_hint.setStyleSheet("color: #666; font-size: 9pt;")
-        offset_layout = QHBoxLayout()
-        offset_layout.addWidget(self.marker_y_offset_spin)
-        offset_layout.addWidget(offset_hint)
-        offset_layout.addStretch()
-        color_layout.addRow("标记图片 Y 偏移:", offset_layout)
+        y_offset_hint = QLabel("(正值向上,负值向下)")
+        y_offset_hint.setStyleSheet("color: #666; font-size: 9pt;")
+        y_offset_layout = QHBoxLayout()
+        y_offset_layout.addWidget(self.marker_y_offset_spin)
+        y_offset_layout.addWidget(y_offset_hint)
+        y_offset_layout.addStretch()
+        color_layout.addRow("标记图片 Y 偏移:", y_offset_layout)
 
         color_group.setLayout(color_layout)
         layout.addWidget(color_group)
@@ -350,79 +389,146 @@ class ConfigManager(QMainWindow):
         # 顶部信息和模板加载区域
         top_layout = QVBoxLayout()
 
+        # AI任务规划区域
+        ai_group = QGroupBox("🤖 AI智能规划")
+        ai_layout = QVBoxLayout()
+
+        # 说明标签
+        ai_hint = QLabel("💡 用自然语言描述您的计划,AI将自动生成任务时间表")
+        ai_hint.setStyleSheet("color: #FF9800; font-style: italic; padding: 3px;")
+        ai_layout.addWidget(ai_hint)
+
+        # AI输入框
+        input_container = QHBoxLayout()
+        input_label = QLabel("描述您的计划:")
+        input_label.setStyleSheet("font-weight: bold;")
+        input_container.addWidget(input_label)
+
+        self.ai_input = QLineEdit()
+        self.ai_input.setPlaceholderText("例如: 明天9点开会1小时,然后写代码到下午5点,中午12点休息1小时,晚上6点健身...")
+        self.ai_input.setMinimumHeight(35)
+        self.ai_input.returnPressed.connect(self.on_ai_generate_clicked)  # 支持回车键
+        input_container.addWidget(self.ai_input)
+
+        ai_layout.addLayout(input_container)
+
+        # 按钮行
+        ai_button_layout = QHBoxLayout()
+
+        # AI生成按钮
+        self.generate_btn = QPushButton("✨ 智能生成任务")
+        self.generate_btn.clicked.connect(self.on_ai_generate_clicked)
+        self.generate_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #FF6B00;
+                color: white;
+                padding: 8px 16px;
+                font-weight: bold;
+                font-size: 13px;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #FF8500;
+            }
+            QPushButton:disabled {
+                background-color: #ccc;
+                color: #666;
+            }
+        """)
+        ai_button_layout.addWidget(self.generate_btn)
+
+        # 配额状态标签
+        self.quota_label = QLabel("配额状态: 加载中...")
+        self.quota_label.setStyleSheet("color: #666; padding: 5px;")
+        ai_button_layout.addWidget(self.quota_label)
+
+        # 刷新配额按钮
+        refresh_quota_btn = QPushButton("🔄 刷新配额")
+        refresh_quota_btn.clicked.connect(self.refresh_quota_status)
+        refresh_quota_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #4CAF50;
+                color: white;
+                padding: 6px 12px;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #45a049;
+            }
+        """)
+        ai_button_layout.addWidget(refresh_quota_btn)
+
+        ai_button_layout.addStretch()
+        ai_layout.addLayout(ai_button_layout)
+
+        ai_group.setLayout(ai_layout)
+        top_layout.addWidget(ai_group)
+
+        # 初始化时加载配额状态
+        self.refresh_quota_status()
+
         # 说明标签
         info_label = QLabel("双击表格单元格可以编辑任务内容")
         info_label.setStyleSheet("color: #666; font-style: italic;")
         top_layout.addWidget(info_label)
 
-        # 模板加载区域
+        # 模板加载区域 - 单行显示所有模板
         template_group = QGroupBox("📋 预设模板")
-        template_main_layout = QVBoxLayout()
+        template_layout = QHBoxLayout()
 
-        # 第一行模板
-        template_row1 = QHBoxLayout()
-        template_label = QLabel("快速加载预设任务模板:")
-        template_row1.addWidget(template_label)
+        template_label = QLabel("快速加载:")
+        template_layout.addWidget(template_label)
 
         # 24小时模板按钮
-        template_24h_btn = QPushButton("24小时完整作息")
+        template_24h_btn = QPushButton("24小时")
         template_24h_btn.clicked.connect(lambda: self.load_template("tasks_template_24h.json"))
         template_24h_btn.setStyleSheet("QPushButton { background-color: #4CAF50; color: white; padding: 6px; }")
-        template_row1.addWidget(template_24h_btn)
+        template_layout.addWidget(template_24h_btn)
 
         # 工作日模板按钮
-        template_work_btn = QPushButton("工作日作息")
+        template_work_btn = QPushButton("工作日")
         template_work_btn.clicked.connect(lambda: self.load_template("tasks_template_workday.json"))
         template_work_btn.setStyleSheet("QPushButton { background-color: #2196F3; color: white; padding: 6px; }")
-        template_row1.addWidget(template_work_btn)
+        template_layout.addWidget(template_work_btn)
 
         # 学生模板按钮
-        template_student_btn = QPushButton("学生作息")
+        template_student_btn = QPushButton("学生")
         template_student_btn.clicked.connect(lambda: self.load_template("tasks_template_student.json"))
         template_student_btn.setStyleSheet("QPushButton { background-color: #9C27B0; color: white; padding: 6px; }")
-        template_row1.addWidget(template_student_btn)
+        template_layout.addWidget(template_student_btn)
 
         # 自由职业者模板
         template_freelancer_btn = QPushButton("自由职业")
         template_freelancer_btn.clicked.connect(lambda: self.load_template("tasks_template_freelancer.json"))
         template_freelancer_btn.setStyleSheet("QPushButton { background-color: #00BCD4; color: white; padding: 6px; }")
-        template_row1.addWidget(template_freelancer_btn)
-
-        template_row1.addStretch()
-        template_main_layout.addLayout(template_row1)
-
-        # 第二行模板
-        template_row2 = QHBoxLayout()
-        template_row2.addWidget(QLabel("更多场景:"))
+        template_layout.addWidget(template_freelancer_btn)
 
         # 夜班作息模板
-        template_night_btn = QPushButton("夜班作息")
+        template_night_btn = QPushButton("夜班")
         template_night_btn.clicked.connect(lambda: self.load_template("tasks_template_night_shift.json"))
         template_night_btn.setStyleSheet("QPushButton { background-color: #3F51B5; color: white; padding: 6px; }")
-        template_row2.addWidget(template_night_btn)
+        template_layout.addWidget(template_night_btn)
 
         # 内容创作者模板
-        template_creator_btn = QPushButton("内容创作者")
+        template_creator_btn = QPushButton("创作者")
         template_creator_btn.clicked.connect(lambda: self.load_template("tasks_template_creator.json"))
         template_creator_btn.setStyleSheet("QPushButton { background-color: #E91E63; color: white; padding: 6px; }")
-        template_row2.addWidget(template_creator_btn)
+        template_layout.addWidget(template_creator_btn)
 
         # 健身达人模板
-        template_fitness_btn = QPushButton("健身达人")
+        template_fitness_btn = QPushButton("健身")
         template_fitness_btn.clicked.connect(lambda: self.load_template("tasks_template_fitness.json"))
         template_fitness_btn.setStyleSheet("QPushButton { background-color: #FF5722; color: white; padding: 6px; }")
-        template_row2.addWidget(template_fitness_btn)
+        template_layout.addWidget(template_fitness_btn)
 
         # 创业者模板
         template_entrepreneur_btn = QPushButton("创业者")
         template_entrepreneur_btn.clicked.connect(lambda: self.load_template("tasks_template_entrepreneur.json"))
         template_entrepreneur_btn.setStyleSheet("QPushButton { background-color: #FF9800; color: white; padding: 6px; }")
-        template_row2.addWidget(template_entrepreneur_btn)
+        template_layout.addWidget(template_entrepreneur_btn)
 
-        template_row2.addStretch()
-        template_main_layout.addLayout(template_row2)
-
-        template_group.setLayout(template_main_layout)
+        template_layout.addStretch()
+        template_group.setLayout(template_layout)
         top_layout.addWidget(template_group)
 
         layout.addLayout(top_layout)
@@ -447,6 +553,10 @@ class ConfigManager(QMainWindow):
         self.tasks_table.setColumnCount(5)
         self.tasks_table.setHorizontalHeaderLabels(["开始时间", "结束时间", "任务名称", "颜色", "操作"])
         self.tasks_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
+
+        # 监听表格项的变化,实时同步到时间轴
+        self.tasks_table.itemChanged.connect(self.on_table_item_changed)
+
         self.load_tasks_to_table()
 
         layout.addWidget(self.tasks_table)
@@ -673,6 +783,13 @@ class ConfigManager(QMainWindow):
                     prev_start_widget.setTime(QTime(prev_start_min // 60, prev_start_min % 60))
                     prev_end_widget.setTime(QTime(prev_end_min // 60, prev_end_min % 60))
 
+    def on_table_item_changed(self, item):
+        """表格项改变时的处理(任务名称修改)"""
+        # 只处理任务名称列(第2列)的修改
+        if item and item.column() == 2:
+            # 刷新时间轴,同步任务名称
+            self.refresh_timeline_from_table()
+
     def refresh_timeline_from_table(self):
         """从表格刷新时间轴"""
         tasks = []
@@ -706,6 +823,9 @@ class ConfigManager(QMainWindow):
 
     def load_tasks_to_table(self):
         """加载任务到表格"""
+        # 暂时阻塞itemChanged信号,避免在加载时触发同步
+        self.tasks_table.blockSignals(True)
+
         self.tasks_table.setRowCount(len(self.tasks))
 
         for row, task in enumerate(self.tasks):
@@ -751,7 +871,12 @@ class ConfigManager(QMainWindow):
             color_preview.setFixedSize(30, 20)
             color_preview.setStyleSheet(f"background-color: {task['color']}; border: 1px solid #ccc;")
 
-            color_input.textChanged.connect(lambda text, prev=color_preview: prev.setStyleSheet(f"background-color: {text}; border: 1px solid #ccc;"))
+            # 更新颜色预览并同步到时间轴
+            def on_color_changed(text, prev_label):
+                prev_label.setStyleSheet(f"background-color: {text}; border: 1px solid #ccc;")
+                self.refresh_timeline_from_table()
+
+            color_input.textChanged.connect(lambda text, prev=color_preview: on_color_changed(text, prev))
 
             color_layout.addWidget(color_input)
             color_layout.addWidget(color_btn)
@@ -766,6 +891,9 @@ class ConfigManager(QMainWindow):
             self.tasks_table.setCellWidget(row, 4, delete_btn)
 
         self.tasks_table.resizeColumnsToContents()
+
+        # 恢复itemChanged信号
+        self.tasks_table.blockSignals(False)
 
         # 刷新时间轴编辑器
         self.timeline_editor.set_tasks(self.tasks)
@@ -1128,6 +1256,8 @@ class ConfigManager(QMainWindow):
             self.marker_image_input.setEnabled(is_image_mode)
             # 启用/禁用图片大小设置
             self.marker_size_spin.setEnabled(is_image_mode)
+            # 启用/禁用 X 轴偏移设置
+            self.marker_x_offset_spin.setEnabled(is_image_mode)
             # 启用/禁用 Y 轴偏移设置
             self.marker_y_offset_spin.setEnabled(is_image_mode)
 
@@ -1304,6 +1434,7 @@ class ConfigManager(QMainWindow):
                 "marker_type": self.marker_type_combo.currentText(),
                 "marker_image_path": self.marker_image_input.text(),
                 "marker_size": self.marker_size_spin.value(),
+                "marker_x_offset": self.marker_x_offset_spin.value(),
                 "marker_y_offset": self.marker_y_offset_spin.value(),
                 "screen_index": self.screen_spin.value(),
                 "update_interval": self.interval_spin.value(),
@@ -1388,6 +1519,153 @@ class ConfigManager(QMainWindow):
 
         except Exception as e:
             QMessageBox.critical(self, "错误", f"保存失败:\n{str(e)}")
+
+    def refresh_quota_status(self):
+        """刷新配额状态"""
+        # 先检查后端服务器是否运行
+        if not self.ai_client.check_backend_health():
+            self.quota_label.setText("❌ AI服务未启动 (请运行 backend_api.py)")
+            self.quota_label.setStyleSheet("color: #f44336; padding: 5px; font-weight: bold;")
+            self.generate_btn.setEnabled(False)
+            return
+
+        # 获取配额状态
+        quota_info = self.ai_client.get_quota_status()
+        if quota_info:
+            remaining = quota_info.get('remaining', {})
+            daily_plan_remaining = remaining.get('daily_plan', 0)
+
+            if daily_plan_remaining > 0:
+                self.quota_label.setText(f"✓ 今日剩余: {daily_plan_remaining} 次规划")
+                self.quota_label.setStyleSheet("color: #4CAF50; padding: 5px; font-weight: bold;")
+                self.generate_btn.setEnabled(True)
+            else:
+                self.quota_label.setText("⚠️ 今日配额已用完")
+                self.quota_label.setStyleSheet("color: #FF9800; padding: 5px; font-weight: bold;")
+                self.generate_btn.setEnabled(False)
+        else:
+            self.quota_label.setText("⚠️ 无法获取配额状态")
+            self.quota_label.setStyleSheet("color: #999; padding: 5px;")
+            self.generate_btn.setEnabled(True)  # 仍然允许尝试
+
+    def on_ai_generate_clicked(self):
+        """处理AI生成按钮点击"""
+        user_input = self.ai_input.text().strip()
+
+        if not user_input:
+            QMessageBox.warning(
+                self,
+                "输入为空",
+                "请先描述您的计划!\n\n例如: 明天9点开会1小时,然后写代码到下午5点"
+            )
+            return
+
+        # 检查是否有正在运行的任务
+        if self.ai_worker is not None and self.ai_worker.isRunning():
+            QMessageBox.warning(
+                self,
+                "请稍候",
+                "AI正在处理上一个请求,请稍候..."
+            )
+            return
+
+        # 检查后端服务器
+        if not self.ai_client.check_backend_health():
+            QMessageBox.critical(
+                self,
+                "AI服务未启动",
+                "无法连接到AI后端服务器!\n\n请确保已启动 backend_api.py\n\n启动命令: python backend_api.py",
+                QMessageBox.Ok
+            )
+            return
+
+        # 禁用按钮并显示加载状态
+        self.generate_btn.setEnabled(False)
+        self.generate_btn.setText("⏳ AI正在生成...")
+
+        # 创建并启动工作线程
+        self.ai_worker = AIWorker(self.ai_client, user_input)
+        self.ai_worker.finished.connect(self.on_ai_generation_finished)
+        self.ai_worker.error.connect(self.on_ai_generation_error)
+        self.ai_worker.start()
+
+    def on_ai_generation_finished(self, result):
+        """AI生成完成的回调"""
+        try:
+            if result and result.get('success'):
+                tasks = result.get('tasks', [])
+
+                if not tasks:
+                    QMessageBox.warning(
+                        self,
+                        "生成失败",
+                        "AI未能生成任何任务,请尝试更详细地描述您的计划。"
+                    )
+                    return
+
+                # 询问是否替换当前任务
+                if self.tasks_table.rowCount() > 0:
+                    reply = QMessageBox.question(
+                        self,
+                        '确认替换',
+                        f'AI已生成 {len(tasks)} 个任务\n\n是否替换当前表格中的所有任务?',
+                        QMessageBox.Yes | QMessageBox.No
+                    )
+
+                    if reply == QMessageBox.No:
+                        return
+
+                # 清空当前任务表格
+                self.tasks_table.setRowCount(0)
+
+                # 加载AI生成的任务
+                self.tasks = tasks
+                self.load_tasks_to_table()
+
+                # 显示成功消息
+                token_usage = result.get('token_usage', 0)
+                QMessageBox.information(
+                    self,
+                    "生成成功",
+                    f"✓ 已生成 {len(tasks)} 个任务\n"
+                    f"📊 Token使用: {token_usage}\n\n"
+                    "记得点击【保存所有设置】按钮来保存更改"
+                )
+
+                # 清空输入框
+                self.ai_input.clear()
+
+                # 刷新配额状态
+                self.refresh_quota_status()
+
+            else:
+                # result为None表示已经在ai_client中显示了错误对话框
+                pass
+
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "发生错误",
+                f"生成任务时发生错误:\n\n{str(e)}"
+            )
+
+        finally:
+            # 恢复按钮状态
+            self.generate_btn.setEnabled(True)
+            self.generate_btn.setText("✨ 智能生成任务")
+
+    def on_ai_generation_error(self, error_msg):
+        """AI生成失败的回调"""
+        try:
+            QMessageBox.critical(
+                self,
+                "AI生成失败",
+                f"生成任务时发生错误:\n\n{error_msg}\n\n请检查:\n1. 后端服务器是否正常运行\n2. 网络连接是否正常\n3. API密钥是否有效"
+            )
+        finally:
+            # 恢复按钮状态
+            self.generate_btn.setEnabled(True)
+            self.generate_btn.setText("✨ 智能生成任务")
 
 
 def main():

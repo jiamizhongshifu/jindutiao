@@ -1084,8 +1084,8 @@ class TimeProgressBar(QWidget):
         # 计算标记图片需要的额外空间
         marker_extra_space = 0
         if self.config.get('marker_type') in ['image', 'gif']:
-            marker_size = self.config.get('marker_size', 50)
-            marker_y_offset = self.config.get('marker_y_offset', 0)
+            marker_size = self.config.get('marker_size', 100)
+            marker_y_offset = self.config.get('marker_y_offset', -30)
             # 标记图片可能超出进度条高度,需要预留额外空间
             # 如果图片底对齐,可能需要的高度 = 图片高度 - 进度条高度 + Y轴偏移
             marker_extra_space = max(0, marker_size - bar_height + abs(marker_y_offset))
@@ -1265,7 +1265,7 @@ class TimeProgressBar(QWidget):
 
     def init_marker_image(self):
         """初始化时间标记图片"""
-        marker_type = self.config.get('marker_type', 'line')
+        marker_type = self.config.get('marker_type', 'gif')
 
         # 清理旧的资源
         self.marker_pixmap = None
@@ -1278,7 +1278,7 @@ class TimeProgressBar(QWidget):
             return
 
         # 获取图片路径
-        image_path = self.config.get('marker_image_path', '')
+        image_path = self.config.get('marker_image_path', 'kun.webp')
 
         if not image_path:
             self.logger.info("未配置时间标记图片,使用线条模式")
@@ -1310,7 +1310,7 @@ class TimeProgressBar(QWidget):
                     return
 
                 # 缩放到配置的大小
-                marker_size = self.config.get('marker_size', 50)
+                marker_size = self.config.get('marker_size', 100)
                 self.marker_movie.setScaledSize(QPixmap(marker_size, marker_size).size())
 
                 # 启动动画
@@ -1331,7 +1331,7 @@ class TimeProgressBar(QWidget):
                     return
 
                 # 缩放到配置的大小,保持宽高比
-                marker_size = self.config.get('marker_size', 50)
+                marker_size = self.config.get('marker_size', 100)
                 self.marker_pixmap = self.marker_pixmap.scaled(
                     marker_size,
                     marker_size,
@@ -1949,17 +1949,18 @@ class TimeProgressBar(QWidget):
         bg_color.setAlpha(self.config['background_opacity'])
         painter.fillRect(0, bar_y_offset, width, bar_height, bg_color)
 
-        # 2. 绘制任务色块(使用紧凑模式位置)
+        # 2. 绘制任务色块(使用紧凑模式位置) - 先绘制所有色块,不绘制悬停文字
+        current_time = QTime.currentTime()
+        current_seconds = current_time.hour() * 3600 + current_time.minute() * 60 + current_time.second()
+
+        hover_info = None  # 保存悬停信息,最后绘制
+
         for i, pos in enumerate(self.task_positions):
             task = pos['task']
 
             # 使用紧凑模式的百分比位置
             start_pct = pos['compact_start_pct']
             end_pct = pos['compact_end_pct']
-
-            # 判断任务状态(比较任务的原始时间和当前时间)
-            current_time = QTime.currentTime()
-            current_seconds = current_time.hour() * 3600 + current_time.minute() * 60 + current_time.second()
 
             # 三种状态:未开始、进行中、已完成
             is_completed = pos['original_end'] <= current_seconds  # 已完成
@@ -1978,95 +1979,30 @@ class TimeProgressBar(QWidget):
                 # 转换为灰度并降低饱和度
                 gray_value = int(color.red() * 0.299 + color.green() * 0.587 + color.blue() * 0.114)
                 color = QColor(gray_value, gray_value, gray_value, 120)  # 半透明灰色
-            # 进行中和已完成的任务保持原色(点亮状态)
 
-            # 绘制任务块
-            if i == self.hovered_task_index:
-                # 悬停状态:根据文字大小动态调整色块尺寸
+            # 绘制任务块(在进度条位置)
+            rect = QRectF(x, bar_y_offset + 1, task_width, bar_height - 2)
 
-                # 设置文字字体
-                font = QFont()
-                font.setPointSize(9)
-                font.setBold(True)
-                painter.setFont(font)
-
-                # 任务信息 - 单行显示
-                task_text = f"{task['task']} ({task['start']}-{task['end']})"
-
-                # 计算文字的实际尺寸
-                font_metrics = painter.fontMetrics()
-                text_width = font_metrics.horizontalAdvance(task_text)
-                text_height = font_metrics.height()
-
-                # 添加内边距(增加以确保文字不被截断)
-                padding_horizontal = 30  # 左右各15像素
-                padding_vertical = 14    # 上下各7像素
-
-                # 计算悬停色块的实际尺寸
-                hover_width = max(task_width, text_width + padding_horizontal)  # 取任务块宽度和文字宽度的较大值
-                hover_height = text_height + padding_vertical
-
-                # 计算悬停色块的位置(居中对齐任务块)
-                hover_x = x + (task_width - hover_width) / 2
-                hover_y = bar_y_offset - hover_height - 5  # 向上偏移5像素,避免与进度条重叠
-
-                # 确保悬停色块不超出窗口边界
-                if hover_x < 0:
-                    hover_x = 0
-                elif hover_x + hover_width > width:
-                    hover_x = width - hover_width
-
-                # 确保 y 坐标不会超出窗口顶部
-                if hover_y < 0:
-                    hover_y = 0
-
-                hover_rect = QRectF(hover_x, hover_y, hover_width, hover_height)
-
-                # 绘制悬停的扩展色块
-                hover_color = QColor(color)
-                hover_color.setAlpha(240)  # 稍微透明
-                painter.setBrush(hover_color)
-                painter.setPen(QPen(QColor(255, 255, 255, 255), 2))  # 白色边框
-
-                if self.config.get('corner_radius', 0) > 0:
-                    painter.drawRoundedRect(
-                        hover_rect,
-                        self.config['corner_radius'],
-                        self.config['corner_radius']
-                    )
-                else:
-                    painter.drawRect(hover_rect)
-
-                # 绘制任务文本
-                painter.setPen(QColor(255, 255, 255))  # 白色文字
-                painter.drawText(hover_rect, Qt.AlignCenter, task_text)
-
-                # 在进度条位置也绘制正常的色块
-                base_rect = QRectF(x, bar_y_offset + 1, task_width, bar_height - 2)
+            if self.config.get('corner_radius', 0) > 0:
                 painter.setBrush(color)
                 painter.setPen(Qt.NoPen)
-                if self.config.get('corner_radius', 0) > 0:
-                    painter.drawRoundedRect(
-                        base_rect,
-                        self.config['corner_radius'],
-                        self.config['corner_radius']
-                    )
-                else:
-                    painter.fillRect(base_rect, color)
+                painter.drawRoundedRect(
+                    rect,
+                    self.config['corner_radius'],
+                    self.config['corner_radius']
+                )
             else:
-                # 普通状态 - 在进度条位置绘制
-                rect = QRectF(x, bar_y_offset + 1, task_width, bar_height - 2)
+                painter.fillRect(rect, color)
 
-                if self.config.get('corner_radius', 0) > 0:
-                    painter.setBrush(color)
-                    painter.setPen(Qt.NoPen)
-                    painter.drawRoundedRect(
-                        rect,
-                        self.config['corner_radius'],
-                        self.config['corner_radius']
-                    )
-                else:
-                    painter.fillRect(rect, color)
+            # 如果是悬停任务,保存信息稍后绘制
+            if i == self.hovered_task_index:
+                hover_info = {
+                    'task': task,
+                    'color': color,
+                    'x': x,
+                    'task_width': task_width,
+                    'bar_y_offset': bar_y_offset
+                }
 
         # 3. 绘制时间标记(最上层,在进度条区域)
         marker_x = self.current_time_percentage * width
@@ -2079,7 +2015,19 @@ class TimeProgressBar(QWidget):
                 # 计算绘制位置(水平居中,底部对齐到进度条底部 + Y轴偏移)
                 pixmap_width = current_pixmap.width()
                 pixmap_height = current_pixmap.height()
+
+                # 计算居中对齐位置
                 draw_x = int(marker_x - pixmap_width / 2)
+
+                # 应用 X 轴偏移(正值向右,负值向左)
+                # 注意:偏移在边界限制之后应用,以确保偏移能够生效
+                marker_x_offset = self.config.get('marker_x_offset', 0)
+                draw_x += marker_x_offset
+
+                # 边界限制:防止图片完全超出屏幕
+                # 允许部分溢出以保证偏移效果可见
+                draw_x = max(-pixmap_width // 2, min(draw_x, width - pixmap_width // 2))
+
                 # Y 轴位置 = 窗口底部 - 图片高度 - Y轴偏移(正值向上,负值向下)
                 marker_y_offset = self.config.get('marker_y_offset', 0)
                 draw_y = height - pixmap_height - marker_y_offset
@@ -2091,7 +2039,19 @@ class TimeProgressBar(QWidget):
             # 静态图片标记
             pixmap_width = self.marker_pixmap.width()
             pixmap_height = self.marker_pixmap.height()
+
+            # 计算居中对齐位置
             draw_x = int(marker_x - pixmap_width / 2)
+
+            # 应用 X 轴偏移(正值向右,负值向左)
+            # 注意:偏移在边界限制之后应用,以确保偏移能够生效
+            marker_x_offset = self.config.get('marker_x_offset', 0)
+            draw_x += marker_x_offset
+
+            # 边界限制:防止图片完全超出屏幕
+            # 允许部分溢出以保证偏移效果可见
+            draw_x = max(-pixmap_width // 2, min(draw_x, width - pixmap_width // 2))
+
             # Y 轴位置 = 窗口底部 - 图片高度 - Y轴偏移(正值向上,负值向下)
             marker_y_offset = self.config.get('marker_y_offset', 0)
             draw_y = height - pixmap_height - marker_y_offset
@@ -2114,6 +2074,71 @@ class TimeProgressBar(QWidget):
             marker_pen.setWidth(self.config['marker_width'])
             painter.setPen(marker_pen)
             painter.drawLine(int(marker_x), bar_y_offset, int(marker_x), height)
+
+        # 4. 最后绘制悬停文字(确保在最上层,不被时间标记遮挡)
+        if hover_info:
+            task = hover_info['task']
+            color = hover_info['color']
+            x = hover_info['x']
+            task_width = hover_info['task_width']
+            bar_y_offset = hover_info['bar_y_offset']
+
+            # 设置文字字体
+            font = QFont()
+            font.setPointSize(9)
+            font.setBold(True)
+            painter.setFont(font)
+
+            # 任务信息 - 单行显示
+            task_text = f"{task['task']} ({task['start']}-{task['end']})"
+
+            # 计算文字的实际尺寸
+            font_metrics = painter.fontMetrics()
+            text_width = font_metrics.horizontalAdvance(task_text)
+            text_height = font_metrics.height()
+
+            # 添加内边距
+            padding_horizontal = 30  # 左右各15像素
+            padding_vertical = 14    # 上下各7像素
+
+            # 计算悬停色块的实际尺寸
+            hover_width = max(task_width, text_width + padding_horizontal)
+            hover_height = text_height + padding_vertical
+
+            # 计算悬停色块的位置(居中对齐任务块)
+            hover_x = x + (task_width - hover_width) / 2
+            hover_y = bar_y_offset - hover_height - 5  # 向上偏移5像素
+
+            # 确保悬停色块不超出窗口边界
+            if hover_x < 0:
+                hover_x = 0
+            elif hover_x + hover_width > width:
+                hover_x = width - hover_width
+
+            # 确保 y 坐标不会超出窗口顶部
+            if hover_y < 0:
+                hover_y = 0
+
+            hover_rect = QRectF(hover_x, hover_y, hover_width, hover_height)
+
+            # 绘制悬停的扩展色块
+            hover_color = QColor(color)
+            hover_color.setAlpha(240)  # 稍微透明
+            painter.setBrush(hover_color)
+            painter.setPen(QPen(QColor(255, 255, 255, 255), 2))  # 白色边框
+
+            if self.config.get('corner_radius', 0) > 0:
+                painter.drawRoundedRect(
+                    hover_rect,
+                    self.config['corner_radius'],
+                    self.config['corner_radius']
+                )
+            else:
+                painter.drawRect(hover_rect)
+
+            # 绘制任务文本
+            painter.setPen(QColor(255, 255, 255))  # 白色文字
+            painter.drawText(hover_rect, Qt.AlignCenter, task_text)
 
         painter.end()
 

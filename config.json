@@ -6,15 +6,19 @@
     "marker_color": "#FF0000",
     "marker_width": 2,
     "marker_type": "gif",
-    "marker_image_path": "C:/Users/Sats/Downloads/FtYZNfMhlJj8DTmU9-LtGNjmzxYx.webp",
-    "marker_size": 50,
+    "marker_image_path": "kun.webp",
+    "marker_size": 100,
+    "marker_x_offset": 30,
+    "marker_y_offset": -30,
     "screen_index": 0,
     "update_interval": 1000,
     "enable_shadow": true,
     "corner_radius": 0,
     "notification": {
         "enabled": true,
-        "before_start_minutes": [5],
+        "before_start_minutes": [
+            5
+        ],
         "on_start": true,
         "before_end_minutes": [],
         "on_end": false,
@@ -25,11 +29,5 @@
             "start": "22:00",
             "end": "08:00"
         }
-    },
-    "pomodoro": {
-        "work_duration": 1500,
-        "short_break": 300,
-        "long_break": 900,
-        "long_break_interval": 4
     }
 }
