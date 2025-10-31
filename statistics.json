@@ -20,29 +20,29 @@
                     "start": "09:00",
                     "end": "10:00",
                     "color": "#4CAF50",
-                    "status": "not_started",
-                    "completed_at": null
+                    "status": "completed",
+                    "completed_at": "2025-10-31T17:43:00.368384"
                 },
                 "测试提醒任务": {
                     "start": "09:45",
                     "end": "10:00",
                     "color": "#FF5722",
-                    "status": "not_started",
-                    "completed_at": null
+                    "status": "completed",
+                    "completed_at": "2025-10-31T17:43:00.369387"
                 },
                 "项目讨论": {
                     "start": "11:00",
                     "end": "12:00",
                     "color": "#2196F3",
-                    "status": "not_started",
-                    "completed_at": null
+                    "status": "completed",
+                    "completed_at": "2025-10-31T17:43:00.369387"
                 },
                 "开发工作": {
                     "start": "14:00",
                     "end": "16:00",
                     "color": "#FF9800",
-                    "status": "not_started",
-                    "completed_at": null
+                    "status": "completed",
+                    "completed_at": "2025-10-31T17:43:00.369387"
                 },
                 "晚餐": {
                     "start": "19:00",
@@ -61,18 +61,59 @@
             },
             "summary": {
                 "total_tasks": 6,
-                "completed_tasks": 0,
+                "completed_tasks": 4,
                 "in_progress_tasks": 0,
-                "not_started_tasks": 6,
+                "not_started_tasks": 2,
                 "total_planned_minutes": 375,
-                "total_completed_minutes": 0,
-                "completion_rate": 0.0
+                "total_completed_minutes": 255,
+                "completion_rate": 68.0
             }
         }
     },
-    "task_history": {},
+    "task_history": {
+        "早会": [
+            {
+                "date": "2025-10-31",
+                "start": "09:00",
+                "end": "10:00",
+                "color": "#4CAF50",
+                "duration_minutes": 60,
+                "completed_at": "2025-10-31T17:43:00.368384"
+            }
+        ],
+        "测试提醒任务": [
+            {
+                "date": "2025-10-31",
+                "start": "09:45",
+                "end": "10:00",
+                "color": "#FF5722",
+                "duration_minutes": 15,
+                "completed_at": "2025-10-31T17:43:00.369387"
+            }
+        ],
+        "项目讨论": [
+            {
+                "date": "2025-10-31",
+                "start": "11:00",
+                "end": "12:00",
+                "color": "#2196F3",
+                "duration_minutes": 60,
+                "completed_at": "2025-10-31T17:43:00.369387"
+            }
+        ],
+        "开发工作": [
+            {
+                "date": "2025-10-31",
+                "start": "14:00",
+                "end": "16:00",
+                "color": "#FF9800",
+                "duration_minutes": 120,
+                "completed_at": "2025-10-31T17:43:00.369387"
+            }
+        ]
+    },
     "metadata": {
         "created_at": "2025-10-30T13:15:00.303688",
-        "last_updated": "2025-10-31T01:02:00.205112"
+        "last_updated": "2025-10-31T18:45:00.532568"
     }
 }

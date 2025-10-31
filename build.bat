@@ -30,6 +30,11 @@ pyinstaller --clean ^
     --add-data "config.json;." ^
     --add-data "tasks.json;." ^
     --hidden-import config_gui ^
+    --hidden-import theme_manager ^
+    --hidden-import theme_ai_helper ^
+    --hidden-import timeline_editor ^
+    --hidden-import statistics_manager ^
+    --hidden-import statistics_gui ^
     main.py
 
 echo.

@@ -11,11 +11,12 @@ from pathlib import Path
 from datetime import datetime, date
 from PySide6.QtWidgets import (QApplication, QWidget, QSystemTrayIcon, QMenu, QToolTip, QLabel,
                                 QHBoxLayout, QVBoxLayout, QDialog, QFormLayout, QSpinBox, QPushButton)
-from PySide6.QtCore import Qt, QRectF, QTimer, QTime, QFileSystemWatcher, QPoint, Signal
+from PySide6.QtCore import Qt, QRectF, QTimer, QTime, QFileSystemWatcher, QPoint, Signal, QEventLoop
 from PySide6.QtGui import QPainter, QColor, QPen, QAction, QFont, QPixmap, QMovie, QCursor
 from enum import Enum
 from statistics_manager import StatisticsManager
 from backend_manager import BackendManager
+from theme_manager import ThemeManager
 
 # Windows 特定导入
 if platform.system() == 'Windows':
@@ -173,12 +174,28 @@ class PomodoroPanel(QWidget):
         self.dragging = False
         self.drag_position = QPoint()
 
-        # 初始化UI
+        # 初始化UI(先初始化UI组件)
         self.init_ui()
 
         # 倒计时定时器
         self.countdown_timer = QTimer(self)
         self.countdown_timer.timeout.connect(self.update_countdown)
+
+        # 初始化主题管理器(UI初始化完成后再注册)
+        try:
+            if getattr(sys, 'frozen', False):
+                app_dir = Path(sys.executable).parent
+            else:
+                app_dir = Path(__file__).parent
+            self.theme_manager = ThemeManager(app_dir)
+            # 注册时不立即应用主题(避免UI未就绪时调用)
+            self.theme_manager.register_ui_component(self, apply_immediately=False)
+            self.theme_manager.theme_changed.connect(self.apply_theme)
+            # 使用QTimer延迟应用主题,确保UI完全就绪
+            QTimer.singleShot(100, self.apply_theme)
+        except Exception as e:
+            self.logger.warning(f"主题管理器初始化失败: {e}")
+            self.theme_manager = None
 
         self.logger.info("番茄钟面板创建成功")
 
@@ -488,7 +505,10 @@ class PomodoroPanel(QWidget):
         height = self.height()
 
         # 1. 绘制半透明背景(深色,带圆角)
-        bg_color = QColor(50, 50, 50, 230)  # 深灰色,半透明
+        if hasattr(self, 'theme_bg_color'):
+            bg_color = self.theme_bg_color
+        else:
+            bg_color = QColor(50, 50, 50, 230)  # 深灰色,半透明
         painter.setBrush(bg_color)
         painter.setPen(Qt.NoPen)
         painter.drawRoundedRect(0, 0, width, height, 10, 10)  # 圆角半径10px
@@ -497,7 +517,8 @@ class PomodoroPanel(QWidget):
         font = QFont()
         font.setPointSize(20)
         painter.setFont(font)
-        painter.setPen(QColor(255, 255, 255))
+        icon_color = QColor(self.theme_text_color) if hasattr(self, 'theme_text_color') else QColor(255, 255, 255)
+        painter.setPen(icon_color)
         painter.drawText(QRectF(10, 0, 40, height), Qt.AlignCenter, "🍅")
 
         # 3. 绘制倒计时文字
@@ -532,7 +553,8 @@ class PomodoroPanel(QWidget):
         # 按钮图标
         font.setPointSize(16)
         painter.setFont(font)
-        painter.setPen(QColor(255, 255, 255))
+        btn_text_color = QColor(self.theme_text_color) if hasattr(self, 'theme_text_color') else QColor(255, 255, 255)
+        painter.setPen(btn_text_color)
 
         if self.state in [PomodoroState.WORK, PomodoroState.SHORT_BREAK, PomodoroState.LONG_BREAK]:
             # 显示暂停图标
@@ -554,7 +576,8 @@ class PomodoroPanel(QWidget):
         # 按钮图标
         font.setPointSize(14)
         painter.setFont(font)
-        painter.setPen(QColor(255, 255, 255))
+        btn_text_color = QColor(self.theme_text_color) if hasattr(self, 'theme_text_color') else QColor(255, 255, 255)
+        painter.setPen(btn_text_color)
         painter.drawText(settings_rect, Qt.AlignCenter, "⚙")
 
         # 6. 绘制关闭按钮
@@ -570,10 +593,36 @@ class PomodoroPanel(QWidget):
         # 按钮图标
         font.setPointSize(12)
         painter.setFont(font)
-        painter.setPen(QColor(255, 255, 255))
+        btn_text_color = QColor(self.theme_text_color) if hasattr(self, 'theme_text_color') else QColor(255, 255, 255)
+        painter.setPen(btn_text_color)
         painter.drawText(close_rect, Qt.AlignCenter, "✕")
 
         painter.end()
+    
+    def apply_theme(self):
+        """应用当前主题到番茄钟面板"""
+        if not self.theme_manager:
+            return
+        
+        theme = self.theme_manager.get_current_theme()
+        if not theme:
+            return
+        
+        # 保存主题颜色以便绘制时使用
+        bg_color = theme.get('background_color', '#323232')
+        text_color = theme.get('text_color', '#FFFFFF')
+        accent_color = theme.get('accent_color', '#2196F3')
+        
+        # 转换背景色为RGB（用于半透明背景）
+        bg_rgb = QColor(bg_color)
+        bg_rgb.setAlpha(230)  # 保持半透明
+        
+        # 保存主题颜色
+        self.theme_bg_color = bg_rgb
+        self.theme_text_color = text_color
+        self.theme_accent_color = accent_color
+        
+        self.update()
 
 
 class NotificationManager:
@@ -919,6 +968,12 @@ class TimeProgressBar(QWidget):
         # 统计窗口实例
         self.statistics_window = None
 
+        # 初始化主题管理器（延迟加载主题，避免初始化时触发信号）
+        self.theme_manager = ThemeManager(self.app_dir)
+        # 暂时不注册UI组件，等窗口完全初始化后再注册
+        # self.theme_manager.register_ui_component(self)
+        # self.theme_manager.theme_changed.connect(self.apply_theme)
+
         self.init_ui()
         self.init_timer()  # 初始化定时器
         self.init_tray()  # 初始化托盘
@@ -927,6 +982,15 @@ class TimeProgressBar(QWidget):
         self.init_file_watcher()  # 初始化文件监视器
         self.installEventFilter(self)  # 安装事件过滤器
         self.setMouseTracking(True)  # 启用鼠标追踪
+        
+        # 窗口完全初始化后再注册主题管理器和应用主题
+        # 注册时不立即应用主题（避免在初始化时调用apply_theme）
+        self.theme_manager.register_ui_component(self, apply_immediately=False)
+        self.theme_manager.theme_changed.connect(self.apply_theme)
+        
+        # 使用QTimer延迟应用主题，确保窗口完全显示后再应用
+        from PySide6.QtCore import QTimer
+        QTimer.singleShot(100, self.apply_theme)
 
     def get_app_dir(self):
         """获取应用程序目录(支持打包后的 exe)"""
@@ -975,14 +1039,8 @@ class TimeProgressBar(QWidget):
         # 设置窗口布局和位置
         self.setup_geometry()
 
-        # 初始化时显示窗口
-        self.show()
-        self.raise_()
-        self.setVisible(True)
-
-        # Windows 特定:设置窗口始终在最顶层
-        if platform.system() == 'Windows':
-            self.set_windows_topmost()
+        # 注意：不在init_ui中调用show()，避免在初始化时显示窗口
+        # show()将在main()函数中调用
 
     def showEvent(self, event):
         """窗口显示事件"""
@@ -1146,8 +1204,8 @@ class TimeProgressBar(QWidget):
             "background_opacity": 180,
             "marker_color": "#FF0000",
             "marker_width": 2,
-            "marker_type": "line",  # "line", "image", "gif"
-            "marker_image_path": "",  # 自定义图片路径
+            "marker_type": "gif",  # "line", "image", "gif"
+            "marker_image_path": "kun.webp",  # 默认使用kun.webp
             "marker_size": 50,  # 标记图片大小(像素)
             "marker_y_offset": 0,  # 标记图片 Y 轴偏移(像素,正值向上,负值向下)
             "screen_index": 0,
@@ -1182,6 +1240,16 @@ class TimeProgressBar(QWidget):
                 config = json.load(f)
             # 合并默认配置(防止缺失键)
             merged_config = {**default_config, **config}
+            
+            # 向后兼容：如果config.json中没有theme字段，添加默认主题配置
+            if 'theme' not in merged_config:
+                merged_config['theme'] = {
+                    'mode': 'preset',
+                    'current_theme_id': 'business',
+                    'auto_apply_task_colors': False
+                }
+                self.logger.info("检测到旧版本config.json，已添加默认主题配置")
+            
             self.logger.info("配置文件加载成功")
             return merged_config
         except json.JSONDecodeError as e:
@@ -1289,8 +1357,11 @@ class TimeProgressBar(QWidget):
         # 支持相对路径和绝对路径
         image_file = Path(image_path)
         if not image_file.is_absolute():
-            # 相对路径:相对于应用目录
+            # 相对路径:优先尝试应用目录，然后尝试资源路径（打包后）
             image_file = self.app_dir / image_path
+            if not image_file.exists():
+                # 尝试从资源路径获取（打包后的情况）
+                image_file = self.get_resource_path(image_path)
 
         if not image_file.exists():
             self.logger.error(f"时间标记图片不存在: {image_file}")
@@ -2138,10 +2209,79 @@ class TimeProgressBar(QWidget):
                 painter.drawRect(hover_rect)
 
             # 绘制任务文本
-            painter.setPen(QColor(255, 255, 255))  # 白色文字
+            theme = self.theme_manager.get_current_theme() if self.theme_manager else None
+            text_color = QColor(theme.get('text_color', '#FFFFFF')) if theme else QColor(255, 255, 255)
+            painter.setPen(text_color)
             painter.drawText(hover_rect, Qt.AlignCenter, task_text)
 
         painter.end()
+    
+    def apply_theme(self):
+        """应用当前主题到进度条"""
+        try:
+            if not hasattr(self, 'theme_manager') or not self.theme_manager:
+                return
+
+            theme = self.theme_manager.get_current_theme()
+            if not theme:
+                return
+
+            # 更新config中的颜色配置（保持向后兼容）
+            old_bg_color = self.config.get('background_color', '#505050')
+            new_bg_color = theme.get('background_color', old_bg_color)
+            old_opacity = self.config.get('background_opacity', 180)
+            new_opacity = theme.get('background_opacity', old_opacity)
+            old_marker_color = self.config.get('marker_color', '#FF0000')
+            new_marker_color = theme.get('marker_color', old_marker_color)
+
+            self.config['background_color'] = new_bg_color
+            self.config['background_opacity'] = new_opacity
+            self.config['marker_color'] = new_marker_color
+
+            # 应用主题配色到任务(如果主题提供了task_colors)
+            task_colors = theme.get('task_colors', [])
+            if task_colors and len(self.tasks) > 0:
+                # 智能分配任务颜色
+                for i, task in enumerate(self.tasks):
+                    color_index = i % len(task_colors)
+                    task['color'] = task_colors[color_index]
+
+                # 保存更新后的任务到文件(使主题持久化)
+                try:
+                    tasks_file = self.app_dir / 'tasks.json'
+                    with open(tasks_file, 'w', encoding='utf-8') as f:
+                        json.dump(self.tasks, f, indent=4, ensure_ascii=False)
+                    self.logger.info(f"已应用主题配色到 {len(self.tasks)} 个任务")
+                except Exception as e:
+                    self.logger.error(f"保存任务配色失败: {e}")
+
+            # 保存主题配置到config.json
+            try:
+                config_file = self.app_dir / 'config.json'
+                with open(config_file, 'r', encoding='utf-8') as f:
+                    config_data = json.load(f)
+
+                # 更新主题相关配置
+                config_data['background_color'] = new_bg_color
+                config_data['background_opacity'] = new_opacity
+                config_data['marker_color'] = new_marker_color
+
+                with open(config_file, 'w', encoding='utf-8') as f:
+                    json.dump(config_data, f, indent=4, ensure_ascii=False)
+            except Exception as e:
+                self.logger.error(f"保存主题配置失败: {e}")
+
+            # 强制刷新整个窗口（确保变化可见）
+            self.update()
+
+            self.logger.info(f"已应用主题: {theme.get('name', 'Unknown')}")
+            self.logger.info(f"  背景色: {old_bg_color} -> {new_bg_color}")
+            self.logger.info(f"  透明度: {old_opacity} -> {new_opacity}")
+            self.logger.info(f"  标记色: {old_marker_color} -> {new_marker_color}")
+            if task_colors:
+                self.logger.info(f"  任务配色: 已应用 {len(task_colors)} 种颜色")
+        except Exception as e:
+            self.logger.error(f"应用主题失败: {e}", exc_info=True)
 
 
 def main():
@@ -2161,18 +2301,22 @@ def main():
     )
     logger = logging.getLogger(__name__)
 
-    # 启动AI后端服务
-    backend_manager = BackendManager(logger)
-    backend_started = backend_manager.ensure_backend_running()
-
-    if backend_started:
-        logger.info("AI后端服务已准备就绪")
-    else:
-        logger.warning("AI后端服务未启动(可能未配置或启动失败)")
-
-    # 创建并显示主窗口
+    # 创建并显示主窗口（先创建窗口，再启动后台服务）
     window = TimeProgressBar()
+    
+    # 在窗口完全创建后再显示（避免初始化时的问题）
     window.show()
+    window.raise_()
+    
+    # Windows 特定:设置窗口始终在最顶层
+    if platform.system() == 'Windows':
+        window.set_windows_topmost()
+
+    # 启动AI后端服务（异步启动，完全避免阻塞UI）
+    backend_manager = BackendManager(logger)
+    # 使用QTimer延迟启动，并在后台线程中启动后端服务
+    from PySide6.QtCore import QTimer
+    QTimer.singleShot(2000, lambda: backend_manager.ensure_backend_running_async())
 
     # 在应用退出时停止后端服务
     def cleanup():

@@ -1,0 +1,193 @@
+{
+    "preset_themes": {
+        "business": {
+            "id": "business",
+            "name": "商务专业",
+            "type": "preset",
+            "background_color": "#1E1E1E",
+            "background_opacity": 220,
+            "task_colors": [
+                "#1976D2",
+                "#388E3C",
+                "#F57C00",
+                "#7B1FA2"
+            ],
+            "marker_color": "#FF5252",
+            "text_color": "#FFFFFF",
+            "accent_color": "#2196F3",
+            "description": "深色背景，蓝色系工作，适合商务场景"
+        },
+        "fresh": {
+            "id": "fresh",
+            "name": "清新自然",
+            "type": "preset",
+            "background_color": "#F5F5F5",
+            "background_opacity": 240,
+            "task_colors": [
+                "#66BB6A",
+                "#FFD54F",
+                "#FF7043",
+                "#7E57C2"
+            ],
+            "marker_color": "#FF5252",
+            "text_color": "#424242",
+            "accent_color": "#66BB6A",
+            "description": "浅色背景，自然色系，清新舒适"
+        },
+        "warm": {
+            "id": "warm",
+            "name": "温暖橙色",
+            "type": "preset",
+            "background_color": "#FFF8E1",
+            "background_opacity": 250,
+            "task_colors": [
+                "#FF9800",
+                "#FF6F00",
+                "#FFB300",
+                "#FFC107"
+            ],
+            "marker_color": "#D32F2F",
+            "text_color": "#5D4037",
+            "accent_color": "#FF9800",
+            "description": "暖色调，温馨舒适，适合日常使用"
+        },
+        "minimal": {
+            "id": "minimal",
+            "name": "极简黑白",
+            "type": "preset",
+            "background_color": "#FFFFFF",
+            "background_opacity": 255,
+            "task_colors": [
+                "#000000",
+                "#424242",
+                "#757575",
+                "#9E9E9E"
+            ],
+            "marker_color": "#F44336",
+            "text_color": "#212121",
+            "accent_color": "#000000",
+            "description": "极简风格，黑白灰配色，专注高效"
+        },
+        "tech": {
+            "id": "tech",
+            "name": "科技蓝",
+            "type": "preset",
+            "background_color": "#0D1117",
+            "background_opacity": 230,
+            "task_colors": [
+                "#58A6FF",
+                "#79C0FF",
+                "#7C3AED",
+                "#A855F7"
+            ],
+            "marker_color": "#FF6B6B",
+            "text_color": "#C9D1D9",
+            "accent_color": "#58A6FF",
+            "description": "深色背景，蓝色系，科技感十足"
+        },
+        "ocean": {
+            "id": "ocean",
+            "name": "海洋蓝",
+            "type": "preset",
+            "background_color": "#E3F2FD",
+            "background_opacity": 250,
+            "task_colors": [
+                "#2196F3",
+                "#03A9F4",
+                "#00BCD4",
+                "#0097A7"
+            ],
+            "marker_color": "#F44336",
+            "text_color": "#1565C0",
+            "accent_color": "#2196F3",
+            "description": "浅蓝色调，清新宁静，适合专注工作"
+        },
+        "forest": {
+            "id": "forest",
+            "name": "森林绿",
+            "type": "preset",
+            "background_color": "#E8F5E9",
+            "background_opacity": 250,
+            "task_colors": [
+                "#4CAF50",
+                "#66BB6A",
+                "#8BC34A",
+                "#9CCC65"
+            ],
+            "marker_color": "#FF5722",
+            "text_color": "#2E7D32",
+            "accent_color": "#4CAF50",
+            "description": "绿色系，自然清新，适合学习和工作"
+        },
+        "sunset": {
+            "id": "sunset",
+            "name": "日落橙",
+            "type": "preset",
+            "background_color": "#FFF3E0",
+            "background_opacity": 250,
+            "task_colors": [
+                "#FF9800",
+                "#FF6F00",
+                "#E65100",
+                "#FFB300"
+            ],
+            "marker_color": "#E91E63",
+            "text_color": "#E65100",
+            "accent_color": "#FF9800",
+            "description": "橙色系，温暖活力，适合创意工作"
+        },
+        "lavender": {
+            "id": "lavender",
+            "name": "薰衣草紫",
+            "type": "preset",
+            "background_color": "#F3E5F5",
+            "background_opacity": 250,
+            "task_colors": [
+                "#9C27B0",
+                "#BA68C8",
+                "#CE93D8",
+                "#E1BEE7"
+            ],
+            "marker_color": "#FF4081",
+            "text_color": "#6A1B9A",
+            "accent_color": "#9C27B0",
+            "description": "紫色系，优雅舒适，适合思考和学习"
+        },
+        "dark": {
+            "id": "dark",
+            "name": "深色模式",
+            "type": "preset",
+            "background_color": "#121212",
+            "background_opacity": 240,
+            "task_colors": [
+                "#BB86FC",
+                "#03DAC6",
+                "#CF6679",
+                "#6200EE"
+            ],
+            "marker_color": "#FF1744",
+            "text_color": "#FFFFFF",
+            "accent_color": "#BB86FC",
+            "description": "深色背景，Material Design深色主题，护眼舒适"
+        },
+        "light": {
+            "id": "light",
+            "name": "浅色模式",
+            "type": "preset",
+            "background_color": "#FAFAFA",
+            "background_opacity": 255,
+            "task_colors": [
+                "#6200EE",
+                "#03DAC6",
+                "#018786",
+                "#B00020"
+            ],
+            "marker_color": "#FF1744",
+            "text_color": "#000000",
+            "accent_color": "#6200EE",
+            "description": "浅色背景，Material Design浅色主题，明亮清晰"
+        }
+    },
+    "custom_themes": {},
+    "ai_generated_themes": {}
+}

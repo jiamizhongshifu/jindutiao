@@ -28,6 +28,11 @@ pyinstaller --clean ^
     --noconsole ^
     --name PyDayBar ^
     --hidden-import config_gui ^
+    --hidden-import theme_manager ^
+    --hidden-import theme_ai_helper ^
+    --hidden-import timeline_editor ^
+    --hidden-import statistics_manager ^
+    --hidden-import statistics_gui ^
     main.py
 
 echo.
@@ -36,6 +41,9 @@ pyinstaller --clean ^
     --onefile ^
     --noconsole ^
     --name PyDayBar-Config ^
+    --hidden-import theme_manager ^
+    --hidden-import theme_ai_helper ^
+    --hidden-import timeline_editor ^
     config_gui.py
 
 echo.

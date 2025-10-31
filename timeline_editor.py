@@ -7,6 +7,8 @@
 from PySide6.QtWidgets import QWidget, QToolTip
 from PySide6.QtCore import Qt, QRectF, Signal, QPointF
 from PySide6.QtGui import QPainter, QColor, QPen, QFont, QCursor
+import sys
+from pathlib import Path
 
 
 class TimelineEditor(QWidget):
@@ -45,8 +47,28 @@ class TimelineEditor(QWidget):
         # 启用鼠标跟踪
         self.setMouseTracking(True)
 
-        # 设置样式
-        self.setStyleSheet("background-color: #2C2C2C; border: 2px solid #444; border-radius: 5px;")
+        # 初始化主题管理器
+        try:
+            if getattr(sys, 'frozen', False):
+                app_dir = Path(sys.executable).parent
+            else:
+                app_dir = Path(__file__).parent
+            from theme_manager import ThemeManager
+            self.theme_manager = ThemeManager(app_dir)
+            self.theme_manager.register_ui_component(self)
+            self.theme_manager.theme_changed.connect(self.apply_theme)
+            # 初始化主题颜色为默认值
+            self.bg_color = None
+            self.text_color = None
+            self.border_color = None
+            self.apply_theme()
+        except Exception:
+            # 如果主题管理器不可用，使用默认样式
+            self.theme_manager = None
+            self.bg_color = None
+            self.text_color = None
+            self.border_color = None
+            self.setStyleSheet("background-color: #2C2C2C; border: 2px solid #444; border-radius: 5px;")
 
     def set_tasks(self, tasks):
         """设置任务列表"""
@@ -113,6 +135,35 @@ class TimelineEditor(QWidget):
         except:
             return 0
 
+    def apply_theme(self):
+        """应用当前主题到时间轴编辑器"""
+        if not self.theme_manager:
+            return
+        
+        theme = self.theme_manager.get_current_theme()
+        if not theme:
+            return
+        
+        bg_color = theme.get('background_color', '#2C2C2C')
+        text_color = theme.get('text_color', '#FFFFFF')
+        border_color = theme.get('accent_color', '#444')
+        
+        # 应用样式
+        self.setStyleSheet(f"""
+            QWidget {{
+                background-color: {bg_color};
+                border: 2px solid {border_color};
+                border-radius: 5px;
+            }}
+        """)
+        
+        # 保存主题颜色以便绘制时使用
+        self.bg_color = bg_color
+        self.text_color = text_color
+        self.border_color = border_color
+        
+        self.update()
+
     def minutes_to_time(self, minutes):
         """将分钟数转换为 HH:MM"""
         minutes = int(minutes) % 1440  # 确保在 0-1439 范围内
@@ -156,13 +207,15 @@ class TimelineEditor(QWidget):
 
             # 绘制任务名（如果宽度足够）
             if rect.width() > 60:
-                painter.setPen(QColor("#FFF"))
+                # 任务色块中的文字统一使用白色,确保在所有颜色背景下都清晰可见
+                painter.setPen(QColor("#FFFFFF"))
                 painter.setFont(QFont("Microsoft YaHei", 9, QFont.Bold))
                 text_rect = rect.adjusted(5, 0, -5, 0)
                 painter.drawText(text_rect, Qt.AlignCenter, task['task'])
 
             # 绘制边框
-            painter.setPen(QPen(QColor("#333"), 1))
+            border_color = self.border_color if hasattr(self, 'border_color') and self.border_color else "#333"
+            painter.setPen(QPen(QColor(border_color), 1))
             painter.drawRect(rect)
 
         # 如果正在拖拽，显示时间提示

@@ -1,9 +1,9 @@
 {
     "bar_height": 10,
     "position": "bottom",
-    "background_color": "#505050",
-    "background_opacity": 180,
-    "marker_color": "#FF0000",
+    "background_color": "#FFF3E0",
+    "background_opacity": 250,
+    "marker_color": "#E91E63",
     "marker_width": 2,
     "marker_type": "gif",
     "marker_image_path": "kun.webp",
@@ -29,5 +29,9 @@
             "start": "22:00",
             "end": "08:00"
         }
+    },
+    "theme": {
+        "mode": "preset",
+        "current_theme_id": "sunset"
     }
 }

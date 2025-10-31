@@ -42,12 +42,16 @@ USER_QUOTAS = {
     "free": {
         "daily_plan": 3,
         "weekly_report": 1,
-        "chat": 10
+        "chat": 10,
+        "theme_recommend": 5,  # 主题推荐每日5次
+        "theme_generate": 3    # 主题生成每日3次
     },
     "pro": {
         "daily_plan": 50,
         "weekly_report": 10,
-        "chat": 100
+        "chat": 100,
+        "theme_recommend": 50,  # 专业版无限
+        "theme_generate": 50
     }
 }
 
@@ -62,7 +66,13 @@ def check_quota(user_id: str, feature: str, user_tier: str = "free") -> tuple[bo
         user_usage[user_id] = {}
 
     if today not in user_usage[user_id]:
-        user_usage[user_id][today] = {"daily_plan": 0, "weekly_report": 0, "chat": 0}
+        user_usage[user_id][today] = {
+            "daily_plan": 0, 
+            "weekly_report": 0, 
+            "chat": 0,
+            "theme_recommend": 0,
+            "theme_generate": 0
+        }
 
     usage = user_usage[user_id][today]
     quota = USER_QUOTAS[user_tier][feature]
@@ -343,7 +353,13 @@ def quota_status():
     if user_id in user_usage and today in user_usage[user_id]:
         usage = user_usage[user_id][today]
     else:
-        usage = {"daily_plan": 0, "weekly_report": 0, "chat": 0}
+        usage = {
+            "daily_plan": 0, 
+            "weekly_report": 0, 
+            "chat": 0,
+            "theme_recommend": 0,
+            "theme_generate": 0
+        }
 
     quotas = USER_QUOTAS[user_tier]
 
@@ -356,9 +372,295 @@ def quota_status():
         "remaining": {
             "daily_plan": quotas["daily_plan"] - usage["daily_plan"],
             "weekly_report": quotas["weekly_report"] - usage["weekly_report"],
-            "chat": quotas["chat"] - usage["chat"]
+            "chat": quotas["chat"] - usage["chat"],
+            "theme_recommend": quotas["theme_recommend"] - usage["theme_recommend"],
+            "theme_generate": quotas["theme_generate"] - usage["theme_generate"]
         }
     })
+
+
+@app.route('/api/recommend-theme', methods=['POST'])
+def recommend_theme():
+    """
+    推荐主题配色（考虑任务名称）
+    
+    请求体:
+    {
+        "user_id": "xxx",
+        "tasks": [
+            {"task": "工作", "start": "09:00", "end": "12:00", "color": "#4CAF50"},
+            ...
+        ],
+        "task_analysis": {
+            "task_types": {"work": 3, "break": 2},
+            "keywords": [...]
+        },
+        "statistics": {...},
+        "user_tier": "free"
+    }
+    
+    返回:
+    {
+        "success": true,
+        "recommendations": [
+            {
+                "name": "商务专业",
+                "theme_id": "recommended_1",
+                "config": {
+                    "background_color": "#1E1E1E",
+                    "task_colors": ["#1976D2", "#388E3C", ...],
+                    ...
+                },
+                "reason": "根据您的任务安排（主要是工作类任务），推荐使用商务专业主题..."
+            },
+            ...
+        ],
+        "quota_info": {...}
+    }
+    """
+    data = request.json
+    user_id = data.get("user_id", "anonymous")
+    tasks = data.get("tasks", [])
+    task_analysis = data.get("task_analysis", {})
+    statistics = data.get("statistics", {})
+    user_tier = data.get("user_tier", "free")
+    
+    # 检查配额
+    allowed, quota_info = check_quota(user_id, "theme_recommend", user_tier)
+    if not allowed:
+        return jsonify(quota_info), 403
+    
+    try:
+        # 构建提示词
+        task_types = task_analysis.get('task_types', {})
+        keywords = task_analysis.get('keywords', [])
+        
+        prompt = f"""你是一个专业的UI配色专家。根据以下任务数据，推荐3-5种适合的配色方案。
+
+任务数据：
+- 任务列表: {json.dumps(tasks, ensure_ascii=False)}
+- 任务类型分布: {json.dumps(task_types, ensure_ascii=False)}
+- 任务关键词: {', '.join(keywords[:10])}  # 最多显示10个关键词
+- 时间分布: 分析任务的时间模式
+
+请根据任务名称的语义特点，为每种推荐方案提供：
+1. 主题名称（如"商务专业"）
+2. 背景色、任务配色（4-6种颜色，需考虑任务语义）
+   - 工作类任务：蓝色、绿色等专业色
+   - 休息类任务：橙色、黄色等温暖色
+   - 学习类任务：紫色、靛蓝等专注色
+   - 运动类任务：红色、橙色等活力色
+3. 推荐理由（2-3句话，说明为什么适合这些任务类型）
+
+返回JSON格式，包含recommendations数组，每个推荐包含：
+- name: 主题名称
+- theme_id: 主题ID（格式：recommended_1, recommended_2...）
+- config: 主题配置对象
+  - background_color: 背景色（十六进制）
+  - background_opacity: 背景透明度（0-255）
+  - task_colors: 任务配色数组（4-6种颜色）
+  - marker_color: 时间标记颜色
+  - text_color: 文字颜色
+  - accent_color: 强调色
+- reason: 推荐理由（2-3句话）
+
+示例输出格式：
+{{
+  "recommendations": [
+    {{
+      "name": "商务专业",
+      "theme_id": "recommended_1",
+      "config": {{
+        "background_color": "#1E1E1E",
+        "background_opacity": 220,
+        "task_colors": ["#1976D2", "#388E3C", "#F57C00"],
+        "marker_color": "#FF5252",
+        "text_color": "#FFFFFF",
+        "accent_color": "#2196F3"
+      }},
+      "reason": "根据您的任务安排（主要是工作类任务），推荐使用商务专业主题，深色背景配合蓝色系工作色，营造专业专注的工作氛围。"
+    }}
+  ]
+}}"""
+        
+        response = tuzi_client.chat.completions.create(
+            model="gpt-5",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "你是一个专业的UI配色专家，擅长根据任务类型推荐合适的配色方案。输出必须是纯JSON格式，不要包含任何markdown标记或额外文本。"
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            temperature=0.7
+        )
+        
+        content = response.choices[0].message.content.strip()
+        
+        # 尝试从markdown代码块中提取JSON
+        if "```json" in content:
+            content = content.split("```json")[1].split("```")[0].strip()
+        elif "```" in content:
+            content = content.split("```")[1].split("```")[0].strip()
+        
+        # 解析JSON
+        try:
+            result = json.loads(content)
+            recommendations = result.get('recommendations', [])
+            
+            # 确保每个推荐都有完整的配置
+            for rec in recommendations:
+                if 'config' not in rec:
+                    rec['config'] = {}
+                if 'theme_id' not in rec:
+                    rec['theme_id'] = f"recommended_{recommendations.index(rec) + 1}"
+            
+            return jsonify({
+                "success": True,
+                "recommendations": recommendations,
+                "quota_info": quota_info
+            })
+        except json.JSONDecodeError as e:
+            return jsonify({
+                "success": False,
+                "error": f"JSON解析失败: {str(e)}",
+                "raw_response": content[:200]  # 返回前200字符用于调试
+            }), 500
+            
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@app.route('/api/generate-theme', methods=['POST'])
+def generate_theme():
+    """
+    生成主题配置
+    
+    请求体:
+    {
+        "user_id": "xxx",
+        "description": "清新自然的工作主题",
+        "user_tier": "free"
+    }
+    
+    返回:
+    {
+        "success": true,
+        "theme": {
+            "theme_id": "ai_generated_20250101_123456",
+            "name": "生成的主题名称",
+            "config": {
+                "background_color": "#F5F5F5",
+                "background_opacity": 240,
+                "task_colors": ["#66BB6A", "#FFD54F", ...],
+                "marker_color": "#FF5252",
+                "text_color": "#424242",
+                "accent_color": "#66BB6A"
+            },
+            "description": "基于用户描述生成的主题"
+        },
+        "quota_info": {...}
+    }
+    """
+    data = request.json
+    user_id = data.get("user_id", "anonymous")
+    description = data.get("description", "")
+    user_tier = data.get("user_tier", "free")
+    
+    # 检查配额
+    allowed, quota_info = check_quota(user_id, "theme_generate", user_tier)
+    if not allowed:
+        return jsonify(quota_info), 403
+    
+    try:
+        prompt = f"""你是一个专业的UI设计师。根据用户的描述生成完整的主题配色方案。
+
+用户描述："{description}"
+
+请生成包含以下字段的主题配置：
+- background_color: 背景色（十六进制）
+- background_opacity: 背景透明度（0-255）
+- task_colors: 任务配色数组（4-6种颜色）
+- marker_color: 时间标记颜色
+- text_color: 文字颜色
+- accent_color: 强调色
+
+返回JSON格式，包含：
+- theme_id: 主题ID（格式：ai_generated_YYYYMMDD_HHMMSS）
+- name: 主题名称（基于描述生成）
+- config: 主题配置对象
+- description: 主题描述
+
+示例输出格式：
+{{
+  "theme_id": "ai_generated_20250101_123456",
+  "name": "清新自然",
+  "config": {{
+    "background_color": "#F5F5F5",
+    "background_opacity": 240,
+    "task_colors": ["#66BB6A", "#FFD54F", "#FF7043", "#7E57C2"],
+    "marker_color": "#FF5252",
+    "text_color": "#424242",
+    "accent_color": "#66BB6A"
+  }},
+  "description": "基于用户描述生成的主题"
+}}"""
+        
+        response = tuzi_client.chat.completions.create(
+            model="gpt-5",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "你是一个专业的UI设计师，擅长根据自然语言描述生成配色方案。输出必须是纯JSON格式，不要包含任何markdown标记或额外文本。"
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            temperature=0.7
+        )
+        
+        content = response.choices[0].message.content.strip()
+        
+        # 尝试从markdown代码块中提取JSON
+        if "```json" in content:
+            content = content.split("```json")[1].split("```")[0].strip()
+        elif "```" in content:
+            content = content.split("```")[1].split("```")[0].strip()
+        
+        # 解析JSON
+        try:
+            result = json.loads(content)
+            
+            # 生成主题ID（如果AI未生成）
+            if 'theme_id' not in result:
+                from datetime import datetime
+                result['theme_id'] = f"ai_generated_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            
+            return jsonify({
+                "success": True,
+                "theme": result,
+                "quota_info": quota_info
+            })
+        except json.JSONDecodeError as e:
+            return jsonify({
+                "success": False,
+                "error": f"JSON解析失败: {str(e)}",
+                "raw_response": content[:200]
+            }), 500
+            
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
 
 
 @app.route('/health', methods=['GET'])
@@ -377,6 +679,8 @@ if __name__ == '__main__':
     print("  POST /api/plan-tasks - 任务规划")
     print("  POST /api/generate-weekly-report - 周报生成")
     print("  POST /api/chat-query - 对话查询")
+    print("  POST /api/recommend-theme - 主题推荐 (NEW!)")
+    print("  POST /api/generate-theme - 主题生成 (NEW!)")
     print("  GET  /api/quota-status - 配额查询")
     print("  GET  /health - 健康检查")
     print("="*60)

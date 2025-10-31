@@ -10,8 +10,10 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QFont, QPainter, QPen
 from statistics_manager import StatisticsManager
+from theme_manager import ThemeManager
 from pathlib import Path
 import logging
+import sys
 
 
 class CircularProgressWidget(QWidget):
@@ -125,8 +127,21 @@ class StatisticsWindow(QWidget):
         super().__init__(parent)
         self.stats_manager = stats_manager
         self.logger = logger
+        
+        # 初始化主题管理器
+        if getattr(sys, 'frozen', False):
+            app_dir = Path(sys.executable).parent
+        else:
+            app_dir = Path(__file__).parent
+        self.theme_manager = ThemeManager(app_dir)
+        self.theme_manager.register_ui_component(self)
+        self.theme_manager.theme_changed.connect(self.apply_theme)
+        
         self.init_ui()
         self.load_statistics()
+        
+        # 应用初始主题
+        self.apply_theme()
 
     def init_ui(self):
         """初始化用户界面"""
@@ -140,6 +155,7 @@ class StatisticsWindow(QWidget):
         # 顶部标题栏
         title_layout = QHBoxLayout()
         title_label = QLabel("📊 任务统计报告")
+        self.title_label = title_label  # 保存引用以便主题更新
         title_label.setStyleSheet("font-size: 20px; font-weight: bold; color: #2196F3;")
         title_layout.addWidget(title_label)
         title_layout.addStretch()
@@ -158,20 +174,7 @@ class StatisticsWindow(QWidget):
 
         # 标签页
         self.tab_widget = QTabWidget()
-        self.tab_widget.setStyleSheet("""
-            QTabWidget::pane {
-                border: 1px solid #E0E0E0;
-                background: white;
-            }
-            QTabBar::tab {
-                padding: 10px 20px;
-                margin-right: 2px;
-            }
-            QTabBar::tab:selected {
-                background: #2196F3;
-                color: white;
-            }
-        """)
+        # 样式将在 apply_theme 中设置
 
         # 创建各个标签页
         self.create_today_tab()
@@ -190,7 +193,7 @@ class StatisticsWindow(QWidget):
         # 创建滚动区域
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setStyleSheet("QScrollArea { border: none; background: #F5F5F5; }")
+        # 样式将在 apply_theme 中设置
 
         content_widget = QWidget()
         content_layout = QVBoxLayout(content_widget)
@@ -218,15 +221,7 @@ class StatisticsWindow(QWidget):
         self.today_table.setHorizontalHeaderLabels(['任务名称', '开始时间', '结束时间', '时长(分钟)', '状态'])
         self.today_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.today_table.setAlternatingRowColors(True)
-        self.today_table.setStyleSheet("""
-            QTableWidget {
-                border: 1px solid #E0E0E0;
-                gridline-color: #E0E0E0;
-            }
-            QTableWidget::item {
-                padding: 8px;
-            }
-        """)
+        # 样式将在 apply_theme 中设置
 
         details_layout.addWidget(self.today_table)
         content_layout.addWidget(details_group)
@@ -247,7 +242,7 @@ class StatisticsWindow(QWidget):
         # 创建滚动区域
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setStyleSheet("QScrollArea { border: none; background: #F5F5F5; }")
+        # 样式将在 apply_theme 中设置
 
         content_widget = QWidget()
         content_layout = QVBoxLayout(content_widget)
@@ -297,7 +292,7 @@ class StatisticsWindow(QWidget):
         # 创建滚动区域
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setStyleSheet("QScrollArea { border: none; background: #F5F5F5; }")
+        # 样式将在 apply_theme 中设置
 
         content_widget = QWidget()
         content_layout = QVBoxLayout(content_widget)
@@ -589,6 +584,81 @@ class StatisticsWindow(QWidget):
                 "错误",
                 f"导出失败:\n{str(e)}"
             )
+
+    def apply_theme(self):
+        """应用当前主题到统计窗口"""
+        theme = self.theme_manager.get_current_theme()
+        if not theme:
+            return
+        
+        bg_color = theme.get('background_color', '#FFFFFF')
+        text_color = theme.get('text_color', '#000000')
+        accent_color = theme.get('accent_color', '#2196F3')
+        
+        # 应用窗口背景色
+        self.setStyleSheet(f"""
+            QWidget {{
+                background-color: {bg_color};
+                color: {text_color};
+            }}
+        """)
+        
+        # 更新标题颜色
+        if hasattr(self, 'title_label'):
+            self.title_label.setStyleSheet(f"font-size: 20px; font-weight: bold; color: {accent_color};")
+        
+        if hasattr(self, 'tab_widget'):
+            self.tab_widget.setStyleSheet(f"""
+                QTabWidget::pane {{
+                    border: 1px solid #E0E0E0;
+                    background: {bg_color};
+                }}
+                QTabBar::tab {{
+                    padding: 10px 20px;
+                    margin-right: 2px;
+                    background: {bg_color};
+                    color: {text_color};
+                }}
+                QTabBar::tab:selected {{
+                    background: {accent_color};
+                    color: white;
+                }}
+            """)
+        
+        # 更新滚动区域背景
+        for scroll in self.findChildren(QScrollArea):
+            scroll.setStyleSheet(f"QScrollArea {{ border: none; background: {bg_color}; }}")
+        
+        # 更新表格样式
+        for table in self.findChildren(QTableWidget):
+            table.setStyleSheet(f"""
+                QTableWidget {{
+                    border: 1px solid #E0E0E0;
+                    gridline-color: #E0E0E0;
+                    background-color: {bg_color};
+                    color: {text_color};
+                }}
+                QTableWidget::item {{
+                    padding: 8px;
+                }}
+                QHeaderView::section {{
+                    background-color: {accent_color};
+                    color: white;
+                    padding: 8px;
+                }}
+            """)
+        
+        # 更新统计卡片样式
+        for card in self.findChildren(StatCard):
+            card.setStyleSheet(f"""
+                StatCard {{
+                    background-color: {bg_color};
+                    border: 1px solid #E0E0E0;
+                    border-radius: 8px;
+                }}
+            """)
+        
+        self.logger.info(f"已应用主题到统计窗口: {theme.get('name', 'Unknown')}")
 
     def closeEvent(self, event):
         """窗口关闭事件"""
