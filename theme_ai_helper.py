@@ -195,3 +195,4 @@ class ThemeAIHelper:
             self.ai_client._show_error_dialog(f"发生错误: {str(e)}", None)
             return None
 
+

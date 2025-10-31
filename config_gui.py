@@ -109,21 +109,60 @@ class ConfigManager(QMainWindow):
             # 初始化AI主题助手
             self.theme_ai_helper = ThemeAIHelper(self.ai_client)
 
-            # 在后台线程中启动后端服务(完全不阻塞UI)
+            # 启动定时器持续更新AI状态
             from PySide6.QtCore import QTimer
+            self.ai_status_timer = QTimer()
+            self.ai_status_timer.timeout.connect(self._update_ai_status)
+            self.ai_status_timer.start(2000)  # 每2秒检查一次
+
+            # 在后台线程中启动后端服务(完全不阻塞UI)
             QTimer.singleShot(2000, lambda: self.backend_manager.ensure_backend_running_async())
 
-            # 更新UI状态(如果有AI相关的UI组件需要更新)
+            # 初次更新UI状态
             self._update_ai_status()
 
         except Exception as e:
             logging.error(f"初始化AI组件失败: {e}")
+            # 如果初始化失败,确保显示错误状态
+            self._update_ai_status_error(str(e))
 
     def _update_ai_status(self):
         """更新AI服务状态显示"""
-        # 这个方法会在后台定期检查AI服务状态
-        # 如果AI服务可用,更新UI显示
-        pass
+        # 检查是否有配额标签(在任务规划标签页)
+        if not hasattr(self, 'quota_label'):
+            return
+
+        # 检查AI客户端是否已初始化
+        if not hasattr(self, 'ai_client') or not self.ai_client:
+            self.quota_label.setText("⏳ AI服务正在初始化...")
+            self.quota_label.setStyleSheet("color: #ff9800; padding: 5px; font-weight: bold;")
+            if hasattr(self, 'generate_btn'):
+                self.generate_btn.setEnabled(False)
+            return
+
+        # 检查后端服务器是否运行
+        if not self.ai_client.check_backend_health():
+            self.quota_label.setText("⚠️ AI服务正在启动...")
+            self.quota_label.setStyleSheet("color: #ff9800; padding: 5px; font-weight: bold;")
+            if hasattr(self, 'generate_btn'):
+                self.generate_btn.setEnabled(False)
+            return
+
+        # 后端已启动,更新配额状态
+        self.refresh_quota_status()
+
+        # 后端已就绪,停止定时器(节省资源)
+        if hasattr(self, 'ai_status_timer') and self.ai_status_timer.isActive():
+            self.ai_status_timer.stop()
+
+    def _update_ai_status_error(self, error_msg):
+        """显示AI服务错误状态"""
+        if hasattr(self, 'quota_label'):
+            self.quota_label.setText(f"❌ AI服务初始化失败")
+            self.quota_label.setStyleSheet("color: #f44336; padding: 5px; font-weight: bold;")
+            logging.error(f"AI服务错误: {error_msg}")
+        if hasattr(self, 'generate_btn'):
+            self.generate_btn.setEnabled(False)
 
     def get_resource_path(self, relative_path):
         """获取资源文件路径(支持打包后的 exe)"""
@@ -1133,29 +1172,62 @@ class ConfigManager(QMainWindow):
         if not self.tasks:
             QMessageBox.warning(self, "提示", "请先添加任务后再获取AI推荐")
             return
-        
+
+        # 检查AI组件是否已初始化
+        if not hasattr(self, 'theme_ai_helper') or not self.theme_ai_helper:
+            QMessageBox.warning(
+                self,
+                "AI服务未就绪",
+                "AI服务正在初始化中,请稍候片刻再试...",
+                QMessageBox.Ok
+            )
+            return
+
+        # 检查后端服务是否运行
+        if not hasattr(self, 'ai_client') or not self.ai_client or not self.ai_client.check_backend_health():
+            reply = QMessageBox.question(
+                self,
+                "AI服务未启动",
+                "AI后端服务未启动。\n\n是否需要帮助?\n\n提示:\n1. 确保已安装依赖: pip install flask flask-cors openai python-dotenv\n2. 确保.env文件包含有效的TUZI_API_KEY\n3. 手动运行: python backend_api.py",
+                QMessageBox.Yes | QMessageBox.No
+            )
+            if reply == QMessageBox.Yes:
+                # 尝试启动后端服务
+                if hasattr(self, 'backend_manager'):
+                    QMessageBox.information(
+                        self,
+                        "正在启动",
+                        "正在尝试启动AI后端服务,请稍候...",
+                        QMessageBox.Ok
+                    )
+                    self.backend_manager.ensure_backend_running_async()
+            return
+
         # 禁用按钮，显示加载状态
         sender = self.sender()
         sender.setEnabled(False)
         sender.setText("生成中...")
-        
+
         # 在后台线程中执行AI请求
         class ThemeRecommendWorker(QThread):
             finished = Signal(object)
             error = Signal(str)
-            
+
             def __init__(self, ai_helper, tasks):
                 super().__init__()
                 self.ai_helper = ai_helper
                 self.tasks = tasks
-            
+
             def run(self):
                 try:
                     result = self.ai_helper.recommend_themes(self.tasks, {})
                     self.finished.emit(result)
                 except Exception as e:
+                    import traceback
+                    error_detail = traceback.format_exc()
+                    logging.error(f"AI推荐失败: {error_detail}")
                     self.error.emit(str(e))
-        
+
         self.recommend_worker = ThemeRecommendWorker(self.theme_ai_helper, self.tasks)
         self.recommend_worker.finished.connect(self.on_ai_recommend_finished)
         self.recommend_worker.error.connect(self.on_ai_recommend_error)
