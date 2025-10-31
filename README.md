@@ -6,11 +6,11 @@
 
 [![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/PySide6-6.5+-green.svg)](https://pypi.org/project/PySide6/)
-[![Version](https://img.shields.io/badge/version-1.2.2-brightgreen.svg)](https://github.com)
+[![Version](https://img.shields.io/badge/version-1.3.0-brightgreen.svg)](https://github.com)
 [![License](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com)
 
-**当前版本: v1.2.2** | 最后更新: 2025-10-31
+**当前版本: v1.3.0** | 最后更新: 2025-10-31
 
 </div>
 
@@ -33,6 +33,7 @@
 - 🔔 **智能通知** - 任务提醒和番茄钟通知,支持免打扰时段
 - 📈 **任务统计报告** - 自动跟踪任务完成情况,提供多维度统计分析和数据导出
 - 🎨 **优化图层渲染** - 悬停提示文字始终显示在时间标记上方,确保清晰可见
+- 🤖 **AI 智能规划** - 使用自然语言快速生成任务时间表,后端服务自动启动 (NEW!)
 
 ## 📸 效果预览
 
@@ -110,6 +111,7 @@
 - 📊 **可视化任务编辑** - 使用时间选择器和颜色选择器编辑任务
 - 🎨 **外观配置** - 调整进度条高度、位置、颜色、透明度等
 - 🖼️ **时间标记设置** - 选择线条/图片/GIF 标记,调整大小和偏移
+- 🤖 **AI 智能规划** - 使用自然语言描述计划,AI 自动生成任务时间表 (NEW!)
 - 📑 **预设模板** - 一键加载 8 种内置模板:
   - 24小时完整作息
   - 工作日作息
@@ -309,6 +311,62 @@
 - 休息结束时提醒开始新的番茄钟
 - 面板颜色随状态变化(工作=红色,休息=绿色,暂停=灰色)
 
+### AI 智能规划 🤖 (v1.3.0 新增)
+
+**快速上手:**
+
+1. **启动配置管理器**
+   - 运行 `python config_gui.py` 或右键托盘图标 → 打开配置
+   - 切换到"任务管理"标签页
+
+2. **使用 AI 规划**
+   - 在"AI智能规划"区域输入您的计划,例如:
+     - "明天9点开会1小时,然后写代码到下午5点,中午12点休息1小时"
+     - "早上8点起床,9点健身1小时,10点到12点学习,下午2点到6点工作"
+   - 点击"✨ 智能生成任务"按钮
+   - AI 会自动解析并生成任务时间表
+
+3. **配额管理**
+   - 免费用户: 每日 3 次规划额度
+   - 实时显示剩余额度
+   - 点击"🔄 刷新配额"查看最新状态
+
+**AI 功能特性:**
+- ✅ **自动启动** - 程序启动时自动检测并启动 AI 后端服务
+- ✅ **后台运行** - AI 服务在后台运行,不影响主程序
+- ✅ **智能解析** - 准确理解自然语言的时间表述
+- ✅ **冲突检测** - 自动检测时间冲突并优化
+- ✅ **一键替换** - 生成的任务可一键替换当前任务表
+
+**配置 AI 服务 (首次使用):**
+
+1. **获取 API 密钥**
+   - 访问 [兔子API](https://api.tu-zi.com) 注册账号
+   - 获取您的 API 密钥
+
+2. **配置环境变量**
+   - 在项目根目录找到 `.env` 文件
+   - 将 `TUZI_API_KEY` 设置为您的 API 密钥
+   ```
+   TUZI_API_KEY=your_api_key_here
+   ```
+
+3. **验证服务**
+   - 启动程序后,AI 服务会自动运行
+   - 打开配置管理器,如果显示"✓ 今日剩余: X 次规划"表示服务正常
+   - 如果显示"❌ AI服务未启动",请检查 API 密钥配置
+
+**技术说明:**
+- **AI 模型:** 使用 GPT-5 (兔子API提供)
+- **后端架构:** Flask + OpenAI SDK
+- **成本:** 每次规划约 < $0.001
+- **隐私保护:** 所有数据仅用于任务规划,不存储个人信息
+
+**故障排除:**
+- **服务未启动:** 检查 `.env` 文件中的 API 密钥是否正确
+- **端口占用:** 确保端口 5000 未被其他程序占用
+- **配额用尽:** 等待次日重置或升级到专业版
+
 ### 通知管理 🔔
 
 **配置任务提醒:**
@@ -378,17 +436,22 @@ pyinstaller PyDayBar.spec
 **数据文件 (datas):**
 - 8个任务模板文件 (`tasks_template_*.json`)
 - 默认时间标记动图 (`kun.webp`)
+- AI后端脚本 (`backend_api.py`, `backend_manager.py`, `ai_client.py`)
 
 **隐藏导入 (hiddenimports):**
 - `statistics_manager` - 统计数据管理器
 - `statistics_gui` - 统计报告GUI
+- `backend_manager` - AI 后端管理器 (NEW!)
+- `ai_client` - AI 客户端 (NEW!)
+- `requests`, `flask`, `flask_cors`, `openai`, `dotenv` - AI 相关依赖 (NEW!)
 - `PySide6.QtCore`, `PySide6.QtGui`, `PySide6.QtWidgets` - Qt子模块
 
 ### 打包结果
 
-- **文件大小**: 约 46.5 MB
-- **生成位置**: `dist\PyDayBar.exe`
+- **文件大小**: 约 69 MB (包含 AI 功能)
+- **生成位置**: `dist\PyDayBar.exe`, `dist\PyDayBar-Config.exe`
 - **运行方式**: 双击exe即可运行,无需Python环境
+- **AI 功能**: 自动启动后端服务,无需手动配置
 
 ### 首次运行自动生成文件
 
@@ -397,6 +460,7 @@ exe首次运行时会在同目录自动创建:
 - `tasks.json` - 任务文件(从模板加载)
 - `statistics.json` - 统计数据文件
 - `pydaybar.log` - 运行日志
+- `.env` - AI 服务配置文件 (需手动配置 API 密钥)
 
 ### 打包配置管理器(可选)
 
@@ -418,18 +482,24 @@ pyinstaller PyDayBar-Config.spec
 
 ```
 PyDayBar/
-├── main.py                       # 主程序入口 (1900+ 行)
+├── main.py                       # 主程序入口 (2100+ 行)
 │                                 # 包含: 番茄钟、通知管理、进度条、统计追踪
 ├── statistics_manager.py         # 统计数据管理器
-├── statistics_gui.py              # 统计报告GUI窗口
-├── config_gui.py                 # GUI 配置管理器 (1123 行)
+├── statistics_gui.py             # 统计报告GUI窗口
+├── config_gui.py                 # GUI 配置管理器 (1280+ 行)
+├── backend_api.py                # AI 后端 Flask 服务器 (NEW!)
+├── backend_manager.py            # AI 后端自动管理器 (NEW!)
+├── ai_client.py                  # AI 客户端封装 (NEW!)
+├── timeline_editor.py            # 可视化时间轴编辑器
 ├── config.json                   # 运行时配置文件
 ├── tasks.json                    # 当前任务安排
+├── .env                          # AI 服务配置 (NEW!)
 ├── requirements.txt              # Python 依赖
 ├── PyDayBar.spec                 # PyInstaller 打包配置
 ├── PyDayBar-Config.spec          # 配置管理器打包配置
 ├── README.md                     # 本文件
 ├── CLAUDE.md                     # Claude Code 项目指导
+├── AI_FEATURE_GUIDE.md           # AI 功能使用指南 (NEW!)
 ├── jindutiao.md                  # 详细开发文档
 ├── tasks_template_*.json         # 8 个预设模板
 ├── statistics.json               # 统计数据文件
@@ -546,6 +616,27 @@ PyDayBar/
 - 点击统计窗口的"🔄 刷新"按钮手动刷新
 - 确保任务时间设置正确(当前时间在任务时间范围内)
 - 检查系统时间是否准确
+
+### Q9: AI 智能规划显示"服务未启动"?
+
+**原因:** AI 后端服务未能成功启动。
+
+**解决方案:**
+- 检查 `.env` 文件是否存在且配置了有效的 `TUZI_API_KEY`
+- 确保端口 5000 未被占用(可尝试关闭其他占用该端口的程序)
+- 查看 `pydaybar.log` 日志文件获取详细错误信息
+- 手动运行 `python backend_api.py` 检查后端服务是否能正常启动
+- 确保已安装必要的依赖: `pip install flask flask-cors python-dotenv openai`
+
+### Q10: AI 生成的任务不准确?
+
+**原因:** 输入描述不够清晰或包含歧义。
+
+**解决方案:**
+- 使用明确的时间表述,如"9点到11点"而不是"早上工作"
+- 指定任务持续时间,如"健身1小时"
+- 分段描述复杂计划,避免在一句话中包含过多信息
+- 参考 [AI_FEATURE_GUIDE.md](AI_FEATURE_GUIDE.md) 获取更多示例
 
 更多问题请参考 [jindutiao.md 常见问题部分](jindutiao.md#常见问题与解决方案-faq) 或查看 `pydaybar.log` 日志文件。
 
@@ -718,7 +809,7 @@ PyDayBar 计划深度整合现代 AI 能力,从"时间可视化工具"进化为"
 - [x] **任务提醒通知** - 支持多种提醒时间点和免打扰时段
 - [x] **番茄钟通知** - 工作/休息完成提醒
 
-### 当前版本 (v1.2) ✅ 新增功能
+### 当前版本 (v1.2) ✅ 统计功能
 - [x] **任务统计报告** - 完整的统计分析系统
   - 今日/本周/本月统计摘要
   - 任务完成率可视化(圆形进度条)
@@ -728,7 +819,19 @@ PyDayBar 计划深度整合现代 AI 能力,从"时间可视化工具"进化为"
 - [x] **图层渲染优化** (v1.2.1) - 悬停文字始终显示在时间标记上方
 - [x] **默认动图标记** (v1.2.1) - 开箱即用的炫酷时间标记效果
 
-### 近期计划 (v1.3) - 用户体验优化
+### 当前版本 (v1.3) ✅ AI 智能规划
+- [x] **AI 智能任务规划** - 自然语言生成任务时间表
+  - GPT-5 驱动的智能解析
+  - 自动时间冲突检测和优化
+  - 每日免费额度 (3次)
+- [x] **AI 后端自动启动** - 无需手动配置
+  - 程序启动时自动检测并启动后端服务
+  - 后台运行,不影响主程序
+  - 应用退出时自动清理
+- [x] **配额管理系统** - 实时显示剩余次数
+- [x] **完整打包支持** - AI 功能可完全独立运行
+
+### 近期计划 (v1.4) - 用户体验优化
 - [ ] **主题切换系统** - 深色/浅色主题,支持自动跟随系统
 - [ ] **番茄钟统计增强** - 完整的番茄钟历史记录和趋势分析
 - [ ] **任务拖拽编辑增强** - 优化 timeline_editor 交互体验
@@ -819,7 +922,43 @@ PyDayBar 计划深度整合现代 AI 能力,从"时间可视化工具"进化为"
 
 ## 📝 更新日志
 
-### v1.2.2 (2025-10-31)
+### v1.3.0 (2025-10-31) - AI 智能规划
+**重大更新:**
+- ✨ **AI 智能任务规划** - 使用自然语言快速生成任务时间表
+  - 集成 GPT-5 API (兔子API)
+  - 支持复杂时间表述的智能解析
+  - 自动检测时间冲突并优化安排
+  - 每日免费额度: 3次规划
+- 🚀 **AI 后端自动启动管理**
+  - 新增 `backend_manager.py` 模块
+  - 程序启动时自动检测并启动后端服务
+  - 后台运行 Flask 服务器 (端口 5000)
+  - 应用退出时自动清理后端进程
+  - 健康检查和自动重启机制
+- 💬 **AI 客户端封装** (`ai_client.py`)
+  - 任务规划 API 调用
+  - 配额状态查询
+  - 错误处理和用户提示
+  - 线程安全设计,防止 UI 阻塞
+- 🔧 **配置管理器增强**
+  - AI 智能规划区域集成到任务管理标签页
+  - 实时配额状态显示
+  - 一键刷新配额功能
+  - 后端服务状态指示
+
+**技术改进:**
+- 🎯 打包配置更新,支持 AI 相关模块和依赖
+- 📝 完善文档,新增 AI 功能使用指南
+- 🐛 修复已知问题
+
+**新增文件:**
+- `backend_api.py` - Flask AI 后端服务器
+- `backend_manager.py` - 后端进程自动管理器
+- `ai_client.py` - AI 功能客户端封装
+- `.env` - AI 服务配置文件 (需用户配置)
+- `AI_FEATURE_GUIDE.md` - AI 功能详细使用指南
+
+### v1.2.2 (2025-10-30)
 **新增功能:**
 - ✨ 配置管理器支持标记图片 X 轴偏移设置
   - 范围: -100 到 100 像素

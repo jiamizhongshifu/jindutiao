@@ -15,6 +15,7 @@ from PySide6.QtCore import Qt, QRectF, QTimer, QTime, QFileSystemWatcher, QPoint
 from PySide6.QtGui import QPainter, QColor, QPen, QAction, QFont, QPixmap, QMovie, QCursor
 from enum import Enum
 from statistics_manager import StatisticsManager
+from backend_manager import BackendManager
 
 # Windows 特定导入
 if platform.system() == 'Windows':
@@ -2153,9 +2154,32 @@ def main():
     # 创建应用实例
     app = QApplication(sys.argv)
 
+    # 初始化日志
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s'
+    )
+    logger = logging.getLogger(__name__)
+
+    # 启动AI后端服务
+    backend_manager = BackendManager(logger)
+    backend_started = backend_manager.ensure_backend_running()
+
+    if backend_started:
+        logger.info("AI后端服务已准备就绪")
+    else:
+        logger.warning("AI后端服务未启动(可能未配置或启动失败)")
+
     # 创建并显示主窗口
     window = TimeProgressBar()
     window.show()
+
+    # 在应用退出时停止后端服务
+    def cleanup():
+        logger.info("正在清理资源...")
+        backend_manager.stop_backend()
+
+    app.aboutToQuit.connect(cleanup)
 
     # 进入事件循环
     sys.exit(app.exec())

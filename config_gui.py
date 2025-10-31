@@ -17,6 +17,8 @@ from PySide6.QtCore import Qt, QTime, Signal, QThread
 from PySide6.QtGui import QColor, QIcon
 from timeline_editor import TimelineEditor
 from ai_client import PyDayBarAIClient
+from backend_manager import BackendManager
+import logging
 
 
 class AIWorker(QThread):
@@ -80,6 +82,10 @@ class ConfigManager(QMainWindow):
         # 初始化AI客户端
         self.ai_client = PyDayBarAIClient()
         self.ai_worker = None  # AI工作线程
+
+        # 初始化后端管理器并尝试启动服务
+        self.backend_manager = BackendManager()
+        self.backend_manager.ensure_backend_running()
 
         self.init_ui()
 
