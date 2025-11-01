@@ -2,8 +2,20 @@ import json
 
 def handler(req):
     """Vercel Python Serverless Function handler"""
+    # 兼容字典和对象格式的请求
+    if isinstance(req, dict):
+        method = req.get('method', 'GET')
+        query_params = req.get('queryStringParameters') or {}
+    else:
+        method = req.method if hasattr(req, 'method') else 'GET'
+        query_params = {}
+        if hasattr(req, 'queryStringParameters') and req.queryStringParameters:
+            query_params = req.queryStringParameters
+        elif hasattr(req, 'args') and req.args:
+            query_params = req.args
+    
     # 处理CORS预检请求
-    if hasattr(req, 'method') and req.method == 'OPTIONS':
+    if method == 'OPTIONS':
         return {
             'statusCode': 200,
             'headers': {
@@ -14,7 +26,7 @@ def handler(req):
             'body': ''
         }
     
-    if hasattr(req, 'method') and req.method != 'GET':
+    if method != 'GET':
         return {
             'statusCode': 405,
             'headers': {
@@ -23,13 +35,6 @@ def handler(req):
             },
             'body': json.dumps({'error': 'Method not allowed'})
         }
-    
-    # 解析查询参数
-    query_params = {}
-    if hasattr(req, 'queryStringParameters') and req.queryStringParameters:
-        query_params = req.queryStringParameters
-    elif hasattr(req, 'args') and req.args:
-        query_params = req.args
     
     user_tier = query_params.get('user_tier', 'free') if isinstance(query_params, dict) else 'free'
     
