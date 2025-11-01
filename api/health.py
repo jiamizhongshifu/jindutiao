@@ -2,26 +2,8 @@ import json
 from datetime import datetime
 
 def handler(req):
-    """Vercel Python Serverless Function handler"""
-    # Vercel Python函数中，req是一个类似字典的对象
-    # 但也可以有属性访问方式
-    try:
-        method = req.method if hasattr(req, 'method') else req.get('method', 'GET')
-    except:
-        method = 'GET'
-    
-    # 处理CORS预检请求
-    if method == 'OPTIONS':
-        return {
-            'statusCode': 200,
-            'headers': {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type'
-            },
-            'body': ''
-        }
-    
+    """Vercel Python Serverless Function handler - 简化版本用于测试"""
+    # 直接返回，不检查method（因为GET请求可能没有method属性）
     return {
         'statusCode': 200,
         'headers': {
@@ -31,6 +13,7 @@ def handler(req):
         'body': json.dumps({
             "status": "ok",
             "timestamp": datetime.now().isoformat(),
-            "service": "PyDayBar API Proxy (Vercel)"
+            "service": "PyDayBar API Proxy (Vercel)",
+            "message": "Health check successful"
         })
     }
