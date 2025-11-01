@@ -985,10 +985,10 @@ PyDayBar 计划深度整合现代 AI 能力,从"时间可视化工具"进化为"
 
 **重大更新:**
 - ✅ **API密钥安全方案实施**
-  - 部署Vercel Serverless Functions代理服务器
+  - 成功部署Vercel Serverless Functions代理服务器
   - API密钥完全不在客户端，保护密钥安全
   - 统一使用我们提供的API服务，方便后续付费转化
-  - 代理服务器URL: `https://jindutiao.vercel.app`
+  - 代理服务器URL: `https://jindutiao.vercel.app` ✅ **已部署并测试通过**
 
 **技术改进:**
 - 🔒 **API密钥安全**
@@ -1001,7 +1001,13 @@ PyDayBar 计划深度整合现代 AI 能力,从"时间可视化工具"进化为"
   - 使用Vercel Serverless Functions（完全免费）
   - 100GB带宽/月，无限函数调用
   - 自动HTTPS，全球CDN加速
-  - 部署URL: https://jindutiao.vercel.app
+  - 部署URL: https://jindutiao.vercel.app ✅ **已部署成功**
+  - 所有7个API端点已成功部署并测试通过
+
+**部署优化:**
+- ✅ 优化了`requirements.txt`，只保留`requests`依赖
+- ✅ 创建了`.vercelignore`文件，排除大文件（减少部署包大小）
+- ✅ 配置了`vercel.json`，明确指定Python Serverless Functions
 
 **注意事项:**
 - ⚠️ **超时限制**
