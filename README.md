@@ -86,11 +86,9 @@
    python main.py
    ```
 
-5. **打开配置管理器(可选)**
-   ```bash
-   python config_gui.py
-   ```
-   或右键系统托盘图标选择"打开配置"
+5. **打开配置管理器**
+   - 右键点击系统托盘图标选择"⚙️ 打开配置"
+   - 或从源码运行: `python config_gui.py` (仅开发环境)
 
 ### 首次运行
 
@@ -105,7 +103,9 @@
 
 ### 使用 GUI 配置管理器(推荐)
 
-运行 `python config_gui.py` 或通过系统托盘菜单"打开配置"启动可视化配置管理器。
+配置管理器已集成在主程序中，通过系统托盘菜单"⚙️ 打开配置"即可启动。
+
+**注意**: 在开发环境中，也可以直接运行 `python config_gui.py` 进行测试。
 
 **GUI 配置管理器功能:**
 - 📊 **可视化任务编辑** - 使用时间选择器和颜色选择器编辑任务
@@ -316,7 +316,7 @@
 **快速上手:**
 
 1. **启动配置管理器**
-   - 运行 `python config_gui.py` 或右键托盘图标 → 打开配置
+   - 右键点击系统托盘图标 → ⚙️ 打开配置
    - 切换到"任务管理"标签页
 
 2. **使用 AI 规划**
@@ -439,18 +439,22 @@ pyinstaller PyDayBar.spec
 - AI后端脚本 (`backend_api.py`, `backend_manager.py`, `ai_client.py`)
 
 **隐藏导入 (hiddenimports):**
+- `config_gui` - GUI 配置管理器 (已集成在主程序中)
+- `theme_manager` - 主题管理器
+- `theme_ai_helper` - AI主题助手
 - `statistics_manager` - 统计数据管理器
 - `statistics_gui` - 统计报告GUI
-- `backend_manager` - AI 后端管理器 (NEW!)
-- `ai_client` - AI 客户端 (NEW!)
-- `requests`, `flask`, `flask_cors`, `openai`, `dotenv` - AI 相关依赖 (NEW!)
+- `backend_manager` - AI 后端管理器
+- `ai_client` - AI 客户端
+- `requests`, `flask`, `flask_cors`, `openai`, `dotenv` - AI 相关依赖
 - `PySide6.QtCore`, `PySide6.QtGui`, `PySide6.QtWidgets` - Qt子模块
 
 ### 打包结果
 
-- **文件大小**: 约 69 MB (包含 AI 功能)
-- **生成位置**: `dist\PyDayBar.exe`, `dist\PyDayBar-Config.exe`
+- **文件大小**: 约 66 MB (包含 AI 功能和集成配置管理器)
+- **生成位置**: `dist\PyDayBar-v1.4.exe`
 - **运行方式**: 双击exe即可运行,无需Python环境
+- **配置管理器**: 已集成在主程序中,通过托盘菜单"打开配置"访问
 - **AI 功能**: 自动启动后端服务,无需手动配置
 
 ### 首次运行自动生成文件
@@ -462,19 +466,23 @@ exe首次运行时会在同目录自动创建:
 - `pydaybar.log` - 运行日志
 - `.env` - AI 服务配置文件 (需手动配置 API 密钥)
 
-### 打包配置管理器(可选)
+### 配置管理器集成说明
 
-```bash
-pyinstaller PyDayBar-Config.spec
-```
+**v1.4 更新**: 配置管理器已完全集成在主程序中,无需单独打包。
 
-配置管理器也可以通过主程序的托盘菜单打开,不需要单独打包。
+- 主程序已包含完整的配置管理器模块
+- 通过托盘菜单"⚙️ 打开配置"即可访问
+- 所有功能均可在主程序中正常使用
+- 不再需要单独的 `PyDayBar-Config.exe` 文件
+
+**注意**: `PyDayBar-Config.spec` 文件已保留但不再使用,仅用于历史参考。
 
 **⚠️ 重要提示:**
 
 1. **必须使用 `.spec` 文件打包**,不要直接运行 `pyinstaller main.py`,否则模板文件和新模块不会被包含
 2. 每次添加新的模板文件或Python模块后,需要更新 `PyDayBar.spec` 中的 `datas` 或 `hiddenimports` 列表
-3. 详细打包说明请参考 [CLAUDE.md](CLAUDE.md#⚠️-important-packaging-with-template-files)
+3. **配置管理器已集成**: 主程序已包含完整的 `config_gui` 模块,无需单独打包
+4. 详细打包说明请参考 [CLAUDE.md](CLAUDE.md#⚠️-important-packaging-with-template-files)
 
 ## 🛠️ 开发指南
 
@@ -1006,6 +1014,219 @@ PyDayBar 计划深度整合现代 AI 能力,从"时间可视化工具"进化为"
 - 首次使用 AI 功能需等待 3-5 秒让服务完全启动
 - 如遇问题请查看 `pydaybar.log` 日志文件
 - 确保 `.env` 文件包含有效的 `TUZI_API_KEY`
+
+---
+
+## 🔧 AI 服务启动问题修复经验总结
+
+本次成功修复 AI 服务长时间停留在"正在启动"状态以及无法获取配额信息的问题，以下是关键修复方案和经验总结：
+
+### 问题根源分析
+
+通过详细的日志分析，发现了以下关键问题：
+
+1. **`.env` 配置文件查找失败**
+   - **现象：** 后端进程启动后立即退出，没有任何错误输出
+   - **原因：** 在打包后的环境中，`backend_api.py` 无法在正确的位置找到 `.env` 配置文件
+   - **影响：** API 密钥缺失，导致 `ValueError` 异常，进程立即退出
+
+2. **重复启动与竞态条件**
+   - **现象：** 日志中出现多个进程同时启动（PID: 130668, 130084, 130684 等）
+   - **原因：** 多个 UI 线程或定时器同时尝试启动后端服务
+   - **影响：** 进程相互冲突，资源被占用，启动失败
+
+3. **错误信息未捕获**
+   - **现象：** 进程退出但没有显示错误信息
+   - **原因：** 错误输出（stderr）未被及时捕获和记录
+   - **影响：** 难以诊断具体失败原因
+
+### 有效修复方案
+
+#### 1. 解决 `.env` 配置文件查找失败问题 ✅
+
+**问题根源：**
+在打包后的环境中，工作目录是 `dist` 目录，但 `.env` 文件在项目根目录，`backend_api.py` 的 `load_dotenv()` 无法找到配置文件。
+
+**修复方案：**
+
+**a) `.env` 文件复制机制**
+```python
+# backend_manager.py
+# 在启动后端进程前，将.env文件复制到工作目录
+if self.env_file.exists():
+    target_env = self.app_dir / ".env"
+    if target_env != self.env_file and self.env_file.exists():
+        shutil.copy2(self.env_file, target_env)
+        self.logger.info(f"已复制.env文件到工作目录: {target_env}")
+```
+
+**b) 环境变量传递**
+```python
+# 设置环境变量，明确告知backend_api.py .env文件的位置
+env = os.environ.copy()
+if self.env_file.exists():
+    env['PYDAYBAR_ENV_FILE'] = str(self.env_file.absolute())
+```
+
+**c) `backend_api.py` 加载优化**
+```python
+# backend_api.py
+# 优先级：1. 环境变量指定的路径 2. 当前目录 3. 父目录
+if os.getenv('PYDAYBAR_ENV_FILE'):
+    env_file_path = Path(os.getenv('PYDAYBAR_ENV_FILE'))
+    if env_file_path.exists():
+        load_dotenv(dotenv_path=env_file_path)
+        # 成功加载
+```
+
+**效果：** 确保在各种运行环境下都能找到配置文件，后端服务可以正常启动。
+
+#### 2. 防止后端服务重复启动与竞态条件 ✅
+
+**问题根源：**
+多个线程同时尝试启动后端服务，导致多个进程被创建，相互冲突。
+
+**修复方案：**
+
+**a) 引入线程锁**
+```python
+# backend_manager.py
+class BackendManager:
+    def __init__(self, logger):
+        self._start_lock = threading.Lock()  # 防止重复启动的锁
+    
+    def ensure_backend_running_async(self):
+        def start_in_background():
+            # 使用锁防止重复启动
+            if not self._start_lock.acquire(blocking=False):
+                self.logger.debug("后端启动正在进行中，跳过重复启动")
+                return
+            try:
+                # 启动逻辑...
+            finally:
+                self._start_lock.release()
+```
+
+**b) 启动前状态检查**
+```python
+# 检查是否已有进程在运行
+if self.backend_process is not None and self.backend_process.poll() is None:
+    self.logger.info("后端进程已在运行中，等待启动完成...")
+    # 等待最多5秒
+    for i in range(10):
+        time.sleep(0.5)
+        if self.check_backend_health():
+            return
+```
+
+**效果：** 确保同一时间只有一个线程在执行启动逻辑，避免了重复启动和资源冲突。
+
+#### 3. 增强后端进程错误捕获与日志记录 ✅
+
+**问题根源：**
+后端进程启动失败时，错误信息（stderr）未被及时捕获和记录。
+
+**修复方案：**
+
+**a) 实时错误输出捕获**
+```python
+# backend_manager.py
+self.backend_process = subprocess.Popen(
+    [python_exe, str(self.backend_script)],
+    stdout=subprocess.PIPE,
+    stderr=subprocess.PIPE,  # 捕获错误输出
+    env=env,
+    # ...
+)
+
+# 立即检查进程是否仍在运行
+time.sleep(0.5)
+if self.backend_process.poll() is not None:
+    # 进程已退出，读取错误信息
+    stdout, stderr = self.backend_process.communicate(timeout=1)
+    if stderr:
+        error_msg = stderr.decode('utf-8', errors='ignore')
+        self.logger.error(f"后端进程立即退出，错误信息: {error_msg}")
+```
+
+**b) 详细日志输出**
+```python
+# backend_api.py
+if not TUZI_API_KEY:
+    error_msg = "未找到TUZI_API_KEY环境变量,请在.env文件中配置"
+    print(f"[ERROR] {error_msg}")
+    print(f"[ERROR] 当前工作目录: {os.getcwd()}")
+    print(f"[ERROR] 尝试的.env路径:")
+    if os.getenv('PYDAYBAR_ENV_FILE'):
+        print(f"[ERROR]   1. {os.getenv('PYDAYBAR_ENV_FILE')}")
+    print(f"[ERROR]   2. {Path('.env').absolute()}")
+    print(f"[ERROR]   3. {Path('..') / '.env'}")
+    raise ValueError(error_msg)
+```
+
+**效果：** 进程退出时能够立即捕获并记录详细的错误信息，大大提升了问题诊断效率。
+
+#### 4. 优化 AI 服务状态与配额刷新逻辑 ✅
+
+**问题根源：**
+之前的逻辑在健康检查通过后立即停止定时器，导致如果配额接口出现问题，状态无法恢复。
+
+**修复方案：**
+
+**a) 定时器控制优化**
+```python
+# config_gui.py
+def _on_quota_status_finished(self, quota_info):
+    if quota_info:
+        # 配额检查成功，停止定时器（节省资源）
+        if hasattr(self, 'ai_status_timer') and self.ai_status_timer:
+            if self.ai_status_timer.isActive():
+                self.ai_status_timer.stop()
+    else:
+        # 配额检查失败，重新检查后端健康状态
+        if not self.backend_manager.check_backend_health():
+            # 后端已崩溃，重新启动
+            self.backend_manager.ensure_backend_running_async()
+            # 重新启动定时器
+            if hasattr(self, 'ai_status_timer') and self.ai_status_timer:
+                if not self.ai_status_timer.isActive():
+                    self.ai_status_timer.start(5000)
+```
+
+**b) 配额失败后的恢复机制**
+- 如果后端已崩溃：重新显示"正在启动"状态，自动异步重启后端服务，并重新启动 AI 状态定时器
+- 如果后端正常但配额接口失败：延迟 3 秒后重试配额检查，避免频繁请求
+
+**效果：** 确保在配额获取失败时，系统能够自动恢复并重试，提升了稳定性和用户体验。
+
+### 经验总结
+
+1. **配置文件路径处理是关键**
+   - 打包后的环境与开发环境路径不同，需要统一处理
+   - 优先使用环境变量传递路径，其次使用文件复制
+   - 提供多种查找路径的降级策略
+
+2. **并发控制必不可少**
+   - 异步操作必须使用锁机制防止竞态条件
+   - 启动前检查现有进程状态，避免重复启动
+   - 使用 `threading.Lock` 而非全局变量
+
+3. **错误捕获要及时**
+   - 进程启动后立即检查状态，不要等到超时
+   - 使用 `subprocess.PIPE` 捕获 stdout 和 stderr
+   - 详细的错误日志是诊断问题的关键
+
+4. **状态管理要健壮**
+   - 定时器不应该过早停止
+   - 提供失败后的自动恢复机制
+   - 区分不同类型的失败（后端崩溃 vs 接口失败）
+
+5. **日志记录要详细**
+   - 使用分隔线标记关键日志段
+   - 记录所有关键路径和状态变化
+   - 错误信息要包含足够的上下文
+
+这些修复措施从根本上解决了 AI 后端服务的启动、配置加载、进程管理和状态反馈等多个环节的问题，最终实现了 AI 服务能够稳定启动并成功加载配额信息。
 
 ### v1.4.0 (2025-01-XX) - 智能主题系统 🎨
 

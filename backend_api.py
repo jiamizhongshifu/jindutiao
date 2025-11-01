@@ -7,6 +7,7 @@ import os
 import sys
 import json
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, List, Optional
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
@@ -20,12 +21,69 @@ if sys.platform == 'win32':
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 # 加载环境变量
-load_dotenv()
-TUZI_API_KEY = os.getenv("TUZI_API_KEY")
-TUZI_BASE_URL = "https://api.tu-zi.com/v1"
+# 优先级：1. 环境变量PYDAYBAR_ENV_FILE指定的路径 2. 当前目录 3. 父目录
+env_file_path = None
+if os.getenv('PYDAYBAR_ENV_FILE'):
+    env_file_path = Path(os.getenv('PYDAYBAR_ENV_FILE'))
+    if env_file_path.exists():
+        load_dotenv(dotenv_path=env_file_path)
+        print(f"[INFO] 从环境变量指定的路径加载.env文件: {env_file_path}")
+    else:
+        print(f"[WARNING] 环境变量指定的.env文件不存在: {env_file_path}")
+        env_file_path = None
+
+if not env_file_path:
+    # 尝试当前目录
+    current_env = Path('.env')
+    if current_env.exists():
+        load_dotenv(dotenv_path=current_env)
+        print(f"[INFO] 从当前目录加载.env文件: {current_env.absolute()}")
+    else:
+        # 尝试父目录（开发环境）
+        parent_env = Path('..') / '.env'
+        if parent_env.exists():
+            load_dotenv(dotenv_path=parent_env)
+            print(f"[INFO] 从父目录加载.env文件: {parent_env.absolute()}")
+        else:
+            # 最后尝试默认行为（从当前目录加载，如果存在）
+            load_dotenv()
+            if Path('.env').exists():
+                print(f"[INFO] 使用默认方式加载.env文件: {Path('.env').absolute()}")
+            else:
+                print("[WARNING] 未找到.env文件，尝试从环境变量加载")
+
+# 使用API密钥管理器获取密钥（优先级：用户密钥 > 默认密钥）
+try:
+    from api_key_manager import APIKeyManager
+    api_key_manager = APIKeyManager()
+    TUZI_API_KEY = api_key_manager.get_api_key(env_file_path)
+    key_source = api_key_manager.get_key_source()
+    
+    if TUZI_API_KEY:
+        if key_source == 'user':
+            print(f"[INFO] 使用用户自定义API密钥")
+        elif key_source == 'default':
+            print(f"[INFO] 使用内置默认API密钥（免费额度）")
+    else:
+        print("[WARNING] API密钥管理器未找到密钥，尝试从环境变量加载")
+        TUZI_API_KEY = os.getenv("TUZI_API_KEY")
+except ImportError:
+    # 如果api_key_manager模块不存在（向后兼容），使用原有逻辑
+    print("[INFO] API密钥管理器模块未找到，使用传统方式加载")
+    TUZI_API_KEY = os.getenv("TUZI_API_KEY")
+
+TUZI_BASE_URL = os.getenv("TUZI_BASE_URL", "https://api.tu-zi.com/v1")
 
 if not TUZI_API_KEY:
-    raise ValueError("未找到TUZI_API_KEY环境变量,请在.env文件中配置")
+    error_msg = "未找到TUZI_API_KEY环境变量,请在.env文件中配置"
+    print(f"[ERROR] {error_msg}")
+    print(f"[ERROR] 当前工作目录: {os.getcwd()}")
+    print(f"[ERROR] 尝试的.env路径:")
+    if os.getenv('PYDAYBAR_ENV_FILE'):
+        print(f"[ERROR]   1. {os.getenv('PYDAYBAR_ENV_FILE')}")
+    print(f"[ERROR]   2. {Path('.env').absolute()}")
+    print(f"[ERROR]   3. {Path('..') / '.env'}")
+    raise ValueError(error_msg)
 
 # 初始化Flask应用
 app = Flask(__name__)

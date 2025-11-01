@@ -17,6 +17,9 @@ from enum import Enum
 from statistics_manager import StatisticsManager
 from backend_manager import BackendManager
 from theme_manager import ThemeManager
+# 确保 config_gui 模块被 PyInstaller 检测到（必须在顶部导入）
+import config_gui
+from config_gui import ConfigManager
 
 # Windows 特定导入
 if platform.system() == 'Windows':
@@ -1760,9 +1763,7 @@ class TimeProgressBar(QWidget):
     def open_config_gui(self):
         """打开配置界面"""
         try:
-            # 动态导入配置界面
-            from config_gui import ConfigManager
-
+            # 使用已导入的 ConfigManager（在文件顶部已导入）
             # 如果已经打开,则显示现有窗口
             if hasattr(self, 'config_window') and self.config_window.isVisible():
                 self.config_window.activateWindow()

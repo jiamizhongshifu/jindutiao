@@ -23,19 +23,13 @@ echo.
 
 echo [3/3] 开始打包...
 echo.
+echo ⚠️  重要提示: 打包过程会清理 dist 目录！
+echo    请确保用户数据文件（config.json, tasks.json, statistics.json 等）
+echo    不在项目根目录的 dist 文件夹中，否则会被删除！
+echo.
 echo 使用 PyInstaller 打包 (单目录模式)...
-pyinstaller --clean ^
-    --noconsole ^
-    --name PyDayBar ^
-    --add-data "config.json;." ^
-    --add-data "tasks.json;." ^
-    --hidden-import config_gui ^
-    --hidden-import theme_manager ^
-    --hidden-import theme_ai_helper ^
-    --hidden-import timeline_editor ^
-    --hidden-import statistics_manager ^
-    --hidden-import statistics_gui ^
-    main.py
+echo 注意: 使用 PyDayBar.spec 文件进行打包，确保包含所有资源文件
+pyinstaller --clean --noconfirm PyDayBar.spec
 
 echo.
 echo ========================================

@@ -13,11 +13,12 @@ from PySide6.QtWidgets import (
     QComboBox, QCheckBox, QTableWidget, QTableWidgetItem, QHeaderView,
     QMessageBox, QTimeEdit, QGroupBox, QFormLayout, QFileDialog
 )
-from PySide6.QtCore import Qt, QTime, Signal, QThread
+from PySide6.QtCore import Qt, QTime, Signal, QThread, QTimer
 from PySide6.QtGui import QColor, QIcon
 from timeline_editor import TimelineEditor
 from ai_client import PyDayBarAIClient
 from backend_manager import BackendManager
+import requests
 from theme_manager import ThemeManager
 from theme_ai_helper import ThemeAIHelper
 import logging
@@ -74,60 +75,205 @@ class ConfigManager(QMainWindow):
 
         self.config_file = self.app_dir / 'config.json'
         self.tasks_file = self.app_dir / 'tasks.json'
-        self.config = self.load_config()
-        self.tasks = self.load_tasks()
-
-        # 如果任务为空,默认加载24小时模板
-        if not self.tasks:
-            self.load_default_template()
-
+        
+        # 延迟加载配置和任务，先让窗口显示
+        self.config = {}
+        self.tasks = []
+        
         # 延迟初始化AI相关组件(避免阻塞UI显示)
         self.ai_client = None
         self.ai_worker = None
         self.backend_manager = None
         self.theme_ai_helper = None
 
-        # 初始化主题管理器(必需,用于主题切换)
-        self.theme_manager = ThemeManager(self.app_dir)
+        # 延迟初始化主题管理器(避免同步文件I/O阻塞UI)
+        self.theme_manager = None
 
         # 先初始化UI,让窗口快速显示
         self.init_ui()
+        
+        # UI显示后再异步加载配置和任务
+        QTimer.singleShot(50, self._load_config_and_tasks)
 
-        # UI显示后再异步初始化AI组件
-        from PySide6.QtCore import QTimer
-        QTimer.singleShot(100, self._init_ai_components)
+        # UI显示后再异步初始化主题管理器和AI组件
+        QTimer.singleShot(100, self._init_theme_manager)
+        QTimer.singleShot(200, self._init_ai_components)
+
+    def _load_config_and_tasks(self):
+        """延迟加载配置和任务（不阻塞UI显示）"""
+        try:
+            self.config = self.load_config()
+            self.tasks = self.load_tasks()
+            
+            # 如果任务为空,默认加载24小时模板
+            if not self.tasks:
+                self.load_default_template()
+            
+            # 更新UI控件的值（如果已创建）
+            self._update_ui_from_config()
+            
+            # 如果任务表格已创建，加载任务
+            if hasattr(self, 'tasks_table') and self.tasks_table is not None:
+                self.load_tasks_to_table()
+            
+            logging.info("配置和任务加载完成")
+        except Exception as e:
+            logging.error(f"加载配置和任务失败: {e}")
+    
+    def _update_ui_from_config(self):
+        """从配置更新UI控件值"""
+        if not self.config:
+            return
+        
+        try:
+            # 更新高度控件
+            if hasattr(self, 'height_spin'):
+                self.height_spin.setValue(self.config.get('bar_height', 20))
+                if hasattr(self, 'height_preset_buttons'):
+                    self.update_height_preset_buttons()
+            
+            # 更新位置控件
+            if hasattr(self, 'position_combo'):
+                self.position_combo.setCurrentText(self.config.get('position', 'bottom'))
+            
+            # 更新显示器索引
+            if hasattr(self, 'screen_spin'):
+                self.screen_spin.setValue(self.config.get('screen_index', 0))
+            
+            # 更新间隔
+            if hasattr(self, 'interval_spin'):
+                self.interval_spin.setValue(self.config.get('update_interval', 1000))
+            
+            # 更新颜色控件
+            if hasattr(self, 'bg_color_input'):
+                self.bg_color_input.setText(self.config.get('background_color', '#505050'))
+                if hasattr(self, 'bg_color_preview'):
+                    self.update_color_preview(self.bg_color_input, self.bg_color_preview)
+            
+            if hasattr(self, 'opacity_spin'):
+                self.opacity_spin.setValue(self.config.get('background_opacity', 180))
+            
+            if hasattr(self, 'marker_color_input'):
+                self.marker_color_input.setText(self.config.get('marker_color', '#FF0000'))
+                if hasattr(self, 'marker_color_preview'):
+                    self.update_color_preview(self.marker_color_input, self.marker_color_preview)
+            
+            if hasattr(self, 'marker_width_spin'):
+                self.marker_width_spin.setValue(self.config.get('marker_width', 2))
+            
+            if hasattr(self, 'marker_type_combo'):
+                self.marker_type_combo.setCurrentText(self.config.get('marker_type', 'line'))
+            
+            if hasattr(self, 'marker_image_input'):
+                self.marker_image_input.setText(self.config.get('marker_image_path', ''))
+            
+            if hasattr(self, 'marker_size_spin'):
+                self.marker_size_spin.setValue(self.config.get('marker_size', 50))
+                if hasattr(self, 'marker_size_preset_buttons'):
+                    self.update_marker_size_preset_buttons()
+            
+            if hasattr(self, 'marker_x_offset_spin'):
+                self.marker_x_offset_spin.setValue(self.config.get('marker_x_offset', 0))
+            
+            if hasattr(self, 'marker_y_offset_spin'):
+                self.marker_y_offset_spin.setValue(self.config.get('marker_y_offset', 0))
+        except Exception as e:
+            logging.error(f"更新UI控件失败: {e}")
+    
+    def _init_timeline_editor(self, layout, placeholder):
+        """延迟初始化时间轴编辑器"""
+        try:
+            # 创建时间轴编辑器
+            self.timeline_editor = TimelineEditor()
+            self.timeline_editor.task_time_changed.connect(self.on_timeline_task_changed)
+            
+            # 移除占位符，添加实际编辑器
+            layout.removeWidget(placeholder)
+            placeholder.deleteLater()
+            layout.addWidget(self.timeline_editor)
+            
+            # 如果任务已加载，设置任务
+            if hasattr(self, 'tasks') and self.tasks:
+                QTimer.singleShot(50, lambda: self.timeline_editor.set_tasks(self.tasks) if self.timeline_editor else None)
+            
+            logging.info("时间轴编辑器初始化完成")
+        except Exception as e:
+            logging.error(f"初始化时间轴编辑器失败: {e}")
+    
+    def _init_theme_manager(self):
+        """延迟初始化主题管理器(在后台运行,不阻塞UI)"""
+        try:
+            # 初始化主题管理器
+            self.theme_manager = ThemeManager(self.app_dir)
+            logging.info("主题管理器初始化完成")
+        except Exception as e:
+            logging.error(f"初始化主题管理器失败: {e}")
 
     def _init_ai_components(self):
         """延迟初始化AI相关组件(在后台运行,不阻塞UI)"""
         try:
-            # 初始化AI客户端
+            # 初始化AI客户端（默认使用代理服务器）
             self.ai_client = PyDayBarAIClient()
-
-            # 初始化后端管理器并异步启动
-            self.backend_manager = BackendManager()
-
+            
+            # 注意：使用代理服务器模式时，不需要启动本地后端服务
+            # BackendManager仅用于向后兼容（如果用户需要本地模式）
+            # 使用代理服务器时，不需要BackendManager
+            
             # 初始化AI主题助手
             self.theme_ai_helper = ThemeAIHelper(self.ai_client)
 
-            # 启动定时器持续更新AI状态
-            from PySide6.QtCore import QTimer
+            # 启动定时器持续更新AI状态（仅在标签页可见时检查）
             self.ai_status_timer = QTimer()
-            self.ai_status_timer.timeout.connect(self._update_ai_status)
-            self.ai_status_timer.start(2000)  # 每2秒检查一次
+            self.ai_status_timer.timeout.connect(self._update_ai_status_async)
+            # 延迟启动，避免初始化时立即检查
+            QTimer.singleShot(1000, lambda: self._start_ai_status_timer_if_needed())
 
-            # 在后台线程中启动后端服务(完全不阻塞UI)
-            QTimer.singleShot(2000, lambda: self.backend_manager.ensure_backend_running_async())
+            # 初始化后端管理器（仅用于向后兼容，代理模式下不启动本地服务）
+            # 获取根logger，它应该已经配置了文件处理器
+            root_logger = logging.getLogger()
+            # 如果根logger没有文件处理器，添加一个（指向pydaybar.log）
+            if not any(isinstance(h, logging.FileHandler) for h in root_logger.handlers):
+                # 获取应用目录（支持打包后的环境）
+                if getattr(sys, 'frozen', False):
+                    app_dir = Path(sys.executable).parent
+                else:
+                    app_dir = Path(__file__).parent
+                log_file = app_dir / "pydaybar.log"
+                file_handler = logging.FileHandler(log_file, encoding='utf-8')
+                file_handler.setLevel(logging.INFO)
+                file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+                root_logger.addHandler(file_handler)
+            
+            # 创建BackendManager实例（但不启动本地服务，因为使用代理服务器）
+            self.backend_manager = BackendManager(root_logger)
+            # 注意：不调用 ensure_backend_running_async()，因为使用代理服务器
 
-            # 初次更新UI状态
-            self._update_ai_status()
+            # 初次更新UI状态（异步）
+            QTimer.singleShot(500, self._update_ai_status_async)
 
         except Exception as e:
             logging.error(f"初始化AI组件失败: {e}")
             # 如果初始化失败,确保显示错误状态
             self._update_ai_status_error(str(e))
 
-    def _update_ai_status(self):
-        """更新AI服务状态显示"""
+    def _start_ai_status_timer_if_needed(self):
+        """如果需要，启动AI状态定时器（仅在任务管理标签页可见时）"""
+        if not hasattr(self, 'tabs'):
+            return
+        
+        # 仅在任务管理标签页（索引1）可见时启动定时器
+        if self.tabs.currentIndex() == 1:  # 任务管理标签页
+            if hasattr(self, 'ai_status_timer') and self.ai_status_timer:
+                if not self.ai_status_timer.isActive():
+                    self.ai_status_timer.start(5000)  # 改为5秒检查一次，减少频率
+        else:
+            # 如果不在任务管理标签页，停止定时器
+            if hasattr(self, 'ai_status_timer') and self.ai_status_timer:
+                if self.ai_status_timer.isActive():
+                    self.ai_status_timer.stop()
+    
+    def _update_ai_status_async(self):
+        """异步更新AI服务状态显示（不阻塞UI）"""
         # 检查是否有配额标签(在任务规划标签页)
         if not hasattr(self, 'quota_label'):
             return
@@ -140,20 +286,62 @@ class ConfigManager(QMainWindow):
                 self.generate_btn.setEnabled(False)
             return
 
-        # 检查后端服务器是否运行
-        if not self.ai_client.check_backend_health():
+        # 使用异步方式检查后端服务器状态
+        self._check_backend_health_async()
+
+    def _check_backend_health_async(self):
+        """异步检查后端服务器健康状态"""
+        class HealthCheckWorker(QThread):
+            finished = Signal(bool)
+            
+            def __init__(self, backend_url):
+                super().__init__()
+                self.backend_url = backend_url
+            
+            def run(self):
+                try:
+                    response = requests.get(f"{self.backend_url}/health", timeout=2)
+                    self.finished.emit(response.status_code == 200)
+                except Exception:
+                    self.finished.emit(False)
+        
+        # 创建并启动工作线程
+        worker = HealthCheckWorker(self.ai_client.backend_url)
+        worker.finished.connect(self._on_health_check_finished)
+        worker.start()
+        
+        # 保存worker引用，避免被垃圾回收
+        if not hasattr(self, '_health_check_workers'):
+            self._health_check_workers = []
+        self._health_check_workers.append(worker)
+        
+        # 清理旧的worker引用（保留最近3个）
+        if len(self._health_check_workers) > 3:
+            self._health_check_workers.pop(0)
+    
+    def _on_health_check_finished(self, is_healthy):
+        """后端健康检查完成回调"""
+        if not hasattr(self, 'quota_label'):
+            return
+        
+        if not is_healthy:
+            # 代理服务器未响应，继续显示"正在启动"状态
             self.quota_label.setText("⚠️ AI服务正在启动...")
             self.quota_label.setStyleSheet("color: #ff9800; padding: 5px; font-weight: bold;")
             if hasattr(self, 'generate_btn'):
                 self.generate_btn.setEnabled(False)
+            
+            # 注意：使用代理服务器时，不需要启动本地后端服务
+            # 如果代理服务器不可用，可能是网络问题或服务器暂时不可用
+            
+            # 不停止定时器，继续检查（每5秒检查一次）
             return
 
-        # 后端已启动,更新配额状态
-        self.refresh_quota_status()
+        # 代理服务器已响应,异步更新配额状态
+        self.refresh_quota_status_async()
 
-        # 后端已就绪,停止定时器(节省资源)
-        if hasattr(self, 'ai_status_timer') and self.ai_status_timer.isActive():
-            self.ai_status_timer.stop()
+        # 注意：不在这里停止定时器，等配额检查成功后再停止
+        # 这样可以确保如果代理服务器崩溃，定时器会继续检查
 
     def _update_ai_status_error(self, error_msg):
         """显示AI服务错误状态"""
@@ -186,12 +374,24 @@ class ConfigManager(QMainWindow):
         # 主布局
         layout = QVBoxLayout(central_widget)
 
-        # 创建标签页
+        # 创建标签页(使用懒加载,只在切换到标签页时才创建内容)
         tabs = QTabWidget()
+        
+        # 立即创建外观配置和任务管理标签页(基础功能)
         tabs.addTab(self.create_config_tab(), "外观配置")
         tabs.addTab(self.create_tasks_tab(), "任务管理")
-        tabs.addTab(self.create_theme_tab(), "🎨 主题设置")
-        tabs.addTab(self.create_notification_tab(), "🔔 通知设置")
+        
+        # 延迟创建主题设置和通知设置标签页(避免初始化时阻塞)
+        self.theme_tab_widget = None
+        self.notification_tab_widget = None
+        tabs.addTab(QWidget(), "🎨 主题设置")  # 占位widget
+        tabs.addTab(QWidget(), "🔔 通知设置")  # 占位widget
+        
+        # 连接标签页切换信号,实现懒加载
+        tabs.currentChanged.connect(self.on_tab_changed)
+        # 连接标签页切换信号,控制AI状态定时器
+        tabs.currentChanged.connect(self._on_tab_changed_for_ai_status)
+        self.tabs = tabs  # 保存引用
 
         layout.addWidget(tabs)
 
@@ -210,6 +410,72 @@ class ConfigManager(QMainWindow):
         button_layout.addWidget(cancel_btn)
 
         layout.addLayout(button_layout)
+
+    def on_tab_changed(self, index):
+        """标签页切换时的处理(实现懒加载)"""
+        if index == 2:  # 主题设置标签页
+            if self.theme_tab_widget is None:
+                # 检查主题管理器是否已初始化
+                if self.theme_manager is None:
+                    # 如果还未初始化,先初始化
+                    self._init_theme_manager()
+                    # 等待一小段时间让初始化完成
+                    QTimer.singleShot(100, lambda: self._load_theme_tab())
+                else:
+                    self._load_theme_tab()
+        elif index == 3:  # 通知设置标签页
+            if self.notification_tab_widget is None:
+                self._load_notification_tab()
+    
+    def _load_theme_tab(self):
+        """加载主题设置标签页"""
+        if self.theme_tab_widget is not None:
+            return  # 已经加载过了
+        
+        try:
+            self.theme_tab_widget = self.create_theme_tab()
+            self.tabs.setTabEnabled(2, True)  # 确保标签页可用
+            # 替换占位widget
+            self.tabs.removeTab(2)
+            self.tabs.insertTab(2, self.theme_tab_widget, "🎨 主题设置")
+            self.tabs.setCurrentIndex(2)  # 切换到主题设置标签页
+        except Exception as e:
+            logging.error(f"加载主题设置标签页失败: {e}")
+            # 显示错误提示
+            from PySide6.QtWidgets import QLabel
+            error_widget = QWidget()
+            error_layout = QVBoxLayout(error_widget)
+            error_label = QLabel(f"加载主题设置失败: {e}")
+            error_label.setStyleSheet("color: red; padding: 20px;")
+            error_layout.addWidget(error_label)
+            self.theme_tab_widget = error_widget
+            self.tabs.removeTab(2)
+            self.tabs.insertTab(2, self.theme_tab_widget, "🎨 主题设置")
+    
+    def _load_notification_tab(self):
+        """加载通知设置标签页"""
+        if self.notification_tab_widget is not None:
+            return  # 已经加载过了
+        
+        try:
+            self.notification_tab_widget = self.create_notification_tab()
+            self.tabs.setTabEnabled(3, True)  # 确保标签页可用
+            # 替换占位widget
+            self.tabs.removeTab(3)
+            self.tabs.insertTab(3, self.notification_tab_widget, "🔔 通知设置")
+            self.tabs.setCurrentIndex(3)  # 切换到通知设置标签页
+        except Exception as e:
+            logging.error(f"加载通知设置标签页失败: {e}")
+            # 显示错误提示
+            from PySide6.QtWidgets import QLabel
+            error_widget = QWidget()
+            error_layout = QVBoxLayout(error_widget)
+            error_label = QLabel(f"加载通知设置失败: {e}")
+            error_label.setStyleSheet("color: red; padding: 20px;")
+            error_layout.addWidget(error_label)
+            self.notification_tab_widget = error_widget
+            self.tabs.removeTab(3)
+            self.tabs.insertTab(3, self.notification_tab_widget, "🔔 通知设置")
 
     def create_config_tab(self):
         """创建外观配置标签页"""
@@ -255,7 +521,9 @@ class ConfigManager(QMainWindow):
 
         self.height_spin = QSpinBox()
         self.height_spin.setRange(8, 100)
-        self.height_spin.setValue(self.config.get('bar_height', 20))
+        # 延迟读取配置值，避免配置未加载时出错
+        current_height = self.config.get('bar_height', 20) if self.config else 20
+        self.height_spin.setValue(current_height)
         self.height_spin.setSuffix(" px")
         self.height_spin.setMaximumWidth(80)
         self.height_spin.valueChanged.connect(self.on_height_value_changed)
@@ -265,25 +533,25 @@ class ConfigManager(QMainWindow):
 
         basic_layout.addRow("进度条高度:", height_container)
 
-        # 初始化时更新按钮状态
-        self.update_height_preset_buttons()
+        # 延迟更新按钮状态，避免配置未加载时出错
+        QTimer.singleShot(100, self.update_height_preset_buttons)
 
         # 位置选择
         self.position_combo = QComboBox()
         self.position_combo.addItems(["bottom", "top"])
-        self.position_combo.setCurrentText(self.config.get('position', 'bottom'))
+        self.position_combo.setCurrentText(self.config.get('position', 'bottom') if self.config else 'bottom')
         basic_layout.addRow("屏幕位置:", self.position_combo)
 
         # 显示器索引
         self.screen_spin = QSpinBox()
         self.screen_spin.setRange(0, 10)
-        self.screen_spin.setValue(self.config.get('screen_index', 0))
+        self.screen_spin.setValue(self.config.get('screen_index', 0) if self.config else 0)
         basic_layout.addRow("显示器索引:", self.screen_spin)
 
         # 更新间隔
         self.interval_spin = QSpinBox()
         self.interval_spin.setRange(100, 60000)
-        self.interval_spin.setValue(self.config.get('update_interval', 1000))
+        self.interval_spin.setValue(self.config.get('update_interval', 1000) if self.config else 1000)
         self.interval_spin.setSuffix(" 毫秒")
         basic_layout.addRow("更新间隔:", self.interval_spin)
 
@@ -296,7 +564,8 @@ class ConfigManager(QMainWindow):
 
         # 背景颜色
         bg_color_layout = QHBoxLayout()
-        self.bg_color_input = QLineEdit(self.config.get('background_color', '#505050'))
+        bg_color = self.config.get('background_color', '#505050') if self.config else '#505050'
+        self.bg_color_input = QLineEdit(bg_color)
         self.bg_color_btn = QPushButton("选择颜色")
         self.bg_color_btn.clicked.connect(lambda: self.choose_color(self.bg_color_input))
         self.bg_color_preview = QLabel()
@@ -309,12 +578,13 @@ class ConfigManager(QMainWindow):
         # 背景透明度
         self.opacity_spin = QSpinBox()
         self.opacity_spin.setRange(0, 255)
-        self.opacity_spin.setValue(self.config.get('background_opacity', 180))
+        self.opacity_spin.setValue(self.config.get('background_opacity', 180) if self.config else 180)
         color_layout.addRow("背景透明度:", self.opacity_spin)
 
         # 时间标记颜色
         marker_color_layout = QHBoxLayout()
-        self.marker_color_input = QLineEdit(self.config.get('marker_color', '#FF0000'))
+        marker_color = self.config.get('marker_color', '#FF0000') if self.config else '#FF0000'
+        self.marker_color_input = QLineEdit(marker_color)
         self.marker_color_btn = QPushButton("选择颜色")
         self.marker_color_btn.clicked.connect(lambda: self.choose_color(self.marker_color_input))
         self.marker_color_preview = QLabel()
@@ -327,7 +597,7 @@ class ConfigManager(QMainWindow):
         # 时间标记宽度
         self.marker_width_spin = QSpinBox()
         self.marker_width_spin.setRange(1, 10)
-        self.marker_width_spin.setValue(self.config.get('marker_width', 2))
+        self.marker_width_spin.setValue(self.config.get('marker_width', 2) if self.config else 2)
         self.marker_width_spin.setSuffix(" 像素")
         color_layout.addRow("时间标记宽度:", self.marker_width_spin)
 
@@ -335,7 +605,8 @@ class ConfigManager(QMainWindow):
         marker_type_layout = QHBoxLayout()
         self.marker_type_combo = QComboBox()
         self.marker_type_combo.addItems(["line", "image", "gif"])
-        self.marker_type_combo.setCurrentText(self.config.get('marker_type', 'line'))
+        marker_type = self.config.get('marker_type', 'line') if self.config else 'line'
+        self.marker_type_combo.setCurrentText(marker_type)
         self.marker_type_combo.currentTextChanged.connect(self.on_marker_type_changed)
         marker_type_layout.addWidget(self.marker_type_combo)
 
@@ -348,7 +619,8 @@ class ConfigManager(QMainWindow):
 
         # 标记图片路径
         marker_image_layout = QHBoxLayout()
-        self.marker_image_input = QLineEdit(self.config.get('marker_image_path', ''))
+        marker_image_path = self.config.get('marker_image_path', '') if self.config else ''
+        self.marker_image_input = QLineEdit(marker_image_path)
         self.marker_image_input.setPlaceholderText("选择图片文件 (JPG/PNG/GIF/WebP)")
         marker_image_layout.addWidget(self.marker_image_input)
 
@@ -394,7 +666,8 @@ class ConfigManager(QMainWindow):
 
         self.marker_size_spin = QSpinBox()
         self.marker_size_spin.setRange(20, 200)
-        self.marker_size_spin.setValue(self.config.get('marker_size', 50))
+        marker_size = self.config.get('marker_size', 50) if self.config else 50
+        self.marker_size_spin.setValue(marker_size)
         self.marker_size_spin.setSuffix(" px")
         self.marker_size_spin.setMaximumWidth(80)
         self.marker_size_spin.valueChanged.connect(self.on_marker_size_value_changed)
@@ -404,8 +677,8 @@ class ConfigManager(QMainWindow):
 
         color_layout.addRow("标记图片大小:", marker_size_container)
 
-        # 初始化时更新按钮状态
-        self.update_marker_size_preset_buttons()
+        # 延迟更新按钮状态
+        # 将在 _load_config_and_tasks 中更新
 
         # 标记图片 X 轴偏移
         self.marker_x_offset_spin = QSpinBox()
@@ -546,8 +819,15 @@ class ConfigManager(QMainWindow):
         ai_group.setLayout(ai_layout)
         top_layout.addWidget(ai_group)
 
-        # 初始化时加载配额状态
-        self.refresh_quota_status()
+        # 延迟加载配额状态，避免初始化时阻塞
+        QTimer.singleShot(300, self.refresh_quota_status_async)
+        
+        # 立即显示初始状态（不需要等待）
+        if hasattr(self, 'quota_label'):
+            self.quota_label.setText("⏳ AI服务正在初始化...")
+            self.quota_label.setStyleSheet("color: #ff9800; padding: 5px; font-weight: bold;")
+        if hasattr(self, 'generate_btn'):
+            self.generate_btn.setEnabled(False)
 
         # 说明标签
         info_label = QLabel("双击表格单元格可以编辑任务内容")
@@ -615,7 +895,7 @@ class ConfigManager(QMainWindow):
 
         layout.addLayout(top_layout)
 
-        # 可视化时间轴编辑器
+        # 可视化时间轴编辑器（延迟创建，避免初始化时阻塞）
         timeline_group = QGroupBox("🎨 可视化时间轴编辑器")
         timeline_layout = QVBoxLayout()
 
@@ -623,12 +903,19 @@ class ConfigManager(QMainWindow):
         timeline_hint.setStyleSheet("color: #FFD700; font-style: italic; padding: 5px;")
         timeline_layout.addWidget(timeline_hint)
 
-        self.timeline_editor = TimelineEditor()
-        self.timeline_editor.task_time_changed.connect(self.on_timeline_task_changed)
-        timeline_layout.addWidget(self.timeline_editor)
+        # 创建占位符，延迟初始化时间轴编辑器
+        timeline_placeholder = QWidget()
+        timeline_placeholder.setMinimumHeight(100)
+        timeline_placeholder.setStyleSheet("background-color: #f5f5f5; border: 1px dashed #ccc;")
+        timeline_layout.addWidget(timeline_placeholder)
+        
+        self.timeline_editor = None  # 延迟初始化
 
         timeline_group.setLayout(timeline_layout)
         layout.addWidget(timeline_group)
+        
+        # 延迟创建时间轴编辑器
+        QTimer.singleShot(150, lambda: self._init_timeline_editor(timeline_layout, timeline_placeholder))
 
         # 任务表格
         self.tasks_table = QTableWidget()
@@ -639,7 +926,8 @@ class ConfigManager(QMainWindow):
         # 监听表格项的变化,实时同步到时间轴
         self.tasks_table.itemChanged.connect(self.on_table_item_changed)
 
-        self.load_tasks_to_table()
+        # 延迟加载任务到表格，避免初始化时阻塞UI
+        QTimer.singleShot(100, self.load_tasks_to_table)
 
         layout.addWidget(self.tasks_table)
 
@@ -686,9 +974,19 @@ class ConfigManager(QMainWindow):
         preset_group = QGroupBox("预设主题")
         preset_layout = QFormLayout()
 
-        # 获取所有预设主题
-        all_themes = self.theme_manager.get_all_themes()
-        preset_themes = all_themes.get('preset_themes', {})
+        # 获取所有预设主题(检查主题管理器是否已初始化)
+        if not self.theme_manager:
+            # 如果主题管理器还未初始化,尝试初始化
+            self._init_theme_manager()
+            # 如果仍然失败,使用默认主题
+            if not self.theme_manager:
+                preset_themes = ThemeManager.DEFAULT_PRESET_THEMES.copy()
+            else:
+                all_themes = self.theme_manager.get_all_themes()
+                preset_themes = all_themes.get('preset_themes', {})
+        else:
+            all_themes = self.theme_manager.get_all_themes()
+            preset_themes = all_themes.get('preset_themes', {})
 
         # 当前选中的主题ID（从config中获取）
         theme_config = self.config.get('theme', {})
@@ -1042,9 +1340,14 @@ class ConfigManager(QMainWindow):
             if theme_id:
                 self.selected_theme_id = theme_id
                 
-                # 更新预览
-                all_themes = self.theme_manager.get_all_themes()
-                preset_themes = all_themes.get('preset_themes', {})
+                # 更新预览(检查主题管理器是否已初始化)
+                if not self.theme_manager:
+                    # 如果未初始化,使用默认主题
+                    preset_themes = ThemeManager.DEFAULT_PRESET_THEMES.copy()
+                else:
+                    all_themes = self.theme_manager.get_all_themes()
+                    preset_themes = all_themes.get('preset_themes', {})
+                
                 theme_data = preset_themes.get(theme_id, {})
                 
                 # 更新背景色预览
@@ -1070,6 +1373,9 @@ class ConfigManager(QMainWindow):
 
     def update_preview_from_current_theme(self):
         """从当前主题更新预览"""
+        if not self.theme_manager:
+            return
+        
         theme = self.theme_manager.get_current_theme()
         if not theme:
             return
@@ -1095,6 +1401,9 @@ class ConfigManager(QMainWindow):
         if not self.selected_theme_id:
             return
         
+        if not self.theme_manager:
+            return  # 主题管理器未初始化，静默失败
+        
         # 应用预设主题
         success = self.theme_manager.apply_preset_theme(self.selected_theme_id)
         if success:
@@ -1111,6 +1420,10 @@ class ConfigManager(QMainWindow):
 
     def apply_selected_theme(self):
         """应用选中的主题（显示提示）"""
+        if not self.theme_manager:
+            QMessageBox.warning(self, "错误", "主题管理器未初始化，请稍后再试")
+            return
+        
         # 从下拉框获取当前选中的主题ID
         if hasattr(self, 'theme_combo'):
             index = self.theme_combo.currentIndex()
@@ -1135,6 +1448,10 @@ class ConfigManager(QMainWindow):
 
     def apply_theme_colors_to_tasks(self):
         """应用主题配色到任务"""
+        if not self.theme_manager:
+            QMessageBox.warning(self, "错误", "主题管理器未初始化，请稍后再试")
+            return
+        
         theme = self.theme_manager.get_current_theme()
         if not theme:
             QMessageBox.warning(self, "提示", "请先选择一个主题")
@@ -1162,8 +1479,8 @@ class ConfigManager(QMainWindow):
             # 更新任务表格和编辑器
             if hasattr(self, 'load_tasks_to_table'):
                 self.load_tasks_to_table()
-            if hasattr(self, 'timeline_editor'):
-                self.timeline_editor.set_tasks(self.tasks)
+            if hasattr(self, 'timeline_editor') and self.timeline_editor:
+                QTimer.singleShot(50, lambda: self.timeline_editor.set_tasks(self.tasks) if self.timeline_editor else None)
             
             QMessageBox.information(self, "成功", "已应用主题配色到任务")
     
@@ -1184,7 +1501,10 @@ class ConfigManager(QMainWindow):
             return
 
         # 检查后端服务是否运行
-        if not hasattr(self, 'ai_client') or not self.ai_client or not self.ai_client.check_backend_health():
+        # 异步检查后端服务状态（不阻塞UI）
+        if not hasattr(self, 'ai_client') or not self.ai_client:
+            # 如果AI客户端未初始化，直接返回，不显示推荐
+            return
             reply = QMessageBox.question(
                 self,
                 "AI服务未启动",
@@ -1381,6 +1701,10 @@ class ConfigManager(QMainWindow):
         }
         
         # 应用主题
+        if not self.theme_manager:
+            QMessageBox.warning(self, "错误", "主题管理器未初始化，请稍后再试")
+            return
+        
         success = self.theme_manager.apply_custom_theme(theme_config, theme_id)
         if success:
             QMessageBox.information(self, "成功", f"已应用主题: {theme_config['name']}")
@@ -1456,6 +1780,10 @@ class ConfigManager(QMainWindow):
         }
         
         # 保存并应用主题
+        if not self.theme_manager:
+            QMessageBox.warning(self, "错误", "主题管理器未初始化，请稍后再试")
+            return
+        
         success = self.theme_manager.apply_custom_theme(full_theme_config, theme_id)
         if success:
             QMessageBox.information(self, "成功", f"已生成并应用主题: {full_theme_config['name']}")
@@ -1675,8 +2003,16 @@ class ConfigManager(QMainWindow):
         """表格项改变时的处理(任务名称修改)"""
         # 只处理任务名称列(第2列)的修改
         if item and item.column() == 2:
-            # 刷新时间轴,同步任务名称
-            self.refresh_timeline_from_table()
+            # 使用防抖，避免频繁刷新时间轴
+            if not hasattr(self, '_table_refresh_timer'):
+                self._table_refresh_timer = QTimer()
+                self._table_refresh_timer.setSingleShot(True)
+                self._table_refresh_timer.timeout.connect(self.refresh_timeline_from_table)
+            
+            # 重置定时器
+            if self._table_refresh_timer.isActive():
+                self._table_refresh_timer.stop()
+            self._table_refresh_timer.start(300)  # 300ms防抖
 
     def refresh_timeline_from_table(self):
         """从表格刷新时间轴"""
@@ -1707,15 +2043,21 @@ class ConfigManager(QMainWindow):
                 }
                 tasks.append(task)
 
-        self.timeline_editor.set_tasks(tasks)
+        # 刷新时间轴编辑器（延迟执行，避免阻塞）
+        if hasattr(self, 'timeline_editor') and self.timeline_editor:
+            QTimer.singleShot(50, lambda: self.timeline_editor.set_tasks(tasks) if self.timeline_editor else None)
 
     def load_tasks_to_table(self):
-        """加载任务到表格"""
+        """加载任务到表格（优化性能，分批创建UI组件）"""
         # 暂时阻塞itemChanged信号,避免在加载时触发同步
         self.tasks_table.blockSignals(True)
+        
+        # 禁用UI更新，加快批量操作
+        self.tasks_table.setUpdatesEnabled(False)
 
         self.tasks_table.setRowCount(len(self.tasks))
 
+        # 批量创建UI组件，使用延迟刷新避免阻塞
         for row, task in enumerate(self.tasks):
             # 开始时间
             start_time = QTimeEdit()
@@ -1759,10 +2101,19 @@ class ConfigManager(QMainWindow):
             color_preview.setFixedSize(30, 20)
             color_preview.setStyleSheet(f"background-color: {task['color']}; border: 1px solid #ccc;")
 
-            # 更新颜色预览并同步到时间轴
+            # 更新颜色预览并同步到时间轴（使用防抖，避免频繁刷新）
             def on_color_changed(text, prev_label):
                 prev_label.setStyleSheet(f"background-color: {text}; border: 1px solid #ccc;")
-                self.refresh_timeline_from_table()
+                # 使用防抖，避免频繁刷新时间轴
+                if not hasattr(self, '_timeline_refresh_timer'):
+                    self._timeline_refresh_timer = QTimer()
+                    self._timeline_refresh_timer.setSingleShot(True)
+                    self._timeline_refresh_timer.timeout.connect(self.refresh_timeline_from_table)
+                
+                # 重置定时器
+                if self._timeline_refresh_timer.isActive():
+                    self._timeline_refresh_timer.stop()
+                self._timeline_refresh_timer.start(300)  # 300ms防抖
 
             color_input.textChanged.connect(lambda text, prev=color_preview: on_color_changed(text, prev))
 
@@ -1778,13 +2129,18 @@ class ConfigManager(QMainWindow):
             delete_btn.setStyleSheet("QPushButton { background-color: #f44336; color: white; }")
             self.tasks_table.setCellWidget(row, 4, delete_btn)
 
-        self.tasks_table.resizeColumnsToContents()
+        # 恢复UI更新
+        self.tasks_table.setUpdatesEnabled(True)
+        
+        # 延迟调整列宽，避免阻塞
+        QTimer.singleShot(100, lambda: self.tasks_table.resizeColumnsToContents() if hasattr(self, 'tasks_table') else None)
 
         # 恢复itemChanged信号
         self.tasks_table.blockSignals(False)
 
-        # 刷新时间轴编辑器
-        self.timeline_editor.set_tasks(self.tasks)
+        # 延迟刷新时间轴编辑器，避免阻塞UI
+        if hasattr(self, 'timeline_editor') and self.timeline_editor:
+            QTimer.singleShot(100, lambda: self.timeline_editor.set_tasks(self.tasks) if self.timeline_editor else None)
 
     def add_task(self):
         """添加新任务,自动接续上一个任务的结束时间"""
@@ -1890,8 +2246,9 @@ class ConfigManager(QMainWindow):
 
         if reply == QMessageBox.Yes:
             self.tasks_table.setRowCount(0)
-            # 刷新时间轴
-            self.timeline_editor.set_tasks([])
+            # 刷新时间轴（延迟执行）
+            if hasattr(self, 'timeline_editor') and self.timeline_editor:
+                QTimer.singleShot(50, lambda: self.timeline_editor.set_tasks([]) if self.timeline_editor else None)
             QMessageBox.information(self, "提示", "所有任务已清空\n\n记得点击【保存所有设置】按钮来保存更改")
 
     def load_default_template(self):
@@ -2027,8 +2384,9 @@ class ConfigManager(QMainWindow):
                 self.tasks = template_tasks
                 self.load_tasks_to_table()
 
-                # 刷新时间轴
-                self.timeline_editor.set_tasks(template_tasks)
+                # 刷新时间轴（延迟执行）
+                if hasattr(self, 'timeline_editor') and self.timeline_editor:
+                    QTimer.singleShot(50, lambda: self.timeline_editor.set_tasks(template_tasks) if self.timeline_editor else None)
 
                 QMessageBox.information(
                     self,
@@ -2074,8 +2432,9 @@ class ConfigManager(QMainWindow):
                 self.tasks = template_tasks
                 self.load_tasks_to_table()
 
-                # 刷新时间轴
-                self.timeline_editor.set_tasks(template_tasks)
+                # 刷新时间轴（延迟执行）
+                if hasattr(self, 'timeline_editor') and self.timeline_editor:
+                    QTimer.singleShot(50, lambda: self.timeline_editor.set_tasks(template_tasks) if self.timeline_editor else None)
 
                 QMessageBox.information(
                     self,
@@ -2299,17 +2658,29 @@ class ConfigManager(QMainWindow):
         """保存所有设置"""
         try:
             # 收集通知配置
-            # 收集开始前提醒时间
-            before_start_minutes = [
-                minutes for minutes, checkbox in self.notify_before_start_checks.items()
-                if checkbox.isChecked()
-            ]
+            # 收集开始前提醒时间（安全检查，避免属性不存在）
+            before_start_minutes = []
+            if hasattr(self, 'notify_before_start_checks'):
+                before_start_minutes = [
+                    minutes for minutes, checkbox in self.notify_before_start_checks.items()
+                    if checkbox.isChecked()
+                ]
+            else:
+                # 如果属性不存在，使用配置中的默认值
+                notification_config = self.config.get('notification', {})
+                before_start_minutes = notification_config.get('before_start_minutes', [10, 5])
 
-            # 收集结束前提醒时间
-            before_end_minutes = [
-                minutes for minutes, checkbox in self.notify_before_end_checks.items()
-                if checkbox.isChecked()
-            ]
+            # 收集结束前提醒时间（安全检查，避免属性不存在）
+            before_end_minutes = []
+            if hasattr(self, 'notify_before_end_checks'):
+                before_end_minutes = [
+                    minutes for minutes, checkbox in self.notify_before_end_checks.items()
+                    if checkbox.isChecked()
+                ]
+            else:
+                # 如果属性不存在，使用配置中的默认值
+                notification_config = self.config.get('notification', {})
+                before_end_minutes = notification_config.get('before_end_minutes', [5])
 
             # 保存配置
             config = {
@@ -2329,17 +2700,17 @@ class ConfigManager(QMainWindow):
                 "enable_shadow": self.shadow_check.isChecked(),
                 "corner_radius": self.radius_spin.value(),
                 "notification": {
-                    "enabled": self.notify_enabled_check.isChecked(),
+                    "enabled": (getattr(self, 'notify_enabled_check', None) and self.notify_enabled_check.isChecked()) if hasattr(self, 'notify_enabled_check') else self.config.get('notification', {}).get('enabled', True),
                     "before_start_minutes": before_start_minutes,
-                    "on_start": self.notify_on_start_check.isChecked(),
+                    "on_start": (getattr(self, 'notify_on_start_check', None) and self.notify_on_start_check.isChecked()) if hasattr(self, 'notify_on_start_check') else self.config.get('notification', {}).get('on_start', True),
                     "before_end_minutes": before_end_minutes,
-                    "on_end": self.notify_on_end_check.isChecked(),
-                    "sound_enabled": self.notify_sound_check.isChecked(),
+                    "on_end": (getattr(self, 'notify_on_end_check', None) and self.notify_on_end_check.isChecked()) if hasattr(self, 'notify_on_end_check') else self.config.get('notification', {}).get('on_end', False),
+                    "sound_enabled": (getattr(self, 'notify_sound_check', None) and self.notify_sound_check.isChecked()) if hasattr(self, 'notify_sound_check') else self.config.get('notification', {}).get('sound_enabled', True),
                     "sound_file": "",
                     "quiet_hours": {
-                        "enabled": self.quiet_enabled_check.isChecked(),
-                        "start": self.quiet_start_time.time().toString("HH:mm"),
-                        "end": self.quiet_end_time.time().toString("HH:mm")
+                        "enabled": (getattr(self, 'quiet_enabled_check', None) and self.quiet_enabled_check.isChecked()) if hasattr(self, 'quiet_enabled_check') else self.config.get('notification', {}).get('quiet_hours', {}).get('enabled', False),
+                        "start": self.quiet_start_time.time().toString("HH:mm") if hasattr(self, 'quiet_start_time') else self.config.get('notification', {}).get('quiet_hours', {}).get('start', '22:00'),
+                        "end": self.quiet_end_time.time().toString("HH:mm") if hasattr(self, 'quiet_end_time') else self.config.get('notification', {}).get('quiet_hours', {}).get('end', '08:00')
                     }
                 }
             }
@@ -2408,24 +2779,75 @@ class ConfigManager(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "错误", f"保存失败:\n{str(e)}")
 
+    def _on_tab_changed_for_ai_status(self, index):
+        """标签页切换时，控制AI状态定时器"""
+        self._start_ai_status_timer_if_needed()
+    
     def refresh_quota_status(self):
-        """刷新配额状态"""
+        """刷新配额状态（同步版本，用于按钮点击）"""
+        self.refresh_quota_status_async()
+    
+    def refresh_quota_status_async(self):
+        """异步刷新配额状态（不阻塞UI）"""
         # 检查AI客户端是否已初始化
         if not self.ai_client:
-            self.quota_label.setText("⏳ AI服务正在初始化...")
-            self.quota_label.setStyleSheet("color: #ff9800; padding: 5px; font-weight: bold;")
-            self.generate_btn.setEnabled(False)
+            if hasattr(self, 'quota_label'):
+                self.quota_label.setText("⏳ AI服务正在初始化...")
+                self.quota_label.setStyleSheet("color: #ff9800; padding: 5px; font-weight: bold;")
+            if hasattr(self, 'generate_btn'):
+                self.generate_btn.setEnabled(False)
             return
 
-        # 先检查后端服务器是否运行
-        if not self.ai_client.check_backend_health():
-            self.quota_label.setText("❌ AI服务未启动")
-            self.quota_label.setStyleSheet("color: #f44336; padding: 5px; font-weight: bold;")
-            self.generate_btn.setEnabled(False)
+        # 异步获取配额状态
+        class QuotaCheckWorker(QThread):
+            finished = Signal(object)
+            
+            def __init__(self, backend_url, user_id, user_tier):
+                super().__init__()
+                self.backend_url = backend_url
+                self.user_id = user_id
+                self.user_tier = user_tier
+            
+            def run(self):
+                try:
+                    response = requests.get(
+                        f"{self.backend_url}/api/quota-status",
+                        params={
+                            "user_id": self.user_id,
+                            "user_tier": self.user_tier
+                        },
+                        timeout=5  # 缩短超时时间
+                    )
+                    if response.status_code == 200:
+                        self.finished.emit(response.json())
+                    else:
+                        self.finished.emit(None)
+                except Exception:
+                    self.finished.emit(None)
+        
+        # 创建并启动工作线程
+        worker = QuotaCheckWorker(
+            self.ai_client.backend_url,
+            self.ai_client.user_id,
+            self.ai_client.user_tier
+        )
+        worker.finished.connect(self._on_quota_status_finished)
+        worker.start()
+        
+        # 保存worker引用，避免被垃圾回收
+        if not hasattr(self, '_quota_check_workers'):
+            self._quota_check_workers = []
+        self._quota_check_workers.append(worker)
+        
+        # 清理旧的worker引用（保留最近3个）
+        if len(self._quota_check_workers) > 3:
+            self._quota_check_workers.pop(0)
+    
+    def _on_quota_status_finished(self, quota_info):
+        """配额状态检查完成回调"""
+        if not hasattr(self, 'quota_label'):
             return
-
-        # 获取配额状态
-        quota_info = self.ai_client.get_quota_status()
+        
         if quota_info:
             remaining = quota_info.get('remaining', {})
             daily_plan_remaining = remaining.get('daily_plan', 0)
@@ -2433,15 +2855,31 @@ class ConfigManager(QMainWindow):
             if daily_plan_remaining > 0:
                 self.quota_label.setText(f"✓ 今日剩余: {daily_plan_remaining} 次规划")
                 self.quota_label.setStyleSheet("color: #4CAF50; padding: 5px; font-weight: bold;")
-                self.generate_btn.setEnabled(True)
+                if hasattr(self, 'generate_btn'):
+                    self.generate_btn.setEnabled(True)
             else:
                 self.quota_label.setText("⚠️ 今日配额已用完")
                 self.quota_label.setStyleSheet("color: #FF9800; padding: 5px; font-weight: bold;")
-                self.generate_btn.setEnabled(False)
+                if hasattr(self, 'generate_btn'):
+                    self.generate_btn.setEnabled(False)
+            
+            # 配额检查成功，停止定时器（节省资源）
+            if hasattr(self, 'ai_status_timer') and self.ai_status_timer:
+                if self.ai_status_timer.isActive():
+                    self.ai_status_timer.stop()
+                    logging.info("AI状态定时器已停止（配额检查成功）")
         else:
+            # 配额检查失败，可能是后端服务崩溃或接口有问题
             self.quota_label.setText("⚠️ 无法获取配额状态")
             self.quota_label.setStyleSheet("color: #999; padding: 5px;")
-            self.generate_btn.setEnabled(True)  # 仍然允许尝试
+            if hasattr(self, 'generate_btn'):
+                self.generate_btn.setEnabled(True)  # 仍然允许尝试
+            
+            # 配额检查失败，可能是代理服务器暂时不可用或网络问题
+            # 使用代理服务器时，不需要检查本地后端服务
+            # 延迟后重试配额检查
+            logging.warning("配额检查失败，可能是代理服务器暂时不可用，3秒后重试...")
+            QTimer.singleShot(3000, self.refresh_quota_status_async)
 
     def on_ai_generate_clicked(self):
         """处理AI生成按钮点击"""
@@ -2464,8 +2902,9 @@ class ConfigManager(QMainWindow):
             )
             return
 
-        # 检查AI客户端是否已初始化
-        if not self.ai_client:
+        # 检查后端服务器（使用异步检查，但这里是按钮点击，需要快速反馈）
+        # 先尝试快速检查，如果失败则显示提示
+        if not hasattr(self, 'ai_client') or not self.ai_client:
             QMessageBox.warning(
                 self,
                 "AI服务正在初始化",
@@ -2473,9 +2912,22 @@ class ConfigManager(QMainWindow):
                 QMessageBox.Ok
             )
             return
-
-        # 检查后端服务器
-        if not self.ai_client.check_backend_health():
+        
+        # 对于按钮点击，仍然使用同步检查（但已在后台线程中）
+        # 如果后端未启动，给出提示并返回
+        # 注意：这里不阻塞UI，因为后端服务应该已经在后台启动
+        try:
+            import requests
+            response = requests.get(f"{self.ai_client.backend_url}/health", timeout=1)
+            if response.status_code != 200:
+                QMessageBox.critical(
+                    self,
+                    "AI服务未启动",
+                    "无法连接到AI后端服务器!\n\nAI服务正在后台启动,请稍候片刻再试...",
+                    QMessageBox.Ok
+                )
+                return
+        except Exception:
             QMessageBox.critical(
                 self,
                 "AI服务未启动",
@@ -2571,6 +3023,39 @@ class ConfigManager(QMainWindow):
             # 恢复按钮状态
             self.generate_btn.setEnabled(True)
             self.generate_btn.setText("✨ 智能生成任务")
+
+    def closeEvent(self, event):
+        """窗口关闭事件，清理所有资源"""
+        # 停止AI状态定时器
+        if hasattr(self, 'ai_status_timer') and self.ai_status_timer:
+            if self.ai_status_timer.isActive():
+                self.ai_status_timer.stop()
+            self.ai_status_timer = None
+        
+        # 取消正在运行的AI工作线程
+        if hasattr(self, 'ai_worker') and self.ai_worker:
+            if self.ai_worker.isRunning():
+                self.ai_worker.terminate()
+                self.ai_worker.wait(1000)  # 等待最多1秒
+            self.ai_worker = None
+        
+        # 取消注册主题管理器组件（如果已注册）
+        if hasattr(self, 'theme_manager') and self.theme_manager:
+            try:
+                self.theme_manager.unregister_ui_component(self)
+            except Exception:
+                pass
+        
+        # 停止AI后端服务（如果配置管理器启动的）
+        if hasattr(self, 'backend_manager') and self.backend_manager:
+            try:
+                self.backend_manager.stop_backend()
+            except Exception:
+                pass
+        
+        # 接受关闭事件
+        event.accept()
+        logging.info("配置管理器已关闭，资源已清理")
 
 
 def main():

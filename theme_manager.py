@@ -197,6 +197,10 @@ class ThemeManager(QObject):
         # UI组件注册列表
         self._registered_components = []
         
+        # 主题数据缓存
+        self._themes_cache = None
+        self._themes_cache_timestamp = None
+        
         # 初始化主题系统
         self._initialize_themes()
         
@@ -253,6 +257,10 @@ class ThemeManager(QObject):
             # 保存更新后的文件
             with open(self.themes_file, 'w', encoding='utf-8') as f:
                 json.dump(themes_data, f, indent=4, ensure_ascii=False)
+            
+            # 清除缓存，强制下次重新加载
+            self._themes_cache = None
+            self._themes_cache_timestamp = None
             
         except Exception as e:
             self.logger.error(f"合并预设主题失败: {e}")
@@ -450,6 +458,10 @@ class ThemeManager(QObject):
             with open(self.themes_file, 'w', encoding='utf-8') as f:
                 json.dump(themes_data, f, indent=4, ensure_ascii=False)
             
+            # 清除缓存，强制下次重新加载
+            self._themes_cache = None
+            self._themes_cache_timestamp = None
+            
             # 应用主题
             self.current_theme_config = theme_config.copy()
             
@@ -477,14 +489,39 @@ class ThemeManager(QObject):
     
     def get_all_themes(self) -> dict:
         """
-        获取所有主题
+        获取所有主题(带缓存机制)
         
         返回:
         - 包含所有主题的字典
         """
+        # 检查缓存是否有效(文件修改时间)
+        try:
+            if self.themes_file.exists():
+                current_mtime = self.themes_file.stat().st_mtime
+                if (self._themes_cache is not None and 
+                    self._themes_cache_timestamp is not None and
+                    self._themes_cache_timestamp == current_mtime):
+                    # 缓存有效，直接返回
+                    return self._themes_cache
+        except Exception as e:
+            self.logger.debug(f"检查缓存时出错: {e}")
+        
+        # 缓存无效或不存在，重新加载
         try:
             with open(self.themes_file, 'r', encoding='utf-8') as f:
-                return json.load(f)
+                themes_data = json.load(f)
+            
+            # 更新缓存
+            try:
+                if self.themes_file.exists():
+                    self._themes_cache_timestamp = self.themes_file.stat().st_mtime
+                else:
+                    self._themes_cache_timestamp = None
+            except Exception:
+                self._themes_cache_timestamp = None
+            
+            self._themes_cache = themes_data
+            return themes_data
         except Exception as e:
             self.logger.error(f"加载所有主题失败: {e}")
             return {
@@ -505,6 +542,18 @@ class ThemeManager(QObject):
             self._registered_components.append(component)
             self.logger.debug(f"已注册UI组件: {type(component).__name__}")
             
+            # 连接主题变更信号（确保不重复连接）
+            # 使用disconnect确保不会重复连接
+            try:
+                self.theme_changed.disconnect(component.apply_theme)
+            except (TypeError, RuntimeError):
+                # 如果没有连接过，disconnect会抛出异常，这是正常的
+                pass
+            
+            # 连接信号
+            if hasattr(component, 'apply_theme'):
+                self.theme_changed.connect(component.apply_theme)
+            
             # 立即应用当前主题（仅在组件已就绪时）
             if apply_immediately and hasattr(component, 'apply_theme'):
                 try:
@@ -516,6 +565,15 @@ class ThemeManager(QObject):
         """取消注册UI组件"""
         if component in self._registered_components:
             self._registered_components.remove(component)
+            
+            # 断开信号连接
+            if hasattr(component, 'apply_theme'):
+                try:
+                    self.theme_changed.disconnect(component.apply_theme)
+                except (TypeError, RuntimeError):
+                    # 如果没有连接过，disconnect会抛出异常，这是正常的
+                    pass
+            
             self.logger.debug(f"已取消注册UI组件: {type(component).__name__}")
     
     def detect_system_theme(self) -> str:
