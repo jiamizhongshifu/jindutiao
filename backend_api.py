@@ -6,6 +6,7 @@ PyDayBar AI Backend API Server
 import os
 import sys
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -20,6 +21,15 @@ if sys.platform == 'win32':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
+# 初始化日志
+logger = logging.getLogger("pydaybar.backend")
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+logger.setLevel(logging.INFO)
+
 # 加载环境变量
 # 优先级：1. 环境变量PYDAYBAR_ENV_FILE指定的路径 2. 当前目录 3. 父目录
 env_file_path = None
@@ -27,9 +37,9 @@ if os.getenv('PYDAYBAR_ENV_FILE'):
     env_file_path = Path(os.getenv('PYDAYBAR_ENV_FILE'))
     if env_file_path.exists():
         load_dotenv(dotenv_path=env_file_path)
-        print(f"[INFO] 从环境变量指定的路径加载.env文件: {env_file_path}")
+        logger.info("从环境变量指定的路径加载.env文件: %s", env_file_path)
     else:
-        print(f"[WARNING] 环境变量指定的.env文件不存在: {env_file_path}")
+        logger.warning("环境变量指定的.env文件不存在: %s", env_file_path)
         env_file_path = None
 
 if not env_file_path:
@@ -37,20 +47,20 @@ if not env_file_path:
     current_env = Path('.env')
     if current_env.exists():
         load_dotenv(dotenv_path=current_env)
-        print(f"[INFO] 从当前目录加载.env文件: {current_env.absolute()}")
+        logger.info("从当前目录加载.env文件: %s", current_env.absolute())
     else:
         # 尝试父目录（开发环境）
         parent_env = Path('..') / '.env'
         if parent_env.exists():
             load_dotenv(dotenv_path=parent_env)
-            print(f"[INFO] 从父目录加载.env文件: {parent_env.absolute()}")
+            logger.info("从父目录加载.env文件: %s", parent_env.absolute())
         else:
             # 最后尝试默认行为（从当前目录加载，如果存在）
             load_dotenv()
             if Path('.env').exists():
-                print(f"[INFO] 使用默认方式加载.env文件: {Path('.env').absolute()}")
+                logger.info("使用默认方式加载.env文件: %s", Path('.env').absolute())
             else:
-                print("[WARNING] 未找到.env文件，尝试从环境变量加载")
+                logger.warning("未找到.env文件，尝试从环境变量加载")
 
 # 使用API密钥管理器获取密钥（优先级：用户密钥 > 默认密钥）
 try:
@@ -61,28 +71,28 @@ try:
     
     if TUZI_API_KEY:
         if key_source == 'user':
-            print(f"[INFO] 使用用户自定义API密钥")
+            logger.info("使用用户自定义API密钥")
         elif key_source == 'default':
-            print(f"[INFO] 使用内置默认API密钥（免费额度）")
+            logger.info("使用内置默认API密钥（免费额度）")
     else:
-        print("[WARNING] API密钥管理器未找到密钥，尝试从环境变量加载")
+        logger.warning("API密钥管理器未找到密钥，尝试从环境变量加载")
         TUZI_API_KEY = os.getenv("TUZI_API_KEY")
 except ImportError:
     # 如果api_key_manager模块不存在（向后兼容），使用原有逻辑
-    print("[INFO] API密钥管理器模块未找到，使用传统方式加载")
+    logger.info("API密钥管理器模块未找到，使用传统方式加载")
     TUZI_API_KEY = os.getenv("TUZI_API_KEY")
 
 TUZI_BASE_URL = os.getenv("TUZI_BASE_URL", "https://api.tu-zi.com/v1")
 
 if not TUZI_API_KEY:
     error_msg = "未找到TUZI_API_KEY环境变量,请在.env文件中配置"
-    print(f"[ERROR] {error_msg}")
-    print(f"[ERROR] 当前工作目录: {os.getcwd()}")
-    print(f"[ERROR] 尝试的.env路径:")
+    logger.error(error_msg)
+    logger.error("当前工作目录: %s", os.getcwd())
+    logger.error("尝试的.env路径:")
     if os.getenv('PYDAYBAR_ENV_FILE'):
-        print(f"[ERROR]   1. {os.getenv('PYDAYBAR_ENV_FILE')}")
-    print(f"[ERROR]   2. {Path('.env').absolute()}")
-    print(f"[ERROR]   3. {Path('..') / '.env'}")
+        logger.error("  1. %s", os.getenv('PYDAYBAR_ENV_FILE'))
+    logger.error("  2. %s", Path('.env').absolute())
+    logger.error("  3. %s", Path('..') / '.env')
     raise ValueError(error_msg)
 
 # 初始化Flask应用
@@ -160,13 +170,23 @@ def plan_tasks():
     user_input = data.get("input", "")
     user_tier = data.get("user_tier", "free")
 
+    logger.info("收到 /api/plan-tasks 请求 user_id=%s tier=%s", user_id, user_tier)
+    if user_input:
+        logger.info("任务规划输入摘要: %s", (user_input[:80] + "...") if len(user_input) > 80 else user_input)
+    else:
+        logger.info("任务规划输入为空")
+
     # 检查配额
     allowed, quota_info = check_quota(user_id, "daily_plan", user_tier)
     if not allowed:
+        logger.warning("用户 %s 的任务规划配额已用尽 (%s/%s)", user_id, quota_info.get("used"), quota_info.get("quota"))
         return jsonify(quota_info), 403
 
     # 使用JSON输出模式(兔子API的GPT-5)
     try:
+        logger.info("调用 TUZI API 进行任务规划, 模型=gpt-5")
+        logger.info("调用 TUZI API 生成主题推荐, 模型=gpt-5")
+        logger.info("调用 TUZI API 生成主题推荐, 模型=gpt-5")
         response = tuzi_client.chat.completions.create(
             model="gpt-5",
             messages=[
@@ -193,6 +213,10 @@ def plan_tasks():
         )
 
         content = response.choices[0].message.content.strip()
+        logger.info("主题生成原始响应长度: %s", len(content))
+        logger.info("主题推荐原始响应长度: %s", len(content))
+        logger.info("主题推荐原始响应长度: %s", len(content))
+        logger.info("任务规划原始响应长度: %s", len(content))
 
         # 尝试从markdown代码块中提取JSON
         if content.startswith("```"):
@@ -206,6 +230,7 @@ def plan_tasks():
             tasks = result.get("tasks", [])
 
             if not tasks:
+                logger.warning("任务规划响应未包含任何任务, 原始长度=%s", len(content))
                 return jsonify({
                     "success": False,
                     "error": "未生成任何任务",
@@ -220,6 +245,7 @@ def plan_tasks():
             for i, task in enumerate(tasks):
                 task["color"] = color_palette[i % len(color_palette)]
 
+            logger.info("任务规划成功, 生成任务数量: %s", len(tasks))
             return jsonify({
                 "success": True,
                 "tasks": tasks,
@@ -228,6 +254,7 @@ def plan_tasks():
             })
 
         except json.JSONDecodeError as e:
+            logger.error("任务规划响应解析失败: %s", str(e))
             return jsonify({
                 "success": False,
                 "error": f"JSON解析失败: {str(e)}",
@@ -235,6 +262,7 @@ def plan_tasks():
             }), 500
 
     except Exception as e:
+        logger.exception("任务规划接口异常: %s", str(e))
         return jsonify({
             "success": False,
             "error": str(e)
@@ -253,9 +281,13 @@ def generate_weekly_report():
     statistics = data.get("statistics", {})
     user_tier = data.get("user_tier", "free")
 
+    logger.info("收到 /api/generate-weekly-report 请求 user_id=%s tier=%s", user_id, user_tier)
+    logger.info("周报统计字段: %s", list(statistics.keys()))
+
     # 检查配额
     allowed, quota_info = check_quota(user_id, "weekly_report", user_tier)
     if not allowed:
+        logger.warning("用户 %s 的周报配额已用尽 (%s/%s)", user_id, quota_info.get("used"), quota_info.get("quota"))
         return jsonify(quota_info), 403
 
     # 构建统计摘要
@@ -270,6 +302,7 @@ def generate_weekly_report():
 """
 
     try:
+        logger.info("调用 TUZI API 生成周报, 模型=gpt-5")
         response = tuzi_client.chat.completions.create(
             model="gpt-5",
             messages=[
@@ -295,6 +328,7 @@ def generate_weekly_report():
         )
 
         report = response.choices[0].message.content
+        logger.info("周报生成成功, 内容长度: %s", len(report))
 
         return jsonify({
             "success": True,
@@ -304,6 +338,7 @@ def generate_weekly_report():
         })
 
     except Exception as e:
+        logger.exception("周报生成接口异常: %s", str(e))
         return jsonify({
             "success": False,
             "error": str(e)
@@ -326,9 +361,13 @@ def chat_query():
     context = data.get("context", {})
     user_tier = data.get("user_tier", "free")
 
+    logger.info("收到 /api/chat-query 请求 user_id=%s tier=%s", user_id, user_tier)
+    logger.info("对话查询问题摘要: %s", (query[:80] + "...") if len(query) > 80 else (query or "<空>"))
+
     # 检查配额
     allowed, quota_info = check_quota(user_id, "chat", user_tier)
     if not allowed:
+        logger.warning("用户 %s 的对话查询配额已用尽 (%s/%s)", user_id, quota_info.get("used"), quota_info.get("quota"))
         return jsonify(quota_info), 403
 
     # 获取对话历史
@@ -370,6 +409,7 @@ def chat_query():
     })
 
     try:
+        logger.info("调用 TUZI API 进行对话查询, 模型=gpt-5")
         response = tuzi_client.chat.completions.create(
             model="gpt-5",
             messages=messages,
@@ -378,6 +418,7 @@ def chat_query():
         )
 
         answer = response.choices[0].message.content
+        logger.info("对话查询成功, 回答长度: %s", len(answer))
 
         # 保存对话历史
         history.append({"role": "user", "content": query})
@@ -392,6 +433,7 @@ def chat_query():
         })
 
     except Exception as e:
+        logger.exception("对话查询接口异常: %s", str(e))
         return jsonify({
             "success": False,
             "error": str(e)
@@ -482,10 +524,14 @@ def recommend_theme():
     task_analysis = data.get("task_analysis", {})
     statistics = data.get("statistics", {})
     user_tier = data.get("user_tier", "free")
-    
+
+    logger.info("收到 /api/recommend-theme 请求 user_id=%s tier=%s", user_id, user_tier)
+    logger.info("任务数量=%s 关键词数量=%s", len(tasks), len(task_analysis.get("keywords", [])))
+
     # 检查配额
     allowed, quota_info = check_quota(user_id, "theme_recommend", user_tier)
     if not allowed:
+        logger.warning("用户 %s 的主题推荐配额已用尽 (%s/%s)", user_id, quota_info.get("used"), quota_info.get("quota"))
         return jsonify(quota_info), 403
     
     try:
@@ -541,6 +587,7 @@ def recommend_theme():
   ]
 }}"""
         
+        logger.info("调用 TUZI API 生成主题配置, 模型=gpt-5")
         response = tuzi_client.chat.completions.create(
             model="gpt-5",
             messages=[
@@ -576,12 +623,14 @@ def recommend_theme():
                 if 'theme_id' not in rec:
                     rec['theme_id'] = f"recommended_{recommendations.index(rec) + 1}"
             
+            logger.info("主题推荐成功, 推荐数量: %s", len(recommendations))
             return jsonify({
                 "success": True,
                 "recommendations": recommendations,
                 "quota_info": quota_info
             })
         except json.JSONDecodeError as e:
+            logger.error("主题推荐响应解析失败: %s", str(e))
             return jsonify({
                 "success": False,
                 "error": f"JSON解析失败: {str(e)}",
@@ -589,6 +638,7 @@ def recommend_theme():
             }), 500
             
     except Exception as e:
+        logger.exception("主题推荐接口异常: %s", str(e))
         return jsonify({
             "success": False,
             "error": str(e)
@@ -630,10 +680,14 @@ def generate_theme():
     user_id = data.get("user_id", "anonymous")
     description = data.get("description", "")
     user_tier = data.get("user_tier", "free")
-    
+
+    logger.info("收到 /api/generate-theme 请求 user_id=%s tier=%s", user_id, user_tier)
+    logger.info("主题生成描述摘要: %s", (description[:80] + "...") if len(description) > 80 else (description or "<空>"))
+
     # 检查配额
     allowed, quota_info = check_quota(user_id, "theme_generate", user_tier)
     if not allowed:
+        logger.warning("用户 %s 的主题生成配额已用尽 (%s/%s)", user_id, quota_info.get("used"), quota_info.get("quota"))
         return jsonify(quota_info), 403
     
     try:
@@ -702,12 +756,14 @@ def generate_theme():
                 from datetime import datetime
                 result['theme_id'] = f"ai_generated_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
             
+            logger.info("主题生成成功")
             return jsonify({
                 "success": True,
                 "theme": result,
                 "quota_info": quota_info
             })
         except json.JSONDecodeError as e:
+            logger.error("主题生成响应解析失败: %s", str(e))
             return jsonify({
                 "success": False,
                 "error": f"JSON解析失败: {str(e)}",
@@ -715,6 +771,7 @@ def generate_theme():
             }), 500
             
     except Exception as e:
+        logger.exception("主题生成接口异常: %s", str(e))
         return jsonify({
             "success": False,
             "error": str(e)
