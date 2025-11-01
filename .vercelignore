@@ -1,0 +1,83 @@
+# Vercel部署忽略文件
+# 只部署api目录，排除其他所有文件
+
+# 排除构建产物（大文件）
+dist/
+build/
+*.exe
+*.pkg
+*.dmg
+*.deb
+*.rpm
+
+# 排除主程序文件
+main.py
+config_gui.py
+statistics_gui.py
+backend_api.py
+backend_manager.py
+ai_client.py
+theme_manager.py
+theme_ai_helper.py
+timeline_editor.py
+api_key_manager.py
+statistics_manager.py
+proxy_server.py
+
+# 排除测试文件
+test_*.py
+*_test.py
+
+# 排除文档文件
+*.md
+!api/README.md
+
+# 排除配置文件
+*.json
+!vercel.json
+!api/requirements.txt
+
+# 排除资源和数据文件
+resources/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.svg
+*.ico
+kun.webp
+templates/
+data/
+
+# 排除缓存和临时文件
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+*.tmp
+*.temp
+*.bak
+
+# 排除IDE配置
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 排除环境文件
+.env
+.env.local
+.venv/
+venv/
+env/
+
+# 排除其他目录
+docs/
+vercel_api/
+railway.json
+Procfile
+*.spec
+copy/
+backup/
