@@ -692,6 +692,201 @@ PyDayBar/
 
 更多问题请参考 [jindutiao.md 常见问题部分](jindutiao.md#常见问题与解决方案-faq) 或查看 `pydaybar.log` 日志文件。
 
+## 🚨 Vercel部署问题记录 (待修复)
+
+**状态**: ⚠️ 部署成功但函数无法访问 (404错误)
+
+**部署URL**: `https://jindutiao.vercel.app`
+
+### 📋 问题概述
+
+Vercel部署过程中遇到的主要问题：
+
+1. **函数格式问题** - 函数已部署但返回404错误
+2. **日志为空** - 函数日志中没有执行记录
+3. **路由配置问题** - 函数无法被正确访问
+
+### 🔍 详细问题记录
+
+#### 问题1: 函数格式错误导致404
+
+**错误现象**:
+- 访问 `https://jindutiao.vercel.app/api/health` 返回 404 NOT_FOUND
+- Functions列表显示所有7个函数已部署
+- 日志为空，没有任何执行记录
+
+**尝试的解决方案**:
+1. ✅ 使用 `def handler(req)` 函数格式 → 失败
+2. ✅ 使用 `BaseHTTPRequestHandler` 类格式 → 已修复但未测试
+3. ✅ 添加调试日志输出到 `sys.stderr` → 已添加
+4. ✅ 简化 `vercel.json` 配置 → 移除 `builds` 配置导致Flask错误
+5. ✅ 恢复 `builds` 配置 → 保留警告但部署成功
+
+**当前状态**:
+- ✅ 函数格式已改为 `BaseHTTPRequestHandler` 类格式
+- ✅ 部署成功（Build Completed, Deployment completed）
+- ❌ 访问仍然返回404
+- ❌ 日志仍然为空
+
+**相关文件**:
+- `api/health.py` - 健康检查函数
+- `api/quota-status.py` - 配额查询函数
+- `vercel.json` - Vercel配置文件
+
+**代码变更记录**:
+```python
+# 之前的错误格式
+def handler(req):
+    return {'statusCode': 200, ...}
+
+# 修复后的正确格式
+from http.server import BaseHTTPRequestHandler
+
+class handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        self.wfile.write(response.encode('utf-8'))
+```
+
+#### 问题2: builds配置警告
+
+**警告信息**:
+```
+WARN! Due to `builds` existing in your configuration file, the Build and Development Settings defined in your Project Settings will not apply.
+```
+
+**原因**:
+- `builds` 配置会覆盖Vercel Dashboard中的项目设置
+- 这是预期的行为，不是错误
+
+**解决方案**:
+- ✅ 保留 `builds` 配置（必需，Python Serverless Functions需要）
+- ✅ 警告可以安全忽略（不影响功能）
+
+**当前配置** (`vercel.json`):
+```json
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/**/*.py",
+      "use": "@vercel/python"
+    }
+  ]
+}
+```
+
+#### 问题3: 部署包大小优化
+
+**问题**:
+- 初始部署时超过250MB限制
+
+**解决方案**:
+- ✅ 创建 `.vercelignore` 排除大文件
+- ✅ 简化 `api/requirements.txt` 只保留 `requests`
+- ✅ 每个函数大小优化到910 kB
+
+**结果**:
+- ✅ 部署成功，每个函数约910 kB
+
+### 📝 待修复事项
+
+1. **验证函数格式修复是否有效**
+   - [ ] 等待Vercel重新部署完成
+   - [ ] 测试 `/api/health` 端点
+   - [ ] 检查日志是否有输出
+   - [ ] 如果仍然404，检查Vercel官方文档
+
+2. **检查其他函数格式**
+   - [ ] `api/plan-tasks.py` - POST请求函数
+   - [ ] `api/generate-weekly-report.py` - POST请求函数
+   - [ ] `api/chat-query.py` - POST请求函数
+   - [ ] `api/recommend-theme.py` - POST请求函数
+   - [ ] `api/generate-theme.py` - POST请求函数
+
+3. **验证环境变量**
+   - [ ] 确认 `TUZI_API_KEY` 已设置
+   - [ ] 确认 `TUZI_BASE_URL` 已设置（可选）
+   - [ ] 确认环境变量设置为Production
+
+4. **测试所有端点**
+   - [ ] GET `/api/health` - 健康检查
+   - [ ] GET `/api/quota-status?user_tier=free` - 配额查询
+   - [ ] POST `/api/plan-tasks` - 任务规划
+   - [ ] POST `/api/generate-weekly-report` - 周报生成
+   - [ ] POST `/api/chat-query` - 对话查询
+   - [ ] POST `/api/recommend-theme` - 主题推荐
+   - [ ] POST `/api/generate-theme` - 主题生成
+
+### 🔧 排查步骤
+
+#### 步骤1: 检查函数日志
+1. 登录Vercel Dashboard
+2. 进入项目 `jindutiao`
+3. Functions → 点击 `/api/health.py`
+4. 查看Logs标签页
+5. 检查是否有执行记录
+
+#### 步骤2: 使用内置测试功能
+1. Functions → 点击函数名
+2. 点击 "Test" 按钮
+3. 查看返回结果和错误信息
+
+#### 步骤3: 检查部署日志
+1. Deployments → 最新部署
+2. 查看Build Logs和Runtime Logs
+3. 确认没有构建错误
+
+#### 步骤4: 验证函数格式
+根据Vercel文档，Python Serverless Functions应该：
+- 文件位于 `api/` 目录
+- 使用 `BaseHTTPRequestHandler` 类格式
+- 定义 `handler` 类继承自 `BaseHTTPRequestHandler`
+- 实现 `do_GET()`, `do_POST()` 等方法
+
+### 📚 参考资料
+
+- [Vercel Python Serverless Functions文档](https://vercel.com/docs/functions/serverless-functions/runtimes/python)
+- [Vercel部署问题排查指南](VERCEL_TROUBLESHOOTING.md)
+- [Vercel部署状态文档](VERCEL_FUNCTIONS_STATUS.md)
+- [Vercel空日志问题排查](VERCEL_EMPTY_LOGS_TROUBLESHOOTING.md)
+- [Vercel builds警告说明](VERCEL_BUILDS_WARNING_EXPLANATION.md)
+
+### 🎯 下一步行动
+
+1. **等待最新部署完成**（commit: `e00fcf3`）
+   - 函数格式已修复为 `BaseHTTPRequestHandler`
+   - 等待1-2分钟让Vercel重新部署
+
+2. **测试API端点**
+   ```bash
+   curl https://jindutiao.vercel.app/api/health
+   ```
+
+3. **检查日志**
+   - 如果日志有输出：根据错误信息修复
+   - 如果仍然没有日志：检查路由配置
+
+4. **如果仍然404**
+   - 查看Vercel官方文档
+   - 检查是否有其他配置问题
+   - 考虑使用Vercel CLI进行本地测试
+
+### 💡 备注
+
+- 所有函数文件位于 `api/` 目录下
+- 所有函数使用 `BaseHTTPRequestHandler` 类格式
+- `vercel.json` 配置包含 `builds` 配置（必需）
+- 警告信息可以忽略（不影响功能）
+
+---
+
+**最后更新**: 2025-11-01  
+**当前状态**: ⚠️ 等待测试修复后的函数格式  
+**负责人**: 待Claude Code修复
+
 ## 🤖 AI 增强愿景
 
 PyDayBar 计划深度整合现代 AI 能力,从"时间可视化工具"进化为"AI 驱动的智能时间管理助手"。
