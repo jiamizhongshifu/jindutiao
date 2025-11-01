@@ -6,11 +6,11 @@
 
 [![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/PySide6-6.5+-green.svg)](https://pypi.org/project/PySide6/)
-[![Version](https://img.shields.io/badge/version-1.4.1-brightgreen.svg)](https://github.com)
+[![Version](https://img.shields.io/badge/version-1.4.2-brightgreen.svg)](https://github.com)
 [![License](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com)
 
-**当前版本: v1.4.1** | 最后更新: 2025-11-01 | AI 服务稳定性修复
+**当前版本: v1.4.2** | 最后更新: 2025-11-01 | Vercel代理服务器部署 ✅
 
 </div>
 
@@ -980,6 +980,40 @@ PyDayBar 计划深度整合现代 AI 能力,从"时间可视化工具"进化为"
 - ⚡ **用户体验优先:** 优先实现提升日常使用体验的功能
 
 ## 📝 更新日志
+
+### v1.4.2 (2025-11-01) - Vercel代理服务器部署 ✅
+
+**重大更新:**
+- ✅ **API密钥安全方案实施**
+  - 部署Vercel Serverless Functions代理服务器
+  - API密钥完全不在客户端，保护密钥安全
+  - 统一使用我们提供的API服务，方便后续付费转化
+  - 代理服务器URL: `https://jindutiao.vercel.app`
+
+**技术改进:**
+- 🔒 **API密钥安全**
+  - 客户端默认使用Vercel代理服务器
+  - 支持通过环境变量 `PYDAYBAR_PROXY_URL` 自定义代理URL
+  - 密钥存储在Vercel服务器环境变量中，客户端无法获取
+
+**部署信息:**
+- 🌐 **Vercel部署**
+  - 使用Vercel Serverless Functions（完全免费）
+  - 100GB带宽/月，无限函数调用
+  - 自动HTTPS，全球CDN加速
+  - 部署URL: https://jindutiao.vercel.app
+
+**注意事项:**
+- ⚠️ **超时限制**
+  - Vercel免费版：10秒超时
+  - Vercel Pro版：60秒超时
+  - AI请求通常需要30-60秒
+  - 如果AI请求时间 > 10秒，建议升级到Vercel Pro或使用Railway
+
+**相关文档:**
+- `api/README.md` - Vercel部署指南
+- `VERCEL_DEPLOYMENT.md` - 详细部署文档
+- `VERCEL_QUICK_START.md` - 快速开始指南
 
 ### v1.4.1 (2025-11-01) - AI 服务稳定性修复 🔧
 

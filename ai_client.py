@@ -25,7 +25,7 @@ class PyDayBarAIClient:
         # 如果没有设置，则使用默认的Vercel代理服务器
         proxy_url = os.getenv(
             "PYDAYBAR_PROXY_URL",
-            "https://pydaybar-proxy.vercel.app"  # 默认Vercel代理服务器URL（部署后更新为实际URL）
+            "https://jindutiao.vercel.app"  # Vercel代理服务器URL
         )
         
         # 如果backend_url未指定，使用代理服务器

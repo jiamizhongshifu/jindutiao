@@ -57,9 +57,11 @@
 # ai_client.py (第28行)
 proxy_url = os.getenv(
     "PYDAYBAR_PROXY_URL",
-    "https://your-project-name.vercel.app"  # 替换为你的实际Vercel URL
+    "https://jindutiao.vercel.app"  # Vercel代理服务器URL（已配置）
 )
 ```
+
+**✅ 已更新：** 客户端代码已更新为使用实际部署的URL。
 
 ### 4. 测试部署
 
