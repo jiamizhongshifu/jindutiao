@@ -184,13 +184,14 @@ class PyDayBarAIClient:
             配额信息字典 或 None
         """
         try:
+            # Vercel冷启动可能需要10-15秒，使用较长的超时时间
             response = requests.get(
                 f"{self.backend_url}/api/quota-status",
                 params={
                     "user_id": self.user_id,
                     "user_tier": self.user_tier
                 },
-                timeout=10
+                timeout=20
             )
 
             if response.status_code == 200:
@@ -208,9 +209,10 @@ class PyDayBarAIClient:
             True表示服务器正常, False表示异常
         """
         try:
+            # Vercel冷启动可能需要10-15秒，使用较长的超时时间
             response = requests.get(
                 f"{self.backend_url}/api/health",
-                timeout=5
+                timeout=15
             )
             return response.status_code == 200
         except Exception:

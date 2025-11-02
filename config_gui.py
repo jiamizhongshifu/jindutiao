@@ -17,7 +17,7 @@ from PySide6.QtCore import Qt, QTime, Signal, QThread, QTimer
 from PySide6.QtGui import QColor, QIcon
 from timeline_editor import TimelineEditor
 from ai_client import PyDayBarAIClient
-from backend_manager import BackendManager
+from autostart_manager import AutoStartManager
 import requests
 from theme_manager import ThemeManager
 from theme_ai_helper import ThemeAIHelper
@@ -83,7 +83,7 @@ class ConfigManager(QMainWindow):
         # 延迟初始化AI相关组件(避免阻塞UI显示)
         self.ai_client = None
         self.ai_worker = None
-        self.backend_manager = None
+        self.autostart_manager = AutoStartManager()  # 自启动管理器
         self.theme_ai_helper = None
 
         # 延迟初始化主题管理器(避免同步文件I/O阻塞UI)
@@ -143,7 +143,13 @@ class ConfigManager(QMainWindow):
             # 更新间隔
             if hasattr(self, 'interval_spin'):
                 self.interval_spin.setValue(self.config.get('update_interval', 1000))
-            
+
+            # 更新自启动复选框（从注册表读取真实状态）
+            if hasattr(self, 'autostart_check') and self.autostart_manager:
+                registry_status = self.autostart_manager.is_enabled()
+                self.autostart_check.setChecked(registry_status)
+                self._update_autostart_status_label()
+
             # 更新颜色控件
             if hasattr(self, 'bg_color_input'):
                 self.bg_color_input.setText(self.config.get('background_color', '#505050'))
@@ -244,9 +250,9 @@ class ConfigManager(QMainWindow):
                 file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
                 root_logger.addHandler(file_handler)
             
-            # 创建BackendManager实例（但不启动本地服务，因为使用代理服务器）
-            self.backend_manager = BackendManager(root_logger)
-            # 注意：不调用 ensure_backend_running_async()，因为使用代理服务器
+            # 已切换到Vercel云服务，不再需要本地BackendManager
+            # self.backend_manager = BackendManager(root_logger)
+            self.backend_manager = None  # 标记为None，避免后续引用报错
 
             # 初次更新UI状态（异步）
             QTimer.singleShot(500, self._update_ai_status_async)
@@ -300,9 +306,11 @@ class ConfigManager(QMainWindow):
             
             def run(self):
                 try:
-                    response = requests.get(f"{self.backend_url}/api/health", timeout=2)
+                    # Vercel冷启动可能需要10-15秒，增加超时时间
+                    response = requests.get(f"{self.backend_url}/api/health", timeout=15)
                     self.finished.emit(response.status_code == 200)
-                except Exception:
+                except Exception as e:
+                    logging.warning(f"健康检查失败: {str(e)}")
                     self.finished.emit(False)
         
         # 创建并启动工作线程
@@ -554,6 +562,30 @@ class ConfigManager(QMainWindow):
         self.interval_spin.setValue(self.config.get('update_interval', 1000) if self.config else 1000)
         self.interval_spin.setSuffix(" 毫秒")
         basic_layout.addRow("更新间隔:", self.interval_spin)
+
+        # 开机自启动
+        autostart_container = QWidget()
+        autostart_layout = QHBoxLayout(autostart_container)
+        autostart_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.autostart_check = QCheckBox("开机自动启动")
+        self.autostart_check.setToolTip("勾选后，PyDayBar将在Windows开机时自动启动")
+        # 从注册表读取当前状态
+        if self.autostart_manager:
+            self.autostart_check.setChecked(self.autostart_manager.is_enabled())
+        autostart_layout.addWidget(self.autostart_check)
+
+        # 添加状态提示标签
+        self.autostart_status_label = QLabel()
+        self.autostart_status_label.setStyleSheet("color: #999; font-size: 11px;")
+        self._update_autostart_status_label()
+        autostart_layout.addWidget(self.autostart_status_label)
+        autostart_layout.addStretch()
+
+        # 连接复选框变化信号，实时更新状态标签
+        self.autostart_check.stateChanged.connect(self._update_autostart_status_label)
+
+        basic_layout.addRow("自启动:", autostart_container)
 
         basic_group.setLayout(basic_layout)
         layout.addWidget(basic_group)
@@ -821,10 +853,10 @@ class ConfigManager(QMainWindow):
 
         # 延迟加载配额状态，避免初始化时阻塞
         QTimer.singleShot(300, self.refresh_quota_status_async)
-        
+
         # 立即显示初始状态（不需要等待）
         if hasattr(self, 'quota_label'):
-            self.quota_label.setText("⏳ AI服务正在初始化...")
+            self.quota_label.setText("⏳ 正在连接云服务（可能需要10-15秒）...")
             self.quota_label.setStyleSheet("color: #ff9800; padding: 5px; font-weight: bold;")
         if hasattr(self, 'generate_btn'):
             self.generate_btn.setEnabled(False)
@@ -1505,22 +1537,13 @@ class ConfigManager(QMainWindow):
         if not hasattr(self, 'ai_client') or not self.ai_client:
             # 如果AI客户端未初始化，直接返回，不显示推荐
             return
-            reply = QMessageBox.question(
+            # 已切换到Vercel云服务，不再需要本地后端服务
+            QMessageBox.warning(
                 self,
-                "AI服务未启动",
-                "AI后端服务未启动。\n\n是否需要帮助?\n\n提示:\n1. 确保已安装依赖: pip install flask flask-cors openai python-dotenv\n2. 确保.env文件包含有效的TUZI_API_KEY\n3. 手动运行: python backend_api.py",
-                QMessageBox.Yes | QMessageBox.No
+                "AI云服务连接失败",
+                "无法连接到AI云服务。\n\n可能的原因:\n1. 网络连接问题\n2. 云服务冷启动中（首次访问需要10-15秒）\n3. 服务临时不可用\n\n请稍后点击'刷新配额'按钮重试。",
+                QMessageBox.Ok
             )
-            if reply == QMessageBox.Yes:
-                # 尝试启动后端服务
-                if hasattr(self, 'backend_manager'):
-                    QMessageBox.information(
-                        self,
-                        "正在启动",
-                        "正在尝试启动AI后端服务,请稍候...",
-                        QMessageBox.Ok
-                    )
-                    self.backend_manager.ensure_backend_running_async()
             return
 
         # 禁用按钮，显示加载状态
@@ -2492,6 +2515,18 @@ class ConfigManager(QMainWindow):
                     }
                 """)
 
+    def _update_autostart_status_label(self):
+        """更新自启动状态标签"""
+        if not hasattr(self, 'autostart_status_label'):
+            return
+
+        if self.autostart_check.isChecked():
+            self.autostart_status_label.setText("(将在开机时自动启动)")
+            self.autostart_status_label.setStyleSheet("color: #4CAF50; font-size: 11px;")
+        else:
+            self.autostart_status_label.setText("(未启用)")
+            self.autostart_status_label.setStyleSheet("color: #999; font-size: 11px;")
+
     def on_marker_type_changed(self, marker_type):
         """时间标记类型改变时的处理"""
         # 根据类型启用/禁用相关控件
@@ -2682,6 +2717,19 @@ class ConfigManager(QMainWindow):
                 notification_config = self.config.get('notification', {})
                 before_end_minutes = notification_config.get('before_end_minutes', [5])
 
+            # 处理开机自启动设置
+            autostart_enabled = self.autostart_check.isChecked() if hasattr(self, 'autostart_check') else False
+            if hasattr(self, 'autostart_manager') and self.autostart_manager:
+                if self.autostart_manager.set_enabled(autostart_enabled):
+                    logging.info(f"自启动设置{'启用' if autostart_enabled else '禁用'}成功")
+                else:
+                    logging.error(f"自启动设置{'启用' if autostart_enabled else '禁用'}失败")
+                    QMessageBox.warning(
+                        self,
+                        "警告",
+                        f"开机自启动设置失败\n\n可能需要管理员权限或系统限制"
+                    )
+
             # 保存配置
             config = {
                 "bar_height": self.height_spin.value(),
@@ -2699,6 +2747,7 @@ class ConfigManager(QMainWindow):
                 "update_interval": self.interval_spin.value(),
                 "enable_shadow": self.shadow_check.isChecked(),
                 "corner_radius": self.radius_spin.value(),
+                "autostart_enabled": autostart_enabled,
                 "notification": {
                     "enabled": (getattr(self, 'notify_enabled_check', None) and self.notify_enabled_check.isChecked()) if hasattr(self, 'notify_enabled_check') else self.config.get('notification', {}).get('enabled', True),
                     "before_start_minutes": before_start_minutes,
@@ -2792,7 +2841,7 @@ class ConfigManager(QMainWindow):
         # 检查AI客户端是否已初始化
         if not self.ai_client:
             if hasattr(self, 'quota_label'):
-                self.quota_label.setText("⏳ AI服务正在初始化...")
+                self.quota_label.setText("⏳ 正在连接云服务...")
                 self.quota_label.setStyleSheet("color: #ff9800; padding: 5px; font-weight: bold;")
             if hasattr(self, 'generate_btn'):
                 self.generate_btn.setEnabled(False)
@@ -2810,19 +2859,22 @@ class ConfigManager(QMainWindow):
             
             def run(self):
                 try:
+                    # Vercel冷启动可能需要10-15秒，增加超时时间
                     response = requests.get(
                         f"{self.backend_url}/api/quota-status",
                         params={
                             "user_id": self.user_id,
                             "user_tier": self.user_tier
                         },
-                        timeout=5  # 缩短超时时间
+                        timeout=20  # 增加超时时间以应对Vercel冷启动
                     )
                     if response.status_code == 200:
                         self.finished.emit(response.json())
                     else:
+                        logging.warning(f"配额查询返回错误状态码: {response.status_code}")
                         self.finished.emit(None)
-                except Exception:
+                except Exception as e:
+                    logging.warning(f"配额查询失败: {str(e)}")
                     self.finished.emit(None)
         
         # 创建并启动工作线程
@@ -2869,17 +2921,16 @@ class ConfigManager(QMainWindow):
                     self.ai_status_timer.stop()
                     logging.info("AI状态定时器已停止（配额检查成功）")
         else:
-            # 配额检查失败，可能是后端服务崩溃或接口有问题
-            self.quota_label.setText("⚠️ 无法获取配额状态")
-            self.quota_label.setStyleSheet("color: #999; padding: 5px;")
+            # 配额检查失败，可能是云服务冷启动或网络问题
+            self.quota_label.setText("⚠️ 无法连接云服务（请点击刷新重试）")
+            self.quota_label.setStyleSheet("color: #f44336; padding: 5px; font-weight: bold;")
             if hasattr(self, 'generate_btn'):
                 self.generate_btn.setEnabled(True)  # 仍然允许尝试
-            
-            # 配额检查失败，可能是代理服务器暂时不可用或网络问题
-            # 使用代理服务器时，不需要检查本地后端服务
+
+            # 配额检查失败，可能是云服务冷启动或网络问题
             # 延迟后重试配额检查
-            logging.warning("配额检查失败，可能是代理服务器暂时不可用，3秒后重试...")
-            QTimer.singleShot(3000, self.refresh_quota_status_async)
+            logging.warning("配额查询失败，可能是云服务冷启动或网络问题，5秒后重试...")
+            QTimer.singleShot(5000, self.refresh_quota_status_async)
 
     def on_ai_generate_clicked(self):
         """处理AI生成按钮点击"""
@@ -3026,7 +3077,8 @@ class ConfigManager(QMainWindow):
             except Exception:
                 pass
         
-        # 停止AI后端服务（如果配置管理器启动的）
+        # 已切换到Vercel云服务，不再需要停止本地后端服务
+        # 保留此检查以保持向后兼容性
         if hasattr(self, 'backend_manager') and self.backend_manager:
             try:
                 self.backend_manager.stop_backend()

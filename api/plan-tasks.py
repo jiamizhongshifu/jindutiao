@@ -5,6 +5,11 @@ import requests
 import sys
 import traceback
 
+# 添加api目录到Python路径
+sys.path.insert(0, os.path.dirname(__file__))
+
+from quota_manager import QuotaManager
+
 TUZI_API_KEY = os.getenv("TUZI_API_KEY")
 TUZI_BASE_URL = os.getenv("TUZI_BASE_URL", "https://api.tu-zi.com/v1")
 
@@ -39,6 +44,22 @@ class handler(BaseHTTPRequestHandler):
                 return
 
             user_data = json.loads(body)
+            user_id = user_data.get('user_id', 'user_demo')
+            user_tier = user_data.get('user_tier', 'free')
+
+            # 检查并扣除配额
+            quota_manager = QuotaManager()
+
+            # 先检查配额是否足够
+            quota_status = quota_manager.get_quota_status(user_id, user_tier)
+            if quota_status['remaining']['daily_plan'] <= 0:
+                print(f"Quota exceeded for user {user_id}", file=sys.stderr)
+                self._send_json_response(429, {
+                    'success': False,
+                    'error': '今日配额已用尽',
+                    'quota_info': quota_status
+                })
+                return
 
             # 构造API请求 - 使用OpenAI格式
             api_url = f"{TUZI_BASE_URL}/chat/completions"
@@ -115,15 +136,23 @@ class handler(BaseHTTPRequestHandler):
                     for i, task in enumerate(tasks):
                         task["color"] = color_palette[i % len(color_palette)]
 
+                    # 任务生成成功，扣除配额
+                    quota_result = quota_manager.use_quota(user_id, 'daily_plan', 1)
+
+                    if quota_result.get('success'):
+                        print(f"Successfully used quota for {user_id}, remaining: {quota_result['remaining']}", file=sys.stderr)
+                        quota_info = quota_manager.get_quota_status(user_id, user_tier)
+                    else:
+                        print(f"Failed to use quota: {quota_result}", file=sys.stderr)
+                        # 即使配额扣除失败，也返回任务（已经调用了API）
+                        quota_info = quota_status
+
                     print(f"Successfully generated {len(tasks)} tasks", file=sys.stderr)
 
                     self._send_json_response(200, {
                         "success": True,
                         "tasks": tasks,
-                        "quota_info": {
-                            "remaining": {"daily_plan": 2},
-                            "user_tier": user_data.get("user_tier", "free")
-                        }
+                        "quota_info": quota_info
                     })
 
                 except json.JSONDecodeError as e:
