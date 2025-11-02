@@ -2240,9 +2240,13 @@ class TimeProgressBar(QWidget):
             self.config['background_opacity'] = new_opacity
             self.config['marker_color'] = new_marker_color
 
-            # 应用主题配色到任务(如果主题提供了task_colors)
+            # 应用主题配色到任务(如果主题提供了task_colors且用户启用了自动应用)
+            # 检查config中的auto_apply_task_colors设置
+            theme_config = self.config.get('theme', {})
+            auto_apply = theme_config.get('auto_apply_task_colors', False)
+
             task_colors = theme.get('task_colors', [])
-            if task_colors and len(self.tasks) > 0:
+            if auto_apply and task_colors and len(self.tasks) > 0:
                 # 智能分配任务颜色
                 for i, task in enumerate(self.tasks):
                     color_index = i % len(task_colors)
@@ -2256,6 +2260,8 @@ class TimeProgressBar(QWidget):
                     self.logger.info(f"已应用主题配色到 {len(self.tasks)} 个任务")
                 except Exception as e:
                     self.logger.error(f"保存任务配色失败: {e}")
+            elif task_colors and len(self.tasks) > 0 and not auto_apply:
+                self.logger.info(f"主题包含 {len(task_colors)} 种配色，但auto_apply_task_colors=False，保留用户自定义颜色")
 
             # 保存主题配置到config.json
             try:
