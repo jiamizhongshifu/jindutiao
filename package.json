@@ -1,0 +1,6 @@
+{
+  "name": "pydaybar-api",
+  "version": "1.0.0",
+  "description": "PyDayBar Serverless API",
+  "private": true
+}

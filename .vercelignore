@@ -34,7 +34,7 @@ test_*.py
 
 # 排除配置文件
 *.json
-!vercel.json
+!package.json
 !api/requirements.txt
 
 # 排除资源和数据文件
