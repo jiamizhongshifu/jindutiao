@@ -1910,15 +1910,17 @@ class TimeProgressBar(QWidget):
         if not self.task_positions:
             # 没有任务时使用全天计算
             new_percentage = total_seconds / 86400
+            self.logger.debug(f"[时间标记] 无任务列表,使用全天计算: {current_time.toString('HH:mm:ss')} -> {new_percentage:.4f}")
         else:
             # 查找当前时间所在的任务
             found = False
             cumulative_duration = 0
 
-            for pos in self.task_positions:
+            for i, pos in enumerate(self.task_positions):
                 task_start = pos['original_start']
                 task_end = pos['original_end']
                 task_duration = task_end - task_start
+                task_name = pos['task'].get('task', '未命名')
 
                 if task_start <= total_seconds <= task_end:
                     # 当前时间在这个任务内
@@ -1926,12 +1928,28 @@ class TimeProgressBar(QWidget):
                     progress_in_task = (total_seconds - task_start) / task_duration if task_duration > 0 else 0
                     # 计算在整个进度条上的位置
                     new_percentage = pos['compact_start_pct'] + (pos['compact_end_pct'] - pos['compact_start_pct']) * progress_in_task
+
+                    self.logger.debug(
+                        f"[时间标记] 当前时间 {current_time.toString('HH:mm:ss')} "
+                        f"在任务[{i}]'{task_name}'内 "
+                        f"({self.seconds_to_time_str(task_start)}-{self.seconds_to_time_str(task_end)}) "
+                        f"任务进度={progress_in_task:.2%} "
+                        f"紧凑位置={pos['compact_start_pct']:.4f}-{pos['compact_end_pct']:.4f} "
+                        f"标记位置={new_percentage:.4f}"
+                    )
                     found = True
                     break
                 elif total_seconds < task_start:
                     # 当前时间在这个任务之前(处于间隔中)
                     # 显示在这个任务的起始位置
                     new_percentage = pos['compact_start_pct']
+
+                    self.logger.debug(
+                        f"[时间标记] 当前时间 {current_time.toString('HH:mm:ss')} "
+                        f"在任务[{i}]'{task_name}'之前(间隔中) "
+                        f"({self.seconds_to_time_str(task_start)}-{self.seconds_to_time_str(task_end)}) "
+                        f"标记位置={new_percentage:.4f}(任务起点)"
+                    )
                     found = True
                     break
 
@@ -1940,6 +1958,10 @@ class TimeProgressBar(QWidget):
             # 如果当前时间在所有任务之后
             if not found:
                 new_percentage = 1.0
+                self.logger.debug(
+                    f"[时间标记] 当前时间 {current_time.toString('HH:mm:ss')} "
+                    f"在所有任务之后,标记位置=1.0(最右端)"
+                )
 
         # 仅当百分比实际变化时才重绘(避免浮点误差)
         if abs(new_percentage - self.current_time_percentage) > 0.00001:
