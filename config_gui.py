@@ -178,9 +178,12 @@ class ConfigManager(QMainWindow):
                 if hasattr(self, 'marker_size_preset_buttons'):
                     self.update_marker_size_preset_buttons()
             
+            if hasattr(self, 'marker_speed_spin'):
+                self.marker_speed_spin.setValue(self.config.get('marker_speed', 100))
+
             if hasattr(self, 'marker_x_offset_spin'):
                 self.marker_x_offset_spin.setValue(self.config.get('marker_x_offset', 0))
-            
+
             if hasattr(self, 'marker_y_offset_spin'):
                 self.marker_y_offset_spin.setValue(self.config.get('marker_y_offset', 0))
         except Exception as e:
@@ -702,6 +705,21 @@ class ConfigManager(QMainWindow):
         y_offset_layout.addWidget(y_offset_hint)
         y_offset_layout.addStretch()
         color_layout.addRow("标记图片 Y 偏移:", y_offset_layout)
+
+        # 标记动画播放速度
+        self.marker_speed_spin = QSpinBox()
+        self.marker_speed_spin.setRange(10, 500)
+        self.marker_speed_spin.setValue(self.config.get('marker_speed', 100))
+        self.marker_speed_spin.setSuffix(" %")
+        self.marker_speed_spin.setSingleStep(10)
+        self.marker_speed_spin.setMaximumWidth(100)
+        speed_hint = QLabel("(100%=原速, 200%=2倍速)")
+        speed_hint.setStyleSheet("color: #666; font-size: 9pt;")
+        speed_layout = QHBoxLayout()
+        speed_layout.addWidget(self.marker_speed_spin)
+        speed_layout.addWidget(speed_hint)
+        speed_layout.addStretch()
+        color_layout.addRow("动画播放速度:", speed_layout)
 
         color_group.setLayout(color_layout)
         layout.addWidget(color_group)
@@ -2154,6 +2172,7 @@ class ConfigManager(QMainWindow):
                 "marker_type": self.marker_type_combo.currentText(),
                 "marker_image_path": self.marker_image_input.text(),
                 "marker_size": self.marker_size_spin.value(),
+                "marker_speed": self.marker_speed_spin.value(),
                 "marker_x_offset": self.marker_x_offset_spin.value(),
                 "marker_y_offset": self.marker_y_offset_spin.value(),
                 "screen_index": self.screen_spin.value(),

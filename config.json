@@ -8,6 +8,7 @@
     "marker_type": "gif",
     "marker_image_path": "kun.webp",
     "marker_size": 100,
+    "marker_speed": 100,
     "marker_x_offset": 0,
     "marker_y_offset": -30,
     "screen_index": 0,

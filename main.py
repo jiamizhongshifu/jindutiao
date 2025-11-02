@@ -11,7 +11,7 @@ from pathlib import Path
 from datetime import datetime, date
 from PySide6.QtWidgets import (QApplication, QWidget, QSystemTrayIcon, QMenu, QToolTip, QLabel,
                                 QHBoxLayout, QVBoxLayout, QDialog, QFormLayout, QSpinBox, QPushButton)
-from PySide6.QtCore import Qt, QRectF, QTimer, QTime, QFileSystemWatcher, QPoint, Signal, QEventLoop
+from PySide6.QtCore import Qt, QRectF, QTimer, QTime, QFileSystemWatcher, QPoint, Signal, QEventLoop, QSize
 from PySide6.QtGui import QPainter, QColor, QPen, QAction, QFont, QPixmap, QMovie, QCursor
 from enum import Enum
 from statistics_manager import StatisticsManager
@@ -964,6 +964,16 @@ class TimeProgressBar(QWidget):
         # 初始化时间标记相关变量
         self.marker_pixmap = None  # 静态图片
         self.marker_movie = None   # GIF 动画
+        self.marker_frame_timer = None  # 手动控制GIF帧切换的定时器
+        self.marker_current_frame = 0  # 手动跟踪当前帧索引（用于WebP修复）
+
+        # GIF 帧率监控变量（用于诊断播放速度问题）
+        self.gif_frame_count = 0  # 总帧数计数
+        self.gif_last_frame_time = None  # 上一帧的时间
+        self.gif_start_time = None  # 开始监控的时间
+        self.gif_loop_count = 0  # 循环次数
+        self.paint_event_count = 0  # paintEvent 调用次数
+
         self.init_marker_image()   # 加载时间标记图片
 
         # 番茄钟面板实例
@@ -1343,8 +1353,22 @@ class TimeProgressBar(QWidget):
         # 清理旧的资源
         self.marker_pixmap = None
         if self.marker_movie:
+            # 断开所有信号连接，防止重复连接导致帧率异常
+            try:
+                self.marker_movie.frameChanged.disconnect(self._on_gif_frame_changed)
+                self.marker_movie.finished.disconnect(self._on_marker_animation_finished)
+            except:
+                pass  # 如果没有连接，忽略错误
             self.marker_movie.stop()
+            self.marker_movie.deleteLater()  # 确保对象被正确清理
             self.marker_movie = None
+
+            # 重置监控变量
+            self.gif_frame_count = 0
+            self.gif_last_frame_time = None
+            self.gif_start_time = None
+            self.gif_loop_count = 0
+            self.paint_event_count = 0
 
         if marker_type == 'line':
             # 线条模式,不需要加载图片
@@ -1362,13 +1386,30 @@ class TimeProgressBar(QWidget):
         image_file = Path(image_path)
         if not image_file.is_absolute():
             # 相对路径:优先尝试应用目录，然后尝试资源路径（打包后）
-            image_file = self.app_dir / image_path
-            if not image_file.exists():
-                # 尝试从资源路径获取（打包后的情况）
-                image_file = self.get_resource_path(image_path)
+            app_dir_path = self.app_dir / image_path
+            resource_path = self.get_resource_path(image_path)
+
+            # 详细路径诊断日志
+            self.logger.info(f"[路径诊断] 原始路径: {image_path}")
+            self.logger.info(f"[路径诊断] app_dir: {self.app_dir}")
+            self.logger.info(f"[路径诊断] sys.frozen: {getattr(sys, 'frozen', False)}")
+            if getattr(sys, 'frozen', False):
+                self.logger.info(f"[路径诊断] _MEIPASS: {getattr(sys, '_MEIPASS', 'N/A')}")
+            self.logger.info(f"[路径诊断] app_dir路径: {app_dir_path} (存在: {app_dir_path.exists()})")
+            self.logger.info(f"[路径诊断] resource路径: {resource_path} (存在: {resource_path.exists()})")
+
+            if app_dir_path.exists():
+                image_file = app_dir_path
+                self.logger.info(f"[路径诊断] 使用app_dir路径")
+            elif resource_path.exists():
+                image_file = resource_path
+                self.logger.info(f"[路径诊断] 使用resource路径")
+            else:
+                image_file = resource_path  # 默认使用resource路径用于错误报告
 
         if not image_file.exists():
             self.logger.error(f"时间标记图片不存在: {image_file}")
+            self.logger.error(f"[路径诊断] 请检查PyInstaller spec文件中是否包含: ('kun.webp', '.')")
             self.config['marker_type'] = 'line'
             return
 
@@ -1378,9 +1419,24 @@ class TimeProgressBar(QWidget):
         try:
             if ext in ['.gif', '.webp']:
                 # GIF 或 WebP 动画
+                self.logger.info(f"[QMovie诊断] 开始加载动画文件: {image_file}")
                 self.marker_movie = QMovie(str(image_file))
-                if not self.marker_movie.isValid():
+
+                # 详细的QMovie验证日志
+                is_valid = self.marker_movie.isValid()
+                self.logger.info(f"[QMovie诊断] isValid(): {is_valid}")
+                if is_valid:
+                    self.logger.info(f"[QMovie诊断] frameCount(): {self.marker_movie.frameCount()}")
+                    self.logger.info(f"[QMovie诊断] loopCount(): {self.marker_movie.loopCount()}")
+                    # 尝试跳到第一帧测试
+                    self.marker_movie.jumpToFrame(0)
+                    first_frame = self.marker_movie.currentPixmap()
+                    self.logger.info(f"[QMovie诊断] 第一帧尺寸: {first_frame.width()}x{first_frame.height()}")
+                    self.logger.info(f"[QMovie诊断] 第一帧是否为空: {first_frame.isNull()}")
+
+                if not is_valid:
                     self.logger.error(f"无效的动画文件: {image_file}")
+                    self.logger.error(f"[QMovie诊断] QMovie.lastErrorString(): {self.marker_movie.lastErrorString()}")
                     self.marker_movie = None
                     self.config['marker_type'] = 'line'
                     return
@@ -1389,13 +1445,79 @@ class TimeProgressBar(QWidget):
                 marker_size = self.config.get('marker_size', 100)
                 self.marker_movie.setScaledSize(QPixmap(marker_size, marker_size).size())
 
-                # 启动动画
-                self.marker_movie.start()
+                # 设置播放速度 (100 = 原速, 200 = 2倍速, 50 = 0.5倍速)
+                marker_speed = self.config.get('marker_speed', 100)
+                self.marker_movie.setSpeed(marker_speed)
 
-                # 连接帧更新信号,触发重绘
-                self.marker_movie.frameChanged.connect(self.update)
+                # 设置缓存模式以优化播放性能
+                self.marker_movie.setCacheMode(QMovie.CacheAll)
 
-                self.logger.info(f"加载动画时间标记 ({ext}): {image_file}")
+                # 预先缓存所有帧到内存（避免每次jumpToFrame解码）
+                # 注意：必须在缓存之前断开finished信号，否则jumpToFrame会触发大量finished事件
+                self.marker_cached_frames = []
+                frame_count = self.marker_movie.frameCount()
+                self.logger.info(f"[帧缓存] 开始缓存 {frame_count} 帧到内存（目标尺寸: {marker_size}x{marker_size}）...")
+
+                # 缓存所有帧并手动缩放（QMovie的setScaledSize在某些情况下不可靠）
+                from PySide6.QtCore import Qt
+                target_size = QSize(marker_size, marker_size)
+
+                for i in range(frame_count):
+                    self.marker_movie.jumpToFrame(i)
+                    original_pixmap = self.marker_movie.currentPixmap()
+
+                    # 手动缩放到目标尺寸（保持宽高比，平滑变换）
+                    scaled_pixmap = original_pixmap.scaled(
+                        target_size,
+                        Qt.AspectRatioMode.KeepAspectRatio,
+                        Qt.TransformationMode.SmoothTransformation
+                    ).copy()  # 深拷贝
+
+                    self.marker_cached_frames.append(scaled_pixmap)
+                    self.logger.info(f"[帧缓存] 缓存帧 {i+1}/{frame_count}: {original_pixmap.width()}x{original_pixmap.height()} → {scaled_pixmap.width()}x{scaled_pixmap.height()}")
+
+                # 重置到第一帧
+                self.marker_movie.jumpToFrame(0)
+                self.logger.info(f"[帧缓存] 完成！共缓存 {len(self.marker_cached_frames)} 帧")
+
+                # 检测WebP格式 - 需要手动控制帧切换
+                is_webp = image_path.lower().endswith('.webp')
+
+                if is_webp:
+                    # WebP格式：使用帧缓存 + 定时器手动控制（不启动QMovie）
+                    self.logger.warning(f"[GIF修复] 检测到WebP格式，启用帧缓存+定时器手动控制")
+
+                    # 创建高精度定时器手动控制帧切换
+                    from PySide6.QtCore import QTimer, Qt
+                    self.marker_frame_timer = QTimer(self)
+                    self.marker_frame_timer.setTimerType(Qt.TimerType.PreciseTimer)  # 使用高精度定时器
+                    self.marker_frame_timer.timeout.connect(self._advance_marker_frame)
+
+                    # 计算实际帧延迟: 基础150ms * (100 / 速度)
+                    marker_speed = self.config.get('marker_speed', 100)
+                    base_delay = 150  # 基础延迟150ms
+                    actual_delay = int(base_delay * (100 / marker_speed))
+                    self.marker_frame_timer.setInterval(actual_delay)
+                    self.marker_frame_timer.start()
+
+                    self.logger.info(f"[GIF修复] 高精度定时器已启动，间隔={actual_delay}ms（使用预缓存帧）")
+
+                else:
+                    # GIF格式：使用QMovie自然播放
+                    self.logger.info(f"[GIF播放] GIF格式，使用QMovie自然播放")
+
+                    # 连接帧更新信号，使用监控回调
+                    self.marker_movie.frameChanged.connect(self._on_gif_frame_changed)
+
+                    # 连接finished信号,确保循环重启（防止卡顿）
+                    self.marker_movie.finished.connect(self._on_marker_animation_finished)
+
+                    # 启动动画
+                    self.marker_movie.start()
+
+                loop_count = self.marker_movie.loopCount()
+                loop_info = "无限循环" if loop_count == -1 else f"{loop_count}次循环"
+                self.logger.info(f"加载动画时间标记 ({ext}): {image_file}, 速度={marker_speed}%, {loop_info}")
 
             elif ext in ['.jpg', '.jpeg', '.png', '.webp']:
                 # 静态图片(包括静态的 WebP)
@@ -1794,12 +1916,32 @@ class TimeProgressBar(QWidget):
         old_position = self.config.get('position', 'bottom')
         old_screen_index = self.config.get('screen_index', 0)
 
+        # 保存旧的动画配置
+        old_marker_type = self.config.get('marker_type', 'gif')
+        old_marker_image = self.config.get('marker_image_path', '')
+        old_marker_size = self.config.get('marker_size', 40)
+
         # 重新加载配置和任务
         self.config = self.load_config()
         self.tasks = self.load_tasks()
 
-        # 重新加载时间标记图片
-        self.init_marker_image()
+        # 检查动画配置是否改变
+        new_marker_type = self.config.get('marker_type', 'gif')
+        new_marker_image = self.config.get('marker_image_path', '')
+        new_marker_size = self.config.get('marker_size', 40)
+
+        marker_config_changed = (
+            old_marker_type != new_marker_type or
+            old_marker_image != new_marker_image or
+            old_marker_size != new_marker_size
+        )
+
+        # 只有当动画配置真的改变时才重新初始化，避免中断正在播放的动画
+        if marker_config_changed:
+            self.logger.info(f"检测到动画配置变化，重新初始化动画")
+            self.init_marker_image()
+        else:
+            self.logger.debug(f"动画配置未变化，跳过重新初始化")
 
         # 重新计算时间范围
         self.calculate_time_range()
@@ -1847,6 +1989,13 @@ class TimeProgressBar(QWidget):
 
     def init_file_watcher(self):
         """初始化文件监视器"""
+        # 禁用文件监视器以避免Windows上QFileSystemWatcher的bug
+        # 该bug会导致fileChanged信号被反复触发（每300ms一次），造成动画卡顿
+        # 用户可以通过重启应用或使用配置窗口来重新加载配置
+        self.logger.info("文件监视器已禁用（避免Windows QFileSystemWatcher bug导致的动画卡顿）")
+        return
+
+        # 以下代码已禁用
         self.file_watcher = QFileSystemWatcher(self)
 
         # 获取文件路径
@@ -1867,27 +2016,149 @@ class TimeProgressBar(QWidget):
 
         # 防止重复触发: 使用定时器去抖
         if hasattr(self, '_reload_timer') and self._reload_timer.isActive():
+            self.logger.debug(f"重载定时器已激活，重置定时器")
             self._reload_timer.stop()
 
         # Windows 某些编辑器会先删除再创建文件
         # 需要重新添加到监视列表
+        # 注意：重新添加可能会触发新的fileChanged信号，导致无限循环
+        # 所以只在文件真正不存在于监视列表时才添加
         tasks_file = str(self.app_dir / 'tasks.json')
         config_file = str(self.app_dir / 'config.json')
 
-        # 检查并重新添加监视
         current_files = self.file_watcher.files()
-        if tasks_file not in current_files:
+
+        # 只有当文件确实不在监视列表中，且文件确实存在时，才重新添加
+        import os
+        if tasks_file not in current_files and os.path.exists(tasks_file):
+            self.logger.warning(f"文件被移出监视列表，重新添加: {tasks_file}")
             self.file_watcher.addPath(tasks_file)
-            self.logger.info(f"重新监视文件: {tasks_file}")
-        if config_file not in current_files:
+        if config_file not in current_files and os.path.exists(config_file):
+            self.logger.warning(f"文件被移出监视列表，重新添加: {config_file}")
             self.file_watcher.addPath(config_file)
-            self.logger.info(f"重新监视文件: {config_file}")
 
         # 延迟重载,避免频繁触发
-        self._reload_timer = QTimer(self)
-        self._reload_timer.setSingleShot(True)
-        self._reload_timer.timeout.connect(self.reload_all)
+        # 复用同一个定时器而不是每次创建新的
+        if not hasattr(self, '_reload_timer'):
+            self._reload_timer = QTimer(self)
+            self._reload_timer.setSingleShot(True)
+            self._reload_timer.timeout.connect(self.reload_all)
+
         self._reload_timer.start(300)  # 300毫秒延迟
+
+    def _advance_marker_frame(self):
+        """手动推进GIF动画到下一帧(使用预缓存的帧)"""
+        if hasattr(self, 'marker_cached_frames') and self.marker_cached_frames:
+            # 使用预缓存的帧数组，避免jumpToFrame的解码开销
+            total_frames = len(self.marker_cached_frames)
+
+            # 切换到下一帧（循环）
+            self.marker_current_frame = (self.marker_current_frame + 1) % total_frames
+
+            # 触发重绘（paintEvent会从marker_cached_frames读取当前帧）
+            self.update()
+
+    def _on_marker_animation_finished(self):
+        """动画播放完成时的回调,确保循环重启"""
+        # 如果启用了WebP手动帧控制,finished信号会被定时器处理,这里直接返回
+        if hasattr(self, 'marker_frame_timer') and self.marker_frame_timer is not None:
+            return
+
+        if self.marker_movie and self.marker_movie.isValid():
+            # 即使GIF设置了无限循环,在某些情况下finished信号仍可能被触发
+            # 手动重启动画确保循环不中断
+            self.gif_loop_count += 1
+            self.logger.warning(f"[GIF监控] finished信号触发! 循环次数={self.gif_loop_count}")
+            self.marker_movie.start()
+
+    def _on_gif_frame_changed(self, frame_num):
+        """GIF 帧变化回调，用于监控播放速度"""
+        import time
+        current_time = time.time()
+
+        # 初始化监控
+        if self.gif_start_time is None:
+            self.gif_start_time = current_time
+            self.gif_last_frame_time = current_time
+            self.gif_frame_count = 0
+            self.logger.info(f"[GIF监控] 开始监控 - 配置速度={self.config.get('marker_speed', 100)}%, 总帧数={self.marker_movie.frameCount()}")
+
+            # 首次回调时检查：WebP格式存在QMovie播放bug，需要手动控制
+            # Bug现象：nextFrameDelay()返回正确值(147ms)，但实际播放延迟为0
+            marker_image_path = self.config.get('marker_image_path', '')
+            is_webp = marker_image_path.lower().endswith('.webp')
+
+            if is_webp and self.marker_frame_timer is None:
+                self.logger.warning(f"[GIF修复] 检测到WebP格式，启用手动帧控制（QMovie对WebP的已知bug）")
+
+                # 停止QMovie的自动播放
+                self.marker_movie.setPaused(True)
+
+                # 断开frameChanged信号，避免继续触发监控
+                try:
+                    self.marker_movie.frameChanged.disconnect(self._on_gif_frame_changed)
+                    self.logger.info(f"[GIF修复] 已断开frameChanged信号连接")
+                except:
+                    pass
+
+                # 断开finished信号，避免jumpToFrame(0)时触发finished回调
+                try:
+                    self.marker_movie.finished.disconnect(self._on_marker_animation_finished)
+                    self.logger.info(f"[GIF修复] 已断开finished信号连接")
+                except:
+                    pass
+
+                # 创建高精度定时器手动控制帧切换
+                from PySide6.QtCore import QTimer, Qt
+                self.marker_frame_timer = QTimer(self)
+                self.marker_frame_timer.setTimerType(Qt.TimerType.PreciseTimer)  # 使用高精度定时器
+                self.marker_frame_timer.timeout.connect(self._advance_marker_frame)
+
+                # 计算实际帧延迟: 基础150ms * (100 / 速度)
+                marker_speed = self.config.get('marker_speed', 100)
+                base_delay = 150  # 基础延迟150ms
+                actual_delay = int(base_delay * (100 / marker_speed))
+                self.marker_frame_timer.setInterval(actual_delay)
+                self.marker_frame_timer.start()
+
+                self.logger.info(f"[GIF修复] 高精度定时器已启动，间隔={actual_delay}ms，QMovie已暂停")
+                return  # 不再继续监控，交给定时器控制
+
+        self.gif_frame_count += 1
+
+        # 计算帧间隔
+        if self.gif_last_frame_time:
+            frame_interval = (current_time - self.gif_last_frame_time) * 1000  # 毫秒
+
+            # 检测异常帧间隔（正常应该是 ~147ms）
+            if frame_interval < 100:
+                self.logger.warning(f"[GIF监控] 帧 {frame_num}: 间隔过短! {frame_interval:.1f}ms (预期 ~147ms)")
+            elif frame_interval > 200:
+                self.logger.warning(f"[GIF监控] 帧 {frame_num}: 间隔过长! {frame_interval:.1f}ms (预期 ~147ms)")
+
+        self.gif_last_frame_time = current_time
+
+        # 每完成一轮循环输出统计
+        if frame_num == 0 and self.gif_frame_count > 1:
+            elapsed = current_time - self.gif_start_time
+            avg_fps = self.gif_frame_count / elapsed if elapsed > 0 else 0
+            expected_fps = 6.8  # 8帧 / (8 * 147ms) = 6.8 FPS
+
+            self.logger.info(
+                f"[GIF监控] 循环完成 - "
+                f"总帧数={self.gif_frame_count}, "
+                f"时长={elapsed:.2f}s, "
+                f"平均FPS={avg_fps:.2f} "
+                f"(预期={expected_fps:.1f})"
+            )
+
+            if avg_fps > 8.0:
+                self.logger.error(f"[GIF监控] FPS过高! ({avg_fps:.2f} vs {expected_fps:.1f})")
+            elif avg_fps > 7.5:
+                self.logger.warning(f"[GIF监控] FPS偏高 ({avg_fps:.2f} vs {expected_fps:.1f})")
+
+        # 触发重绘
+        self.update()
 
     def update_time_marker(self):
         """更新时间标记的位置(紧凑模式)"""
@@ -2037,6 +2308,12 @@ class TimeProgressBar(QWidget):
 
     def paintEvent(self, event):
         """自定义绘制事件"""
+        self.paint_event_count += 1
+
+        # 每100次paintEvent输出一次统计（避免日志过多）
+        if self.paint_event_count % 100 == 0:
+            self.logger.debug(f"[GIF监控] paintEvent 调用次数: {self.paint_event_count}")
+
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)  # 抗锯齿
 
@@ -2111,10 +2388,18 @@ class TimeProgressBar(QWidget):
         marker_x = self.current_time_percentage * width
         marker_type = self.config.get('marker_type', 'line')
 
-        if marker_type == 'gif' and self.marker_movie and self.marker_movie.isValid():
-            # GIF 动画标记
-            current_pixmap = self.marker_movie.currentPixmap()
-            if not current_pixmap.isNull():
+        if marker_type == 'gif':
+            # GIF 动画标记 - 优先使用预缓存的帧
+            current_pixmap = None
+            if hasattr(self, 'marker_cached_frames') and self.marker_cached_frames:
+                # 使用预缓存的帧（性能最优）
+                frame_index = self.marker_current_frame % len(self.marker_cached_frames)
+                current_pixmap = self.marker_cached_frames[frame_index]
+            elif self.marker_movie and self.marker_movie.isValid():
+                # 回退方案：使用QMovie的currentPixmap
+                current_pixmap = self.marker_movie.currentPixmap()
+
+            if current_pixmap and not current_pixmap.isNull():
                 # 计算绘制位置(水平居中,底部对齐到进度条底部 + Y轴偏移)
                 pixmap_width = current_pixmap.width()
                 pixmap_height = current_pixmap.height()
