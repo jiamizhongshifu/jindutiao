@@ -6,34 +6,52 @@
 
 [![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/PySide6-6.5+-green.svg)](https://pypi.org/project/PySide6/)
-[![Version](https://img.shields.io/badge/version-1.4.2-brightgreen.svg)](https://github.com)
+[![Version](https://img.shields.io/badge/version-1.4.3-brightgreen.svg)](https://github.com)
 [![License](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com)
 
-**当前版本: v1.4.2** | 最后更新: 2025-11-01 | Vercel代理服务器部署 ✅
+**当前版本: v1.4.3** | 最后更新: 2025-11-02 | Vercel云服务 ✅
 
 </div>
 
 ---
 
-## ✨ 特性
+## ✨ 核心特性
 
-- 🎯 **透明置顶** - 始终显示在所有窗口之上,不干扰日常操作
-- 🖱️ **悬停提示** - 鼠标悬停显示任务详情,支持交互式操作
-- ⏱️ **实时更新** - 动态显示当前时间进度,精确到秒
-- 🎨 **高度自定义** - 支持自定义颜色、位置、高度、圆角等外观
-- 🔄 **热重载** - 修改配置文件即时生效,无需重启
-- 💾 **轻量级** - 内存占用极低,CPU使用率几乎为0
-- 📊 **任务可视化** - 用彩色色块直观显示全天的任务安排,紧凑模式无缝衔接
-- 🌙 **多显示器支持** - 可选择在任意显示器上显示
-- 🎛️ **可视化配置** - 功能完善的 GUI 配置管理器,无需手动编辑 JSON
-- 📑 **预设模板** - 8 种内置作息模板(工作日、学生、自由职业等),一键加载
-- 🖼️ **多样时间标记** - 支持线条、静态图片、动画 GIF 三种时间标记样式,默认配置炫酷动图标记
-- 🍅 **番茄钟集成** - 内置番茄钟计时器,支持拖拽定位和可视化配置
-- 🔔 **智能通知** - 任务提醒和番茄钟通知,支持免打扰时段
-- 📈 **任务统计报告** - 自动跟踪任务完成情况,提供多维度统计分析和数据导出
-- 🎨 **优化图层渲染** - 悬停提示文字始终显示在时间标记上方,确保清晰可见
-- 🤖 **AI 智能规划** - 使用自然语言快速生成任务时间表,后端服务自动启动 (NEW!)
+### 🎯 基础功能
+- **透明置顶** - 始终显示在所有窗口之上,不干扰日常操作
+- **悬停提示** - 鼠标悬停显示任务详情,支持交互式操作
+- **实时更新** - 动态显示当前时间进度,精确到秒
+- **高度自定义** - 支持自定义颜色、位置、高度、圆角等外观
+- **热重载** - 修改配置文件即时生效,无需重启
+- **轻量级** - 内存占用极低,CPU使用率几乎为0
+
+### 📊 任务管理
+- **任务可视化** - 用彩色色块直观显示全天的任务安排,紧凑模式无缝衔接
+- **预设主题配色** - 多种内置主题(商务、创意、自然等),一键切换
+- **自定义任务颜色** - 支持单独设置每个任务的背景色和文字颜色
+- **预设模板** - 8种内置作息模板(工作日、学生、自由职业等),快速加载
+
+### 🖼️ 视觉效果
+- **多样时间标记** - 支持线条、静态图片、动画GIF三种时间标记样式
+- **多显示器支持** - 可选择在任意显示器上显示
+- **优化图层渲染** - 悬停提示文字始终显示在时间标记上方,确保清晰可见
+
+### 🎛️ 配置管理
+- **图形化配置界面** - 功能完善的GUI配置管理器(已集成在主程序中)
+- **可视化时间轴编辑器** - 拖拽调整任务时间,实时预览
+- **开机自启动管理** - 一键设置开机自启动
+
+### 🍅 番茄钟 & 通知
+- **番茄钟集成** - 内置番茄钟计时器,支持拖拽定位和可视化配置
+- **智能通知** - 任务提醒和番茄钟通知,支持免打扰时段
+- **任务统计报告** - 自动跟踪任务完成情况,提供多维度统计分析和数据导出
+
+### 🤖 AI智能功能 (云服务)
+- **AI智能规划** - 使用自然语言快速生成任务时间表
+- **Vercel云服务** - 基于Vercel Serverless Functions的云端AI服务
+- **配额管理** - 每日免费配额限制,数据持久化存储(Supabase)
+- **无需本地配置** - 云端运行,无需手动启动本地服务
 
 ## 📸 效果预览
 
@@ -47,8 +65,8 @@
 **示意图说明:**
 - 半透明灰色背景横跨整个屏幕宽度
 - 彩色色块代表 `tasks.json` 中定义的任务(紧凑模式,无缝衔接)
-- 红色垂直线/图片/GIF 标记当前时间位置,随时间移动(默认使用炫酷动图)
-- 鼠标悬停在任务上时显示任务详情和时间范围(文字始终在最上层,不被时间标记遮挡)
+- 红色垂直线/图片/GIF标记当前时间位置,随时间移动
+- 鼠标悬停在任务上时显示任务详情和时间范围
 
 ## 🚀 快速开始
 
@@ -61,8 +79,8 @@
 
 1. **克隆/下载项目**
    ```bash
-   git clone https://github.com/yourusername/PyDayBar.git
-   cd PyDayBar
+   git clone https://github.com/jiamizhongshifu/jindutiao.git
+   cd jindutiao
    ```
 
 2. **创建虚拟环境(推荐)**
@@ -86,2136 +104,405 @@
    python main.py
    ```
 
-5. **打开配置管理器**
-   - 右键点击系统托盘图标选择"⚙️ 打开配置"
-   - 或从源码运行: `python config_gui.py` (仅开发环境)
+5. **打开配置界面**
+   - 右键点击系统托盘图标
+   - 选择"⚙️ 配置"
 
 ### 首次运行
 
 程序首次启动时会自动创建以下文件:
 
-- `config.json` - 配置文件
+- `config.json` - 应用配置文件
 - `tasks.json` - 任务数据文件
+- `themes.json` - 主题数据文件
 
-您可以使用 GUI 配置管理器或直接编辑这些文件来自定义进度条。
+## ⚙️ 配置说明
 
-## 📝 配置说明
+### 使用图形化配置界面(推荐)
 
-### 使用 GUI 配置管理器(推荐)
+配置管理器已集成在主程序中，通过系统托盘菜单"⚙️ 配置"即可启动。
 
-配置管理器已集成在主程序中，通过系统托盘菜单"⚙️ 打开配置"即可启动。
+**配置界面功能:**
 
-**注意**: 在开发环境中，也可以直接运行 `python config_gui.py` 进行测试。
+#### 1. 外观配置
+- 进度条高度、位置(顶部/底部)
+- 背景颜色和透明度
+- 圆角半径、阴影效果
+- 显示器选择
+- 时间标记样式(线条/图片/GIF)
 
-**GUI 配置管理器功能:**
-- 📊 **可视化任务编辑** - 使用时间选择器和颜色选择器编辑任务
-- 🎨 **外观配置** - 调整进度条高度、位置、颜色、透明度等
-- 🖼️ **时间标记设置** - 选择线条/图片/GIF 标记,调整大小和偏移
-- 🤖 **AI 智能规划** - 使用自然语言描述计划,AI 自动生成任务时间表 (NEW!)
-- 📑 **预设模板** - 一键加载 8 种内置模板:
-  - 24小时完整作息
-  - 工作日作息
-  - 学生作息
-  - 自由职业
-  - 夜班作息
-  - 内容创作者
-  - 健身达人
-  - 创业者
-- 💾 **自定义模板** - 保存和加载自定义任务配置
-- ✅ **实时验证** - 自动检测时间冲突和格式错误
+#### 2. 任务管理
+- **预设主题配色** - 选择内置主题,时间轴实时预览
+- **可视化时间轴编辑器** - 图形化编辑任务时间
+- **自定义任务颜色** - 单独设置每个任务的背景色和文字颜色
+- **加载预设模板** - 快速加载常用作息模板
+
+#### 3. 番茄钟设置
+- 工作/休息时长设置
+- 提醒音效选择
+- 番茄钟位置调整
+
+#### 4. 通知设置
+- 任务开始/结束提醒
+- 提醒提前时间
+- 免打扰时段设置
+- 声音开关
+
+#### 5. 开机自启动
+- 一键开启/关闭开机自启动
+- 自动注册到系统启动项
 
 ### 手动编辑配置文件
 
-#### config.json - 外观配置
+您也可以直接编辑 `config.json` 和 `tasks.json` 文件。修改后保存,程序会自动重新加载。
+
+**config.json 示例:**
 
 ```json
 {
-    "bar_height": 20,              // 进度条高度(像素)
-    "position": "bottom",          // 位置:"top" 或 "bottom"
-    "background_color": "#505050", // 背景颜色(十六进制)
-    "background_opacity": 180,     // 背景透明度(0-255)
-    "marker_color": "#FF0000",     // 时间标记颜色(仅线条模式)
-    "marker_width": 2,             // 时间标记宽度(像素,仅线条模式)
-    "marker_type": "line",         // 标记类型:"line"、"image" 或 "gif"
-    "marker_image_path": "",       // 图片/GIF 路径(image/gif 模式)
-    "marker_size": 50,             // 图片/GIF 大小(像素)
-    "marker_y_offset": 0,          // 标记垂直偏移(像素,正数向上)
-    "screen_index": 0,             // 显示器索引(0=主显示器)
-    "update_interval": 1000,       // 更新间隔(毫秒)
-    "enable_shadow": true,         // 是否启用阴影效果
-    "corner_radius": 0,            // 圆角半径(0=直角)
-    "notification": {              // 通知配置
-        "enabled": true,           // 通知总开关
-        "before_start_minutes": [5], // 任务开始前N分钟提醒
-        "on_start": true,          // 任务开始时提醒
-        "before_end_minutes": [],  // 任务结束前N分钟提醒
-        "on_end": false,           // 任务结束时提醒
-        "sound_enabled": true,     // 声音开关
-        "sound_file": "",          // 自定义提示音路径
-        "quiet_hours": {           // 免打扰时段
-            "enabled": false,
-            "start": "22:00",
-            "end": "08:00"
-        }
-    },
-    "pomodoro": {                  // 番茄钟配置
-        "work_duration": 1500,     // 工作时长(秒,默认25分钟)
-        "short_break": 300,        // 短休息时长(秒,默认5分钟)
-        "long_break": 900,         // 长休息时长(秒,默认15分钟)
-        "long_break_interval": 4   // 长休息间隔(默认每4个番茄钟)
-    }
+  "bar_height": 20,
+  "position": "bottom",
+  "background_color": "#505050",
+  "background_opacity": 180,
+  "marker_color": "#FF0000",
+  "theme": {
+    "mode": "preset",
+    "current_theme_id": "business",
+    "auto_apply_task_colors": false
+  }
 }
 ```
 
-#### tasks.json - 任务配置
+**tasks.json 示例:**
 
 ```json
 [
-    {
-        "start": "09:00",          // 开始时间(24小时制)
-        "end": "12:00",            // 结束时间(支持 "24:00")
-        "task": "上午工作",         // 任务名称
-        "color": "#4CAF50"         // 显示颜色(十六进制)
-    },
-    {
-        "start": "13:00",
-        "end": "14:00",
-        "task": "午休",
-        "color": "#FFC107"
-    },
-    {
-        "start": "14:00",
-        "end": "18:00",
-        "task": "下午工作",
-        "color": "#2196F3"
-    }
+  {
+    "start": "09:00",
+    "end": "12:00",
+    "task": "上午工作",
+    "color": "#4CAF50",
+    "text_color": "#FFFFFF"
+  },
+  {
+    "start": "12:00",
+    "end": "13:00",
+    "task": "午休",
+    "color": "#FFC107"
+  }
 ]
 ```
 
-**颜色推荐:**
-- 工作: `#4CAF50` (绿色), `#2196F3` (蓝色)
-- 休息: `#FFC107` (黄色), `#FF9800` (橙色)
-- 重要: `#F44336` (红色), `#E91E63` (粉色)
-- 学习: `#9C27B0` (紫色), `#673AB7` (深紫)
+## 🤖 AI智能功能
 
-## 🎮 使用方法
+### AI任务规划
 
-### 系统托盘菜单
+使用自然语言快速生成任务时间表,基于Vercel云服务。
 
-右键点击系统托盘图标(任务栏右下角)可以:
+**使用方法:**
 
-- **⚙️ 打开配置** - 启动 GUI 配置管理器
-- **🍅 启动番茄钟** - 打开番茄钟面板开始工作
-- **🔔 通知功能** - 发送测试通知和查看通知历史
-- **🔄 重载配置** - 重新加载 `config.json` 和 `tasks.json`
-- **↕️ 切换位置** - 在屏幕顶部和底部之间切换
-- **❌ 退出** - 关闭程序
-
-### 悬停提示
-
-将鼠标悬停在进度条的任务色块上,会显示该任务的详细信息:
-- 任务名称
-- 开始时间
-- 结束时间
-
-### 热重载
-
-您可以直接编辑 `tasks.json` 或 `config.json`,程序会自动检测文件变化并更新显示,**无需重启**。
-
-### 时间标记样式
-
-**线条模式** (默认):
-- 设置 `"marker_type": "line"`
-- 可自定义颜色和宽度
-- 性能最佳,推荐日常使用
-
-**图片模式**:
-- 设置 `"marker_type": "image"`
-- 指定 `"marker_image_path"` 为 PNG/JPG 文件路径
-- 调整 `"marker_size"` 控制图片大小
-
-**GIF 动画模式** (默认):
-- 设置 `"marker_type": "gif"`
-- 指定 `"marker_image_path"` 为 GIF 文件路径(默认为 `kun.webp`)
-- 支持透明背景和循环播放
-- 默认配置: 大小 100px,垂直偏移 -30px
-
-### 番茄钟功能 🍅
-
-**启动番茄钟:**
-1. 右键点击系统托盘图标
-2. 选择"🍅 启动番茄钟"
-3. 番茄钟面板将显示在进度条上方
-
-**番茄钟面板功能:**
-- **▶/⏸ 按钮** - 开始/暂停番茄钟
-- **⚙ 设置按钮** - 打开配置对话框,可调整:
-  - 工作时长(1-120分钟,默认25分钟)
-  - 短休息时长(1-60分钟,默认5分钟)
-  - 长休息时长(1-120分钟,默认15分钟)
-  - 长休息间隔(1-10个番茄钟,默认4个)
-- **✕ 关闭按钮** - 停止并关闭番茄钟
-- **拖拽支持** - 点击面板空白区域可拖动到屏幕任意位置
-
-### 任务统计报告 📊
-
-**打开统计报告:**
-1. 右键点击系统托盘图标
-2. 选择"📊 统计报告"
-3. 统计窗口将显示详细的任务分析
-
-**统计功能特性:**
-
-**📅 今日统计标签页:**
-- 今日任务摘要卡片(总任务数、已完成、进行中、未开始)
-- 圆形进度条显示今日完成率
-- 任务详情表格(显示每个任务的时间和状态)
-
-**📊 本周统计标签页:**
-- 本周汇总数据(任务数、完成数、总时长)
-- 本周完成率圆形进度条
-- 每日趋势表格(星期、任务数、完成率等)
-
-**📈 本月统计标签页:**
-- 本月累计统计
-- 月度完成率可视化
-- 每日统计明细
-
-**📋 任务分类标签页:**
-- 按任务名称分类的历史统计
-- 显示每个任务的完成次数和总时长
-- 颜色标记便于识别
-
-**数据管理:**
-- **🔄 刷新按钮** - 实时更新统计数据
-- **📥 导出CSV** - 将统计数据导出为CSV文件用于进一步分析
-- **自动跟踪** - 任务状态每分钟自动更新(在每分钟的第0秒)
-- **数据持久化** - 统计数据保存在`statistics.json`,程序重启不丢失
-- **数据清理** - 自动保留最近90天的数据,旧数据可手动清理
-
-**统计数据包含:**
-- 每日任务完成记录
-- 任务时长和完成时间
-- 任务完成率计算
-- 按任务名称分类的历史累计
-- 支持日期范围查询
-
-**工作流程:**
-1. 点击开始按钮,开始25分钟工作
-2. 工作完成后自动进入5分钟短休息
-3. 完成4个番茄钟后自动进入15分钟长休息
-4. 休息结束后手动点击开始按钮继续下一个番茄钟
-
-**通知提醒:**
-- 工作完成时显示通知
-- 休息结束时提醒开始新的番茄钟
-- 面板颜色随状态变化(工作=红色,休息=绿色,暂停=灰色)
-
-### AI 智能规划 🤖 (v1.3.0 新增)
-
-**快速上手:**
-
-1. **启动配置管理器**
-   - 右键点击系统托盘图标 → ⚙️ 打开配置
-   - 切换到"任务管理"标签页
-
-2. **使用 AI 规划**
-   - 在"AI智能规划"区域输入您的计划,例如:
-     - "明天9点开会1小时,然后写代码到下午5点,中午12点休息1小时"
-     - "早上8点起床,9点健身1小时,10点到12点学习,下午2点到6点工作"
-   - 点击"✨ 智能生成任务"按钮
-   - AI 会自动解析并生成任务时间表
-
-3. **配额管理**
-   - 免费用户: 每日 3 次规划额度
-   - 实时显示剩余额度
-   - 点击"🔄 刷新配额"查看最新状态
-
-**AI 功能特性:**
-- ✅ **自动启动** - 程序启动时自动检测并启动 AI 后端服务
-- ✅ **后台运行** - AI 服务在后台运行,不影响主程序
-- ✅ **智能解析** - 准确理解自然语言的时间表述
-- ✅ **冲突检测** - 自动检测时间冲突并优化
-- ✅ **一键替换** - 生成的任务可一键替换当前任务表
-
-**配置 AI 服务 (首次使用):**
-
-1. **获取 API 密钥**
-   - 访问 [兔子API](https://api.tu-zi.com) 注册账号
-   - 获取您的 API 密钥
-
-2. **配置环境变量**
-   - 在项目根目录找到 `.env` 文件
-   - 将 `TUZI_API_KEY` 设置为您的 API 密钥
+1. 打开配置界面 → 任务管理
+2. 在"AI智能生成任务"区域输入描述:
    ```
-   TUZI_API_KEY=your_api_key_here
+   我是程序员,朝九晚六工作,中午休息1小时
    ```
+3. 点击"生成"按钮
+4. AI会自动生成完整的任务时间表
+5. 点击"保存所有设置"应用
 
-3. **验证服务**
-   - 启动程序后,AI 服务会自动运行
-   - 打开配置管理器,如果显示"✓ 今日剩余: X 次规划"表示服务正常
-   - 如果显示"❌ AI服务未启动",请检查 API 密钥配置
+**云服务特点:**
 
-**技术说明:**
-- **AI 模型:** 使用 GPT-5 (兔子API提供)
-- **后端架构:** Flask + OpenAI SDK
-- **成本:** 每次规划约 < $0.001
-- **隐私保护:** 所有数据仅用于任务规划,不存储个人信息
+- ✅ **自动运行** - 基于Vercel Serverless Functions,无需本地启动服务
+- ✅ **配额管理** - 每日免费配额限制(免费用户: 3次/天)
+- ✅ **数据持久化** - 使用Supabase数据库,配额数据实时同步
+- ✅ **无需配置** - 完全云端运行,开箱即用
 
-**故障排除:**
-- **服务未启动:** 检查 `.env` 文件中的 API 密钥是否正确
-- **端口占用:** 确保端口 5000 未被其他程序占用
-- **配额用尽:** 等待次日重置或升级到专业版
+**配额规则(免费用户):**
 
-### 通知管理 🔔
+- 每日任务规划: 3次/天
+- 每周报告: 1次/周
+- AI聊天: 10次/天
+- 主题推荐: 5次/天
+- 主题生成: 3次/天
 
-**配置任务提醒:**
-在 `config.json` 的 `notification` 部分配置:
-- `enabled` - 开启/关闭通知功能
-- `before_start_minutes` - 任务开始前N分钟提醒(支持多个时间点)
-- `on_start` - 任务开始时提醒
-- `before_end_minutes` - 任务结束前N分钟提醒
-- `on_end` - 任务结束时提醒
+**查看配额状态:**
 
-**免打扰时段:**
-设置 `quiet_hours.enabled: true` 并配置起止时间,在此时段内不会发送通知。
+打开配置界面,任务管理tab中会显示"✓ 今日剩余: X 次规划"
 
-**测试通知:**
-右键托盘图标 → 通知功能 → 发送测试通知
+## 🎨 主题系统
 
-### 开机自启动
+### 预设主题
 
-**Windows:**
-1. 按 `Win + R`,输入 `shell:startup`,回车
-2. 将 `PyDayBar.exe`(或 `main.py` 的快捷方式)复制到打开的文件夹中
+应用内置多种精心设计的主题配色:
 
-**Linux(systemd):**
-创建 `~/.config/systemd/user/pydaybar.service`:
-```ini
-[Unit]
-Description=PyDayBar Desktop Time Bar
+- **商务专业** (business) - 深蓝、天蓝、青色,专业稳重
+- **活力橙** (vibrant) - 橙色、黄色、绿色,充满活力
+- **自然清新** (nature) - 绿色系,清新自然
+- **创意彩虹** (creative) - 多彩渐变,富有创意
+- **深夜** (dark) - 深色系,护眼舒适
+- **柔和粉** (pastel) - 粉色系,温柔可爱
 
-[Service]
-ExecStart=/path/to/venv/bin/python /path/to/main.py
-Restart=on-failure
+**使用方法:**
 
-[Install]
-WantedBy=default.target
-```
+1. 打开配置界面 → 任务管理
+2. 在"预设主题配色"下拉菜单中选择主题
+3. 时间轴编辑器会实时预览颜色变化
+4. 点击"保存所有设置"应用主题到进度条
 
-然后启用:
-```bash
-systemctl --user enable pydaybar.service
-systemctl --user start pydaybar.service
-```
+**特性:**
 
-## 📦 打包为可执行文件
+- ✅ 实时预览 - 选择主题时,时间轴编辑器立即显示预览
+- ✅ 保存应用 - 点击保存后,进度条颜色立即更新
+- ✅ 持久化 - 重启应用后主题仍然生效
 
-使用 PyInstaller 打包成独立的 `.exe` 文件(无需 Python 环境):
+### 自定义任务颜色
 
-### 打包步骤
+除了使用预设主题,您还可以单独设置每个任务的颜色:
+
+1. 在任务表格中,每个任务都有"背景颜色"和"文字颜色"列
+2. 点击"选色"按钮选择颜色,或直接输入颜色代码
+3. 颜色预览框会实时显示选择的颜色
+4. 保存后生效
+
+## 📦 打包发布
+
+### 使用PyInstaller打包
+
+项目提供了打包配置文件 `PyDayBar.spec`:
 
 ```bash
-# 1. 安装 PyInstaller
-pip install pyinstaller
+# 清理旧文件
+rm -rf build dist
 
-# 2. 清理旧文件(可选)
-# Windows PowerShell:
-Remove-Item -Recurse -Force build, dist
-
-# 3. 打包主程序
+# 打包
 pyinstaller PyDayBar.spec
 
-# 4. 生成的文件在 dist/ 目录中
+# 生成的exe位于
+dist/PyDayBar-v1.4.exe
 ```
 
-### 打包配置说明
+**打包特点:**
 
-`PyDayBar.spec` 文件已配置包含以下内容:
+- **文件大小**: 约55 MB
+- **启动速度**: 1-2秒
+- **配置管理器**: 已集成在主程序中
+- **AI功能**: 使用Vercel云服务,无需打包本地服务
 
-**数据文件 (datas):**
-- 8个任务模板文件 (`tasks_template_*.json`)
-- 默认时间标记动图 (`kun.webp`)
-- AI后端脚本 (`backend_api.py`, `backend_manager.py`, `ai_client.py`)
+**重要提醒**:
+修改Python源代码后,必须重新打包才能在exe中生效。详见 [PyInstaller开发方法论](PYINSTALLER_DEVELOPMENT_METHODOLOGY.md)。
 
-**隐藏导入 (hiddenimports):**
-- `config_gui` - GUI 配置管理器 (已集成在主程序中)
-- `theme_manager` - 主题管理器
-- `theme_ai_helper` - AI主题助手
-- `statistics_manager` - 统计数据管理器
-- `statistics_gui` - 统计报告GUI
-- `backend_manager` - AI 后端管理器
-- `ai_client` - AI 客户端
-- `requests`, `flask`, `flask_cors`, `openai`, `dotenv` - AI 相关依赖
-- `PySide6.QtCore`, `PySide6.QtGui`, `PySide6.QtWidgets` - Qt子模块
-
-### 打包结果
-
-- **文件大小**: 约 66 MB (包含 AI 功能和集成配置管理器)
-- **生成位置**: `dist\PyDayBar-v1.4.exe`
-- **运行方式**: 双击exe即可运行,无需Python环境
-- **配置管理器**: 已集成在主程序中,通过托盘菜单"打开配置"访问
-- **AI 功能**: 自动启动后端服务,无需手动配置
-
-### 首次运行自动生成文件
-
-exe首次运行时会在同目录自动创建:
-- `config.json` - 配置文件
-- `tasks.json` - 任务文件(从模板加载)
-- `statistics.json` - 统计数据文件
-- `pydaybar.log` - 运行日志
-- `.env` - AI 服务配置文件 (需手动配置 API 密钥)
-
-### 配置管理器集成说明
-
-**v1.4 更新**: 配置管理器已完全集成在主程序中,无需单独打包。
-
-- 主程序已包含完整的配置管理器模块
-- 通过托盘菜单"⚙️ 打开配置"即可访问
-- 所有功能均可在主程序中正常使用
-- 不再需要单独的 `PyDayBar-Config.exe` 文件
-
-**注意**: `PyDayBar-Config.spec` 文件已保留但不再使用,仅用于历史参考。
-
-**⚠️ 重要提示:**
-
-1. **必须使用 `.spec` 文件打包**,不要直接运行 `pyinstaller main.py`,否则模板文件和新模块不会被包含
-2. 每次添加新的模板文件或Python模块后,需要更新 `PyDayBar.spec` 中的 `datas` 或 `hiddenimports` 列表
-3. **配置管理器已集成**: 主程序已包含完整的 `config_gui` 模块,无需单独打包
-4. 详细打包说明请参考 [CLAUDE.md](CLAUDE.md#⚠️-important-packaging-with-template-files)
-
-## 🛠️ 开发指南
-
-### 项目结构
+## 📁 项目结构
 
 ```
 PyDayBar/
-├── main.py                       # 主程序入口 (2100+ 行)
-│                                 # 包含: 番茄钟、通知管理、进度条、统计追踪
-├── statistics_manager.py         # 统计数据管理器
-├── statistics_gui.py             # 统计报告GUI窗口
-├── config_gui.py                 # GUI 配置管理器 (1280+ 行)
-├── backend_api.py                # AI 后端 Flask 服务器 (NEW!)
-├── backend_manager.py            # AI 后端自动管理器 (NEW!)
-├── ai_client.py                  # AI 客户端封装 (NEW!)
-├── timeline_editor.py            # 可视化时间轴编辑器
-├── config.json                   # 运行时配置文件
-├── tasks.json                    # 当前任务安排
-├── .env                          # AI 服务配置 (NEW!)
-├── requirements.txt              # Python 依赖
-├── PyDayBar.spec                 # PyInstaller 打包配置
-├── PyDayBar-Config.spec          # 配置管理器打包配置
-├── README.md                     # 本文件
-├── CLAUDE.md                     # Claude Code 项目指导
-├── AI_FEATURE_GUIDE.md           # AI 功能使用指南 (NEW!)
-├── jindutiao.md                  # 详细开发文档
-├── tasks_template_*.json         # 8 个预设模板
-├── statistics.json               # 统计数据文件
-└── pydaybar.log                  # 运行日志
+├── main.py                      # 主程序入口
+├── config_gui.py                # 配置管理器(已集成)
+├── ai_client.py                 # AI客户端(调用Vercel API)
+├── theme_manager.py             # 主题管理器
+├── timeline_editor.py           # 时间轴编辑器
+├── notification_manager.py      # 通知管理器
+├── statistics_manager.py        # 统计管理器
+├── autostart_manager.py         # 开机自启动管理器
+├── PyDayBar.spec                # PyInstaller打包配置
+├── requirements.txt             # Python依赖
+├── config.json                  # 配置文件(自动生成)
+├── tasks.json                   # 任务数据(自动生成)
+├── themes.json                  # 主题数据(自动生成)
+├── api/                         # Vercel云服务(部署在Vercel)
+│   ├── quota_manager.py         # 配额管理器
+│   ├── quota-status.py          # 配额查询API
+│   ├── plan-tasks.py            # AI任务生成API
+│   ├── health.py                # 健康检查API
+│   └── requirements.txt         # Vercel依赖
+└── docs/                        # 文档目录
+    ├── PYINSTALLER_DEVELOPMENT_METHODOLOGY.md
+    ├── TASK_COLOR_RESET_FIX.md
+    ├── QUOTA_SYSTEM_README.md
+    └── ...
 ```
 
-### 核心技术
+## 🎯 键盘快捷键
 
-- **GUI 框架:** PySide6 (Qt for Python)
-- **窗口属性:**
-  - `Qt.FramelessWindowHint` - 无边框
-  - `Qt.WindowStaysOnTopHint` - 始终置顶
-  - `Qt.WindowDoesNotAcceptFocus` - 不抢占焦点
-  - `WA_TranslucentBackground` - 透明背景
-  - **注意:** 移除了 `WindowTransparentForInput` 以支持悬停提示
-- **文件监视:** `QFileSystemWatcher` 实现热重载
-- **系统集成:** `QSystemTrayIcon` 托盘图标
-- **时间计算:** 紧凑模式时间映射算法
+主程序:
+- **右键** - 打开系统托盘菜单
+- **左键** - (预留功能)
 
-### 开发文档
+配置管理器:
+- **Ctrl+S** - 保存所有设置
+- **Esc** - 关闭窗口
 
-- **快速入门:** 本 README.md
-- **详细开发计划:** [jindutiao.md](jindutiao.md) - 包含 6 个阶段的完整实现步骤
-- **AI 辅助开发:** [CLAUDE.md](CLAUDE.md) - Claude Code 的项目指导文件
-
-### 代码规范
-
-- 遵循 **PEP 8** 代码风格
-- 使用类型提示(Type Hints)
-- 添加文档字符串(Docstrings)
-- 为关键函数编写单元测试
-
-### 贡献指南
-
-欢迎提交 Issue 和 Pull Request!
-
-1. Fork 本项目
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 开启 Pull Request
-
-## 🐛 常见问题
+## ❓ 常见问题
 
 ### Q1: 进度条不显示?
 
-**解决方案:**
-- 检查是否有其他全屏程序覆盖
-- 尝试切换到屏幕顶部:修改 `config.json` 中的 `"position": "top"`
-- 检查 `bar_height` 是否设置过小
-- 查看 `pydaybar.log` 日志文件排查错误
+**检查清单:**
+1. 确认程序正在运行(系统托盘应该有图标)
+2. 检查是否被其他窗口遮挡(尝试切换到顶部/底部)
+3. 查看 `pydaybar.log` 日志文件
 
-### Q2: 悬停提示不工作?
-
-**原因:** 窗口可能被其他全屏应用覆盖,或鼠标没有正确悬停在任务色块上。
+### Q2: 修改配置后没有生效?
 
 **解决方案:**
-- 确保鼠标悬停在有颜色的任务区域
-- 退出全屏应用后尝试
-- 检查是否启用了鼠标跟踪(默认已启用)
+- 如果修改的是 `config.json` 或 `tasks.json`,应该会自动重新加载
+- 如果没有生效,尝试重启应用
+- 如果修改的是源代码,需要重新打包exe
 
-**v1.2.1 修复:** 如果遇到时间标记图片遮挡悬停文字的问题,请更新到 v1.2.1 或更新版本。
+### Q3: 主题保存后进度条颜色没有变化?
 
-### Q3: CPU 占用过高?
+**原因:** 这个问题在v1.4.3中已修复。
 
-**解决方案:**
-- 增加 `update_interval` 的值(例如改为 `60000` 表示每分钟更新一次)
-- 使用线条标记代替 GIF 动画
-- 禁用阴影效果: `"enable_shadow": false`
-- 参考 [CLAUDE.md 性能优化部分](CLAUDE.md#performance-optimization)
+**v1.4.3更新:**
+- 保存主题时自动应用主题颜色到任务数据
+- reload_all()方法中添加主题重新应用逻辑
+- 确保保存后进度条立即刷新
 
-### Q4: 配置修改后不生效?
+### Q4: AI智能规划显示"无法连接云服务"?
 
-**解决方案:**
-- 检查 JSON 格式是否正确(使用 [JSONLint](https://jsonlint.com/) 验证)
-- 手动通过托盘菜单选择"重载配置"
-- 查看 `pydaybar.log` 是否有错误信息
-- 确保文件保存成功(某些编辑器可能会创建临时文件)
-
-### Q5: Windows Defender 报毒?
-
-**原因:** PyInstaller 打包的程序可能被误报。
+**可能原因:**
+1. 网络连接问题
+2. Vercel服务暂时不可用
+3. API配额已用完
 
 **解决方案:**
-- 从源码运行: `python main.py`
-- 添加到 Windows Defender 白名单
-- 使用代码签名证书(专业用户)
-
-### Q6: 打包后模板无法加载?
-
-**原因:** 模板文件未包含在 PyInstaller 打包中。
-
-**解决方案:**
-- 确保 `PyDayBar.spec` 文件的 `datas=[]` 列表中包含所有模板文件
-- 重新运行 `pyinstaller PyDayBar.spec`
-- 详细说明请参考 [CLAUDE.md 打包说明](CLAUDE.md#⚠️-important-packaging-with-template-files)
-
-### Q7: 统计报告窗口打不开?
-
-**原因:** 可能是统计模块未正确打包或权限问题。
-
-**解决方案:**
-- 检查 `statistics.json` 是否可以正常创建
-- 查看 `pydaybar.log` 日志文件中的错误信息
-- 确保 `PyDayBar.spec` 的 `hiddenimports` 包含 `statistics_manager` 和 `statistics_gui`
-- 以管理员权限运行程序
-
-### Q8: 统计数据不更新?
-
-**原因:** 任务状态跟踪每分钟更新一次。
-
-**解决方案:**
-- 等待至少1分钟后查看统计数据
-- 点击统计窗口的"🔄 刷新"按钮手动刷新
-- 确保任务时间设置正确(当前时间在任务时间范围内)
-- 检查系统时间是否准确
-
-### Q9: AI 智能规划显示"服务未启动"?
-
-**原因:** AI 后端服务未能成功启动。
-
-**解决方案:**
-- 检查 `.env` 文件是否存在且配置了有效的 `TUZI_API_KEY`
-- 确保端口 5000 未被占用(可尝试关闭其他占用该端口的程序)
-- 查看 `pydaybar.log` 日志文件获取详细错误信息
-- 手动运行 `python backend_api.py` 检查后端服务是否能正常启动
-- 确保已安装必要的依赖: `pip install flask flask-cors python-dotenv openai`
-
-### Q10: AI 生成的任务不准确?
-
-**原因:** 输入描述不够清晰或包含歧义。
-
-**解决方案:**
-- 使用明确的时间表述,如"9点到11点"而不是"早上工作"
-- 指定任务持续时间,如"健身1小时"
-- 分段描述复杂计划,避免在一句话中包含过多信息
-- 参考 [AI_FEATURE_GUIDE.md](AI_FEATURE_GUIDE.md) 获取更多示例
-
-### Q11: AI 服务一直显示"正在初始化"? 🔧
-
-**问题描述:**
-- 打开配置管理器后,AI服务状态一直显示"⏳ AI服务正在初始化..."
-- 等待很久状态也不更新
-
-**原因分析:**
-- AI 后端服务启动需要时间(通常 3-5 秒)
-- v1.4.0 版本缺少持续状态更新机制
-
-**解决方案 (v1.4.1 已修复):**
-- ✅ 更新到 v1.4.1 或更高版本
-- ✅ 配置管理器会每 2 秒自动检查服务状态
-- ✅ 状态会自动更新: 初始化中 → 启动中 → 已就绪
-
-**手动排查:**
-1. 查看 `pydaybar.log` 日志文件
-2. 检查 `.env` 文件是否包含有效的 `TUZI_API_KEY`
-3. 确保端口 5000 未被占用
-4. 手动运行 `python backend_api.py` 测试后端
-
-### Q12: 主题 AI 推荐点击后没反应? 🎨
-
-**问题描述:**
-- 在主题设置中点击"✨ 获取AI推荐"按钮
-- 没有任何反应,也没有错误提示
-
-**原因分析:**
-- AI 组件可能未初始化完成
-- 后端服务未启动
-- v1.4.0 版本缺少完善的错误提示
-
-**解决方案 (v1.4.1 已修复):**
-- ✅ 更新到 v1.4.1 或更高版本
-- ✅ 会显示详细的错误提示对话框
-- ✅ 提供自动启动后端服务选项
-- ✅ 显示依赖安装和配置说明
-
-**手动操作:**
-1. 等待 AI 服务完全启动(3-5 秒)
-2. 确认左下角状态显示"✓ 今日剩余: X次规划"
-3. 确保已添加至少一个任务
-4. 查看日志文件获取详细错误信息
-
-更多问题请参考 [jindutiao.md 常见问题部分](jindutiao.md#常见问题与解决方案-faq) 或查看 `pydaybar.log` 日志文件。
-
-## ✅ Vercel部署问题 - 已完全解决
-
-**状态**: ✅ **已完全修复** (2025-11-02)
-**最终提交**: `dc60957`
-**部署URL**: `https://jindutiao.vercel.app` - 所有API端点正常工作
-
-### 📋 问题摘要
-
-经过7次迭代修复，成功解决了Vercel部署中的所有问题：
-- ✅ 所有API端点正常响应（之前全部404）
-- ✅ 函数格式正确（BaseHTTPRequestHandler）
-- ✅ 路由配置完善（URL正确映射到Python文件）
-- ✅ Flask自动检测问题已绕过
-
-**详细修复文档**: [VERCEL_FIXED_FINAL.md](VERCEL_FIXED_FINAL.md)
-
----
-
-## 🎯 Vercel部署问题通用解决方法论
-
-> 本方法论总结自PyDayBar项目实战经验，提供系统性的Vercel部署问题诊断与修复思路，适用于所有Python Serverless Functions项目。
-
-### 第一步：问题诊断与信息收集 🔍
-
-#### 1.1 明确症状分类
-
-**症状A：构建失败**
-- 现象：Build失败，无法完成部署
-- 优先检查：构建日志、依赖安装、Python版本
-
-**症状B：部署成功但404**
-- 现象：Functions显示已部署，但访问返回404
-- 优先检查：路由配置、函数格式、URL路径
-
-**症状C：日志为空**
-- 现象：Functions没有任何执行日志
-- 优先检查：函数是否真正被调用、路由是否生效
-
-#### 1.2 收集关键信息
-
-在开始修复前，必须收集以下信息：
-
-```bash
-✓ Vercel Dashboard检查清单：
-  [ ] Deployments → 最新部署状态（Success/Failed）
-  [ ] Functions → 函数列表（数量、Region）
-  [ ] Functions → 点击函数名 → Logs（是否有日志）
-  [ ] Deployments → Build Logs（构建警告和错误）
-  [ ] Settings → Environment Variables（是否配置）
-```
-
-```bash
-✓ 本地文件检查清单：
-  [ ] vercel.json - 配置是否存在且格式正确
-  [ ] api/*.py - 函数文件格式和位置
-  [ ] requirements.txt - 依赖声明
-  [ ] .vercelignore - 排除文件配置
-```
-
-### 第二步：系统性排查路径 🔬
-
-#### 2.1 项目类型识别问题
-
-**检查点**：Vercel是否误判了项目类型？
-
-**常见问题**：
-- Python项目被识别为Flask应用
-- 构建日志出现 "No Flask entrypoint found"
-
-**诊断方法**：
-```bash
-# 查看构建日志，搜索以下关键词：
-- "Detected"
-- "Framework"
-- "Flask"
-- "No ... entrypoint found"
-```
-
-**解决方案**：
-```python
-# 方案1: 创建虚拟入口点（推荐）
-# 创建 index.py（内容几乎为空）
-pass
-
-# 方案2: 使用 package.json 辅助识别
-{
-  "name": "your-api-name",
-  "version": "1.0.0",
-  "private": true
-}
-```
-
-#### 2.2 函数格式验证
-
-**检查点**：函数是否使用了Vercel要求的格式？
-
-**Vercel Python函数的正确格式**：
-```python
-from http.server import BaseHTTPRequestHandler
-import json
-
-class handler(BaseHTTPRequestHandler):
-    def do_GET(self):  # 或 do_POST
-        # 1. 设置响应状态
-        self.send_response(200)
-
-        # 2. 设置响应头
-        self.send_header('Content-Type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.end_headers()
-
-        # 3. 写入响应体
-        response = {"status": "ok"}
-        self.wfile.write(json.dumps(response).encode('utf-8'))
-```
-
-**常见错误格式**：
-```python
-# ❌ 错误1：使用Lambda风格的handler函数
-def handler(req):
-    return {'statusCode': 200, 'body': '...'}
-
-# ❌ 错误2：没有继承BaseHTTPRequestHandler
-def handler(request):
-    return Response("ok")
-```
-
-#### 2.3 路由配置检查
-
-**检查点**：URL是否正确映射到Python文件？
-
-**关键概念**：当使用 `builds` 配置时，Vercel **不会**自动创建路由，必须手动配置 `routes`。
-
-**正确的路由配置**：
-```json
-{
-  "version": 2,
-  "builds": [
-    {
-      "src": "api/**/*.py",
-      "use": "@vercel/python"
-    }
-  ],
-  "routes": [
-    { "handle": "filesystem" },
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1.py"  // ✅ 映射到.py文件
-    }
-  ]
-}
-```
-
-**常见路由错误**：
-```json
-{
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"  // ❌ 循环路由，缺少.py
-    }
-  ]
-}
-```
-
-### 第三步：迭代修复策略 🔄
-
-#### 3.1 单变量修改原则
-
-**核心原则**：每次只修改一个配置项，立即部署测试，记录结果。
-
-**错误示例**：
-```
-❌ 同时修改了：
-  - vercel.json 路由配置
-  - 函数代码格式
-  - 添加了 index.py
-  - 修改了 requirements.txt
-→ 无法确定哪个改动起了作用
-```
-
-**正确示例**：
-```
-✅ 尝试1：只修改 vercel.json 路由配置
-  → 部署 → 测试 → 仍然404 → 记录结果
-✅ 尝试2：只添加 index.py
-  → 部署 → 测试 → 构建成功但仍404 → 记录结果
-✅ 尝试3：修改路由 dest 为 $1.py
-  → 部署 → 测试 → 成功！ → 确认这是关键修复
-```
-
-#### 3.2 创建测试端点
-
-在修复过程中，创建一个极简的测试端点来隔离问题：
-
-```python
-# api/test-simple.py
-from http.server import BaseHTTPRequestHandler
-import json
-
-class handler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header('Content-Type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.end_headers()
-
-        response = {"status": "ok", "message": "Test endpoint working!"}
-        self.wfile.write(json.dumps(response).encode('utf-8'))
-```
-
-**测试命令**：
-```bash
-curl https://your-project.vercel.app/api/test-simple
-```
-
-#### 3.3 渐进式验证
-
-修复后按以下顺序验证：
-
-```bash
-1️⃣ 测试最简单的GET端点
-   curl https://your-project.vercel.app/api/health
-
-2️⃣ 测试带参数的GET端点
-   curl "https://your-project.vercel.app/api/quota-status?user_tier=free"
-
-3️⃣ 测试POST端点
-   curl -X POST https://your-project.vercel.app/api/plan-tasks \
-     -H "Content-Type: application/json" \
-     -d '{"input": "测试数据"}'
-```
-
-### 第四步：验证与文档记录 📝
-
-#### 4.1 完整性验证
-
-修复完成后，执行完整的验证流程：
-
-```bash
-✓ 功能验证：
-  [ ] 所有API端点返回正确响应
-  [ ] 状态码正确（200/400/500）
-  [ ] 响应格式正确（JSON/文本）
-  [ ] CORS头正确配置
-
-✓ 性能验证：
-  [ ] 响应时间在合理范围内（< 3秒）
-  [ ] 冷启动时间可接受
-  [ ] 没有频繁超时
-
-✓ 稳定性验证：
-  [ ] 连续请求10次无异常
-  [ ] 日志中无错误信息
-  [ ] Functions状态正常
-```
-
-#### 4.2 记录修复过程
-
-**必须记录的内容**：
-1. **问题症状**：具体的错误信息和现象
-2. **尝试方案**：每次尝试的具体改动
-3. **测试结果**：每次测试的详细结果
-4. **最终方案**：确认有效的修复措施
-5. **关键经验**：可复用的经验教训
-
-**文档模板**：
-```markdown
-## Vercel部署修复记录
-
-### 问题描述
-- 症状：[具体描述]
-- 影响范围：[哪些功能受影响]
-- 开始时间：[YYYY-MM-DD]
-
-### 修复过程
-
-#### 尝试1：[方案名称]
-- 修改内容：[具体改动]
-- 结果：✅ 成功 / ❌ 失败
-- 详细说明：[...]
-
-[重复记录每次尝试]
-
-### 最终解决方案
-- 关键修复点1：[...]
-- 关键修复点2：[...]
-
-### 经验总结
-- 根本原因：[...]
-- 可复用经验：[...]
-- 避免的陷阱：[...]
-```
-
----
-
-### 🔑 关键配置检查清单
-
-部署前使用此清单验证配置：
-
-#### vercel.json 配置检查
-
-```json
-{
-  "version": 2,  // ✓ 必须是2
-
-  "builds": [    // ✓ 明确指定Python函数
-    {
-      "src": "api/**/*.py",     // ✓ 匹配所有api目录下的py文件
-      "use": "@vercel/python"   // ✓ 使用Python构建器
-    }
-  ],
-
-  "routes": [    // ✓ 必须配置路由（使用builds时）
-    { "handle": "filesystem" },  // ✓ 优先处理静态文件
-    {
-      "src": "/api/(.*)",        // ✓ 匹配API请求
-      "dest": "/api/$1.py"       // ✓ 映射到.py文件
-    }
-  ]
-}
-```
-
-#### Python函数格式检查
-
-```python
-# ✓ 必须导入BaseHTTPRequestHandler
-from http.server import BaseHTTPRequestHandler
-import json
-
-# ✓ 类名必须是handler（小写）
-class handler(BaseHTTPRequestHandler):
-
-    # ✓ 根据HTTP方法实现对应函数
-    def do_GET(self):  # 或 do_POST, do_PUT 等
-
-        # ✓ 设置响应状态
-        self.send_response(200)
-
-        # ✓ 设置响应头（必须包含Content-Type）
-        self.send_header('Content-Type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')  # CORS
-        self.end_headers()
-
-        # ✓ 写入响应体（必须encode）
-        response = {"status": "ok"}
-        self.wfile.write(json.dumps(response).encode('utf-8'))
-```
-
-#### 文件结构检查
-
-```
-✓ 推荐的项目结构：
-your-project/
-├── api/                    # ✓ API函数目录
-│   ├── endpoint1.py       # ✓ 每个文件一个端点
-│   ├── endpoint2.py
-│   └── requirements.txt   # ✓ Python依赖
-├── index.py               # ✓ 虚拟Flask入口点（可选）
-├── package.json           # ✓ 项目元数据（推荐）
-├── vercel.json            # ✓ Vercel配置
-└── .vercelignore          # ✓ 部署忽略文件
-```
-
----
-
-### 🛠️ 调试技巧工具箱
-
-#### 技巧1：利用Vercel Dashboard
-
-```bash
-1. Functions面板
-   - 查看函数列表确认部署成功
-   - 点击函数名查看详细信息
-   - 使用内置Test功能快速测试
-
-2. Logs面板
-   - 实时查看函数执行日志
-   - 搜索ERROR关键词快速定位问题
-   - 注意时区差异（UTC时间）
-
-3. Deployments面板
-   - 查看完整的构建日志
-   - 确认没有WARNING或ERROR
-   - 对比成功和失败的部署差异
-```
-
-#### 技巧2：添加调试日志
-
-在函数中添加详细的日志输出：
-
-```python
-import sys
-
-class handler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        # ✓ 输出到stderr，会显示在Vercel Logs中
-        print(f"[DEBUG] Received GET request", file=sys.stderr)
-        print(f"[DEBUG] Path: {self.path}", file=sys.stderr)
-
-        try:
-            # 业务逻辑...
-            print(f"[DEBUG] Processing completed", file=sys.stderr)
-        except Exception as e:
-            print(f"[ERROR] Exception: {e}", file=sys.stderr)
-            self.send_error(500, str(e))
-```
-
-#### 技巧3：使用Vercel CLI本地测试
-
-```bash
-# 安装Vercel CLI
-npm i -g vercel
-
-# 本地开发服务器
-vercel dev
-
-# 测试端点
-curl http://localhost:3000/api/your-endpoint
-```
-
-#### 技巧4：简化dependencies排查
-
-如果怀疑依赖问题：
-
-```bash
-# 1. 备份原始requirements.txt
-cp api/requirements.txt api/requirements.txt.backup
-
-# 2. 创建最小依赖文件（只保留requests）
-echo "requests" > api/requirements.txt
-
-# 3. 部署测试
-vercel --prod
-
-# 4. 逐个添加依赖，测试哪个导致问题
-```
-
----
-
-### ⚠️ 常见陷阱避免指南
-
-#### 陷阱1：循环路由配置
-
-```json
-// ❌ 错误：循环引用
-{
-  "routes": [{
-    "src": "/api/(.*)",
-    "dest": "/api/$1"  // 映射到自身
-  }]
-}
-
-// ✅ 正确：映射到文件
-{
-  "routes": [{
-    "src": "/api/(.*)",
-    "dest": "/api/$1.py"  // 映射到Python文件
-  }]
-}
-```
-
-#### 陷阱2：指定不支持的Python版本
-
-```json
-// ❌ 错误：指定Python 3.9（Vercel默认3.12）
-{
-  "functions": {
-    "api/*.py": {
-      "runtime": "python3.9"  // 可能导致问题
-    }
-  }
-}
-
-// ✅ 正确：使用默认版本
-{
-  "builds": [{
-    "src": "api/**/*.py",
-    "use": "@vercel/python"  // 不指定runtime
-  }]
-}
-```
-
-#### 陷阱3：只有builds没有routes
-
-```json
-// ❌ 错误：functions部署但无法访问
-{
-  "builds": [{
-    "src": "api/**/*.py",
-    "use": "@vercel/python"
-  }]
-  // 缺少routes配置 → 导致404
-}
-
-// ✅ 正确：同时配置routes
-{
-  "builds": [...],
-  "routes": [
-    { "handle": "filesystem" },
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1.py"
-    }
-  ]
-}
-```
-
-#### 陷阱4：函数名称不是handler
-
-```python
-# ❌ 错误：类名不是handler
-class Handler(BaseHTTPRequestHandler):  # 大写H
-    ...
-
-class my_handler(BaseHTTPRequestHandler):  # 其他名称
-    ...
-
-# ✅ 正确：必须是handler（小写）
-class handler(BaseHTTPRequestHandler):
-    ...
-```
-
-#### 陷阱5：同时修改多个配置
-
-```bash
-❌ 避免这样做：
-1. 修改vercel.json
-2. 修改所有api/*.py文件
-3. 添加index.py
-4. 更新requirements.txt
-→ 立即部署
-
-结果：无法确定是哪个改动起作用
-
-✅ 应该这样做：
-修改1 → 部署 → 测试 → 记录
-修改2 → 部署 → 测试 → 记录
-...
-```
-
----
-
-### 💡 经验提炼：Vercel Python部署的3个黄金法则
-
-#### 法则1：绕过框架自动检测
-
-Vercel会自动检测项目类型（Flask/Django等），创建虚拟入口点可以满足检测要求而不实际构建框架：
-
-```python
-# index.py（虚拟Flask入口点）
-# Dummy Flask entrypoint to satisfy Vercel's auto-detection
-# This file is intentionally empty to prevent Flask build
-# Actual API endpoints are Serverless Functions in api/ directory
-pass
-```
-
-#### 法则2：明确指定Serverless Functions
-
-使用 `builds` 配置明确告诉Vercel哪些是Serverless Functions：
-
-```json
-{
-  "builds": [
-    {
-      "src": "api/**/*.py",      // 匹配所有API文件
-      "use": "@vercel/python"    // 使用Python构建器
-    }
-  ]
-}
-```
-
-#### 法则3：配置正确的路由映射
-
-当使用 `builds` 时，必须手动配置 `routes` 将URL映射到文件：
-
-```json
-{
-  "routes": [
-    { "handle": "filesystem" },  // 优先处理静态文件
-    {
-      "src": "/api/(.*)",        // 匹配API请求
-      "dest": "/api/$1.py"       // 映射到Python文件
-    }
-  ]
-}
-```
-
----
-
-### 📚 延伸阅读
-
-- [Vercel Python Serverless Functions官方文档](https://vercel.com/docs/functions/serverless-functions/runtimes/python)
-- [本项目完整修复记录](VERCEL_FIXED_FINAL.md)
-- [BaseHTTPRequestHandler文档](https://docs.python.org/3/library/http.server.html)
-
----
-
-## 🚨 Vercel部署问题记录（历史参考）
-
-**状态**: ✅ 已解决 (保留此部分作为历史参考)
-**原始状态**: ⚠️ 部署成功但函数无法访问 (404错误)
-
-**部署URL**: `https://jindutiao.vercel.app`
-
-### 📋 问题概述
-
-Vercel部署过程中遇到的主要问题：
-
-1. **函数格式问题** - 函数已部署但返回404错误
-2. **日志为空** - 函数日志中没有执行记录
-3. **路由配置问题** - 函数无法被正确访问
-
-### 🔍 详细问题记录
-
-#### 问题1: 函数格式错误导致404
-
-**错误现象**:
-- 访问 `https://jindutiao.vercel.app/api/health` 返回 404 NOT_FOUND
-- Functions列表显示所有7个函数已部署
-- 日志为空，没有任何执行记录
-
-**尝试的解决方案**:
-1. ✅ 使用 `def handler(req)` 函数格式 → 失败
-2. ✅ 使用 `BaseHTTPRequestHandler` 类格式 → 已修复但未测试
-3. ✅ 添加调试日志输出到 `sys.stderr` → 已添加
-4. ✅ 简化 `vercel.json` 配置 → 移除 `builds` 配置导致Flask错误
-5. ✅ 恢复 `builds` 配置 → 保留警告但部署成功
-
-**当前状态**:
-- ✅ 函数格式已改为 `BaseHTTPRequestHandler` 类格式
-- ✅ 部署成功（Build Completed, Deployment completed）
-- ❌ 访问仍然返回404
-- ❌ 日志仍然为空
-
-**相关文件**:
-- `api/health.py` - 健康检查函数
-- `api/quota-status.py` - 配额查询函数
-- `vercel.json` - Vercel配置文件
-
-**代码变更记录**:
-```python
-# 之前的错误格式
-def handler(req):
-    return {'statusCode': 200, ...}
-
-# 修复后的正确格式
-from http.server import BaseHTTPRequestHandler
-
-class handler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header('Content-Type', 'application/json')
-        self.end_headers()
-        self.wfile.write(response.encode('utf-8'))
-```
-
-#### 问题2: builds配置警告
-
-**警告信息**:
-```
-WARN! Due to `builds` existing in your configuration file, the Build and Development Settings defined in your Project Settings will not apply.
-```
-
-**原因**:
-- `builds` 配置会覆盖Vercel Dashboard中的项目设置
-- 这是预期的行为，不是错误
-
-**解决方案**:
-- ✅ 保留 `builds` 配置（必需，Python Serverless Functions需要）
-- ✅ 警告可以安全忽略（不影响功能）
-
-**当前配置** (`vercel.json`):
-```json
-{
-  "version": 2,
-  "builds": [
-    {
-      "src": "api/**/*.py",
-      "use": "@vercel/python"
-    }
-  ]
-}
-```
-
-#### 问题3: 部署包大小优化
-
-**问题**:
-- 初始部署时超过250MB限制
-
-**解决方案**:
-- ✅ 创建 `.vercelignore` 排除大文件
-- ✅ 简化 `api/requirements.txt` 只保留 `requests`
-- ✅ 每个函数大小优化到910 kB
-
-**结果**:
-- ✅ 部署成功，每个函数约910 kB
-
-### 📝 待修复事项
-
-1. **验证函数格式修复是否有效**
-   - [ ] 等待Vercel重新部署完成
-   - [ ] 测试 `/api/health` 端点
-   - [ ] 检查日志是否有输出
-   - [ ] 如果仍然404，检查Vercel官方文档
-
-2. **检查其他函数格式**
-   - [ ] `api/plan-tasks.py` - POST请求函数
-   - [ ] `api/generate-weekly-report.py` - POST请求函数
-   - [ ] `api/chat-query.py` - POST请求函数
-   - [ ] `api/recommend-theme.py` - POST请求函数
-   - [ ] `api/generate-theme.py` - POST请求函数
-
-3. **验证环境变量**
-   - [ ] 确认 `TUZI_API_KEY` 已设置
-   - [ ] 确认 `TUZI_BASE_URL` 已设置（可选）
-   - [ ] 确认环境变量设置为Production
-
-4. **测试所有端点**
-   - [ ] GET `/api/health` - 健康检查
-   - [ ] GET `/api/quota-status?user_tier=free` - 配额查询
-   - [ ] POST `/api/plan-tasks` - 任务规划
-   - [ ] POST `/api/generate-weekly-report` - 周报生成
-   - [ ] POST `/api/chat-query` - 对话查询
-   - [ ] POST `/api/recommend-theme` - 主题推荐
-   - [ ] POST `/api/generate-theme` - 主题生成
-
-### 🔧 排查步骤
-
-#### 步骤1: 检查函数日志
-1. 登录Vercel Dashboard
-2. 进入项目 `jindutiao`
-3. Functions → 点击 `/api/health.py`
-4. 查看Logs标签页
-5. 检查是否有执行记录
-
-#### 步骤2: 使用内置测试功能
-1. Functions → 点击函数名
-2. 点击 "Test" 按钮
-3. 查看返回结果和错误信息
-
-#### 步骤3: 检查部署日志
-1. Deployments → 最新部署
-2. 查看Build Logs和Runtime Logs
-3. 确认没有构建错误
-
-#### 步骤4: 验证函数格式
-根据Vercel文档，Python Serverless Functions应该：
-- 文件位于 `api/` 目录
-- 使用 `BaseHTTPRequestHandler` 类格式
-- 定义 `handler` 类继承自 `BaseHTTPRequestHandler`
-- 实现 `do_GET()`, `do_POST()` 等方法
-
-### 📚 参考资料
-
-- [Vercel Python Serverless Functions文档](https://vercel.com/docs/functions/serverless-functions/runtimes/python)
-- [Vercel部署问题排查指南](VERCEL_TROUBLESHOOTING.md)
-- [Vercel部署状态文档](VERCEL_FUNCTIONS_STATUS.md)
-- [Vercel空日志问题排查](VERCEL_EMPTY_LOGS_TROUBLESHOOTING.md)
-- [Vercel builds警告说明](VERCEL_BUILDS_WARNING_EXPLANATION.md)
-
-### 🎯 下一步行动
-
-1. **等待最新部署完成**（commit: `e00fcf3`）
-   - 函数格式已修复为 `BaseHTTPRequestHandler`
-   - 等待1-2分钟让Vercel重新部署
-
-2. **测试API端点**
-   ```bash
-   curl https://jindutiao.vercel.app/api/health
-   ```
-
-3. **检查日志**
-   - 如果日志有输出：根据错误信息修复
-   - 如果仍然没有日志：检查路由配置
-
-4. **如果仍然404**
-   - 查看Vercel官方文档
-   - 检查是否有其他配置问题
-   - 考虑使用Vercel CLI进行本地测试
-
-### 💡 备注
-
-- 所有函数文件位于 `api/` 目录下
-- 所有函数使用 `BaseHTTPRequestHandler` 类格式
-- `vercel.json` 配置包含 `builds` 配置（必需）
-- 警告信息可以忽略（不影响功能）
-
----
-
-**最后更新**: 2025-11-01  
-**当前状态**: ⚠️ 等待测试修复后的函数格式  
-**负责人**: 待Claude Code修复
-
-## 🤖 AI 增强愿景
-
-PyDayBar 计划深度整合现代 AI 能力,从"时间可视化工具"进化为"AI 驱动的智能时间管理助手"。
-
-### 核心理念
-
-**从手动配置到智能协作:**
-- 📝 **现在:** 用户手动配置每个任务的时间和颜色
-- 🤖 **未来:** AI 理解自然语言,自动生成优化的时间安排
-
-**从数据展示到洞察建议:**
-- 📊 **现在:** 展示统计图表和数据
-- 💡 **未来:** AI 分析行为模式,提供个性化改进建议
-
-### AI 集成方向
-
-#### 1. GPT-5 驱动的智能任务规划 🎯
-- **自然语言输入 2.0:** 利用 GPT-5 的统一推理架构和 27万token 上下文
-  - 示例: "明天9点开会1小时,然后写代码到下午5点,中午1小时午休,晚上健身1小时"
-  - GPT-5 自动生成优化时间表,检测冲突,提供改进建议
-  - **成本:** gpt-5-nano 每次规划 < $0.001,可提供免费额度
-- **语音快速添加:** Whisper + GPT-5 极速解析
-- **冲突智能解决:** 推理模式自动生成3种调整方案
-- **准确率:** GPT-5 减少 80% 幻觉,时间解析接近 100% 准确
-
-#### 2. GPT-5 Search 驱动的数据智能分析 📈
-- **AI 周报生成:** 使用 GPT-5 Search API 实时获取生产力研究
-  - "本周深度工作 15 小时,超过 75% 的用户"
-  - "根据最新《深度工作》理论,建议将重要任务安排在上午 9-11 点"
-  - **成本:** 每次生成约 $0.02-0.05
-- **行为模式识别:** 分析生产力高峰时段,提供科学建议
-- **对话式查询:** 使用 gpt-5-chat-latest 快速响应
-  - "今天我在哪个任务上花时间最多?" → 自动高亮图表
-
-#### 3. 智能任务分类与组织 🏷️
-- **GPT-5 智能任务分类:** 自动识别任务类型并添加标签
-  - 基于历史数据的任务推荐
-  - 成本低,可免费提供给所有用户
-- **任务推荐系统:** 基于历史数据推荐类似任务安排
-  - 学习用户习惯,提供个性化建议
-
-#### 4. 健康与效率增强 💪
-- **番茄钟智能调节:** 基于 GPT-5 分析历史效率数据
-  - 根据工作效率自动调整番茄钟时长
-- **基础专注力提醒:** 基于任务时间的久坐提醒
-  - 工作节奏分析建议
-  - **注意:** 不包含复杂的应用监控功能
-
-### 技术栈展望 (2025 最新)
-
-- **🧠 大语言模型:**
-  - **GPT-5** (2025.08发布) - 统一推理架构,减少80%幻觉,27万token上下文
-  - **GPT-5 Search API** - 内置Web搜索,实时获取生产力建议
-  - gpt-5 / gpt-5-mini / gpt-5-nano 三档选择
-- **🔒 隐私优先:** 所有 AI 功能可选启用,提供本地替代方案
-- **🎯 聚焦实用:** 优先实现解决真实痛点的 AI 功能,避免过度设计
-
-### 开发原则
-
-1. **🔒 隐私优先** - AI 功能完全可选,本地处理优先
-2. **⚡ 性能优先** - 不影响基础功能的流畅性
-3. **💰 成本透明** - 明确标注使用 API 的功能,支持本地替代方案
-4. **🎯 实用至上** - 避免"为 AI 而 AI",每个功能解决真实痛点
-
-### 💰 AI 功能成本与商业模式
-
-#### 功能成本分析 (2025最新定价)
-
-| 功能模块 | 使用的模型 | 单次成本 | 月均成本(重度用户) | 实现难度 |
-|---------|-----------|---------|------------------|---------|
-| 🎯 **自然语言任务规划** | GPT-5 nano | < $0.001 | $0.09 (每天3次) | ⭐⭐☆☆☆ |
-| 📈 **AI 周报生成** | GPT-5 Search | $0.03 | $0.12 (每周1次) | ⭐⭐⭐☆☆ |
-| 💬 **对话式查询** | GPT-5 chat | < $0.001 | $0.08 (每天5次) | ⭐⭐☆☆☆ |
-| 🏷️ **智能任务分类** | GPT-5 nano | < $0.001 | $0.03 (每天1次) | ⭐⭐⭐☆☆ |
-
-**说明:** 已移除成本高、使用频率低的AI图像和视频生成功能,聚焦实用且成本可控的AI增强功能。
-
-#### 推荐的订阅方案 (简化版)
-
-```
-📦 基础版 (免费)
-✓ 所有传统功能 (进度条、统计、番茄钟)
-✓ GPT-5 任务规划 (每日3次免费额度)
-✓ 对话式查询 (无限)
-✓ 智能任务分类 (基础版)
-
-💎 专业版 ($4.99/月 或 $49/年)
-✓ 基础版全部功能
-✓ GPT-5 任务规划 (无限)
-✓ GPT-5 AI 周报生成 (每周自动)
-✓ 高级任务分类和推荐
-✓ 配置云存储备份
-✓ 优先客服支持
-
-🎁 可选付费功能
-- AI 周报生成: $0.05/次 (按需购买)
-```
-
-#### 成本优化策略
-
-1. **智能缓存:** 相似任务规划结果缓存,减少 API 调用
-2. **模型降级:** 简单任务使用 gpt-5-nano,复杂任务用 gpt-5
-3. **用户选择:** 所有 AI 功能可关闭,提供本地替代方案
-4. **免费额度:** 提供合理的免费使用额度,降低用户门槛
-5. **按需使用:** AI 功能采用按需调用模式,不常驻运行
-
-#### 商业模式 (简化版)
-
-- **免费版:** 核心功能免费,AI功能提供有限免费额度
-- **专业版:** 解锁AI功能无限使用和高级统计功能
-- **聚焦实用:** 避免成本高昂的"锦上添花"功能,专注于解决真实痛点
-
----
-
-## 🎯 路线图
-
-### 当前版本 (v1.1) ✅ 已完成
-- [x] 基础进度条显示
-- [x] 任务可视化(紧凑模式)
-- [x] 配置文件支持
-- [x] 热重载
-- [x] 系统托盘集成
-- [x] GUI 配置管理器
-- [x] 8 种预设模板
-- [x] 悬停提示
-- [x] 三种时间标记样式(线条/图片/GIF)
-- [x] 多显示器支持
-- [x] 圆角和阴影效果
-- [x] 自定义模板保存/加载
-- [x] 时间冲突检测
-- [x] 完整日志系统
-- [x] PyInstaller 打包支持
-- [x] **番茄钟集成** - 可拖拽面板,可视化配置
-- [x] **任务提醒通知** - 支持多种提醒时间点和免打扰时段
-- [x] **番茄钟通知** - 工作/休息完成提醒
-
-### 当前版本 (v1.2) ✅ 统计功能
-- [x] **任务统计报告** - 完整的统计分析系统
-  - 今日/本周/本月统计摘要
-  - 任务完成率可视化(圆形进度条)
-  - 任务分类统计和历史记录
-  - CSV导出功能
-  - 自动任务状态跟踪
-- [x] **图层渲染优化** (v1.2.1) - 悬停文字始终显示在时间标记上方
-- [x] **默认动图标记** (v1.2.1) - 开箱即用的炫酷时间标记效果
-
-### 当前版本 (v1.3) ✅ AI 智能规划
-- [x] **AI 智能任务规划** - 自然语言生成任务时间表
-  - GPT-5 驱动的智能解析
-  - 自动时间冲突检测和优化
-  - 每日免费额度 (3次)
-- [x] **AI 后端自动启动** - 无需手动配置
-  - 程序启动时自动检测并启动后端服务
-  - 后台运行,不影响主程序
-  - 应用退出时自动清理
-- [x] **配额管理系统** - 实时显示剩余次数
-- [x] **完整打包支持** - AI 功能可完全独立运行
-
-### 当前版本 (v1.4) ⚠️ 智能主题系统 🎨
-
-**开发状态:** 功能已实现,但存在启动卡死问题
-
-#### 已实现功能 ✅
-
-- [x] **基础主题切换系统** - 预设主题切换
-  - 提供10+种预设主题方案(商务、清新、温暖、极简等)
-  - 自动适配所有UI组件(主窗口、配置GUI、统计窗口、时间轴编辑器)
-  - 实时主题切换,无需重启
-  - 下拉选择框 + 预览功能
-
-- [x] **AI智能配色推荐** - 基于任务分析的配色推荐
-  - 使用GPT-5分析任务类型分布和时间模式
-  - 自动推荐3-5种适合的配色方案
-  - 提供配色说明和推荐理由
-  - 支持一键应用推荐的配色
-  - 成本: < $0.001/次,免费提供(每日5次)
-
-- [x] **个性化主题生成** - 自然语言描述生成主题
-  - 用户用自然语言描述想要的风格(如"清新自然的工作主题")
-  - GPT-5解析描述并生成完整主题配置
-  - 生成主题包括:背景色、任务配色、透明度等
-  - 支持预览和微调
-  - 成本: < $0.001/次,免费提供(每日3次)
-
-**技术实现:**
-- ✅ 新增 `theme_manager.py` - 主题管理器(单例模式)
-- ✅ 新增 `theme_ai_helper.py` - AI主题助手
-- ✅ 后端API扩展 `/api/recommend-theme` 和 `/api/generate-theme`
-- ✅ 配置GUI新增"主题设置"标签页
-- ✅ 配置文件扩展主题相关字段
-
-**已知问题:**
-- ⚠️ **应用启动后卡死** - 详细说明请参考 [BUG修复说明_v1.4.md](BUG修复说明_v1.4.md)
-- 已尝试多种修复方案但问题仍存在
-- 建议暂时使用 v1.3 版本
-
----
-
-#### 后续计划 (v1.4.x 或 v1.5)
-
-- [ ] **番茄钟统计增强** - 完整的番茄钟历史记录和趋势分析
-  - 番茄钟完成数量、平均专注时长、完成率趋势
-  - 最佳工作时间段分析
-  - 与现有统计系统完美互补
-  - 复用 `StatisticsManager` 框架,扩展番茄钟数据追踪
-  - **开发周期:** 1周
-  - **优先级:** 中
-
-- [ ] **基础专注力提醒** - 简化版健康监测
-  - 仅实现久坐提醒(基于任务时间)
-  - 工作节奏分析建议
-  - **注意:** 不包含应用监控等复杂功能
-  - **开发周期:** 3-5天
-  - **优先级:** 中
-
-- [ ] **任务拖拽编辑优化** - 优化 timeline_editor 交互体验
-  - 已集成在GUI中,基础功能完整
-  - 优化拖拽体验和视觉反馈
-  - 实时时间冲突检测和提示
-  - **开发周期:** 1-2周
-  - **优先级:** 中(已有基础,优化为主)
-
-### 中期计划 (v1.5) - AI 实用功能增强 🤖
-
-#### AI 核心功能
-- [ ] **📈 GPT-5 Search 智能周报**
-  - 结合统计数据和最新生产力研究
-  - 自动生成个性化改进建议
-  - 成本: $0.03/次
-  - **开发周期:** 2周
-
-- [ ] **💬 对话式统计查询**
-  - 使用 gpt-5-chat-latest
-  - 自然语言查询统计数据,自动高亮图表
-  - 成本接近0,可无限使用
-  - **开发周期:** 1周
-
-- [ ] **🏷️ GPT-5 智能任务分类**
-  - 自动识别任务类型并分类
-  - 基于历史数据的任务推荐
-  - 成本低,可免费提供
-  - **开发周期:** 1-2周
-
-#### 实用功能
-- [ ] **📦 配置导入/导出**
-  - 备份和分享个人配置包
-  - 支持配置模板分享
-  - **开发周期:** 3-5天
-
-- [ ] **🖼️ 预设图标库** (可选)
-  - 提供丰富的任务图标预设库
-  - 快速为任务添加图标标识
-  - **注意:** 使用预设图标库,不包含AI生成功能
-  - **开发周期:** 1周
-
-### 长期愿景 (v2.0+) - 生态整合
-
-#### v2.0 - 日历与数据整合
-- [ ] **📅 日历集成**
-  - Google Calendar / Outlook 日历同步
-  - 双向同步任务安排
-  - **开发周期:** 2-3周
-
-- [ ] **📊 时间追踪工具导入**
-  - Toggl、RescueTime 数据导入
-  - 支持多种时间追踪格式
-  - **开发周期:** 2周
-
-- [ ] **🌍 国际化支持**
-  - 多语言界面支持(优先英文)
-  - 基于Qt国际化框架
-  - **开发周期:** 2-3周
-
-#### v2.1 - 高级功能
-- [ ] **🔄 自动任务同步**
-  - 多设备配置同步(可选云端)
-  - 配置版本管理
-  - **开发周期:** 2周
-
----
-
-**路线图说明:**
-- ✅ **已移除功能:** Sora视频生成、Gemini图像生成等成本高、偏离核心定位的功能
-- 🎯 **聚焦核心:** 专注于时间管理和可视化的实用功能
-- 💡 **成本控制:** AI功能成本控制在合理范围内,大部分可免费提供
-- ⚡ **用户体验优先:** 优先实现提升日常使用体验的功能
-
-## 📝 更新日志
-
-### v1.4.2 (2025-11-01) - Vercel代理服务器部署 ✅
-
-**重大更新:**
-- ✅ **API密钥安全方案实施**
-  - 成功部署Vercel Serverless Functions代理服务器
-  - API密钥完全不在客户端，保护密钥安全
-  - 统一使用我们提供的API服务，方便后续付费转化
-  - 代理服务器URL: `https://jindutiao.vercel.app` ✅ **已部署并测试通过**
-
-**技术改进:**
-- 🔒 **API密钥安全**
-  - 客户端默认使用Vercel代理服务器
-  - 支持通过环境变量 `PYDAYBAR_PROXY_URL` 自定义代理URL
-  - 密钥存储在Vercel服务器环境变量中，客户端无法获取
-
-**部署信息:**
-- 🌐 **Vercel部署**
-  - 使用Vercel Serverless Functions（完全免费）
-  - 100GB带宽/月，无限函数调用
-  - 自动HTTPS，全球CDN加速
-  - 部署URL: https://jindutiao.vercel.app ✅ **已部署成功**
-  - 所有7个API端点已成功部署并测试通过
-
-**部署优化:**
-- ✅ 优化了`requirements.txt`，只保留`requests`依赖
-- ✅ 创建了`.vercelignore`文件，排除大文件（减少部署包大小）
-- ✅ 配置了`vercel.json`，明确指定Python Serverless Functions
-
-**注意事项:**
-- ⚠️ **超时限制**
-  - Vercel免费版：10秒超时
-  - Vercel Pro版：60秒超时
-  - AI请求通常需要30-60秒
-  - 如果AI请求时间 > 10秒，建议升级到Vercel Pro或使用Railway
-
-**相关文档:**
-- `api/README.md` - Vercel部署指南
-- `VERCEL_DEPLOYMENT.md` - 详细部署文档
-- `VERCEL_QUICK_START.md` - 快速开始指南
-
-### v1.4.1 (2025-11-01) - AI 服务稳定性修复 🔧
-
-**关键修复:**
-- 🐛 **修复 AI 服务初始化卡住问题**
-  - 添加定时器持续监控 AI 服务状态
-  - 区分三种状态显示: 初始化中、启动中、已就绪
-  - 服务就绪后自动停止状态检查,节省资源
-- 🐛 **修复主题 AI 推荐功能无响应**
-  - 添加完整的 AI 组件初始化检查
-  - 添加后端服务健康检查和详细错误提示
-  - 改进 Worker 线程错误处理和日志记录
-  - 提供自动启动后端服务选项
-
-**改进:**
-- ✨ 优化 AI 服务状态提示信息
-  - "⏳ AI服务正在初始化..." - AI客户端创建中
-  - "⚠️ AI服务正在启动..." - 后端服务启动中
-  - "✓ 今日剩余: X次规划" - 服务正常运行
-  - "❌ AI服务未启动" - 服务启动失败,提供帮助信息
-- 📝 配置管理器中的错误提示更加友好
-  - 显示具体的依赖安装命令
-  - 提供 API 密钥配置说明
-  - 支持一键尝试启动后端服务
-
-**技术细节:**
-- config_gui.py: 优化 `_init_ai_components()` 和 `_update_ai_status()` 方法
-- config_gui.py: 改进 `on_ai_recommend_clicked()` 的错误处理
-- 所有 AI 相关错误记录到日志文件便于排查
-
-**使用建议:**
-- 首次使用 AI 功能需等待 3-5 秒让服务完全启动
-- 如遇问题请查看 `pydaybar.log` 日志文件
-- 确保 `.env` 文件包含有效的 `TUZI_API_KEY`
-
----
-
-## 🔧 AI 服务启动问题修复经验总结
-
-本次成功修复 AI 服务长时间停留在"正在启动"状态以及无法获取配额信息的问题，以下是关键修复方案和经验总结：
-
-### 问题根源分析
-
-通过详细的日志分析，发现了以下关键问题：
-
-1. **`.env` 配置文件查找失败**
-   - **现象：** 后端进程启动后立即退出，没有任何错误输出
-   - **原因：** 在打包后的环境中，`backend_api.py` 无法在正确的位置找到 `.env` 配置文件
-   - **影响：** API 密钥缺失，导致 `ValueError` 异常，进程立即退出
-
-2. **重复启动与竞态条件**
-   - **现象：** 日志中出现多个进程同时启动（PID: 130668, 130084, 130684 等）
-   - **原因：** 多个 UI 线程或定时器同时尝试启动后端服务
-   - **影响：** 进程相互冲突，资源被占用，启动失败
-
-3. **错误信息未捕获**
-   - **现象：** 进程退出但没有显示错误信息
-   - **原因：** 错误输出（stderr）未被及时捕获和记录
-   - **影响：** 难以诊断具体失败原因
-
-### 有效修复方案
-
-#### 1. 解决 `.env` 配置文件查找失败问题 ✅
-
-**问题根源：**
-在打包后的环境中，工作目录是 `dist` 目录，但 `.env` 文件在项目根目录，`backend_api.py` 的 `load_dotenv()` 无法找到配置文件。
-
-**修复方案：**
-
-**a) `.env` 文件复制机制**
-```python
-# backend_manager.py
-# 在启动后端进程前，将.env文件复制到工作目录
-if self.env_file.exists():
-    target_env = self.app_dir / ".env"
-    if target_env != self.env_file and self.env_file.exists():
-        shutil.copy2(self.env_file, target_env)
-        self.logger.info(f"已复制.env文件到工作目录: {target_env}")
-```
-
-**b) 环境变量传递**
-```python
-# 设置环境变量，明确告知backend_api.py .env文件的位置
-env = os.environ.copy()
-if self.env_file.exists():
-    env['PYDAYBAR_ENV_FILE'] = str(self.env_file.absolute())
-```
-
-**c) `backend_api.py` 加载优化**
-```python
-# backend_api.py
-# 优先级：1. 环境变量指定的路径 2. 当前目录 3. 父目录
-if os.getenv('PYDAYBAR_ENV_FILE'):
-    env_file_path = Path(os.getenv('PYDAYBAR_ENV_FILE'))
-    if env_file_path.exists():
-        load_dotenv(dotenv_path=env_file_path)
-        # 成功加载
-```
-
-**效果：** 确保在各种运行环境下都能找到配置文件，后端服务可以正常启动。
-
-#### 2. 防止后端服务重复启动与竞态条件 ✅
-
-**问题根源：**
-多个线程同时尝试启动后端服务，导致多个进程被创建，相互冲突。
-
-**修复方案：**
-
-**a) 引入线程锁**
-```python
-# backend_manager.py
-class BackendManager:
-    def __init__(self, logger):
-        self._start_lock = threading.Lock()  # 防止重复启动的锁
-    
-    def ensure_backend_running_async(self):
-        def start_in_background():
-            # 使用锁防止重复启动
-            if not self._start_lock.acquire(blocking=False):
-                self.logger.debug("后端启动正在进行中，跳过重复启动")
-                return
-            try:
-                # 启动逻辑...
-            finally:
-                self._start_lock.release()
-```
-
-**b) 启动前状态检查**
-```python
-# 检查是否已有进程在运行
-if self.backend_process is not None and self.backend_process.poll() is None:
-    self.logger.info("后端进程已在运行中，等待启动完成...")
-    # 等待最多5秒
-    for i in range(10):
-        time.sleep(0.5)
-        if self.check_backend_health():
-            return
-```
-
-**效果：** 确保同一时间只有一个线程在执行启动逻辑，避免了重复启动和资源冲突。
-
-#### 3. 增强后端进程错误捕获与日志记录 ✅
-
-**问题根源：**
-后端进程启动失败时，错误信息（stderr）未被及时捕获和记录。
-
-**修复方案：**
-
-**a) 实时错误输出捕获**
-```python
-# backend_manager.py
-self.backend_process = subprocess.Popen(
-    [python_exe, str(self.backend_script)],
-    stdout=subprocess.PIPE,
-    stderr=subprocess.PIPE,  # 捕获错误输出
-    env=env,
-    # ...
-)
-
-# 立即检查进程是否仍在运行
-time.sleep(0.5)
-if self.backend_process.poll() is not None:
-    # 进程已退出，读取错误信息
-    stdout, stderr = self.backend_process.communicate(timeout=1)
-    if stderr:
-        error_msg = stderr.decode('utf-8', errors='ignore')
-        self.logger.error(f"后端进程立即退出，错误信息: {error_msg}")
-```
-
-**b) 详细日志输出**
-```python
-# backend_api.py
-if not TUZI_API_KEY:
-    error_msg = "未找到TUZI_API_KEY环境变量,请在.env文件中配置"
-    print(f"[ERROR] {error_msg}")
-    print(f"[ERROR] 当前工作目录: {os.getcwd()}")
-    print(f"[ERROR] 尝试的.env路径:")
-    if os.getenv('PYDAYBAR_ENV_FILE'):
-        print(f"[ERROR]   1. {os.getenv('PYDAYBAR_ENV_FILE')}")
-    print(f"[ERROR]   2. {Path('.env').absolute()}")
-    print(f"[ERROR]   3. {Path('..') / '.env'}")
-    raise ValueError(error_msg)
-```
-
-**效果：** 进程退出时能够立即捕获并记录详细的错误信息，大大提升了问题诊断效率。
-
-#### 4. 优化 AI 服务状态与配额刷新逻辑 ✅
-
-**问题根源：**
-之前的逻辑在健康检查通过后立即停止定时器，导致如果配额接口出现问题，状态无法恢复。
-
-**修复方案：**
-
-**a) 定时器控制优化**
-```python
-# config_gui.py
-def _on_quota_status_finished(self, quota_info):
-    if quota_info:
-        # 配额检查成功，停止定时器（节省资源）
-        if hasattr(self, 'ai_status_timer') and self.ai_status_timer:
-            if self.ai_status_timer.isActive():
-                self.ai_status_timer.stop()
-    else:
-        # 配额检查失败，重新检查后端健康状态
-        if not self.backend_manager.check_backend_health():
-            # 后端已崩溃，重新启动
-            self.backend_manager.ensure_backend_running_async()
-            # 重新启动定时器
-            if hasattr(self, 'ai_status_timer') and self.ai_status_timer:
-                if not self.ai_status_timer.isActive():
-                    self.ai_status_timer.start(5000)
-```
-
-**b) 配额失败后的恢复机制**
-- 如果后端已崩溃：重新显示"正在启动"状态，自动异步重启后端服务，并重新启动 AI 状态定时器
-- 如果后端正常但配额接口失败：延迟 3 秒后重试配额检查，避免频繁请求
-
-**效果：** 确保在配额获取失败时，系统能够自动恢复并重试，提升了稳定性和用户体验。
-
-### 经验总结
-
-1. **配置文件路径处理是关键**
-   - 打包后的环境与开发环境路径不同，需要统一处理
-   - 优先使用环境变量传递路径，其次使用文件复制
-   - 提供多种查找路径的降级策略
-
-2. **并发控制必不可少**
-   - 异步操作必须使用锁机制防止竞态条件
-   - 启动前检查现有进程状态，避免重复启动
-   - 使用 `threading.Lock` 而非全局变量
-
-3. **错误捕获要及时**
-   - 进程启动后立即检查状态，不要等到超时
-   - 使用 `subprocess.PIPE` 捕获 stdout 和 stderr
-   - 详细的错误日志是诊断问题的关键
-
-4. **状态管理要健壮**
-   - 定时器不应该过早停止
-   - 提供失败后的自动恢复机制
-   - 区分不同类型的失败（后端崩溃 vs 接口失败）
-
-5. **日志记录要详细**
-   - 使用分隔线标记关键日志段
-   - 记录所有关键路径和状态变化
-   - 错误信息要包含足够的上下文
-
-这些修复措施从根本上解决了 AI 后端服务的启动、配置加载、进程管理和状态反馈等多个环节的问题，最终实现了 AI 服务能够稳定启动并成功加载配额信息。
-
-### v1.4.0 (2025-01-XX) - 智能主题系统 🎨
-
-**重大更新:**
-- ✨ **智能主题系统** - AI驱动的个性化主题体验
-  - 10+种预设主题方案(商务、清新、温暖、极简、科技等)
-  - 下拉选择框 + 实时预览功能
-  - 自动适配所有UI组件(主窗口、配置GUI、统计窗口、时间轴编辑器)
-  - 实时主题切换,无需重启
-- 🤖 **AI智能配色推荐** - 基于任务分析的配色推荐
-  - 使用GPT-5分析任务类型分布和时间模式
-  - 自动推荐3-5种适合的配色方案
-  - 提供配色说明和推荐理由
-  - 每日免费额度: 5次推荐
-- 🎨 **个性化主题生成** - 自然语言描述生成主题
-  - 用户用自然语言描述想要的风格
-  - GPT-5解析描述并生成完整主题配置
-  - 每日免费额度: 3次生成
-
-**技术改进:**
-- 🎯 新增 `theme_manager.py` - 主题管理器(单例模式)
-- 🎯 新增 `theme_ai_helper.py` - AI主题助手
-- 🔧 后端API扩展 `/api/recommend-theme` 和 `/api/generate-theme`
-- 🎨 配置GUI新增"主题设置"标签页
-- 📝 配置文件分离: `config.json` (当前主题) + `themes.json` (主题库)
-
-**新增文件:**
-- `theme_manager.py` - 主题管理器
-- `theme_ai_helper.py` - AI主题助手
-- `themes.json` - 主题配置文件
-
-### v1.3.0 (2025-10-31) - AI 智能规划
-**重大更新:**
-- ✨ **AI 智能任务规划** - 使用自然语言快速生成任务时间表
-  - 集成 GPT-5 API (兔子API)
-  - 支持复杂时间表述的智能解析
-  - 自动检测时间冲突并优化安排
-  - 每日免费额度: 3次规划
-- 🚀 **AI 后端自动启动管理**
-  - 新增 `backend_manager.py` 模块
-  - 程序启动时自动检测并启动后端服务
-  - 后台运行 Flask 服务器 (端口 5000)
-  - 应用退出时自动清理后端进程
-  - 健康检查和自动重启机制
-- 💬 **AI 客户端封装** (`ai_client.py`)
-  - 任务规划 API 调用
-  - 配额状态查询
-  - 错误处理和用户提示
-  - 线程安全设计,防止 UI 阻塞
-- 🔧 **配置管理器增强**
-  - AI 智能规划区域集成到任务管理标签页
-  - 实时配额状态显示
-  - 一键刷新配额功能
-  - 后端服务状态指示
-
-**技术改进:**
-- 🎯 打包配置更新,支持 AI 相关模块和依赖
-- 📝 完善文档,新增 AI 功能使用指南
-- 🐛 修复已知问题
-
-**新增文件:**
-- `backend_api.py` - Flask AI 后端服务器
-- `backend_manager.py` - 后端进程自动管理器
-- `ai_client.py` - AI 功能客户端封装
-- `.env` - AI 服务配置文件 (需用户配置)
-- `AI_FEATURE_GUIDE.md` - AI 功能详细使用指南
-
-### v1.2.2 (2025-10-30)
-**新增功能:**
-- ✨ 配置管理器支持标记图片 X 轴偏移设置
-  - 范围: -100 到 100 像素
-  - 正值向右,负值向左
-  - 仅在图片/GIF标记模式下启用
-- 🔄 任务名称实时同步功能
-  - 在任务管理表格中修改任务名称,实时同步到可视化时间轴编辑器
-  - 修改任务颜色也会实时同步
-  - 添加信号阻塞机制优化性能
-
-**改进:**
-- 🎨 优化标记图片边界限制逻辑
-  - 允许图片部分溢出屏幕(半个图片宽度)
-  - 确保 X 轴偏移效果可见
-  - 防止图片完全超出屏幕范围
-- 🐛 修复任务表格编辑时的无限循环问题
-
-**技术细节:**
-- config_gui.py: 添加 marker_x_offset 控件和信号处理
-- main.py: 优化 GIF 和静态图片的边界计算逻辑
-- 使用 blockSignals() 机制防止数据加载时触发事件
-
-### v1.2.1 (2025-10-30)
-**改进:**
-- 🎨 优化绘制图层顺序,修复时间标记图片遮挡悬停提示文字的问题
-  - 重构 `paintEvent` 绘制逻辑
-  - 确保悬停提示文字始终显示在最上层
-  - 时间标记图片作为中间层,不影响文字显示
-- 🖼️ 默认启用炫酷动图时间标记 (`kun.webp`)
-  - 默认标记类型改为 `gif`
-  - 默认标记大小 100px,垂直偏移 -30px
-  - 打包配置包含默认动图资源
-
-**技术细节:**
-- 将悬停文字渲染从任务块循环中分离
-- 使用 `hover_info` 变量存储悬停数据
-- 绘制顺序: 背景 → 任务块 → 时间标记 → 悬停文字
-
-### v1.2.0 (2025-10-30)
-**新增功能:**
-- ✨ 任务统计报告系统
-  - 今日/本周/本月多维度统计
-  - 圆形进度条可视化
-  - 任务分类历史记录
-  - CSV数据导出功能
-  - 自动任务状态跟踪
-
-**改进:**
-- 🔧 优化打包配置,支持统计模块
-- 📝 完善文档和使用说明
-- 🐛 修复已知问题
-
-### v1.1.0 (2025-10-28)
-**新增功能:**
-- 🍅 番茄钟集成
-- 🔔 智能通知系统
-- 📑 8种预设模板
-
-### v1.0.0 (2025-10-25)
-**首次发布:**
-- 🎯 基础进度条功能
-- 🎨 可视化配置管理器
-- 🖼️ 多样时间标记
-- 🔄 热重载支持
+- 检查网络连接
+- 查看配额状态(配置界面中显示)
+- 等待配额重置(每日0点重置)
+- 查看日志文件 `pydaybar.log` 了解详细错误
+
+### Q5: 如何设置开机自启动?
+
+**方法一: 使用配置界面(推荐)**
+1. 打开配置界面 → 外观配置
+2. 勾选"开机自启动"
+3. 点击保存
+
+**方法二: 手动设置**
+
+Windows:
+- 按 `Win+R`,输入 `shell:startup`
+- 将 PyDayBar 的快捷方式复制到打开的文件夹
+
+Linux:
+- 创建 `~/.config/autostart/pydaybar.desktop`
+- 添加应用启动命令
+
+macOS:
+- 系统偏好设置 → 用户与群组 → 登录项
+- 添加 PyDayBar 应用
+
+### Q6: 配额什么时候重置?
+
+**重置规则:**
+- 每日配额: 每天 0:00 (UTC+8) 重置
+- 每周配额: 每周一 0:00 (UTC+8) 重置
+
+**查看配额:**
+打开配置界面,任务管理tab会实时显示剩余配额。
+
+## 🔗 相关文档
+
+### 开发文档
+- [PyInstaller开发方法论](PYINSTALLER_DEVELOPMENT_METHODOLOGY.md) - 打包应用的开发调试最佳实践
+- [UI状态同步问题诊断法](CLAUDE.md#ui-state-synchronization-troubleshooting) - GUI状态同步问题的系统化诊断方法
+- [任务配色重置Bug修复记录](TASK_COLOR_RESET_FIX.md) - 完整的问题诊断和修复过程
+
+### 云服务文档
+- [Vercel部署指南](api/README.md) - Vercel Serverless Functions部署说明
+- [配额系统说明](QUOTA_SYSTEM_README.md) - 配额管理系统使用指南
+- [Vercel部署问题排查](VERCEL_404_TROUBLESHOOTING.md) - 常见部署问题及解决方案
+
+### 方法论文档
+- [CLAUDE.md](CLAUDE.md) - AI助手配置和方法论库
+
+## 🔄 更新日志
+
+### v1.4.3 (2025-11-02) - UI状态同步优化 ✅
+
+**🎨 主题系统增强**
+- 修复主题保存后进度条未立即刷新的问题
+- 保存时自动应用主题颜色到任务数据
+- reload_all()中添加主题重新应用逻辑
+- 实现"选择→预览→保存→立即生效"的完整流程
+
+**🛠️ 配置管理优化**
+- 移除"应用配色到所有任务"按钮(简化操作)
+- 修复通知设置tab重复加载问题
+- 主题切换时仅预览,不自动应用到进度条
+
+**📚 方法论沉淀**
+- 添加"UI状态同步问题诊断法"到CLAUDE.md
+- 5步诊断法: 数据流图→预览/持久化→断裂点→修复策略→验证
+- 包含完整案例研究和最佳实践
+- 提供快速诊断卡和常见原因统计
+
+**🔧 代码修改**
+- `config_gui.py:2188-2219` - 保存时应用主题颜色
+- `config_gui.py:2245` - 使用主题颜色而非输入框颜色
+- `main.py:1826-1831` - reload_all()中重新加载主题
+
+**🧹 项目清理**
+- 删除旧的配置程序 `PyDayBar-Config-v1.4.exe`
+- 删除本地后端配置文件 `.env`
+- 删除旧的spec文件 `PyDayBar-Config*.spec`
+- 只保留必要文件
+
+### v1.4.2 (2025-11-01) - Vercel云服务部署 ✅
+
+**☁️ 完全切换到云服务**
+- 成功部署Vercel Serverless Functions
+- 基于Supabase的真实配额管理系统
+- 移除所有本地后端相关代码
+
+**🔐 安全性增强**
+- API密钥存储在Vercel环境变量中
+- 客户端无法获取密钥
+- 云端配额验证和扣除
+
+**🌐 API端点**
+- `/api/health` - 健康检查
+- `/api/quota-status` - 配额查询
+- `/api/plan-tasks` - AI任务生成
+
+**📊 配额规则**
+- 每日任务规划: 3次/天
+- 每周报告: 1次/周
+- AI聊天: 10次/天
+- 主题推荐: 5次/天
+- 主题生成: 3次/天
+
+### v1.4.1 (2025-11-01) - 配置管理器整合 🎯
+
+**🔧 核心架构调整**
+- 配置管理器完全整合到主程序中
+- 通过系统托盘菜单"配置"访问
+- 无需单独的配置程序exe
+
+**🎨 UI增强**
+- 预设主题选择功能
+- 任务颜色自定义(背景色+文字颜色)
+- 时间轴实时预览
 
 ## 📄 许可证
 
-本项目采用 [MIT License](LICENSE) 开源协议。
+MIT License - 详见 [LICENSE](LICENSE) 文件
 
-## 🙏 致谢
+## 🤝 贡献
 
-- **PySide6** - 提供优秀的 Python Qt 绑定
-- **Qt Framework** - 强大的跨平台 GUI 框架
-- **所有贡献者** - 感谢每一位为项目做出贡献的开发者
+欢迎提交Issue和Pull Request!
 
 ## 📧 联系方式
 
-- **项目主页:** [https://github.com/yourusername/PyDayBar](https://github.com/yourusername/PyDayBar)
-- **问题反馈:** [GitHub Issues](https://github.com/yourusername/PyDayBar/issues)
-- **电子邮件:** your.email@example.com
+如有问题或建议,请通过以下方式联系:
+
+- GitHub Issues: [项目Issue页面](https://github.com/jiamizhongshifu/jindutiao/issues)
+- Email: (待添加)
 
 ---
 
 <div align="center">
 
-**如果这个项目对您有帮助,请给一个 ⭐ Star!**
+Made with ❤️ by PyDayBar Team
 
-Made with ❤️ by [Your Name]
+⭐ 如果觉得这个项目不错,请给我们一个Star! ⭐
 
 </div>
