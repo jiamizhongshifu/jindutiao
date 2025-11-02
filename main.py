@@ -1823,6 +1823,13 @@ class TimeProgressBar(QWidget):
         # 更新定时器间隔
         self.timer.setInterval(self.config['update_interval'])
 
+        # 重新应用主题（确保主题配置立即生效）
+        if hasattr(self, 'theme_manager') and self.theme_manager:
+            # 重新加载主题管理器的配置
+            self.theme_manager._load_current_theme()
+            # 应用主题到进度条
+            self.apply_theme()
+
         # 触发重绘
         self.update()
         self.logger.info("配置和任务重载完成")
@@ -2211,8 +2218,12 @@ class TimeProgressBar(QWidget):
                 painter.drawRect(hover_rect)
 
             # 绘制任务文本
-            theme = self.theme_manager.get_current_theme() if self.theme_manager else None
-            text_color = QColor(theme.get('text_color', '#FFFFFF')) if theme else QColor(255, 255, 255)
+            # 优先使用任务特定的文字颜色，否则使用主题全局文字颜色
+            if 'text_color' in task and task['text_color']:
+                text_color = QColor(task['text_color'])
+            else:
+                theme = self.theme_manager.get_current_theme() if self.theme_manager else None
+                text_color = QColor(theme.get('text_color', '#FFFFFF')) if theme else QColor(255, 255, 255)
             painter.setPen(text_color)
             painter.drawText(hover_rect, Qt.AlignCenter, task_text)
 

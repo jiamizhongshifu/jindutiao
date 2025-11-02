@@ -941,6 +941,504 @@ print(f"[DEBUG] Path: {self.path}", file=sys.stderr)
                     <related>任务配色bug修复记录：TASK_COLOR_RESET_FIX.md</related>
                 </references>
             </methodology>
+
+            <methodology name="UI State Synchronization Troubleshooting (UI状态同步问题诊断法)">
+                <description>
+                    系统性解决GUI应用中"配置更新后UI未刷新"类型问题的方法论。
+                    适用于桌面应用、Web应用等涉及多层数据流和状态同步的场景。
+                </description>
+
+                <applicable_scenarios>
+                    <scenario>用户保存配置后，UI显示未更新</scenario>
+                    <scenario>预览功能正常，但保存后效果消失</scenario>
+                    <scenario>配置文件已更新，但应用未响应</scenario>
+                    <scenario>多个组件之间的状态不一致</scenario>
+                </applicable_scenarios>
+
+                <core_principle>
+                    <principle name="数据流完整性">
+                        UI更新问题的本质是数据流断裂。必须追踪从用户输入到UI显示的完整数据流路径。
+                    </principle>
+                    <principle name="预览≠应用">
+                        预览是临时显示，不修改持久化数据。用户保存时才应该真正应用更改。
+                    </principle>
+                    <principle name="多层缓存一致性">
+                        现代应用往往有多层缓存（UI缓存、内存缓存、文件缓存）。必须确保所有层都同步更新。
+                    </principle>
+                </core_principle>
+
+                <diagnosis_steps>
+                    <step n="1" name="绘制完整数据流图">
+                        <instruction>
+                            用箭头图标识数据从源到显示的完整路径：
+
+                            **经典模式：**
+                            ```
+                            用户输入 → 组件A → 内存缓存 → 持久化存储 → 加载 → 组件B → UI显示
+                            ```
+
+                            **检查清单：**
+                            - 数据源在哪里？（用户输入、配置文件、数据库）
+                            - 数据经过哪些中间组件？（表单、管理器、服务）
+                            - 数据最终显示在哪里？（主窗口、子窗口、控件）
+                            - 是否有缓存层？（内存缓存、文件缓存、浏览器缓存）
+                        </instruction>
+                        <example>
+                            <![CDATA[
+案例：主题选择后进度条颜色未更新
+
+[绘制数据流]
+1. 用户选择主题 (ComboBox)
+2. → 更新预览 (TimelineEditor) ✅ 正常
+3. → 更新表格 (TaskTable) ❌ 缺失！
+4. → 保存任务 (tasks.json) ← 从TaskTable读取
+5. → 重新加载 (reload_all)
+6. → 显示进度条 (ProgressBar) ← 从tasks.json读取
+
+[问题发现]
+步骤3缺失：主题选择没有更新TaskTable中的颜色输入框
+→ 导致步骤4保存的是旧颜色
+→ 步骤6显示的也是旧颜色
+                            ]]>
+                        </example>
+                    </step>
+
+                    <step n="2" name="区分预览与持久化">
+                        <instruction>
+                            明确哪些操作是预览（临时显示），哪些是持久化（真正保存）：
+
+                            **预览特征：**
+                            - 仅修改UI组件的显示状态
+                            - 不写入文件或数据库
+                            - 用户可以"取消"回退
+                            - 代码中通常有"preview"、"temp"等关键字
+
+                            **持久化特征：**
+                            - 写入配置文件、数据库
+                            - 触发"saved"、"applied"信号
+                            - 用户无法直接回退（需要撤销操作）
+                            - 代码中通常有"save"、"commit"、"apply"等关键字
+                        </instruction>
+                        <critical_question>
+                            **关键问题：预览时是否更新了中间组件的状态？**
+
+                            如果预览只更新显示组件，不更新数据源组件：
+                            → 保存时可能从旧数据源读取
+                            → 导致"预览正常但保存后失效"
+                        </critical_question>
+                    </step>
+
+                    <step n="3" name="定位数据流断裂点">
+                        <instruction>
+                            使用"二分查找法"定位断裂点：
+
+                            1. **确认源头**：数据是否正确生成？
+                               - 添加日志：`logging.info(f"Theme selected: {theme_id}")`
+
+                            2. **确认终点**：UI是否正确读取数据？
+                               - 添加日志：`logging.info(f"Loading tasks: {tasks}")`
+
+                            3. **二分中间点**：数据在哪一步丢失？
+                               - 检查中间每个组件的输入输出
+                               - 添加日志跟踪数据变化
+                        </instruction>
+                        <debugging_techniques>
+                            <technique name="日志追踪法">
+                                在数据流的每个关键点添加日志：
+                                ```python
+                                # 数据源
+                                logging.info(f"[THEME] User selected: {theme_id}")
+
+                                # 中间处理
+                                logging.info(f"[SAVE] Saving tasks with colors: {[t['color'] for t in tasks]}")
+
+                                # 数据加载
+                                logging.info(f"[LOAD] Loaded tasks: {len(tasks)} tasks")
+
+                                # UI显示
+                                logging.info(f"[UI] Rendering task colors: {task_colors}")
+                                ```
+                            </technique>
+
+                            <technique name="断点调试法">
+                                在关键点设置断点，检查变量值：
+                                - 用户操作后
+                                - 保存操作前
+                                - 文件写入后
+                                - 数据加载时
+                                - UI渲染前
+                            </technique>
+
+                            <technique name="文件对比法">
+                                对比配置文件的变化：
+                                ```bash
+                                # 操作前后对比
+                                diff config.json.old config.json
+                                diff tasks.json.old tasks.json
+                                ```
+                            </technique>
+                        </debugging_techniques>
+                    </step>
+
+                    <step n="4" name="选择修复策略">
+                        <instruction>
+                            根据断裂点位置选择修复策略：
+                        </instruction>
+
+                        <strategy name="策略A：即时同步（推荐用于简单场景）">
+                            <when>数据流较短，组件较少</when>
+                            <approach>
+                                在用户操作时立即同步所有相关组件：
+                                ```python
+                                def on_theme_changed(self, theme_id):
+                                    # 1. 更新预览
+                                    self.update_preview(theme_id)
+
+                                    # 2. 更新表格（关键！）
+                                    self.update_task_table_colors(theme_id)
+
+                                    # 3. 标记为已修改
+                                    self.is_modified = True
+                                ```
+                            </approach>
+                            <pros>简单直观，状态一致性好</pros>
+                            <cons>可能影响性能，用户未保存时已修改数据源</cons>
+                        </strategy>
+
+                        <strategy name="策略B：延迟应用（推荐用于复杂场景）">
+                            <when>数据流较长，涉及多个组件</when>
+                            <approach>
+                                预览时只更新显示，保存时才应用到数据源：
+                                ```python
+                                def on_theme_changed(self, theme_id):
+                                    # 仅预览，不修改数据源
+                                    self.preview_theme(theme_id)
+                                    self.selected_theme_id = theme_id  # 记住选择
+
+                                def save_all(self):
+                                    # 保存时才真正应用
+                                    if hasattr(self, 'selected_theme_id'):
+                                        self.apply_theme_to_tasks(self.selected_theme_id)
+
+                                    # 保存到文件
+                                    self.save_to_file()
+                                ```
+                            </approach>
+                            <pros>用户可以取消，不会污染数据源</pros>
+                            <cons>需要额外状态管理，逻辑稍复杂</cons>
+                        </strategy>
+
+                        <strategy name="策略C：重新加载（推荐用于配置变更）">
+                            <when>保存后需要重新初始化</when>
+                            <approach>
+                                保存后触发完整的重新加载流程：
+                                ```python
+                                def save_all(self):
+                                    # 1. 保存配置和数据
+                                    self.save_config()
+                                    self.save_tasks()
+
+                                    # 2. 发出信号通知主窗口
+                                    self.config_saved.emit()
+
+                                # 主窗口响应
+                                def reload_all(self):
+                                    # 3. 重新加载所有数据
+                                    self.config = self.load_config()
+                                    self.tasks = self.load_tasks()
+
+                                    # 4. 重新应用主题（关键！）
+                                    self.theme_manager._load_current_theme()
+                                    self.apply_theme()
+
+                                    # 5. 刷新UI
+                                    self.update()
+                                ```
+                            </approach>
+                            <pros>确保状态完全一致，适合复杂配置</pros>
+                            <cons>可能有轻微闪烁，性能开销较大</cons>
+                        </strategy>
+                    </step>
+
+                    <step n="5" name="验证修复完整性">
+                        <instruction>
+                            修复后必须验证整个数据流：
+                        </instruction>
+
+                        <verification_checklist>
+                            <check n="1">**操作前状态**：记录当前UI显示的值</check>
+                            <check n="2">**用户操作**：执行完整的用户操作流程</check>
+                            <check n="3">**预览验证**：检查预览是否正确显示</check>
+                            <check n="4">**保存验证**：检查配置文件是否正确更新</check>
+                            <check n="5">**重启验证**：重启应用，检查设置是否持久化</check>
+                            <check n="6">**边界验证**：测试取消、多次操作等边界情况</check>
+                        </verification_checklist>
+
+                        <test_scenarios>
+                            <scenario name="基本流程">
+                                1. 打开应用，记录当前颜色
+                                2. 打开配置，选择新主题
+                                3. 观察预览是否更新
+                                4. 点击保存
+                                5. ✅ 验证：主窗口颜色立即更新
+                            </scenario>
+
+                            <scenario name="取消操作">
+                                1. 打开配置，选择新主题
+                                2. 不保存，直接关闭
+                                3. ✅ 验证：主窗口颜色未改变
+                            </scenario>
+
+                            <scenario name="重启持久化">
+                                1. 选择主题并保存
+                                2. 完全退出应用
+                                3. 重新启动应用
+                                4. ✅ 验证：新主题颜色仍然生效
+                            </scenario>
+
+                            <scenario name="多次切换">
+                                1. 切换主题A → 保存 → 验证
+                                2. 切换主题B → 保存 → 验证
+                                3. 切换主题C → 不保存 → 验证（应该是B）
+                                4. 重启 → 验证（应该是B）
+                            </scenario>
+                        </test_scenarios>
+                    </step>
+                </diagnosis_steps>
+
+                <case_study name="PyDayBar主题保存后进度条未刷新 (2025-11)">
+                    <problem_description>
+                        用户反馈：在配置界面选择预设主题并保存后，进度条颜色没有立即更新，需要重启应用才能看到新颜色。
+                    </problem_description>
+
+                    <diagnosis_process>
+                        <iteration n="1" status="失败">
+                            <hypothesis>reload_all() 没有重新应用主题</hypothesis>
+                            <fix>在 reload_all() 中添加 apply_theme() 调用</fix>
+                            <result>❌ 用户反馈：保存后进度条颜色仍未刷新</result>
+                        </iteration>
+
+                        <iteration n="2" status="成功">
+                            <analysis>
+                                绘制完整数据流：
+                                ```
+                                1. 用户选择主题 (theme_combo)
+                                   ↓
+                                2. 预览更新 (timeline_editor) ✅ 正常
+                                   ↓ (断裂！)
+                                3. 表格未更新 (tasks_table) ❌ 颜色输入框仍是旧值
+                                   ↓
+                                4. 保存任务 (save_all) ← 从表格输入框读取颜色
+                                   ↓
+                                5. 写入文件 (tasks.json) ← 保存的是旧颜色！
+                                   ↓
+                                6. 重新加载 (reload_all) ← 加载旧颜色
+                                   ↓
+                                7. 显示进度条 (paint) ← 显示旧颜色
+                                ```
+                            </analysis>
+
+                            <root_cause>
+                                **数据流断裂点**：步骤2→3之间
+                                - 预览只更新了 timeline_editor（临时显示）
+                                - 没有更新 tasks_table 的颜色输入框（数据源）
+                                - 保存时从 tasks_table 读取，读到的是旧颜色
+
+                                **为什么第一次修复失败？**
+                                - 虽然 apply_theme() 被调用了
+                                - 但 tasks.json 里的颜色本身就是旧的
+                                - 所以重新加载后还是旧颜色
+                            </root_cause>
+
+                            <fix_strategy>
+                                采用"策略B：延迟应用"
+
+                                **修改点1：记住用户选择**
+                                ```python
+                                def on_preset_theme_changed_with_preview(self, index):
+                                    theme_id = self.theme_combo.itemData(index)
+                                    self.selected_theme_id = theme_id  # 记住选择
+
+                                    # 仅预览，不修改数据源
+                                    self.preview_theme_in_timeline(theme_id)
+                                ```
+
+                                **修改点2：保存时应用主题**
+                                ```python
+                                def save_all(self):
+                                    # 获取主题颜色
+                                    theme_colors = []
+                                    if hasattr(self, 'selected_theme_id') and self.selected_theme_id:
+                                        theme_data = self.get_theme_data(self.selected_theme_id)
+                                        theme_colors = theme_data.get('task_colors', [])
+
+                                    # 保存任务时应用主题颜色
+                                    for row in range(self.tasks_table.rowCount()):
+                                        if theme_colors:
+                                            # 使用主题颜色（而不是表格输入框的值）
+                                            task_color = theme_colors[row % len(theme_colors)]
+                                        else:
+                                            # 用户自定义颜色
+                                            task_color = color_input.text()
+
+                                        task['color'] = task_color
+
+                                    # 保存配置和任务
+                                    self.save_config()
+                                    self.save_tasks()
+                                ```
+
+                                **修改点3：重新加载并应用**
+                                ```python
+                                def reload_all(self):
+                                    # 重新加载配置和任务
+                                    self.config = self.load_config()
+                                    self.tasks = self.load_tasks()
+
+                                    # 重新应用主题
+                                    self.theme_manager._load_current_theme()
+                                    self.apply_theme()
+
+                                    # 刷新UI
+                                    self.update()
+                                ```
+                            </fix_strategy>
+
+                            <result>✅ 成功！用户确认保存后进度条颜色立即更新</result>
+                        </iteration>
+                    </diagnosis_process>
+
+                    <files_modified>
+                        - `config_gui.py:2188-2219` - 保存时应用主题颜色到任务数据
+                        - `config_gui.py:2245` - 使用主题颜色而不是输入框颜色
+                        - `main.py:1826-1831` - reload_all() 中重新加载并应用主题
+                    </files_modified>
+
+                    <lessons_learned>
+                        <lesson name="预览≠应用">
+                            预览功能正常不代表保存也正常。预览通常是临时显示，需要在保存时真正应用数据。
+                        </lesson>
+
+                        <lesson name="数据流完整性">
+                            修复UI问题时，必须追踪完整数据流。不能只看起点和终点，中间环节同样重要。
+                        </lesson>
+
+                        <lesson name="源头修复优于终点修复">
+                            第一次尝试在终点（reload_all）修复，失败了。
+                            第二次尝试在源头（save_all）修复，成功了。
+                            因为问题根源在于保存的数据本身就是错的。
+                        </lesson>
+
+                        <lesson name="增量调试的价值">
+                            虽然第一次修复失败了，但缩小了问题范围：
+                            - 确认了 reload_all 逻辑本身没问题
+                            - 排除了主题管理器的问题
+                            - 将焦点转向数据源（tasks.json）
+                        </lesson>
+                    </lessons_learned>
+                </case_study>
+
+                <best_practices>
+                    <practice name="数据流可视化">
+                        在修复UI状态同步问题前，先用箭头图绘制完整数据流，标记每个组件的输入输出。
+                        这比直接看代码更容易发现断裂点。
+                    </practice>
+
+                    <practice name="日志驱动调试">
+                        在数据流的关键点添加详细日志，包括：
+                        - 数据的来源和去向
+                        - 数据的值和类型
+                        - 操作的时间戳
+                        这样可以通过日志文件回溯整个数据流。
+                    </practice>
+
+                    <practice name="配置与数据分离">
+                        - **配置文件（config.json）**：存储用户的选择（如：选择了哪个主题）
+                        - **数据文件（tasks.json）**：存储实际的数据（如：任务的实际颜色）
+                        保存时需要同时更新两者，加载时也要同时读取。
+                    </practice>
+
+                    <practice name="预览与应用分离">
+                        - 预览函数：`preview_xxx()`，只更新显示组件，不修改数据源
+                        - 应用函数：`apply_xxx()`，真正修改数据源并持久化
+                        - 保存函数：`save_xxx()`，先应用再持久化
+                        这样逻辑清晰，不易出错。
+                    </practice>
+
+                    <practice name="重新加载必须完整">
+                        配置保存后的 reload 流程必须包含：
+                        1. 重新加载配置文件
+                        2. 重新加载数据文件
+                        3. 重新应用主题/样式
+                        4. 刷新所有UI组件
+                        缺少任何一步都可能导致状态不一致。
+                    </practice>
+
+                    <practice name="测试边界场景">
+                        除了基本流程，还要测试：
+                        - 取消操作（不保存）
+                        - 多次切换（A→B→C）
+                        - 重启应用（持久化验证）
+                        - 快速操作（防抖/节流）
+                    </practice>
+                </best_practices>
+
+                <anti_patterns>
+                    <anti_pattern name="只测试预览不测试保存">
+                        ❌ 错误：看到预览正常就认为功能完成
+                        ✅ 正确：完整测试"预览→保存→重启"流程
+                    </anti_pattern>
+
+                    <anti_pattern name="只修复终点不追查源头">
+                        ❌ 错误：发现UI不更新就强制刷新UI
+                        ✅ 正确：追查数据源，从根本上解决问题
+                    </anti_pattern>
+
+                    <anti_pattern name="假设中间组件会自动同步">
+                        ❌ 错误：更新A后假设B会自动更新
+                        ✅ 正确：显式调用B的更新方法，或通过信号/事件通知
+                    </anti_pattern>
+
+                    <anti_pattern name="混淆预览和应用">
+                        ❌ 错误：预览时就修改数据源，导致无法取消
+                        ✅ 正确：预览只改显示，保存时才改数据源
+                    </anti_pattern>
+                </anti_patterns>
+
+                <quick_reference>
+                    <title>UI状态同步问题快速诊断卡</title>
+
+                    <checklist>
+                        <item>□ 绘制完整数据流图（从输入到显示）</item>
+                        <item>□ 区分预览组件和数据源组件</item>
+                        <item>□ 添加日志追踪数据变化</item>
+                        <item>□ 检查配置文件是否更新</item>
+                        <item>□ 检查数据文件是否更新</item>
+                        <item>□ 检查reload逻辑是否完整</item>
+                        <item>□ 测试取消操作</item>
+                        <item>□ 测试重启持久化</item>
+                    </checklist>
+
+                    <common_causes>
+                        1. **预览未同步数据源** - 最常见，70%的问题
+                        2. **保存时读取错误的数据源** - 20%的问题
+                        3. **reload逻辑不完整** - 10%的问题
+                    </common_causes>
+
+                    <debugging_order>
+                        1. 先确认配置文件是否正确保存
+                        2. 再确认数据文件是否正确保存
+                        3. 然后确认reload是否重新加载
+                        4. 最后确认UI是否响应数据变化
+                    </debugging_order>
+                </quick_reference>
+
+                <references>
+                    <related_methodology>PyInstaller Development Methodology</related_methodology>
+                    <related_methodology>Progressive Differential Analysis</related_methodology>
+                    <related_issue>主题保存后进度条未刷新 (2025-11-02)</related_issue>
+                </references>
+            </methodology>
         </debugging_methodology>
     </protocols>
 

@@ -388,11 +388,9 @@ class ConfigManager(QMainWindow):
         # 立即创建外观配置和任务管理标签页(基础功能)
         tabs.addTab(self.create_config_tab(), "外观配置")
         tabs.addTab(self.create_tasks_tab(), "任务管理")
-        
-        # 延迟创建主题设置和通知设置标签页(避免初始化时阻塞)
-        self.theme_tab_widget = None
+
+        # 延迟创建通知设置标签页(避免初始化时阻塞)
         self.notification_tab_widget = None
-        tabs.addTab(QWidget(), "🎨 主题设置")  # 占位widget
         tabs.addTab(QWidget(), "🔔 通知设置")  # 占位widget
         
         # 连接标签页切换信号,实现懒加载
@@ -421,57 +419,22 @@ class ConfigManager(QMainWindow):
 
     def on_tab_changed(self, index):
         """标签页切换时的处理(实现懒加载)"""
-        if index == 2:  # 主题设置标签页
-            if self.theme_tab_widget is None:
-                # 检查主题管理器是否已初始化
-                if self.theme_manager is None:
-                    # 如果还未初始化,先初始化
-                    self._init_theme_manager()
-                    # 等待一小段时间让初始化完成
-                    QTimer.singleShot(100, lambda: self._load_theme_tab())
-                else:
-                    self._load_theme_tab()
-        elif index == 3:  # 通知设置标签页
+        if index == 2:  # 通知设置标签页（主题设置已移除）
             if self.notification_tab_widget is None:
                 self._load_notification_tab()
-    
-    def _load_theme_tab(self):
-        """加载主题设置标签页"""
-        if self.theme_tab_widget is not None:
-            return  # 已经加载过了
-        
-        try:
-            self.theme_tab_widget = self.create_theme_tab()
-            self.tabs.setTabEnabled(2, True)  # 确保标签页可用
-            # 替换占位widget
-            self.tabs.removeTab(2)
-            self.tabs.insertTab(2, self.theme_tab_widget, "🎨 主题设置")
-            self.tabs.setCurrentIndex(2)  # 切换到主题设置标签页
-        except Exception as e:
-            logging.error(f"加载主题设置标签页失败: {e}")
-            # 显示错误提示
-            from PySide6.QtWidgets import QLabel
-            error_widget = QWidget()
-            error_layout = QVBoxLayout(error_widget)
-            error_label = QLabel(f"加载主题设置失败: {e}")
-            error_label.setStyleSheet("color: red; padding: 20px;")
-            error_layout.addWidget(error_label)
-            self.theme_tab_widget = error_widget
-            self.tabs.removeTab(2)
-            self.tabs.insertTab(2, self.theme_tab_widget, "🎨 主题设置")
     
     def _load_notification_tab(self):
         """加载通知设置标签页"""
         if self.notification_tab_widget is not None:
             return  # 已经加载过了
-        
+
         try:
             self.notification_tab_widget = self.create_notification_tab()
-            self.tabs.setTabEnabled(3, True)  # 确保标签页可用
+            self.tabs.setTabEnabled(2, True)  # 确保标签页可用
             # 替换占位widget
-            self.tabs.removeTab(3)
-            self.tabs.insertTab(3, self.notification_tab_widget, "🔔 通知设置")
-            self.tabs.setCurrentIndex(3)  # 切换到通知设置标签页
+            self.tabs.removeTab(2)
+            self.tabs.insertTab(2, self.notification_tab_widget, "🔔 通知设置")
+            self.tabs.setCurrentIndex(2)  # 切换到通知设置标签页
         except Exception as e:
             logging.error(f"加载通知设置标签页失败: {e}")
             # 显示错误提示
@@ -482,8 +445,8 @@ class ConfigManager(QMainWindow):
             error_label.setStyleSheet("color: red; padding: 20px;")
             error_layout.addWidget(error_label)
             self.notification_tab_widget = error_widget
-            self.tabs.removeTab(3)
-            self.tabs.insertTab(3, self.notification_tab_widget, "🔔 通知设置")
+            self.tabs.removeTab(2)
+            self.tabs.insertTab(2, self.notification_tab_widget, "🔔 通知设置")
 
     def create_config_tab(self):
         """创建外观配置标签页"""
@@ -866,6 +829,38 @@ class ConfigManager(QMainWindow):
         info_label.setStyleSheet("color: #666; font-style: italic;")
         top_layout.addWidget(info_label)
 
+        # 预设主题选择区域
+        theme_group = QGroupBox("🎨 预设主题配色")
+        theme_layout = QHBoxLayout()
+
+        theme_label = QLabel("选择主题:")
+        theme_layout.addWidget(theme_label)
+
+        # 创建主题下拉框
+        self.theme_combo = QComboBox()
+        self.theme_combo.setMinimumWidth(150)
+
+        # 延迟加载主题列表
+        QTimer.singleShot(200, self._load_preset_themes)
+
+        self.theme_combo.currentIndexChanged.connect(self.on_preset_theme_changed_with_preview)
+        theme_layout.addWidget(self.theme_combo)
+
+        # 主题配色预览区域
+        preview_label = QLabel("配色预览:")
+        preview_label.setStyleSheet("color: #666; margin-left: 10px;")
+        theme_layout.addWidget(preview_label)
+
+        self.colors_preview_widget = QWidget()
+        colors_preview_layout = QHBoxLayout(self.colors_preview_widget)
+        colors_preview_layout.setContentsMargins(0, 0, 0, 0)
+        colors_preview_layout.setSpacing(3)
+        theme_layout.addWidget(self.colors_preview_widget)
+
+        theme_layout.addStretch()
+        theme_group.setLayout(theme_layout)
+        top_layout.addWidget(theme_group)
+
         # 模板加载区域 - 单行显示所有模板
         template_group = QGroupBox("📋 预设模板")
         template_layout = QHBoxLayout()
@@ -951,8 +946,8 @@ class ConfigManager(QMainWindow):
 
         # 任务表格
         self.tasks_table = QTableWidget()
-        self.tasks_table.setColumnCount(5)
-        self.tasks_table.setHorizontalHeaderLabels(["开始时间", "结束时间", "任务名称", "颜色", "操作"])
+        self.tasks_table.setColumnCount(6)
+        self.tasks_table.setHorizontalHeaderLabels(["开始时间", "结束时间", "任务名称", "背景颜色", "文字颜色", "操作"])
         self.tasks_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
 
         # 监听表格项的变化,实时同步到时间轴
@@ -992,355 +987,6 @@ class ConfigManager(QMainWindow):
 
         return widget
 
-    def create_theme_tab(self):
-        """创建主题设置标签页"""
-        widget = QWidget()
-        layout = QVBoxLayout(widget)
-
-        # 说明标签
-        info_label = QLabel("选择或自定义主题，让进度条更符合您的喜好")
-        info_label.setStyleSheet("color: #666; font-style: italic; padding: 5px;")
-        layout.addWidget(info_label)
-
-        # 预设主题选择组（带预览）
-        preset_group = QGroupBox("预设主题")
-        preset_layout = QFormLayout()
-
-        # 获取所有预设主题(检查主题管理器是否已初始化)
-        if not self.theme_manager:
-            # 如果主题管理器还未初始化,尝试初始化
-            self._init_theme_manager()
-            # 如果仍然失败,使用默认主题
-            if not self.theme_manager:
-                preset_themes = ThemeManager.DEFAULT_PRESET_THEMES.copy()
-            else:
-                all_themes = self.theme_manager.get_all_themes()
-                preset_themes = all_themes.get('preset_themes', {})
-        else:
-            all_themes = self.theme_manager.get_all_themes()
-            preset_themes = all_themes.get('preset_themes', {})
-
-        # 当前选中的主题ID（从config中获取）
-        theme_config = self.config.get('theme', {})
-        current_theme_id = theme_config.get('current_theme_id', 'business')
-        self.selected_theme_id = current_theme_id
-
-        # 创建主题下拉框和预览区域
-        theme_container = QHBoxLayout()
-        
-        self.theme_combo = QComboBox()
-        for theme_id, theme_data in preset_themes.items():
-            theme_name = theme_data.get('name', theme_id)
-            self.theme_combo.addItem(theme_name, theme_id)
-        
-        # 设置当前选中项
-        index = self.theme_combo.findData(current_theme_id)
-        if index >= 0:
-            self.theme_combo.setCurrentIndex(index)
-        
-        self.theme_combo.currentIndexChanged.connect(self.on_preset_theme_changed)
-        theme_container.addWidget(self.theme_combo)
-        
-        # 主题预览区域
-        preview_container = QHBoxLayout()
-        preview_container.setSpacing(5)
-        
-        # 背景色预览
-        bg_preview = QLabel("背景:")
-        bg_preview.setStyleSheet("font-size: 10px; color: #666;")
-        preview_container.addWidget(bg_preview)
-        
-        self.bg_preview_label = QLabel()
-        self.bg_preview_label.setFixedSize(30, 20)
-        self.bg_preview_label.setStyleSheet(f"""
-            QLabel {{
-                background-color: {preset_themes.get(current_theme_id, {}).get('background_color', '#FFFFFF')};
-                border: 1px solid #CCC;
-                border-radius: 3px;
-            }}
-        """)
-        preview_container.addWidget(self.bg_preview_label)
-        
-        # 任务配色预览
-        task_colors_preview = QLabel("配色:")
-        task_colors_preview.setStyleSheet("font-size: 10px; color: #666;")
-        preview_container.addWidget(task_colors_preview)
-        
-        self.colors_preview_widget = QWidget()
-        colors_preview_layout = QHBoxLayout(self.colors_preview_widget)
-        colors_preview_layout.setContentsMargins(0, 0, 0, 0)
-        colors_preview_layout.setSpacing(3)
-        
-        # 初始化颜色预览
-        current_theme_data = preset_themes.get(current_theme_id, {})
-        task_colors = current_theme_data.get('task_colors', [])
-        self.update_colors_preview(task_colors)
-        
-        preview_container.addWidget(self.colors_preview_widget)
-        preview_container.addStretch()
-        
-        theme_container.addLayout(preview_container, 1)
-        
-        preset_layout.addRow("选择主题:", theme_container)
-
-        preset_group.setLayout(preset_layout)
-        layout.addWidget(preset_group)
-
-        # 操作按钮组
-        action_group = QGroupBox("操作")
-        action_layout = QHBoxLayout()
-
-        # 说明：主题选择后会自动应用，此按钮用于手动重新应用
-        apply_theme_btn = QPushButton("🔄 重新应用主题")
-        apply_theme_btn.clicked.connect(self.apply_selected_theme)
-        apply_theme_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #4CAF50;
-                color: white;
-                padding: 8px 16px;
-                font-weight: bold;
-                border-radius: 4px;
-            }
-            QPushButton:hover {
-                background-color: #45a049;
-            }
-        """)
-        action_layout.addWidget(apply_theme_btn)
-        
-        # 添加提示标签
-        hint_label = QLabel("💡 提示：选择主题后会自动应用，无需点击按钮")
-        hint_label.setStyleSheet("color: #666; font-size: 10px; font-style: italic;")
-        action_layout.addWidget(hint_label)
-
-        # 应用主题配色到任务按钮
-        apply_colors_btn = QPushButton("🎨 应用主题配色到任务")
-        apply_colors_btn.clicked.connect(self.apply_theme_colors_to_tasks)
-        apply_colors_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #2196F3;
-                color: white;
-                padding: 8px 16px;
-                font-weight: bold;
-                border-radius: 4px;
-            }
-            QPushButton:hover {
-                background-color: #1976D2;
-            }
-        """)
-        action_layout.addWidget(apply_colors_btn)
-
-        action_layout.addStretch()
-
-        action_group.setLayout(action_layout)
-        layout.addWidget(action_group)
-
-        # AI 智能推荐组
-        ai_recommend_group = QGroupBox("🤖 AI 智能推荐")
-        ai_recommend_layout = QVBoxLayout()
-
-        # 说明标签
-        ai_hint = QLabel("💡 AI会根据您的任务安排智能推荐3-5种适合的主题配色方案")
-        ai_hint.setStyleSheet("color: #FF9800; font-style: italic; padding: 3px;")
-        ai_recommend_layout.addWidget(ai_hint)
-
-        # AI推荐按钮
-        recommend_btn = QPushButton("✨ 获取AI推荐")
-        recommend_btn.clicked.connect(self.on_ai_recommend_clicked)
-        recommend_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #FF6B00;
-                color: white;
-                padding: 8px 16px;
-                font-weight: bold;
-                border-radius: 4px;
-            }
-            QPushButton:hover {
-                background-color: #FF8500;
-            }
-        """)
-        ai_recommend_layout.addWidget(recommend_btn)
-
-        # AI推荐结果区域（滚动区域）
-        from PySide6.QtWidgets import QScrollArea
-        self.ai_recommend_scroll = QScrollArea()
-        self.ai_recommend_scroll.setWidgetResizable(True)
-        self.ai_recommend_scroll.setMaximumHeight(200)
-        self.ai_recommend_scroll.setVisible(False)  # 初始隐藏
-        
-        ai_recommend_container = QWidget()
-        self.ai_recommend_layout = QVBoxLayout(ai_recommend_container)
-        self.ai_recommend_layout.setSpacing(10)
-        
-        self.ai_recommend_scroll.setWidget(ai_recommend_container)
-        ai_recommend_layout.addWidget(self.ai_recommend_scroll)
-
-        ai_recommend_group.setLayout(ai_recommend_layout)
-        layout.addWidget(ai_recommend_group)
-
-        # AI 主题生成组
-        ai_generate_group = QGroupBox("🎨 AI 主题生成")
-        ai_generate_layout = QVBoxLayout()
-
-        # 说明标签
-        generate_hint = QLabel("💡 用自然语言描述您想要的主题风格，AI将自动生成配色方案")
-        generate_hint.setStyleSheet("color: #FF9800; font-style: italic; padding: 3px;")
-        ai_generate_layout.addWidget(generate_hint)
-
-        # 输入框
-        input_container = QHBoxLayout()
-        input_label = QLabel("描述:")
-        input_label.setStyleSheet("font-weight: bold;")
-        input_container.addWidget(input_label)
-
-        self.theme_generate_input = QLineEdit()
-        self.theme_generate_input.setPlaceholderText("例如: 清新自然的工作主题、温暖舒适的日常主题...")
-        self.theme_generate_input.setMinimumHeight(35)
-        self.theme_generate_input.returnPressed.connect(self.on_ai_generate_theme_clicked)
-        input_container.addWidget(self.theme_generate_input)
-
-        ai_generate_layout.addLayout(input_container)
-
-        # 生成按钮
-        generate_theme_btn = QPushButton("✨ 生成主题")
-        generate_theme_btn.clicked.connect(self.on_ai_generate_theme_clicked)
-        generate_theme_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #FF6B00;
-                color: white;
-                padding: 8px 16px;
-                font-weight: bold;
-                border-radius: 4px;
-            }
-            QPushButton:hover {
-                background-color: #FF8500;
-            }
-        """)
-        ai_generate_layout.addWidget(generate_theme_btn)
-
-        ai_generate_group.setLayout(ai_generate_layout)
-        layout.addWidget(ai_generate_group)
-
-        layout.addStretch()
-
-        return widget
-
-    def create_theme_card(self, theme_id, theme_config, is_selected=False):
-        """创建主题选择卡片"""
-        from PySide6.QtWidgets import QFrame
-        
-        card = QFrame()
-        card.setFrameStyle(QFrame.Box)
-        card.setStyleSheet(f"""
-            QFrame {{
-                border: 2px solid {'#4CAF50' if is_selected else '#E0E0E0'};
-                border-radius: 8px;
-                padding: 10px;
-                background-color: {'#F0F8F0' if is_selected else 'white'};
-            }}
-            QFrame:hover {{
-                border-color: #2196F3;
-                background-color: #F5F5F5;
-            }}
-        """)
-
-        card_layout = QHBoxLayout(card)
-
-        # 主题预览（颜色块）
-        preview_widget = QWidget()
-        preview_widget.setFixedSize(60, 60)
-        preview_widget.setStyleSheet(f"""
-            QWidget {{
-                background-color: {theme_config.get('background_color', '#FFFFFF')};
-                border: 1px solid #CCC;
-                border-radius: 4px;
-            }}
-        """)
-        card_layout.addWidget(preview_widget)
-
-        # 主题信息
-        info_layout = QVBoxLayout()
-        
-        name_label = QLabel(theme_config.get('name', theme_id))
-        name_label.setStyleSheet("font-weight: bold; font-size: 14px;")
-        info_layout.addWidget(name_label)
-
-        desc_label = QLabel(theme_config.get('description', ''))
-        desc_label.setStyleSheet("color: #666; font-size: 11px;")
-        desc_label.setWordWrap(True)
-        info_layout.addWidget(desc_label)
-
-        # 颜色预览
-        colors_layout = QHBoxLayout()
-        colors_layout.setSpacing(5)
-        task_colors = theme_config.get('task_colors', [])
-        for color in task_colors[:4]:  # 最多显示4个颜色
-            color_label = QLabel()
-            color_label.setFixedSize(20, 20)
-            color_label.setStyleSheet(f"""
-                QLabel {{
-                    background-color: {color};
-                    border: 1px solid #CCC;
-                    border-radius: 10px;
-                }}
-            """)
-            colors_layout.addWidget(color_label)
-        colors_layout.addStretch()
-        info_layout.addLayout(colors_layout)
-
-        card_layout.addLayout(info_layout, 1)
-
-        # 选中标记
-        if is_selected:
-            check_label = QLabel("✓")
-            check_label.setStyleSheet("font-size: 24px; color: #4CAF50; font-weight: bold;")
-            card_layout.addWidget(check_label)
-
-        # 点击事件
-        def on_card_clicked():
-            # 取消其他卡片的选中状态
-            for tid, c in self.theme_cards.items():
-                if tid != theme_id:
-                    c.setStyleSheet("""
-                        QFrame {
-                            border: 2px solid #E0E0E0;
-                            border-radius: 8px;
-                            padding: 10px;
-                            background-color: white;
-                        }
-                        QFrame:hover {
-                            border-color: #2196F3;
-                            background-color: #F5F5F5;
-                        }
-                    """)
-                    # 移除选中标记
-                    c_layout = c.layout()
-                    if c_layout:
-                        for i in range(c_layout.count() - 1, -1, -1):  # 从后往前遍历
-                            item = c_layout.itemAt(i)
-                            if item and item.widget():
-                                widget = item.widget()
-                                if isinstance(widget, QLabel) and widget.text() == "✓":
-                                    widget.deleteLater()
-                                    break
-            
-            # 选中当前卡片
-            card.setStyleSheet("""
-                QFrame {
-                    border: 2px solid #4CAF50;
-                    border-radius: 8px;
-                    padding: 10px;
-                    background-color: #F0F8F0;
-                }
-            """)
-            check_label = QLabel("✓")
-            check_label.setStyleSheet("font-size: 24px; color: #4CAF50; font-weight: bold;")
-            card_layout.addWidget(check_label)
-            
-            self.selected_theme_id = theme_id
-
-        card.mousePressEvent = lambda e: on_card_clicked()
-
-        return card
 
     def update_colors_preview(self, task_colors):
         """更新任务配色预览"""
@@ -1365,68 +1011,6 @@ class ConfigManager(QMainWindow):
         
         self.colors_preview_widget.layout().addStretch()
 
-    def on_preset_theme_changed(self, index):
-        """预设主题下拉框改变时的处理"""
-        if index >= 0:
-            theme_id = self.theme_combo.itemData(index)
-            if theme_id:
-                self.selected_theme_id = theme_id
-                
-                # 更新预览(检查主题管理器是否已初始化)
-                if not self.theme_manager:
-                    # 如果未初始化,使用默认主题
-                    preset_themes = ThemeManager.DEFAULT_PRESET_THEMES.copy()
-                else:
-                    all_themes = self.theme_manager.get_all_themes()
-                    preset_themes = all_themes.get('preset_themes', {})
-                
-                theme_data = preset_themes.get(theme_id, {})
-                
-                # 更新背景色预览
-                if hasattr(self, 'bg_preview_label'):
-                    bg_color = theme_data.get('background_color', '#FFFFFF')
-                    self.bg_preview_label.setStyleSheet(f"""
-                        QLabel {{
-                            background-color: {bg_color};
-                            border: 1px solid #CCC;
-                            border-radius: 3px;
-                        }}
-                    """)
-                
-                # 更新任务配色预览
-                task_colors = theme_data.get('task_colors', [])
-                if hasattr(self, 'colors_preview_widget'):
-                    self.update_colors_preview(task_colors)
-                
-                # 自动应用主题（无需点击按钮）
-                self.apply_selected_theme_silent()
-
-    # 已移除主题模式选择功能，只保留预设主题
-
-    def update_preview_from_current_theme(self):
-        """从当前主题更新预览"""
-        if not self.theme_manager:
-            return
-        
-        theme = self.theme_manager.get_current_theme()
-        if not theme:
-            return
-        
-        # 更新背景色预览
-        if hasattr(self, 'bg_preview_label'):
-            bg_color = theme.get('background_color', '#FFFFFF')
-            self.bg_preview_label.setStyleSheet(f"""
-                QLabel {{
-                    background-color: {bg_color};
-                    border: 1px solid #CCC;
-                    border-radius: 3px;
-                }}
-            """)
-        
-        # 更新任务配色预览
-        task_colors = theme.get('task_colors', [])
-        if hasattr(self, 'colors_preview_widget'):
-            self.update_colors_preview(task_colors)
 
     def apply_selected_theme_silent(self):
         """静默应用选中的主题（不显示提示框）"""
@@ -1515,319 +1099,85 @@ class ConfigManager(QMainWindow):
                 QTimer.singleShot(50, lambda: self.timeline_editor.set_tasks(self.tasks) if self.timeline_editor else None)
             
             QMessageBox.information(self, "成功", "已应用主题配色到任务")
-    
-    def on_ai_recommend_clicked(self):
-        """AI推荐主题按钮点击事件"""
-        if not self.tasks:
-            QMessageBox.warning(self, "提示", "请先添加任务后再获取AI推荐")
+
+    def _load_preset_themes(self):
+        """加载预设主题列表到下拉框"""
+        if not hasattr(self, 'theme_combo'):
             return
 
-        # 检查AI组件是否已初始化
-        if not hasattr(self, 'theme_ai_helper') or not self.theme_ai_helper:
-            QMessageBox.warning(
-                self,
-                "AI服务未就绪",
-                "AI服务正在初始化中,请稍候片刻再试...",
-                QMessageBox.Ok
-            )
-            return
-
-        # 检查后端服务是否运行
-        # 异步检查后端服务状态（不阻塞UI）
-        if not hasattr(self, 'ai_client') or not self.ai_client:
-            # 如果AI客户端未初始化，直接返回，不显示推荐
-            return
-            # 已切换到Vercel云服务，不再需要本地后端服务
-            QMessageBox.warning(
-                self,
-                "AI云服务连接失败",
-                "无法连接到AI云服务。\n\n可能的原因:\n1. 网络连接问题\n2. 云服务冷启动中（首次访问需要10-15秒）\n3. 服务临时不可用\n\n请稍后点击'刷新配额'按钮重试。",
-                QMessageBox.Ok
-            )
-            return
-
-        # 禁用按钮，显示加载状态
-        sender = self.sender()
-        sender.setEnabled(False)
-        sender.setText("生成中...")
-
-        # 在后台线程中执行AI请求
-        class ThemeRecommendWorker(QThread):
-            finished = Signal(object)
-            error = Signal(str)
-
-            def __init__(self, ai_helper, tasks):
-                super().__init__()
-                self.ai_helper = ai_helper
-                self.tasks = tasks
-
-            def run(self):
-                try:
-                    result = self.ai_helper.recommend_themes(self.tasks, {})
-                    self.finished.emit(result)
-                except Exception as e:
-                    import traceback
-                    error_detail = traceback.format_exc()
-                    logging.error(f"AI推荐失败: {error_detail}")
-                    self.error.emit(str(e))
-
-        self.recommend_worker = ThemeRecommendWorker(self.theme_ai_helper, self.tasks)
-        self.recommend_worker.finished.connect(self.on_ai_recommend_finished)
-        self.recommend_worker.error.connect(self.on_ai_recommend_error)
-        self.recommend_worker.start()
-    
-    def on_ai_recommend_finished(self, recommendations):
-        """AI推荐完成"""
-        # 恢复按钮状态
-        for widget in self.findChildren(QPushButton):
-            if widget.text() == "生成中...":
-                widget.setEnabled(True)
-                widget.setText("✨ 获取AI推荐")
-                break
-        
-        if not recommendations:
-            return
-        
-        # 显示推荐结果
-        if hasattr(self, 'ai_recommend_scroll'):
-            self.ai_recommend_scroll.setVisible(True)
-        
-        # 清空旧推荐
-        if hasattr(self, 'ai_recommend_layout'):
-            while self.ai_recommend_layout.count():
-                item = self.ai_recommend_layout.takeAt(0)
-                if item.widget():
-                    item.widget().deleteLater()
-            
-            # 创建推荐卡片
-            for i, rec in enumerate(recommendations):
-                card = self.create_ai_recommend_card(rec, i)
-                self.ai_recommend_layout.addWidget(card)
-            
-            self.ai_recommend_layout.addStretch()
-        
-        QMessageBox.information(self, "成功", f"已生成 {len(recommendations)} 个推荐主题")
-    
-    def on_ai_recommend_error(self, error_msg):
-        """AI推荐错误"""
-        # 恢复按钮状态
-        for widget in self.findChildren(QPushButton):
-            if widget.text() == "生成中...":
-                widget.setEnabled(True)
-                widget.setText("✨ 获取AI推荐")
-                break
-        
-        QMessageBox.warning(self, "错误", f"AI推荐失败: {error_msg}")
-    
-    def create_ai_recommend_card(self, recommendation, index):
-        """创建AI推荐主题卡片"""
-        from PySide6.QtWidgets import QFrame
-        
-        card = QFrame()
-        card.setFrameStyle(QFrame.Box)
-        card.setStyleSheet("""
-            QFrame {
-                border: 2px solid #E0E0E0;
-                border-radius: 8px;
-                padding: 10px;
-                background-color: white;
-            }
-            QFrame:hover {
-                border-color: #FF6B00;
-                background-color: #FFF8F0;
-            }
-        """)
-        
-        card_layout = QHBoxLayout(card)
-        
-        # 主题预览
-        preview_widget = QWidget()
-        preview_widget.setFixedSize(50, 50)
-        config = recommendation.get('config', {})
-        preview_widget.setStyleSheet(f"""
-            QWidget {{
-                background-color: {config.get('background_color', '#FFFFFF')};
-                border: 1px solid #CCC;
-                border-radius: 4px;
-            }}
-        """)
-        card_layout.addWidget(preview_widget)
-        
-        # 主题信息
-        info_layout = QVBoxLayout()
-        
-        name_label = QLabel(recommendation.get('name', f'推荐主题 {index + 1}'))
-        name_label.setStyleSheet("font-weight: bold; font-size: 14px;")
-        info_layout.addWidget(name_label)
-        
-        reason_label = QLabel(recommendation.get('reason', ''))
-        reason_label.setStyleSheet("color: #666; font-size: 11px;")
-        reason_label.setWordWrap(True)
-        info_layout.addWidget(reason_label)
-        
-        # 颜色预览
-        colors_layout = QHBoxLayout()
-        colors_layout.setSpacing(5)
-        task_colors = config.get('task_colors', [])
-        for color in task_colors[:4]:
-            color_label = QLabel()
-            color_label.setFixedSize(18, 18)
-            color_label.setStyleSheet(f"""
-                QLabel {{
-                    background-color: {color};
-                    border: 1px solid #CCC;
-                    border-radius: 9px;
-                }}
-            """)
-            colors_layout.addWidget(color_label)
-        colors_layout.addStretch()
-        info_layout.addLayout(colors_layout)
-        
-        card_layout.addLayout(info_layout, 1)
-        
-        # 应用按钮
-        apply_btn = QPushButton("应用")
-        apply_btn.setMaximumWidth(60)
-        apply_btn.clicked.connect(lambda: self.apply_ai_recommendation(recommendation))
-        apply_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #4CAF50;
-                color: white;
-                padding: 5px 10px;
-                border-radius: 4px;
-            }
-            QPushButton:hover {
-                background-color: #45a049;
-            }
-        """)
-        card_layout.addWidget(apply_btn)
-        
-        return card
-    
-    def apply_ai_recommendation(self, recommendation):
-        """应用AI推荐的主题"""
-        config = recommendation.get('config', {})
-        theme_id = recommendation.get('theme_id', f"ai_recommended_{recommendation.get('name', 'unknown')}")
-        
-        # 创建主题配置
-        theme_config = {
-            'id': theme_id,
-            'name': recommendation.get('name', 'AI推荐主题'),
-            'type': 'ai_generated',
-            'background_color': config.get('background_color', '#1E1E1E'),
-            'background_opacity': config.get('background_opacity', 220),
-            'task_colors': config.get('task_colors', []),
-            'marker_color': config.get('marker_color', '#FF5252'),
-            'text_color': config.get('text_color', '#FFFFFF'),
-            'accent_color': config.get('accent_color', '#2196F3'),
-            'description': recommendation.get('reason', '')
-        }
-        
-        # 应用主题
+        # 初始化主题管理器（如果还未初始化）
         if not self.theme_manager:
-            QMessageBox.warning(self, "错误", "主题管理器未初始化，请稍后再试")
-            return
-        
-        success = self.theme_manager.apply_custom_theme(theme_config, theme_id)
-        if success:
-            QMessageBox.information(self, "成功", f"已应用主题: {theme_config['name']}")
-            # 更新当前选中主题
-            self.selected_theme_id = theme_id
-        else:
-            QMessageBox.warning(self, "错误", "应用主题失败")
-    
-    def on_ai_generate_theme_clicked(self):
-        """AI生成主题按钮点击事件"""
-        if not hasattr(self, 'theme_generate_input'):
-            return
-        
-        description = self.theme_generate_input.text().strip()
-        if not description:
-            QMessageBox.warning(self, "提示", "请输入主题描述")
-            return
-        
-        # 禁用按钮，显示加载状态
-        sender = self.sender()
-        sender.setEnabled(False)
-        sender.setText("生成中...")
-        
-        # 在后台线程中执行AI请求
-        class ThemeGenerateWorker(QThread):
-            finished = Signal(object)
-            error = Signal(str)
-            
-            def __init__(self, ai_helper, description):
-                super().__init__()
-                self.ai_helper = ai_helper
-                self.description = description
-            
-            def run(self):
-                try:
-                    result = self.ai_helper.generate_theme_from_description(self.description)
-                    self.finished.emit(result)
-                except Exception as e:
-                    self.error.emit(str(e))
-        
-        self.generate_worker = ThemeGenerateWorker(self.theme_ai_helper, description)
-        self.generate_worker.finished.connect(self.on_ai_generate_finished)
-        self.generate_worker.error.connect(self.on_ai_generate_error)
-        self.generate_worker.start()
-    
-    def on_ai_generate_finished(self, theme):
-        """AI生成主题完成"""
-        # 恢复按钮状态
-        for widget in self.findChildren(QPushButton):
-            if widget.text() == "生成中...":
-                widget.setEnabled(True)
-                widget.setText("✨ 生成主题")
-                break
-        
-        if not theme:
-            return
-        
-        # 应用生成的主题
-        theme_config = theme.get('config', {})
-        theme_id = theme.get('theme_id', 'ai_generated_unknown')
-        
-        full_theme_config = {
-            'id': theme_id,
-            'name': theme.get('name', 'AI生成主题'),
-            'type': 'ai_generated',
-            'background_color': theme_config.get('background_color', '#1E1E1E'),
-            'background_opacity': theme_config.get('background_opacity', 220),
-            'task_colors': theme_config.get('task_colors', []),
-            'marker_color': theme_config.get('marker_color', '#FF5252'),
-            'text_color': theme_config.get('text_color', '#FFFFFF'),
-            'accent_color': theme_config.get('accent_color', '#2196F3'),
-            'description': theme.get('description', '基于AI生成的主题')
-        }
-        
-        # 保存并应用主题
+            self._init_theme_manager()
+
+        # 获取所有预设主题
         if not self.theme_manager:
-            QMessageBox.warning(self, "错误", "主题管理器未初始化，请稍后再试")
-            return
-        
-        success = self.theme_manager.apply_custom_theme(full_theme_config, theme_id)
-        if success:
-            QMessageBox.information(self, "成功", f"已生成并应用主题: {full_theme_config['name']}")
-            # 清空输入框
-            if hasattr(self, 'theme_generate_input'):
-                self.theme_generate_input.clear()
-            # 更新当前选中主题
-            self.selected_theme_id = theme_id
+            preset_themes = ThemeManager.DEFAULT_PRESET_THEMES.copy()
         else:
-            QMessageBox.warning(self, "错误", "应用主题失败")
-    
-    def on_ai_generate_error(self, error_msg):
-        """AI生成主题错误"""
-        # 恢复按钮状态
-        for widget in self.findChildren(QPushButton):
-            if widget.text() == "生成中...":
-                widget.setEnabled(True)
-                widget.setText("✨ 生成主题")
-                break
-        
-        QMessageBox.warning(self, "错误", f"AI生成失败: {error_msg}")
+            all_themes = self.theme_manager.get_all_themes()
+            preset_themes = all_themes.get('preset_themes', {})
+
+        # 当前选中的主题ID（从config中获取）
+        theme_config = self.config.get('theme', {})
+        current_theme_id = theme_config.get('current_theme_id', 'business')
+        self.selected_theme_id = current_theme_id
+
+        # 填充下拉框
+        self.theme_combo.clear()
+        for theme_id, theme_data in preset_themes.items():
+            theme_name = theme_data.get('name', theme_id)
+            self.theme_combo.addItem(theme_name, theme_id)
+
+        # 设置当前选中项
+        index = self.theme_combo.findData(current_theme_id)
+        if index >= 0:
+            self.theme_combo.setCurrentIndex(index)
+
+        # 初始化配色预览
+        if current_theme_id in preset_themes:
+            task_colors = preset_themes[current_theme_id].get('task_colors', [])
+            if hasattr(self, 'colors_preview_widget'):
+                self.update_colors_preview(task_colors)
+
+    def on_preset_theme_changed_with_preview(self, index):
+        """预设主题切换时的处理（带实时预览）"""
+        if index < 0:
+            return
+
+        theme_id = self.theme_combo.itemData(index)
+        if not theme_id:
+            return
+
+        self.selected_theme_id = theme_id
+
+        # 获取主题数据
+        if not self.theme_manager:
+            preset_themes = ThemeManager.DEFAULT_PRESET_THEMES.copy()
+        else:
+            all_themes = self.theme_manager.get_all_themes()
+            preset_themes = all_themes.get('preset_themes', {})
+
+        theme_data = preset_themes.get(theme_id, {})
+        task_colors = theme_data.get('task_colors', [])
+
+        # 更新配色预览
+        if hasattr(self, 'colors_preview_widget'):
+            self.update_colors_preview(task_colors)
+
+        # 实时更新时间轴编辑器预览（不修改实际任务数据）
+        if hasattr(self, 'timeline_editor') and self.timeline_editor:
+            # 创建临时任务列表，应用主题配色
+            temp_tasks = []
+            for i, task in enumerate(self.tasks):
+                temp_task = task.copy()
+                # 循环应用主题配色
+                if task_colors:
+                    color_index = i % len(task_colors)
+                    temp_task['color'] = task_colors[color_index]
+                temp_tasks.append(temp_task)
+
+            # 更新时间轴编辑器显示（仅预览，不保存）
+            QTimer.singleShot(50, lambda: self.timeline_editor.set_tasks(temp_tasks) if self.timeline_editor else None)
+
 
     def create_notification_tab(self):
         """创建通知设置选项卡"""
@@ -2146,11 +1496,50 @@ class ConfigManager(QMainWindow):
 
             self.tasks_table.setCellWidget(row, 3, color_widget)
 
+            # 文字颜色选择
+            text_color = task.get('text_color', '#FFFFFF')  # 默认白色
+            text_color_widget = QWidget()
+            text_color_layout = QHBoxLayout(text_color_widget)
+            text_color_layout.setContentsMargins(4, 4, 4, 4)
+
+            text_color_input = QLineEdit(text_color)
+            text_color_input.setMaximumWidth(100)
+
+            text_color_btn = QPushButton("选色")
+            text_color_btn.setMaximumWidth(50)
+            text_color_btn.clicked.connect(lambda checked, inp=text_color_input: self.choose_color(inp))
+
+            text_color_preview = QLabel()
+            text_color_preview.setFixedSize(30, 20)
+            text_color_preview.setStyleSheet(f"background-color: {text_color}; border: 1px solid #ccc;")
+
+            # 更新文字颜色预览并同步到时间轴
+            def on_text_color_changed(text, prev_label):
+                prev_label.setStyleSheet(f"background-color: {text}; border: 1px solid #ccc;")
+                # 使用防抖，避免频繁刷新时间轴
+                if not hasattr(self, '_timeline_refresh_timer'):
+                    self._timeline_refresh_timer = QTimer()
+                    self._timeline_refresh_timer.setSingleShot(True)
+                    self._timeline_refresh_timer.timeout.connect(self.refresh_timeline_from_table)
+
+                # 重置定时器
+                if self._timeline_refresh_timer.isActive():
+                    self._timeline_refresh_timer.stop()
+                self._timeline_refresh_timer.start(300)  # 300ms防抖
+
+            text_color_input.textChanged.connect(lambda text, prev=text_color_preview: on_text_color_changed(text, prev))
+
+            text_color_layout.addWidget(text_color_input)
+            text_color_layout.addWidget(text_color_btn)
+            text_color_layout.addWidget(text_color_preview)
+
+            self.tasks_table.setCellWidget(row, 4, text_color_widget)
+
             # 删除按钮
             delete_btn = QPushButton("🗑️ 删除")
             delete_btn.clicked.connect(lambda checked, r=row: self.delete_task(r))
             delete_btn.setStyleSheet("QPushButton { background-color: #f44336; color: white; }")
-            self.tasks_table.setCellWidget(row, 4, delete_btn)
+            self.tasks_table.setCellWidget(row, 5, delete_btn)
 
         # 恢复UI更新
         self.tasks_table.setUpdatesEnabled(True)
@@ -2230,11 +1619,35 @@ class ConfigManager(QMainWindow):
 
         self.tasks_table.setCellWidget(row, 3, color_widget)
 
+        # 文字颜色选择（默认白色）
+        text_color_widget = QWidget()
+        text_color_layout = QHBoxLayout(text_color_widget)
+        text_color_layout.setContentsMargins(4, 4, 4, 4)
+
+        text_color_input = QLineEdit("#FFFFFF")
+        text_color_input.setMaximumWidth(100)
+
+        text_color_btn = QPushButton("选色")
+        text_color_btn.setMaximumWidth(50)
+        text_color_btn.clicked.connect(lambda checked, inp=text_color_input: self.choose_color(inp))
+
+        text_color_preview = QLabel()
+        text_color_preview.setFixedSize(30, 20)
+        text_color_preview.setStyleSheet("background-color: #FFFFFF; border: 1px solid #ccc;")
+
+        text_color_input.textChanged.connect(lambda text, prev=text_color_preview: prev.setStyleSheet(f"background-color: {text}; border: 1px solid #ccc;"))
+
+        text_color_layout.addWidget(text_color_input)
+        text_color_layout.addWidget(text_color_btn)
+        text_color_layout.addWidget(text_color_preview)
+
+        self.tasks_table.setCellWidget(row, 4, text_color_widget)
+
         # 删除按钮
         delete_btn = QPushButton("🗑️ 删除")
         delete_btn.clicked.connect(lambda checked, r=row: self.delete_task(r))
         delete_btn.setStyleSheet("QPushButton { background-color: #f44336; color: white; }")
-        self.tasks_table.setCellWidget(row, 4, delete_btn)
+        self.tasks_table.setCellWidget(row, 5, delete_btn)
 
         # 刷新时间轴
         self.refresh_timeline_from_table()
@@ -2251,7 +1664,7 @@ class ConfigManager(QMainWindow):
             self.tasks_table.removeRow(row)
             # 重新绑定删除按钮
             for r in range(self.tasks_table.rowCount()):
-                delete_btn = self.tasks_table.cellWidget(r, 4)
+                delete_btn = self.tasks_table.cellWidget(r, 5)
                 if delete_btn:
                     delete_btn.clicked.disconnect()
                     delete_btn.clicked.connect(lambda checked, row=r: self.delete_task(row))
@@ -2748,6 +2161,11 @@ class ConfigManager(QMainWindow):
                 "enable_shadow": self.shadow_check.isChecked(),
                 "corner_radius": self.radius_spin.value(),
                 "autostart_enabled": autostart_enabled,
+                "theme": {
+                    "mode": "preset",
+                    "current_theme_id": self.selected_theme_id if hasattr(self, 'selected_theme_id') and self.selected_theme_id else self.config.get('theme', {}).get('current_theme_id', 'business'),
+                    "auto_apply_task_colors": False
+                },
                 "notification": {
                     "enabled": (getattr(self, 'notify_enabled_check', None) and self.notify_enabled_check.isChecked()) if hasattr(self, 'notify_enabled_check') else self.config.get('notification', {}).get('enabled', True),
                     "before_start_minutes": before_start_minutes,
@@ -2767,6 +2185,19 @@ class ConfigManager(QMainWindow):
             with open(self.config_file, 'w', encoding='utf-8') as f:
                 json.dump(config, f, indent=4, ensure_ascii=False)
 
+            # 获取主题颜色（如果用户选择了预设主题）
+            theme_colors = []
+            if hasattr(self, 'selected_theme_id') and self.selected_theme_id:
+                # 获取主题数据
+                if not self.theme_manager:
+                    preset_themes = ThemeManager.DEFAULT_PRESET_THEMES.copy()
+                else:
+                    all_themes = self.theme_manager.get_all_themes()
+                    preset_themes = all_themes.get('preset_themes', {})
+
+                theme_data = preset_themes.get(self.selected_theme_id, {})
+                theme_colors = theme_data.get('task_colors', [])
+
             # 保存任务
             tasks = []
             for row in range(self.tasks_table.rowCount()):
@@ -2774,9 +2205,18 @@ class ConfigManager(QMainWindow):
                 end_widget = self.tasks_table.cellWidget(row, 1)
                 name_item = self.tasks_table.item(row, 2)
                 color_widget = self.tasks_table.cellWidget(row, 3)
+                text_color_widget = self.tasks_table.cellWidget(row, 4)  # 文字颜色
 
-                if start_widget and end_widget and name_item and color_widget:
+                if start_widget and end_widget and name_item and color_widget and text_color_widget:
                     color_input = color_widget.findChild(QLineEdit)
+                    text_color_input = text_color_widget.findChild(QLineEdit)
+
+                    # 如果选择了预设主题，使用主题颜色
+                    if theme_colors:
+                        color_index = row % len(theme_colors)
+                        task_color = theme_colors[color_index]
+                    else:
+                        task_color = color_input.text() if color_input else "#4CAF50"
 
                     start_time = start_widget.time().toString("HH:mm")
                     end_time = end_widget.time().toString("HH:mm")
@@ -2802,7 +2242,8 @@ class ConfigManager(QMainWindow):
                         "start": start_time,
                         "end": end_time,
                         "task": name_item.text(),
-                        "color": color_input.text() if color_input else "#4CAF50"
+                        "color": task_color,  # 使用主题颜色或用户自定义颜色
+                        "text_color": text_color_input.text() if text_color_input else "#FFFFFF"
                     }
                     tasks.append(task)
 

@@ -14,6 +14,7 @@
     "update_interval": 1000,
     "enable_shadow": true,
     "corner_radius": 0,
+    "autostart_enabled": true,
     "notification": {
         "enabled": true,
         "before_start_minutes": [
@@ -29,9 +30,5 @@
             "start": "22:00",
             "end": "08:00"
         }
-    },
-    "theme": {
-        "mode": "preset",
-        "current_theme_id": "sunset"
     }
 }
