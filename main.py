@@ -15,7 +15,8 @@ from PySide6.QtCore import Qt, QRectF, QTimer, QTime, QFileSystemWatcher, QPoint
 from PySide6.QtGui import QPainter, QColor, QPen, QAction, QFont, QPixmap, QMovie, QCursor
 from enum import Enum
 from statistics_manager import StatisticsManager
-from backend_manager import BackendManager
+# 已切换到Vercel云服务，无需本地后端管理器
+# from backend_manager import BackendManager
 from theme_manager import ThemeManager
 # 确保 config_gui 模块被 PyInstaller 检测到（必须在顶部导入）
 import config_gui
@@ -2313,18 +2314,8 @@ def main():
     if platform.system() == 'Windows':
         window.set_windows_topmost()
 
-    # 启动AI后端服务（异步启动，完全避免阻塞UI）
-    backend_manager = BackendManager(logger)
-    # 使用QTimer延迟启动，并在后台线程中启动后端服务
-    from PySide6.QtCore import QTimer
-    QTimer.singleShot(2000, lambda: backend_manager.ensure_backend_running_async())
-
-    # 在应用退出时停止后端服务
-    def cleanup():
-        logger.info("正在清理资源...")
-        backend_manager.stop_backend()
-
-    app.aboutToQuit.connect(cleanup)
+    # 已切换到Vercel云服务，无需启动本地后端服务
+    # AI功能直接通过 https://jindutiao.vercel.app 提供
 
     # 进入事件循环
     sys.exit(app.exec())

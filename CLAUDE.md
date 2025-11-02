@@ -254,6 +254,494 @@
                 </example>
             </rule>
         </context_management_protocol>
+
+        <!-- ====================================================================== -->
+        <!-- [DEBUGGING METHODOLOGY] - 问题诊断方法论 -->
+        <!-- 基于实战经验总结的系统性问题诊断方法 -->
+        <!-- ====================================================================== -->
+        <debugging_methodology>
+            <methodology name="Progressive Differential Analysis (渐进式差异分析法)">
+                <description>
+                    用于诊断"部分功能正常、部分功能失败"类型问题的系统性方法论。
+                    特别适用于微服务、云服务、前后端分离等现代架构。
+                </description>
+
+                <applicable_scenarios>
+                    <scenario>部分API端点工作正常，部分失败</scenario>
+                    <scenario>相似功能表现不一致（如配额查询成功，任务生成失败）</scenario>
+                    <scenario>涉及路由、网关、代理等中间层的问题</scenario>
+                    <scenario>客户端与服务端路径配置不一致</scenario>
+                </applicable_scenarios>
+
+                <diagnosis_steps>
+                    <step n="1" name="症状对比与分类">
+                        <instruction>
+                            列举所有相关功能，明确标记每个功能的状态：
+                            - ✅ 成功：功能完全正常
+                            - ❌ 失败：功能完全失败或报错
+                            - ⚠️ 部分：功能部分可用或不稳定
+                        </instruction>
+                        <example>
+                            <![CDATA[
+                            功能清单：
+                            ✅ 配额查询 - 可以正常显示剩余次数
+                            ❌ 任务生成 - 提示"无法连接到AI后端服务器"
+                            ⚠️ 服务状态 - 一直显示"正在启动中"
+                            ]]>
+                        </example>
+                    </step>
+
+                    <step n="2" name="差异识别与代码对比">
+                        <instruction>
+                            深入对比成功和失败功能的代码实现，重点关注：
+                            - 请求路径（URL、端点）
+                            - 请求方法（GET/POST等）
+                            - 超时配置
+                            - 错误处理逻辑
+                            找出所有差异点，无论多么细微
+                        </instruction>
+                        <tools>
+                            使用 Grep 工具搜索关键端点路径，如：
+                            - `pattern: "/health|/api/health"`
+                            - `pattern: "quota-status|plan-tasks"`
+                        </tools>
+                    </step>
+
+                    <step n="3" name="完整路径追踪">
+                        <instruction>
+                            追踪失败请求的完整路径，从客户端到服务端：
+
+                            **客户端层：**
+                            - 检查请求构造代码（URL拼接、参数传递）
+                            - 验证硬编码路径 vs 配置文件路径
+
+                            **网络层：**
+                            - 检查路由配置（如 vercel.json、nginx.conf）
+                            - 验证路由规则与实际请求的匹配关系
+                            - 使用 curl/Postman 直接测试端点
+
+                            **服务端层：**
+                            - 确认实际文件/函数位置
+                            - 检查服务端日志（如有）
+                        </instruction>
+                        <critical_checks>
+                            <check>客户端请求路径：`{base_url}/health`</check>
+                            <check>路由配置规则：`/api/(.*) → /api/$1.py`</check>
+                            <check>实际文件位置：`api/health.py`</check>
+                            <check>⚠️ 不匹配！正确路径应为：`{base_url}/api/health`</check>
+                        </critical_checks>
+                    </step>
+
+                    <step n="4" name="配置一致性验证">
+                        <instruction>
+                            系统性检查所有相关配置文件的一致性：
+                            - 路由配置文件（vercel.json, nginx.conf等）
+                            - 客户端配置（环境变量、配置类）
+                            - 服务端配置（端点定义、中间件）
+
+                            确保所有地方使用的路径前缀、命名规范、版本号等完全一致
+                        </instruction>
+                        <best_practice>
+                            在云服务架构中，所有API端点应统一使用相同的路径前缀（如 `/api/`），
+                            避免混用 `/health` 和 `/api/health` 这样的不一致路径。
+                        </best_practice>
+                    </step>
+
+                    <step n="5" name="根因定位与假设验证">
+                        <instruction>
+                            基于前面步骤收集的信息，提出具体假设并验证：
+
+                            **常见根因模式：**
+                            1. 路径不匹配：客户端使用 `/health`，但路由只处理 `/api/*`
+                            2. 超时设置：部分端点超时时间过短
+                            3. 同步vs异步：阻塞调用导致UI假死或超时
+                            4. 错误处理：某些失败被静默忽略，未正确上报
+
+                            **验证方法：**
+                            - 修改代码进行小范围测试
+                            - 使用日志输出详细的请求路径
+                            - 临时增加超时时间观察变化
+                        </instruction>
+                    </step>
+
+                    <step n="6" name="修复与全面验证">
+                        <instruction>
+                            实施修复后，必须进行全面验证：
+
+                            **修复原则：**
+                            - 优先修改客户端代码，使其符合服务端规范
+                            - 统一路径规范（不要在不同地方使用不同格式）
+                            - 移除冗余的前置检查（让请求自然执行，根据响应处理）
+
+                            **验证清单：**
+                            - ✅ 所有原本成功的功能仍然成功
+                            - ✅ 所有原本失败的功能现在成功
+                            - ✅ 边界情况（网络断开、超时）有正确的错误提示
+                            - ✅ 性能无明显下降（特别是移除同步检查后）
+                        </instruction>
+                    </step>
+                </diagnosis_steps>
+
+                <case_study name="PyDayBar AI服务连接问题 (2025-11)">
+                    <problem_description>
+                        切换到纯Vercel云服务架构后，AI服务状态一直显示"正在启动中"，
+                        配额查询成功，但任务生成失败，提示"无法连接到AI后端服务器"。
+                    </problem_description>
+
+                    <diagnosis_process>
+                        <observation>
+                            - ✅ 配额查询（/api/quota-status）成功
+                            - ❌ 任务生成（/api/plan-tasks）失败
+                            - ❌ 服务健康检查卡住
+                        </observation>
+
+                        <key_finding>
+                            代码对比发现：
+                            - 健康检查使用路径：`{backend_url}/health`
+                            - 配额查询使用路径：`{backend_url}/api/quota-status`
+                            - Vercel路由配置：`/api/(.*) → /api/$1.py`
+
+                            **结论：** `/health` 不匹配路由规则，导致404/超时
+                        </key_finding>
+
+                        <root_cause>
+                            客户端健康检查路径（/health）与Vercel路由规则（/api/*）不一致
+                        </root_cause>
+
+                        <solution>
+                            1. 统一所有健康检查路径：`/health` → `/api/health`
+                            2. 移除任务生成前的同步健康检查（避免UI阻塞）
+                            3. 让错误处理下沉到 ai_client 类内部
+                        </solution>
+
+                        <files_modified>
+                            - `ai_client.py:212` - 修正健康检查路径
+                            - `config_gui.py:303` - 修正异步健康检查路径
+                            - `config_gui.py:2916-2937` - 移除同步前置检查
+                        </files_modified>
+
+                        <lessons_learned>
+                            <lesson>云服务架构下，所有API端点应使用统一的路径前缀</lesson>
+                            <lesson>部分功能成功时，对比成功和失败功能的代码差异是最快的诊断方法</lesson>
+                            <lesson>路由配置是"隐形的合约"，客户端必须严格遵守</lesson>
+                            <lesson>避免在UI层做同步网络检查，应使用异步+错误处理</lesson>
+                        </lessons_learned>
+                    </diagnosis_process>
+                </case_study>
+
+                <best_practices>
+                    <practice name="统一路径规范">
+                        在云服务/微服务架构中，为所有API端点定义统一的路径前缀（如 `/api/v1/`），
+                        并在代码、文档、配置文件中严格遵守。避免混用 `/endpoint` 和 `/api/endpoint`。
+                    </practice>
+
+                    <practice name="配置即文档">
+                        将路由配置（vercel.json等）视为API契约的一部分，
+                        在修改客户端代码时，必须先查阅路由配置，确保路径匹配。
+                    </practice>
+
+                    <practice name="日志驱动诊断">
+                        在诊断问题时，优先查看日志文件，使用 grep/findstr 过滤关键字，
+                        对比成功和失败请求的日志差异，往往能快速定位问题。
+                    </practice>
+
+                    <practice name="渐进式修复验证">
+                        修复一个问题后立即验证，不要累积多个修改后再测试。
+                        这样可以快速定位是哪个修改解决了问题（或引入了新问题）。
+                    </practice>
+                </best_practices>
+
+                <anti_patterns>
+                    <anti_pattern name="过早假设根因">
+                        ❌ 错误：看到"连接失败"就假设是网络问题或服务器宕机
+                        ✅ 正确：先验证请求路径、配置、路由规则，再考虑网络层问题
+                    </anti_pattern>
+
+                    <anti_pattern name="忽略部分成功的价值">
+                        ❌ 错误：只关注失败的功能，忽略成功的功能
+                        ✅ 正确：成功的功能是最好的参考答案，对比它们的差异
+                    </anti_pattern>
+
+                    <anti_pattern name="同步阻塞式健康检查">
+                        ❌ 错误：在UI线程或请求前做同步健康检查（导致假死或超时）
+                        ✅ 正确：使用异步健康检查，让实际请求自然执行，根据响应处理错误
+                    </anti_pattern>
+                </anti_patterns>
+            </methodology>
+
+            <methodology name="Vercel Deployment Troubleshooting (Vercel部署问题诊断法)">
+                <description>
+                    系统性解决Vercel Python Serverless Functions部署问题的方法论。
+                    适用于Flask/Django等Python Web项目部署到Vercel时遇到的404、日志为空、构建失败等问题。
+                </description>
+
+                <applicable_scenarios>
+                    <scenario>Vercel部署成功但所有API端点返回404</scenario>
+                    <scenario>Functions列表显示已部署，但日志为空</scenario>
+                    <scenario>构建日志出现"No Flask entrypoint found"警告</scenario>
+                    <scenario>路由配置问题导致函数无法被访问</scenario>
+                </applicable_scenarios>
+
+                <golden_rules>
+                    <rule n="1" name="绕过框架自动检测">
+                        <problem>
+                            Vercel会自动检测项目类型（Flask/Django），如果检测失败可能导致部署问题。
+                        </problem>
+                        <solution>
+                            创建虚拟入口点文件（如 index.py）满足框架检测，但不实际构建框架：
+                            <code_example>
+                                <![CDATA[
+# index.py（虚拟Flask入口点）
+# Dummy Flask entrypoint to satisfy Vercel's auto-detection
+# This file is intentionally empty to prevent Flask build
+# Actual API endpoints are Serverless Functions in api/ directory
+pass
+                                ]]>
+                            </code_example>
+                        </solution>
+                    </rule>
+
+                    <rule n="2" name="明确指定Serverless Functions">
+                        <problem>
+                            不使用builds配置时，Vercel可能无法正确识别哪些Python文件是Serverless Functions。
+                        </problem>
+                        <solution>
+                            在vercel.json中明确指定builds配置：
+                            <code_example>
+                                <![CDATA[
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/**/*.py",      // 匹配所有API文件
+      "use": "@vercel/python"    // 使用Python构建器
+    }
+  ]
+}
+                                ]]>
+                            </code_example>
+                        </solution>
+                    </rule>
+
+                    <rule n="3" name="配置正确的路由映射">
+                        <problem>
+                            使用builds配置后，Vercel不会自动创建路由，必须手动配置routes。
+                            常见错误：dest映射到自身导致循环路由，或缺少.py后缀。
+                        </problem>
+                        <solution>
+                            手动配置routes将URL正确映射到Python文件：
+                            <code_example>
+                                <![CDATA[
+{
+  "routes": [
+    { "handle": "filesystem" },  // 优先处理静态文件
+    {
+      "src": "/api/(.*)",        // 匹配API请求
+      "dest": "/api/$1.py"       // ✅ 映射到Python文件（不是$1）
+    }
+  ]
+}
+                                ]]>
+                            </code_example>
+                        </solution>
+                        <critical_note>
+                            ⚠️ 所有客户端API调用必须使用统一的路径前缀（如 /api/），
+                            确保与路由配置中的 "src" 模式完全匹配。
+                        </critical_note>
+                    </rule>
+                </golden_rules>
+
+                <diagnosis_workflow>
+                    <phase n="1" name="问题分类">
+                        <symptom_a>
+                            <name>构建失败</name>
+                            <indicators>Build失败，无法完成部署</indicators>
+                            <check_priority>构建日志、依赖安装、Python版本</check_priority>
+                        </symptom_a>
+                        <symptom_b>
+                            <name>部署成功但404</name>
+                            <indicators>Functions显示已部署，但访问返回404</indicators>
+                            <check_priority>路由配置、函数格式、URL路径</check_priority>
+                        </symptom_b>
+                        <symptom_c>
+                            <name>日志为空</name>
+                            <indicators>Functions没有任何执行日志</indicators>
+                            <check_priority>函数是否真正被调用、路由是否生效</check_priority>
+                        </symptom_c>
+                    </phase>
+
+                    <phase n="2" name="信息收集">
+                        <vercel_dashboard_checklist>
+                            <item>Deployments → 最新部署状态（Success/Failed）</item>
+                            <item>Functions → 函数列表（数量、Region）</item>
+                            <item>Functions → 点击函数名 → Logs（是否有日志）</item>
+                            <item>Deployments → Build Logs（构建警告和错误）</item>
+                            <item>Settings → Environment Variables（是否配置）</item>
+                        </vercel_dashboard_checklist>
+
+                        <local_files_checklist>
+                            <item>vercel.json - 配置是否存在且格式正确</item>
+                            <item>api/*.py - 函数文件格式和位置</item>
+                            <item>requirements.txt - 依赖声明</item>
+                            <item>.vercelignore - 排除文件配置</item>
+                        </local_files_checklist>
+                    </phase>
+
+                    <phase n="3" name="函数格式验证">
+                        <correct_format>
+                            <![CDATA[
+from http.server import BaseHTTPRequestHandler
+import json
+
+class handler(BaseHTTPRequestHandler):
+    def do_GET(self):  # 或 do_POST
+        # 1. 设置响应状态
+        self.send_response(200)
+
+        # 2. 设置响应头
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.end_headers()
+
+        # 3. 写入响应体
+        response = {"status": "ok"}
+        self.wfile.write(json.dumps(response).encode('utf-8'))
+                            ]]>
+                        </correct_format>
+
+                        <common_mistakes>
+                            <mistake>使用Lambda风格的handler函数</mistake>
+                            <mistake>没有继承BaseHTTPRequestHandler</mistake>
+                            <mistake>响应体未encode为utf-8</mistake>
+                            <mistake>类名不是handler（小写）</mistake>
+                        </common_mistakes>
+                    </phase>
+
+                    <phase n="4" name="迭代修复">
+                        <principle name="单变量修改">
+                            每次只修改一个配置项，立即部署测试，记录结果。
+                            避免同时修改多个配置，导致无法确定哪个改动起了作用。
+                        </principle>
+
+                        <create_test_endpoint>
+                            创建极简测试端点隔离问题：
+                            <![CDATA[
+# api/test-simple.py
+from http.server import BaseHTTPRequestHandler
+import json
+
+class handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.end_headers()
+
+        response = {"status": "ok", "message": "Test endpoint working!"}
+        self.wfile.write(json.dumps(response).encode('utf-8'))
+                            ]]>
+                        </create_test_endpoint>
+
+                        <progressive_validation>
+                            <step>1️⃣ 测试最简单的GET端点：curl /api/health</step>
+                            <step>2️⃣ 测试带参数的GET端点：curl "/api/quota-status?user_tier=free"</step>
+                            <step>3️⃣ 测试POST端点：curl -X POST /api/plan-tasks -d '{...}'</step>
+                        </progressive_validation>
+                    </phase>
+
+                    <phase n="5" name="路径一致性检查">
+                        <critical_alignment>
+                            确保以下三者完全对齐：
+                            <check>客户端请求路径格式</check>
+                            <check>vercel.json 路由配置</check>
+                            <check>实际文件位置</check>
+
+                            <example>
+                                客户端：`{backend_url}/api/health`
+                                路由规则：`/api/(.*) → /api/$1.py`
+                                实际文件：`api/health.py`
+                                ✅ 完全匹配
+                            </example>
+                        </critical_alignment>
+                    </phase>
+                </diagnosis_workflow>
+
+                <common_pitfalls>
+                    <pitfall name="循环路由配置">
+                        <wrong>"dest": "/api/$1"  // ❌ 映射到自身</wrong>
+                        <correct>"dest": "/api/$1.py"  // ✅ 映射到Python文件</correct>
+                    </pitfall>
+
+                    <pitfall name="路径前缀不一致">
+                        <problem>
+                            客户端某些请求使用 /health，某些使用 /api/health，
+                            导致部分功能成功，部分失败。
+                        </problem>
+                        <solution>
+                            统一所有API端点使用相同的路径前缀（如 /api/），
+                            并在路由配置中明确匹配该前缀。
+                        </solution>
+                    </pitfall>
+
+                    <pitfall name="忽略构建警告">
+                        <problem>
+                            构建成功但有"No Flask entrypoint found"警告，
+                            可能导致后续部署问题。
+                        </problem>
+                        <solution>
+                            创建虚拟入口点（index.py）满足框架检测要求。
+                        </solution>
+                    </pitfall>
+                </common_pitfalls>
+
+                <debugging_tools>
+                    <tool name="Vercel Dashboard">
+                        - Functions面板：查看函数列表确认部署成功
+                        - Logs面板：实时查看函数执行日志，搜索ERROR关键词
+                        - Deployments面板：查看完整构建日志，对比成功和失败的部署
+                    </tool>
+
+                    <tool name="Debug Logging">
+                        在函数中添加详细日志：
+                        <![CDATA[
+import sys
+
+print(f"[DEBUG] Received request", file=sys.stderr)
+print(f"[DEBUG] Path: {self.path}", file=sys.stderr)
+                        ]]>
+                    </tool>
+
+                    <tool name="Vercel CLI">
+                        本地测试部署：
+                        ```bash
+                        vercel dev
+                        curl http://localhost:3000/api/your-endpoint
+                        ```
+                    </tool>
+                </debugging_tools>
+
+                <case_study name="PyDayBar Vercel部署修复 (2025-11)">
+                    <iterations>7次迭代</iterations>
+                    <final_solution>
+                        1. 创建虚拟Flask入口点（index.py）绕过框架检测
+                        2. 使用builds明确指定 api/**/*.py 为Serverless Functions
+                        3. 配置routes将 /api/(.*) 映射到 /api/$1.py
+                        4. 所有函数使用BaseHTTPRequestHandler格式
+                    </final_solution>
+                    <key_lesson>
+                        当使用builds配置时，routes不再自动生成，必须手动配置。
+                        这是最容易被忽视但最关键的配置点。
+                    </key_lesson>
+                </case_study>
+
+                <best_practices>
+                    <practice>所有API端点使用统一的路径前缀（如 /api/v1/）</practice>
+                    <practice>将vercel.json视为API契约，客户端代码必须严格遵守</practice>
+                    <practice>每次修复后创建测试端点验证配置正确性</practice>
+                    <practice>详细记录每次尝试和结果，避免重复无效方案</practice>
+                </best_practices>
+            </methodology>
+        </debugging_methodology>
     </protocols>
 
     <!-- ====================================================================== -->

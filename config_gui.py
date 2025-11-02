@@ -300,7 +300,7 @@ class ConfigManager(QMainWindow):
             
             def run(self):
                 try:
-                    response = requests.get(f"{self.backend_url}/health", timeout=2)
+                    response = requests.get(f"{self.backend_url}/api/health", timeout=2)
                     self.finished.emit(response.status_code == 200)
                 except Exception:
                     self.finished.emit(False)
@@ -2913,28 +2913,8 @@ class ConfigManager(QMainWindow):
             )
             return
         
-        # 对于按钮点击，仍然使用同步检查（但已在后台线程中）
-        # 如果后端未启动，给出提示并返回
-        # 注意：这里不阻塞UI，因为后端服务应该已经在后台启动
-        try:
-            import requests
-            response = requests.get(f"{self.ai_client.backend_url}/health", timeout=1)
-            if response.status_code != 200:
-                QMessageBox.critical(
-                    self,
-                    "AI服务未启动",
-                    "无法连接到AI后端服务器!\n\nAI服务正在后台启动,请稍候片刻再试...",
-                    QMessageBox.Ok
-                )
-                return
-        except Exception:
-            QMessageBox.critical(
-                self,
-                "AI服务未启动",
-                "无法连接到AI后端服务器!\n\nAI服务正在后台启动,请稍候片刻再试...",
-                QMessageBox.Ok
-            )
-            return
+        # 云服务架构下，直接发起任务生成请求
+        # 如果服务不可用，ai_client会在内部处理并显示错误信息
 
         # 禁用按钮并显示加载状态
         self.generate_btn.setEnabled(False)

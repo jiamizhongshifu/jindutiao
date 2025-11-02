@@ -16,34 +16,23 @@ class PyDayBarAIClient:
     def __init__(self, backend_url: Optional[str] = None, user_id: str = "user_demo"):
         """
         初始化AI客户端
-        
+
         参数:
-        - backend_url: 后端服务器URL，如果为None则自动使用代理服务器
+        - backend_url: 后端服务器URL，如果为None则使用默认Vercel服务
         - user_id: 用户ID
         """
-        # 优先使用环境变量指定的代理服务器URL
-        # 如果没有设置，则使用默认的Vercel代理服务器
-        proxy_url = os.getenv(
-            "PYDAYBAR_PROXY_URL",
-            "https://jindutiao.vercel.app"  # Vercel代理服务器URL
-        )
-        
-        # 如果backend_url未指定，使用代理服务器
+        # 使用Vercel云端服务（避免本地API密钥泄露）
         if backend_url is None:
-            backend_url = proxy_url
-        
+            backend_url = os.getenv(
+                "PYDAYBAR_API_URL",
+                "https://jindutiao.vercel.app"  # 默认Vercel服务器URL
+            )
+
         self.backend_url = backend_url
         self.user_id = user_id
         self.user_tier = "free"  # 默认免费版
-        self.timeout = 60
-        
-        # 记录使用的服务类型（用于日志和错误提示）
-        if "vercel.app" in self.backend_url or "railway.app" in self.backend_url or "render.com" in self.backend_url or "fly.dev" in self.backend_url:
-            self.service_type = "proxy"
-        elif "localhost" in self.backend_url:
-            self.service_type = "local"
-        else:
-            self.service_type = "unknown"
+        self.timeout = 60  # API请求超时时间（秒）
+        self.service_type = "cloud"  # 云端服务
 
     def set_user_tier(self, tier: str):
         """设置用户等级"""
@@ -92,17 +81,10 @@ class PyDayBarAIClient:
             self._show_error_dialog("请求超时,请稍后重试", parent_widget)
             return None
         except requests.exceptions.ConnectionError:
-            # 根据服务类型显示不同的错误消息
-            if self.service_type == "proxy":
-                self._show_error_dialog(
-                    "无法连接到AI代理服务器\n请检查网络连接",
-                    parent_widget
-                )
-            else:
-                self._show_error_dialog(
-                    "无法连接到AI服务器\n请确保backend_api.py正在运行",
-                    parent_widget
-                )
+            self._show_error_dialog(
+                "无法连接到AI云服务\n请检查网络连接",
+                parent_widget
+            )
             return None
         except Exception as e:
             self._show_error_dialog(f"发生错误: {str(e)}", parent_widget)
@@ -227,7 +209,7 @@ class PyDayBarAIClient:
         """
         try:
             response = requests.get(
-                f"{self.backend_url}/health",
+                f"{self.backend_url}/api/health",
                 timeout=5
             )
             return response.status_code == 200
