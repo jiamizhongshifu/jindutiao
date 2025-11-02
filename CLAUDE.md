@@ -741,6 +741,206 @@ print(f"[DEBUG] Path: {self.path}", file=sys.stderr)
                     <practice>详细记录每次尝试和结果，避免重复无效方案</practice>
                 </best_practices>
             </methodology>
+
+            <methodology name="PyInstaller Packaged Application Development (PyInstaller打包应用开发方法论)">
+                <description>
+                    系统性解决PyInstaller打包Python应用时"修改代码后仍运行旧版本"的问题。
+                    适用于所有使用PyInstaller打包的Python桌面应用开发流程。
+                </description>
+
+                <applicable_scenarios>
+                    <scenario>修改Python源代码后，运行打包的exe仍显示bug</scenario>
+                    <scenario>代码修复无效，怀疑运行了旧版本</scenario>
+                    <scenario>团队协作中，开发者忘记重新打包导致测试失败</scenario>
+                    <scenario>发布前需要确保打包文件是最新代码</scenario>
+                </applicable_scenarios>
+
+                <core_problem>
+                    <root_cause>
+                        PyInstaller打包后的exe是源代码的**快照**，包含打包时的代码字节码。
+                        修改Python源代码**不会**自动更新已打包的exe文件。
+                        开发者经常忘记重新打包，导致运行旧版本，浪费调试时间。
+                    </root_cause>
+
+                    <typical_flow>
+                        ```
+                        修改源代码 (main.py) ✅
+                            ↓
+                        运行 dist/app.exe ❌ (旧版本)
+                            ↓
+                        发现bug仍存在 😕
+                            ↓
+                        反复检查代码，怀疑修复错误
+                            ↓
+                        最终发现：忘记重新打包！
+                        ```
+                    </typical_flow>
+                </core_problem>
+
+                <identification_methods>
+                    <method name="文件时间戳检查">
+                        <command>dir dist\*.exe</command>
+                        <check>对比exe修改时间与源代码最后修改时间</check>
+                        <indicator>如果exe修改时间早于代码修改，说明是旧版本</indicator>
+                    </method>
+
+                    <method name="版本标识日志">
+                        <implementation>
+                            在代码中添加版本号和日志输出：
+                            ```python
+                            VERSION = "v1.4.1-fix-color-reset"
+                            logging.info(f"Running version: {VERSION}")
+                            ```
+                        </implementation>
+                        <check>运行后查看日志，确认版本号是否匹配</check>
+                    </method>
+
+                    <method name="强制清理重建">
+                        <command>rm -rf build dist && pyinstaller app.spec</command>
+                        <purpose>删除所有旧文件，确保全新打包</purpose>
+                    </method>
+                </identification_methods>
+
+                <standard_workflow>
+                    <step n="1" name="修改源代码">
+                        <action>编辑Python源文件（.py）</action>
+                        <check>确保所有修改已保存</check>
+                    </step>
+
+                    <step n="2" name="清理旧文件">
+                        <action>删除build和dist目录</action>
+                        <command_windows>if exist build rmdir /s /q build && if exist dist rmdir /s /q dist</command_windows>
+                        <command_unix>rm -rf build dist</command_unix>
+                        <rationale>避免缓存问题，确保全新打包</rationale>
+                    </step>
+
+                    <step n="3" name="重新打包">
+                        <action>运行PyInstaller</action>
+                        <command>pyinstaller PyDayBar.spec</command>
+                        <verify>检查dist目录生成新的exe文件</verify>
+                    </step>
+
+                    <step n="4" name="测试新版本">
+                        <action>运行新打包的exe</action>
+                        <check>查看日志确认版本号</check>
+                        <verify>验证bug是否修复</verify>
+                    </step>
+                </standard_workflow>
+
+                <best_practices>
+                    <practice name="开发阶段优先用源代码">
+                        **开发调试**：90%时间使用 `python main.py`（修改立即生效）
+                        **功能验证**：偶尔打包测试用户体验
+                        **发布前**：完整打包并全面测试
+                    </practice>
+
+                    <practice name="版本号管理">
+                        在代码中维护版本号：
+                        ```python
+                        VERSION = "1.4.1"
+                        BUILD_DATE = "2025-11-02"
+                        logging.info(f"PyDayBar {VERSION} (Build: {BUILD_DATE})")
+                        ```
+                        在窗口标题显示：`self.setWindowTitle(f"App v{VERSION}")`
+                    </practice>
+
+                    <practice name="打包前检查清单">
+                        - [ ] 所有修改已保存并提交git
+                        - [ ] 更新版本号
+                        - [ ] 清理build和dist目录
+                        - [ ] 运行pyinstaller
+                        - [ ] 验证exe文件生成
+                        - [ ] 运行新版本检查日志
+                        - [ ] 测试核心功能
+                    </practice>
+
+                    <practice name="自动化打包脚本">
+                        创建 `build.sh` 或 `build.bat`：
+                        ```bash
+                        #!/bin/bash
+                        echo "清理旧文件..."
+                        rm -rf build dist
+                        echo "开始打包..."
+                        pyinstaller PyDayBar.spec
+                        echo "打包完成！"
+                        ls -lh dist/
+                        ```
+                    </practice>
+
+                    <practice name="AI助手提醒机制">
+                        **关键原则**：当AI助手修改Python源代码后，**必须主动提醒用户重新打包**
+
+                        提醒模板：
+                        ```
+                        ⚠️ 重要提醒：
+                        我已修改了源代码，但这些修改不会自动反映到dist/目录的exe文件中。
+
+                        请执行以下步骤使修改生效：
+                        1. 清理旧文件：rm -rf build dist
+                        2. 重新打包：pyinstaller PyDayBar.spec
+                        3. 运行新版本：dist/PyDayBar-v1.4.exe
+                        ```
+                    </practice>
+                </best_practices>
+
+                <case_study name="任务配色重置Bug修复 (2025-11)">
+                    <problem_description>
+                        用户使用AI生成任务并保存后，关闭应用重新打开，任务配色被重置。
+                    </problem_description>
+
+                    <first_attempt status="failed">
+                        1. 分析代码，定位问题在 main.py:2243-2258
+                        2. 修改代码，添加 auto_apply_task_colors 检查
+                        3. 告知用户测试
+                        4. **用户反馈：问题仍然存在** ❌
+                    </first_attempt>
+
+                    <diagnosis>
+                        **根本原因识别**：
+                        - 代码已修改并提交到git ✅
+                        - 但用户测试时问题仍存在 ❌
+                        - **关键问题：没有要求用户重新打包！**
+                        - 用户运行的是旧版本 dist/PyDayBar-v1.4.exe
+                    </diagnosis>
+
+                    <second_attempt status="success">
+                        1. 清理旧文件：`rm -rf build dist`
+                        2. 重新打包：`pyinstaller PyDayBar.spec`
+                        3. 明确指导用户运行新版本
+                        4. **用户反馈：问题已解决！** ✅
+                    </second_attempt>
+
+                    <lessons_learned>
+                        <lesson>修改Python源代码后，**必须**重新打包才能在exe中生效</lesson>
+                        <lesson>AI助手应**主动提醒**用户重新打包，而不是假设用户知道</lesson>
+                        <lesson>在代码中添加版本日志，便于确认运行的版本</lesson>
+                        <lesson>清理旧文件后再打包，避免缓存问题</lesson>
+                        <lesson>将打包流程文档化，减少团队协作中的遗漏</lesson>
+                    </lessons_learned>
+                </case_study>
+
+                <anti_patterns>
+                    <anti_pattern name="修改代码后忘记打包">
+                        ❌ 错误流程：修改代码 → 运行旧exe → 问题仍存在 → 怀疑修复错误
+                        ✅ 正确流程：修改代码 → 清理+打包 → 运行新exe → 验证修复
+                    </anti_pattern>
+
+                    <anti_pattern name="频繁打包测试小改动">
+                        ❌ 错误做法：每次修改一行代码就打包测试（耗时10-30秒）
+                        ✅ 正确做法：开发期用 `python main.py` 快速迭代，功能完成后再打包
+                    </anti_pattern>
+
+                    <anti_pattern name="没有版本标识">
+                        ❌ 错误做法：无法区分运行的是哪个版本
+                        ✅ 正确做法：代码中维护版本号，启动时输出日志
+                    </anti_pattern>
+                </anti_patterns>
+
+                <references>
+                    <doc>详细文档：PYINSTALLER_DEVELOPMENT_METHODOLOGY.md</doc>
+                    <related>任务配色bug修复记录：TASK_COLOR_RESET_FIX.md</related>
+                </references>
+            </methodology>
         </debugging_methodology>
     </protocols>
 
