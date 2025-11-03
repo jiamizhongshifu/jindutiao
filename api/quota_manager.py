@@ -52,9 +52,15 @@ class QuotaManager:
     def _create_user_quota(self, user_id: str, user_tier: str) -> Dict:
         """创建新用户配额"""
         from datetime import timezone
-        now = datetime.now(timezone.utc)
-        tomorrow = now + timedelta(days=1)
-        next_week = now + timedelta(days=7)
+
+        # 使用UTC+8时区（中国标准时间）计算重置时间
+        china_tz = timezone(timedelta(hours=8))
+        now_china = datetime.now(china_tz)
+
+        # 计算明天零点（UTC+8时区）
+        tomorrow_midnight = (now_china + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        # 计算下周同一时间的零点
+        next_week_midnight = (now_china + timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0)
 
         # 根据用户等级设置配额
         if user_tier == "pro":
@@ -83,11 +89,11 @@ class QuotaManager:
             "chat_used": 0,
             "theme_recommend_used": 0,
             "theme_generate_used": 0,
-            "daily_plan_reset_at": tomorrow.isoformat(),
-            "weekly_report_reset_at": next_week.isoformat(),
-            "chat_reset_at": tomorrow.isoformat(),
-            "theme_recommend_reset_at": tomorrow.isoformat(),
-            "theme_generate_reset_at": tomorrow.isoformat()
+            "daily_plan_reset_at": tomorrow_midnight.isoformat(),
+            "weekly_report_reset_at": next_week_midnight.isoformat(),
+            "chat_reset_at": tomorrow_midnight.isoformat(),
+            "theme_recommend_reset_at": tomorrow_midnight.isoformat(),
+            "theme_generate_reset_at": tomorrow_midnight.isoformat()
         }
 
         try:
@@ -101,40 +107,50 @@ class QuotaManager:
     def _check_and_reset_quota(self, user_quota: Dict) -> Dict:
         """检查并重置过期的配额"""
         from datetime import timezone
-        now = datetime.now(timezone.utc)
+
+        # 使用UTC+8时区（中国标准时间）判断是否需要重置
+        china_tz = timezone(timedelta(hours=8))
+        now_china = datetime.now(china_tz)
         updates = {}
 
         # 检查每日配额
         if user_quota.get("daily_plan_reset_at"):
             reset_time = datetime.fromisoformat(user_quota["daily_plan_reset_at"].replace("Z", "+00:00"))
-            if now >= reset_time:
+            if now_china >= reset_time:
                 updates["daily_plan_used"] = 0
-                updates["daily_plan_reset_at"] = (now + timedelta(days=1)).isoformat()
+                # 计算明天零点（UTC+8时区）
+                next_reset = (now_china + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+                updates["daily_plan_reset_at"] = next_reset.isoformat()
 
         if user_quota.get("chat_reset_at"):
             reset_time = datetime.fromisoformat(user_quota["chat_reset_at"].replace("Z", "+00:00"))
-            if now >= reset_time:
+            if now_china >= reset_time:
                 updates["chat_used"] = 0
-                updates["chat_reset_at"] = (now + timedelta(days=1)).isoformat()
+                next_reset = (now_china + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+                updates["chat_reset_at"] = next_reset.isoformat()
 
         if user_quota.get("theme_recommend_reset_at"):
             reset_time = datetime.fromisoformat(user_quota["theme_recommend_reset_at"].replace("Z", "+00:00"))
-            if now >= reset_time:
+            if now_china >= reset_time:
                 updates["theme_recommend_used"] = 0
-                updates["theme_recommend_reset_at"] = (now + timedelta(days=1)).isoformat()
+                next_reset = (now_china + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+                updates["theme_recommend_reset_at"] = next_reset.isoformat()
 
         if user_quota.get("theme_generate_reset_at"):
             reset_time = datetime.fromisoformat(user_quota["theme_generate_reset_at"].replace("Z", "+00:00"))
-            if now >= reset_time:
+            if now_china >= reset_time:
                 updates["theme_generate_used"] = 0
-                updates["theme_generate_reset_at"] = (now + timedelta(days=1)).isoformat()
+                next_reset = (now_china + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+                updates["theme_generate_reset_at"] = next_reset.isoformat()
 
         # 检查周配额
         if user_quota.get("weekly_report_reset_at"):
             reset_time = datetime.fromisoformat(user_quota["weekly_report_reset_at"].replace("Z", "+00:00"))
-            if now >= reset_time:
+            if now_china >= reset_time:
                 updates["weekly_report_used"] = 0
-                updates["weekly_report_reset_at"] = (now + timedelta(days=7)).isoformat()
+                # 计算下周同一时间的零点
+                next_reset = (now_china + timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0)
+                updates["weekly_report_reset_at"] = next_reset.isoformat()
 
         # 如果有更新，写回数据库
         if updates and self.client:
