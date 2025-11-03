@@ -24,6 +24,7 @@ from config_gui import ConfigManager
 from pydaybar.core.pomodoro_state import PomodoroState
 from pydaybar.core.notification_manager import NotificationManager
 from pydaybar.ui.pomodoro_panel import PomodoroPanel, PomodoroSettingsDialog
+from pydaybar.utils import time_utils, path_utils
 
 # Windows 特定导入
 if platform.system() == 'Windows':
@@ -36,7 +37,7 @@ class TimeProgressBar(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.app_dir = self.get_app_dir()  # 获取应用目录
+        self.app_dir = path_utils.get_app_dir()  # 获取应用目录
         self.setup_logging()  # 设置日志
         self.config = self.load_config()  # 加载配置
         self.tasks = self.load_tasks()  # 加载任务数据
@@ -88,29 +89,6 @@ class TimeProgressBar(QWidget):
         # 使用QTimer延迟应用主题，确保窗口完全显示后再应用
         from PySide6.QtCore import QTimer
         QTimer.singleShot(100, self.apply_theme)
-
-    def get_app_dir(self):
-        """获取应用程序目录(支持打包后的 exe)"""
-        if getattr(sys, 'frozen', False):
-            # 打包后的 exe,使用 exe 所在目录
-            return Path(sys.executable).parent
-        else:
-            # 开发环境,使用脚本所在目录
-            return Path(__file__).parent
-
-    def get_resource_path(self, relative_path):
-        """获取资源文件路径(支持打包后的 exe)
-
-        PyInstaller 打包后,资源文件会被解压到 _MEIPASS 临时目录
-        """
-        if getattr(sys, 'frozen', False):
-            # 打包后的 exe,资源文件在临时目录
-            base_path = Path(sys._MEIPASS)
-        else:
-            # 开发环境,资源文件在脚本目录
-            base_path = Path(__file__).parent
-
-        return base_path / relative_path
 
     def init_ui(self):
         """初始化用户界面"""
@@ -364,7 +342,7 @@ class TimeProgressBar(QWidget):
         if not tasks_file.exists():
             self.logger.info("tasks.json 不存在,尝试加载24小时模板")
             # 使用 get_resource_path 获取打包资源路径
-            template_file = self.get_resource_path('tasks_template_24h.json')
+            template_file = path_utils.get_resource_path('tasks_template_24h.json')
 
             if template_file.exists():
                 try:
@@ -396,8 +374,8 @@ class TimeProgressBar(QWidget):
             for i, task in enumerate(tasks):
                 if all(key in task for key in ['start', 'end', 'task', 'color']):
                     # 验证时间格式
-                    if self.validate_time_format(task['start']) and \
-                       self.validate_time_format(task['end']):
+                    if time_utils.validate_time_format(task['start']) and \
+                       time_utils.validate_time_format(task['end']):
                         validated_tasks.append(task)
                     else:
                         self.logger.warning(f"任务 {i+1} 时间格式无效: {task}")
@@ -412,22 +390,6 @@ class TimeProgressBar(QWidget):
         except Exception as e:
             self.logger.error(f"加载任务失败: {e}", exc_info=True)
             return []
-
-    def validate_time_format(self, time_str):
-        """验证时间格式 HH:MM
-
-        允许 00:00-23:59 以及特殊的 24:00(表示午夜)
-        """
-        import re
-        # 允许 0-23 小时,以及特殊的 24:00
-        pattern = r'^([0-1]?[0-9]|2[0-4]):([0-5][0-9])$'
-        if re.match(pattern, time_str):
-            hours, minutes = map(int, time_str.split(':'))
-            # 24:00 是唯一允许的 24 小时格式
-            if hours == 24 and minutes != 0:
-                return False
-            return True
-        return False
 
     def init_marker_image(self):
         """初始化时间标记图片"""
@@ -470,7 +432,7 @@ class TimeProgressBar(QWidget):
         if not image_file.is_absolute():
             # 相对路径:优先尝试应用目录，然后尝试资源路径（打包后）
             app_dir_path = self.app_dir / image_path
-            resource_path = self.get_resource_path(image_path)
+            resource_path = path_utils.get_resource_path(image_path)
 
             # 详细路径诊断日志
             self.logger.info(f"[路径诊断] 原始路径: {image_path}")
@@ -644,13 +606,13 @@ class TimeProgressBar(QWidget):
             return
 
         # 按任务开始时间排序
-        sorted_tasks = sorted(self.tasks, key=lambda t: self.time_str_to_seconds(t['start']))
+        sorted_tasks = sorted(self.tasks, key=lambda t: time_utils.time_str_to_seconds(t['start']))
 
         # 计算总的任务持续时间(只计算任务本身,不包括间隔)
         total_task_duration = 0
         for task in sorted_tasks:
-            start_seconds = self.time_str_to_seconds(task['start'])
-            end_seconds = self.time_str_to_seconds(task['end'])
+            start_seconds = time_utils.time_str_to_seconds(task['start'])
+            end_seconds = time_utils.time_str_to_seconds(task['end'])
             duration = end_seconds - start_seconds
             total_task_duration += duration
 
@@ -660,8 +622,8 @@ class TimeProgressBar(QWidget):
         cumulative_duration = 0
 
         for task in sorted_tasks:
-            start_seconds = self.time_str_to_seconds(task['start'])
-            end_seconds = self.time_str_to_seconds(task['end'])
+            start_seconds = time_utils.time_str_to_seconds(task['start'])
+            end_seconds = time_utils.time_str_to_seconds(task['end'])
             duration = end_seconds - start_seconds
 
             # 计算该任务在紧凑排列中的百分比位置
@@ -679,50 +641,11 @@ class TimeProgressBar(QWidget):
             cumulative_duration += duration
 
         # 保存时间范围信息(用于日志)
-        self.time_range_start = self.time_str_to_seconds(sorted_tasks[0]['start'])
-        self.time_range_end = self.time_str_to_seconds(sorted_tasks[-1]['end'])
+        self.time_range_start = time_utils.time_str_to_seconds(sorted_tasks[0]['start'])
+        self.time_range_end = time_utils.time_str_to_seconds(sorted_tasks[-1]['end'])
         self.time_range_duration = total_task_duration
 
         self.logger.info(f"紧凑模式: {len(sorted_tasks)}个任务, 总时长{total_task_duration//3600}小时{(total_task_duration%3600)//60}分钟")
-
-    def time_str_to_seconds(self, time_str):
-        """将 HH:MM 转换为秒数"""
-        try:
-            hours, minutes = map(int, time_str.split(':'))
-            # 特殊处理 24:00
-            if hours == 24 and minutes == 0:
-                return 86400
-            return hours * 3600 + minutes * 60
-        except (ValueError, AttributeError):
-            return 0
-
-    def seconds_to_time_str(self, seconds):
-        """将秒数转换为 HH:MM 格式"""
-        if seconds >= 86400:
-            return "24:00"
-        hours = seconds // 3600
-        minutes = (seconds % 3600) // 60
-        return f"{hours:02d}:{minutes:02d}"
-
-    def time_to_percentage(self, time_str):
-        """将 HH:MM 格式转换为 0.0-1.0 之间的百分比(基于任务时间范围)"""
-        try:
-            seconds = self.time_str_to_seconds(time_str)
-
-            # 如果时间范围无效,使用全天计算
-            if self.time_range_duration == 0:
-                return seconds / 86400
-
-            # 基于任务时间范围计算百分比
-            if seconds < self.time_range_start:
-                return 0.0
-            elif seconds > self.time_range_end:
-                return 1.0
-            else:
-                return (seconds - self.time_range_start) / self.time_range_duration
-        except (ValueError, AttributeError):
-            self.logger.warning(f"无效的时间格式 '{time_str}'")
-            return 0.0
 
     def init_timer(self):
         """初始化定时器"""
@@ -1027,7 +950,7 @@ class TimeProgressBar(QWidget):
             self.logger.debug(f"动画配置未变化，跳过重新初始化")
 
         # 重新计算时间范围
-        self.calculate_time_range()
+        time_utils.calculate_time_range()
 
         # 重新加载通知管理器配置
         if hasattr(self, 'notification_manager'):
@@ -1286,7 +1209,7 @@ class TimeProgressBar(QWidget):
                     self.logger.debug(
                         f"[时间标记] 当前时间 {current_time.toString('HH:mm:ss')} "
                         f"在任务[{i}]'{task_name}'内 "
-                        f"({self.seconds_to_time_str(task_start)}-{self.seconds_to_time_str(task_end)}) "
+                        f"({time_utils.seconds_to_time_str(task_start)}-{time_utils.seconds_to_time_str(task_end)}) "
                         f"任务进度={progress_in_task:.2%} "
                         f"紧凑位置={pos['compact_start_pct']:.4f}-{pos['compact_end_pct']:.4f} "
                         f"标记位置={new_percentage:.4f}"
@@ -1301,7 +1224,7 @@ class TimeProgressBar(QWidget):
                     self.logger.debug(
                         f"[时间标记] 当前时间 {current_time.toString('HH:mm:ss')} "
                         f"在任务[{i}]'{task_name}'之前(间隔中) "
-                        f"({self.seconds_to_time_str(task_start)}-{self.seconds_to_time_str(task_end)}) "
+                        f"({time_utils.seconds_to_time_str(task_start)}-{time_utils.seconds_to_time_str(task_end)}) "
                         f"标记位置={new_percentage:.4f}(任务起点)"
                     )
                     found = True
@@ -1336,8 +1259,8 @@ class TimeProgressBar(QWidget):
                 task_color = task.get('color', '#808080')
 
                 # 计算任务的时间范围(秒)
-                start_seconds = self.time_str_to_seconds(task_start)
-                end_seconds = self.time_str_to_seconds(task_end)
+                start_seconds = time_utils.time_str_to_seconds(task_start)
+                end_seconds = time_utils.time_str_to_seconds(task_end)
 
                 # 判断任务状态
                 if end_seconds <= current_seconds:
