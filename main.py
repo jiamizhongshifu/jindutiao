@@ -17,7 +17,7 @@ from enum import Enum
 from statistics_manager import StatisticsManager
 # 已切换到Vercel云服务，无需本地后端管理器
 # from backend_manager import BackendManager
-from theme_manager import ThemeManager
+from pydaybar.core.theme_manager import ThemeManager
 # 确保 config_gui 模块被 PyInstaller 检测到（必须在顶部导入）
 import config_gui
 from config_gui import ConfigManager

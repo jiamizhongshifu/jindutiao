@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QFont, QPainter, QPen
 from statistics_manager import StatisticsManager
-from theme_manager import ThemeManager
+from pydaybar.core.theme_manager import ThemeManager
 from pathlib import Path
 import logging
 import sys

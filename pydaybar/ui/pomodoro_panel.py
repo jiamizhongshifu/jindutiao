@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (QWidget, QDialog, QSystemTrayIcon, QMessageBox,
 from PySide6.QtCore import Qt, QRectF, QTimer, QPoint, Signal
 from PySide6.QtGui import QPainter, QColor, QPen, QFont, QCursor
 from pydaybar.core.pomodoro_state import PomodoroState
-from theme_manager import ThemeManager
+from pydaybar.core.theme_manager import ThemeManager
 
 
 class PomodoroSettingsDialog(QDialog):

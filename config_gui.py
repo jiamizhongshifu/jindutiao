@@ -19,8 +19,8 @@ from timeline_editor import TimelineEditor
 from ai_client import PyDayBarAIClient
 from autostart_manager import AutoStartManager
 import requests
-from theme_manager import ThemeManager
-from theme_ai_helper import ThemeAIHelper
+from pydaybar.core.theme_manager import ThemeManager
+from pydaybar.core.theme_ai_helper import ThemeAIHelper
 import logging
 from pydaybar.utils import path_utils, time_utils, data_loader
 
