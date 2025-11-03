@@ -24,7 +24,7 @@ from config_gui import ConfigManager
 from pydaybar.core.pomodoro_state import PomodoroState
 from pydaybar.core.notification_manager import NotificationManager
 from pydaybar.ui.pomodoro_panel import PomodoroPanel, PomodoroSettingsDialog
-from pydaybar.utils import time_utils, path_utils
+from pydaybar.utils import time_utils, path_utils, data_loader
 
 # Windows 特定导入
 if platform.system() == 'Windows':
@@ -39,8 +39,8 @@ class TimeProgressBar(QWidget):
         super().__init__()
         self.app_dir = path_utils.get_app_dir()  # 获取应用目录
         self.setup_logging()  # 设置日志
-        self.config = self.load_config()  # 加载配置
-        self.tasks = self.load_tasks()  # 加载任务数据
+        self.config = data_loader.load_config(self.app_dir, self.logger)  # 加载配置
+        self.tasks = data_loader.load_tasks(self.app_dir, self.logger)  # 加载任务数据
         self.calculate_time_range()  # 计算任务的时间范围
         self.current_time_percentage = 0.0  # 初始化时间百分比
         self.hovered_task_index = -1  # 当前悬停的任务索引(-1表示没有悬停)
@@ -267,129 +267,6 @@ class TimeProgressBar(QWidget):
         self.logger = logging.getLogger(__name__)
         self.logger.info("PyDayBar 启动")
 
-    def load_config(self):
-        """加载配置文件"""
-        config_file = self.app_dir / 'config.json'
-
-        # 默认配置
-        default_config = {
-            "bar_height": 20,
-            "position": "bottom",
-            "background_color": "#505050",
-            "background_opacity": 180,
-            "marker_color": "#FF0000",
-            "marker_width": 2,
-            "marker_type": "gif",  # "line", "image", "gif"
-            "marker_image_path": "kun.webp",  # 默认使用kun.webp
-            "marker_size": 50,  # 标记图片大小(像素)
-            "marker_y_offset": 0,  # 标记图片 Y 轴偏移(像素,正值向上,负值向下)
-            "screen_index": 0,
-            "update_interval": 1000,
-            "enable_shadow": True,
-            "corner_radius": 0,
-            # 通知配置
-            "notification": {
-                "enabled": True,                    # 通知总开关
-                "before_start_minutes": [10, 5],   # 任务开始前N分钟提醒
-                "on_start": True,                   # 任务开始时提醒
-                "before_end_minutes": [5],          # 任务结束前N分钟提醒
-                "on_end": False,                    # 任务结束时提醒
-                "sound_enabled": True,              # 声音开关
-                "sound_file": "",                   # 自定义提示音路径
-                "quiet_hours": {                    # 免打扰时段
-                    "enabled": False,
-                    "start": "22:00",
-                    "end": "08:00"
-                }
-            }
-        }
-
-        if not config_file.exists():
-            self.logger.info("config.json 不存在,创建默认配置")
-            with open(config_file, 'w', encoding='utf-8') as f:
-                json.dump(default_config, f, indent=4)
-            return default_config
-
-        try:
-            with open(config_file, 'r', encoding='utf-8') as f:
-                config = json.load(f)
-            # 合并默认配置(防止缺失键)
-            merged_config = {**default_config, **config}
-            
-            # 向后兼容：如果config.json中没有theme字段，添加默认主题配置
-            if 'theme' not in merged_config:
-                merged_config['theme'] = {
-                    'mode': 'preset',
-                    'current_theme_id': 'business',
-                    'auto_apply_task_colors': False
-                }
-                self.logger.info("检测到旧版本config.json，已添加默认主题配置")
-            
-            self.logger.info("配置文件加载成功")
-            return merged_config
-        except json.JSONDecodeError as e:
-            self.logger.error(f"JSON 解析错误: {e}")
-            return default_config
-        except Exception as e:
-            self.logger.error(f"加载配置失败: {e}", exc_info=True)
-            return default_config
-
-    def load_tasks(self):
-        """加载并验证任务数据"""
-        tasks_file = self.app_dir / 'tasks.json'
-
-        # 如果文件不存在,尝试加载24小时模板
-        if not tasks_file.exists():
-            self.logger.info("tasks.json 不存在,尝试加载24小时模板")
-            # 使用 get_resource_path 获取打包资源路径
-            template_file = path_utils.get_resource_path('tasks_template_24h.json')
-
-            if template_file.exists():
-                try:
-                    with open(template_file, 'r', encoding='utf-8') as f:
-                        default_tasks = json.load(f)
-                    # 保存为 tasks.json(保存到 exe 所在目录)
-                    with open(tasks_file, 'w', encoding='utf-8') as f:
-                        json.dump(default_tasks, f, indent=4, ensure_ascii=False)
-                    self.logger.info(f"已从模板加载 {len(default_tasks)} 个任务")
-                    return default_tasks
-                except Exception as e:
-                    self.logger.error(f"加载模板失败: {e}")
-
-            # 如果模板也不存在,创建简单的默认任务
-            self.logger.info("模板不存在,创建默认任务")
-            default_tasks = [
-                {"start": "09:00", "end": "12:00", "task": "上午工作", "color": "#4CAF50"}
-            ]
-            with open(tasks_file, 'w', encoding='utf-8') as f:
-                json.dump(default_tasks, f, indent=4, ensure_ascii=False)
-            return default_tasks
-
-        try:
-            with open(tasks_file, 'r', encoding='utf-8') as f:
-                tasks = json.load(f)
-
-            # 验证数据格式
-            validated_tasks = []
-            for i, task in enumerate(tasks):
-                if all(key in task for key in ['start', 'end', 'task', 'color']):
-                    # 验证时间格式
-                    if time_utils.validate_time_format(task['start']) and \
-                       time_utils.validate_time_format(task['end']):
-                        validated_tasks.append(task)
-                    else:
-                        self.logger.warning(f"任务 {i+1} 时间格式无效: {task}")
-                else:
-                    self.logger.warning(f"任务 {i+1} 缺少必要字段: {task}")
-
-            self.logger.info(f"成功加载 {len(validated_tasks)} 个任务")
-            return validated_tasks
-        except json.JSONDecodeError as e:
-            self.logger.error(f"JSON 解析错误: {e}")
-            return []
-        except Exception as e:
-            self.logger.error(f"加载任务失败: {e}", exc_info=True)
-            return []
 
     def init_marker_image(self):
         """初始化时间标记图片"""
@@ -928,8 +805,8 @@ class TimeProgressBar(QWidget):
         old_marker_size = self.config.get('marker_size', 40)
 
         # 重新加载配置和任务
-        self.config = self.load_config()
-        self.tasks = self.load_tasks()
+        self.config = data_loader.load_config(self.app_dir, self.logger)
+        self.tasks = data_loader.load_tasks(self.app_dir, self.logger)
 
         # 检查动画配置是否改变
         new_marker_type = self.config.get('marker_type', 'gif')
