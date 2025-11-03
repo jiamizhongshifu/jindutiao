@@ -22,6 +22,7 @@ import requests
 from theme_manager import ThemeManager
 from theme_ai_helper import ThemeAIHelper
 import logging
+from pydaybar.utils import path_utils, time_utils, data_loader
 
 
 class AIWorker(QThread):
@@ -67,11 +68,8 @@ class ConfigManager(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        # 获取应用程序目录(支持打包后的 exe)
-        if getattr(sys, 'frozen', False):
-            self.app_dir = Path(sys.executable).parent
-        else:
-            self.app_dir = Path(__file__).parent
+        # 获取应用程序目录(使用统一的path_utils)
+        self.app_dir = path_utils.get_app_dir()
 
         self.config_file = self.app_dir / 'config.json'
         self.tasks_file = self.app_dir / 'tasks.json'
@@ -364,14 +362,8 @@ class ConfigManager(QMainWindow):
             self.generate_btn.setEnabled(False)
 
     def get_resource_path(self, relative_path):
-        """获取资源文件路径(支持打包后的 exe)"""
-        if getattr(sys, 'frozen', False):
-            # 打包后的 exe,资源文件在临时目录
-            base_path = Path(sys._MEIPASS)
-        else:
-            # 开发环境,资源文件在脚本目录
-            base_path = Path(__file__).parent
-        return base_path / relative_path
+        """获取资源文件路径(使用统一的path_utils)"""
+        return path_utils.get_resource_path(relative_path)
 
     def init_ui(self):
         """初始化界面"""
@@ -2107,18 +2099,12 @@ class ConfigManager(QMainWindow):
         return None
 
     def time_to_minutes(self, time_str):
-        """将 HH:mm 转换为分钟数
+        """将 HH:mm 转换为分钟数(使用统一的time_utils)
 
         特殊处理: 24:00 表示一天结束(午夜),返回 1440 分钟
         """
-        try:
-            hours, minutes = map(int, time_str.split(':'))
-            # 特殊处理 24:00
-            if hours == 24 and minutes == 0:
-                return 1440  # 24 * 60
-            return hours * 60 + minutes
-        except:
-            return 0
+        seconds = time_utils.time_str_to_seconds(time_str)
+        return seconds // 60
 
     def save_all(self):
         """保存所有设置"""
