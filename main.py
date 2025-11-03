@@ -24,7 +24,7 @@ from config_gui import ConfigManager
 from pydaybar.core.pomodoro_state import PomodoroState
 from pydaybar.core.notification_manager import NotificationManager
 from pydaybar.ui.pomodoro_panel import PomodoroPanel, PomodoroSettingsDialog
-from pydaybar.utils import time_utils, path_utils, data_loader
+from pydaybar.utils import time_utils, path_utils, data_loader, task_calculator
 
 # Windows 特定导入
 if platform.system() == 'Windows':
@@ -474,55 +474,11 @@ class TimeProgressBar(QWidget):
         将任务按时间顺序排列,计算每个任务在进度条上的位置
         忽略任务之间的时间间隔,所有任务紧密排列
         """
-        if not self.tasks:
-            # 如果没有任务,使用全天范围
-            self.time_range_start = 0
-            self.time_range_end = 86400
-            self.time_range_duration = 86400
-            self.task_positions = []
-            return
-
-        # 按任务开始时间排序
-        sorted_tasks = sorted(self.tasks, key=lambda t: time_utils.time_str_to_seconds(t['start']))
-
-        # 计算总的任务持续时间(只计算任务本身,不包括间隔)
-        total_task_duration = 0
-        for task in sorted_tasks:
-            start_seconds = time_utils.time_str_to_seconds(task['start'])
-            end_seconds = time_utils.time_str_to_seconds(task['end'])
-            duration = end_seconds - start_seconds
-            total_task_duration += duration
-
-        # 构建任务位置映射表
-        # 每个任务记录:原始时间区间 -> 紧凑排列后的百分比区间
-        self.task_positions = []
-        cumulative_duration = 0
-
-        for task in sorted_tasks:
-            start_seconds = time_utils.time_str_to_seconds(task['start'])
-            end_seconds = time_utils.time_str_to_seconds(task['end'])
-            duration = end_seconds - start_seconds
-
-            # 计算该任务在紧凑排列中的百分比位置
-            start_percentage = cumulative_duration / total_task_duration if total_task_duration > 0 else 0
-            end_percentage = (cumulative_duration + duration) / total_task_duration if total_task_duration > 0 else 0
-
-            self.task_positions.append({
-                'task': task,
-                'original_start': start_seconds,
-                'original_end': end_seconds,
-                'compact_start_pct': start_percentage,
-                'compact_end_pct': end_percentage
-            })
-
-            cumulative_duration += duration
-
-        # 保存时间范围信息(用于日志)
-        self.time_range_start = time_utils.time_str_to_seconds(sorted_tasks[0]['start'])
-        self.time_range_end = time_utils.time_str_to_seconds(sorted_tasks[-1]['end'])
-        self.time_range_duration = total_task_duration
-
-        self.logger.info(f"紧凑模式: {len(sorted_tasks)}个任务, 总时长{total_task_duration//3600}小时{(total_task_duration%3600)//60}分钟")
+        result = task_calculator.calculate_task_positions(self.tasks, self.logger)
+        self.task_positions = result['task_positions']
+        self.time_range_start = result['time_range_start']
+        self.time_range_end = result['time_range_end']
+        self.time_range_duration = result['time_range_duration']
 
     def init_timer(self):
         """初始化定时器"""
@@ -827,7 +783,7 @@ class TimeProgressBar(QWidget):
             self.logger.debug(f"动画配置未变化，跳过重新初始化")
 
         # 重新计算时间范围
-        time_utils.calculate_time_range()
+        self.calculate_time_range()
 
         # 重新加载通知管理器配置
         if hasattr(self, 'notification_manager'):
