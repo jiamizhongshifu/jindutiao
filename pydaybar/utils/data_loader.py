@@ -4,6 +4,7 @@
 import json
 from pathlib import Path
 from . import time_utils, path_utils
+from ..core.template_manager import TemplateManager
 
 
 def load_config(app_dir, logger):
@@ -94,10 +95,34 @@ def load_tasks(app_dir, logger):
     """
     tasks_file = app_dir / 'tasks.json'
 
-    # 如果文件不存在,尝试加载24小时模板
+    # 如果文件不存在,智能加载最佳匹配模板
     if not tasks_file.exists():
-        logger.info("tasks.json 不存在,尝试加载24小时模板")
-        # 使用 get_resource_path 获取打包资源路径
+        logger.info("tasks.json 不存在,尝试智能匹配模板")
+
+        # 尝试使用TemplateManager查找最佳匹配模板
+        try:
+            tm = TemplateManager(app_dir, logger)
+            best_match = tm.get_best_match_template()
+
+            if best_match:
+                # 找到匹配的自动应用模板
+                template_id = best_match['id']
+                template_name = best_match['name']
+                logger.info(f"✨ 智能匹配到模板: {template_name} ({template_id})")
+
+                # 加载模板任务数据
+                template_tasks = tm.load_template_tasks(template_id)
+                if template_tasks:
+                    # 保存为 tasks.json
+                    with open(tasks_file, 'w', encoding='utf-8') as f:
+                        json.dump(template_tasks, f, indent=4, ensure_ascii=False)
+                    logger.info(f"✅ 已自动应用模板 {template_name}，包含 {len(template_tasks)} 个任务")
+                    return template_tasks
+        except Exception as e:
+            logger.warning(f"智能模板匹配失败，退回到默认模板: {e}")
+
+        # 如果没有找到自动应用模板，退回到24小时模板
+        logger.info("未找到启用自动应用的模板，使用默认24小时模板")
         template_file = path_utils.get_resource_path('tasks_template_24h.json')
 
         if template_file.exists():
@@ -107,7 +132,7 @@ def load_tasks(app_dir, logger):
                 # 保存为 tasks.json(保存到 exe 所在目录)
                 with open(tasks_file, 'w', encoding='utf-8') as f:
                     json.dump(default_tasks, f, indent=4, ensure_ascii=False)
-                logger.info(f"已从模板加载 {len(default_tasks)} 个任务")
+                logger.info(f"已从24小时模板加载 {len(default_tasks)} 个任务")
                 return default_tasks
             except Exception as e:
                 logger.error(f"加载模板失败: {e}")

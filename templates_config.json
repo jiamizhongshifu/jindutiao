@@ -1,0 +1,150 @@
+{
+  "version": "1.0",
+  "description": "PyDayBar 任务模板配置",
+  "templates": [
+    {
+      "id": "template_24h",
+      "name": "24小时",
+      "description": "标准24小时时间规划",
+      "filename": "tasks_template_24h.json",
+      "button_color": "#4CAF50",
+      "auto_apply": {
+        "enabled": false,
+        "conditions": [],
+        "priority": 0
+      }
+    },
+    {
+      "id": "template_workday",
+      "name": "工作日",
+      "description": "适合朝九晚五的上班族",
+      "filename": "tasks_template_workday.json",
+      "button_color": "#2196F3",
+      "auto_apply": {
+        "enabled": false,
+        "conditions": ["weekday"],
+        "priority": 5
+      }
+    },
+    {
+      "id": "template_student",
+      "name": "学生",
+      "description": "适合学生的作息时间",
+      "filename": "tasks_template_student.json",
+      "button_color": "#9C27B0",
+      "auto_apply": {
+        "enabled": false,
+        "conditions": ["weekday"],
+        "priority": 4
+      }
+    },
+    {
+      "id": "template_freelancer",
+      "name": "自由职业",
+      "description": "灵活自主的工作时间",
+      "filename": "tasks_template_freelancer.json",
+      "button_color": "#00BCD4",
+      "auto_apply": {
+        "enabled": false,
+        "conditions": [],
+        "priority": 0
+      }
+    },
+    {
+      "id": "template_night_shift",
+      "name": "夜班",
+      "description": "夜间工作者作息",
+      "filename": "tasks_template_night_shift.json",
+      "button_color": "#3F51B5",
+      "auto_apply": {
+        "enabled": false,
+        "conditions": [],
+        "priority": 0
+      }
+    },
+    {
+      "id": "template_creator",
+      "name": "创作者",
+      "description": "内容创作者的灵活时间",
+      "filename": "tasks_template_creator.json",
+      "button_color": "#E91E63",
+      "auto_apply": {
+        "enabled": false,
+        "conditions": [],
+        "priority": 0
+      }
+    },
+    {
+      "id": "template_fitness",
+      "name": "健身",
+      "description": "注重健身的生活方式",
+      "filename": "tasks_template_fitness.json",
+      "button_color": "#FF5722",
+      "auto_apply": {
+        "enabled": false,
+        "conditions": [],
+        "priority": 0
+      }
+    },
+    {
+      "id": "template_entrepreneur",
+      "name": "创业者",
+      "description": "创业者的高强度工作节奏",
+      "filename": "tasks_template_entrepreneur.json",
+      "button_color": "#FF9800",
+      "auto_apply": {
+        "enabled": false,
+        "conditions": [],
+        "priority": 0
+      }
+    },
+    {
+      "id": "template_remote_work",
+      "name": "远程办公",
+      "description": "在家远程办公的灵活作息",
+      "filename": "tasks_template_remote_work.json",
+      "button_color": "#009688",
+      "auto_apply": {
+        "enabled": false,
+        "conditions": ["weekday"],
+        "priority": 4
+      }
+    },
+    {
+      "id": "template_part_time",
+      "name": "兼职工作",
+      "description": "兼顾学习或其他工作的兼职作息",
+      "filename": "tasks_template_part_time.json",
+      "button_color": "#795548",
+      "auto_apply": {
+        "enabled": false,
+        "conditions": [],
+        "priority": 0
+      }
+    },
+    {
+      "id": "template_weekend_relax",
+      "name": "周末休闲",
+      "description": "放松身心的周末时光",
+      "filename": "tasks_template_weekend_relax.json",
+      "button_color": "#FFC107",
+      "auto_apply": {
+        "enabled": false,
+        "conditions": ["weekend"],
+        "priority": 5
+      }
+    },
+    {
+      "id": "template_flexible",
+      "name": "弹性作息",
+      "description": "完全自由的弹性时间安排",
+      "filename": "tasks_template_flexible.json",
+      "button_color": "#607D8B",
+      "auto_apply": {
+        "enabled": false,
+        "conditions": [],
+        "priority": 0
+      }
+    }
+  ]
+}

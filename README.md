@@ -6,11 +6,11 @@
 
 [![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/PySide6-6.5+-green.svg)](https://pypi.org/project/PySide6/)
-[![Version](https://img.shields.io/badge/version-1.4.3-brightgreen.svg)](https://github.com)
+[![Version](https://img.shields.io/badge/version-1.4.4-brightgreen.svg)](https://github.com)
 [![License](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com)
 
-**当前版本: v1.4.3** | 最后更新: 2025-11-02 | Vercel云服务 ✅
+**当前版本: v1.4.4** | 最后更新: 2025-11-03 | 模板时间表管理 ✅
 
 </div>
 
@@ -30,7 +30,9 @@
 - **任务可视化** - 用彩色色块直观显示全天的任务安排,紧凑模式无缝衔接
 - **预设主题配色** - 多种内置主题(商务、创意、自然等),一键切换
 - **自定义任务颜色** - 支持单独设置每个任务的背景色和文字颜色
-- **预设模板** - 8种内置作息模板(工作日、学生、自由职业等),快速加载
+- **预设模板** - 12种内置作息模板(工作日、学生、自由职业等),快速加载
+- **模板时间表管理** - 为模板设置自动应用规则(按日期/星期/月份),支持编辑和删除
+- **我的模板** - 管理自定义模板和手动加载的模板,支持添加到时间表规则
 
 ### 🖼️ 视觉效果
 - **多样时间标记** - 支持线条、静态图片、动画GIF三种时间标记样式
@@ -135,7 +137,18 @@
 - **预设主题配色** - 选择内置主题,时间轴实时预览
 - **可视化时间轴编辑器** - 图形化编辑任务时间
 - **自定义任务颜色** - 单独设置每个任务的背景色和文字颜色
-- **加载预设模板** - 快速加载常用作息模板
+- **加载预设模板** - 快速加载常用作息模板(12种内置模板)
+- **模板时间表管理** - 为模板设置自动应用规则:
+  - 按星期(周一至周日)
+  - 按每月日期(1-31号)
+  - 按具体日期(YYYY-MM-DD)
+  - 支持编辑已有规则
+  - 智能显示日期范围
+- **我的模板** - 管理自定义模板:
+  - 下拉框选择已保存的自定义模板
+  - 快速加载到任务列表
+  - 删除不需要的模板
+  - 自定义模板可添加到时间表规则
 
 #### 3. 番茄钟设置
 - 工作/休息时长设置
@@ -414,7 +427,52 @@ macOS:
 ### 方法论文档
 - [CLAUDE.md](CLAUDE.md) - AI助手配置和方法论库
 
+### 开发路线图
+- [📅 v1.5开发路线图](ROADMAP_v1.5.md) - 下一阶段的功能规划和开发计划
+
 ## 🔄 更新日志
+
+### v1.4.4 (2025-11-03) - 模板时间表管理增强 ✅
+
+**📅 模板时间表管理**
+- ✅ 时间表规则支持编辑修改
+  - 添加编辑按钮到规则列表
+  - 编辑对话框预填充当前规则数据
+  - 支持修改模板、规则类型和时间设置
+- ✅ 智能日期范围显示
+  - 连续日期自动识别并显示范围 (如 "2025-01-01 至 2025-01-07 (共7天)")
+  - 少量日期全部显示
+  - 大量日期显示首尾和总数
+- ✅ "我的模板"功能完善
+  - 下拉框选择样式,参考预设主题配色
+  - 支持快速加载和删除
+  - 自定义模板可添加到时间表规则
+
+**🔧 模板管理增强**
+- ✅ `template_manager.py` 支持自定义模板
+  - `get_all_templates()` 新增 `include_custom` 参数
+  - `_load_custom_templates()` 从元数据加载自定义模板
+  - `get_template_by_id()` 搜索预设和自定义模板
+  - `load_template_tasks()` 支持双路径(预设/自定义)
+- ✅ 预设模板和自定义模板分离
+  - 预设模板用于快速加载和自动应用
+  - 自定义模板可用于时间表规则
+
+**🐛 问题修复**
+- 修复4个预设模板文件缺失(远程办公、兼职工作、周末休闲、弹性作息)
+- 修复特定日期规则只显示开始日期的问题
+- 修复日期范围显示不清晰的问题
+
+**📝 代码修改**
+- `config_gui.py:302-307` - 添加编辑按钮
+- `config_gui.py:570-856` - 实现 `_edit_schedule()` 方法(287行)
+- `config_gui.py:1674-1703` - "我的模板"下拉框UI
+- `config_gui.py:2775-2801` - `_reload_custom_template_combo()`
+- `pydaybar/core/schedule_manager.py:323-347` - `_is_continuous_dates()` 连续日期检测
+- `pydaybar/core/schedule_manager.py:369-390` - 增强 `_describe_schedule()` 日期显示
+- `pydaybar/core/template_manager.py:80-97` - 修改 `get_all_templates()`
+- `pydaybar/core/template_manager.py:285-320` - 新增 `_load_custom_templates()`
+- `PyDayBar.spec:18-21` - 添加缺失的模板文件
 
 ### v1.4.3 (2025-11-02) - UI状态同步优化 ✅
 

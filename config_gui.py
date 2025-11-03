@@ -86,15 +86,20 @@ class ConfigManager(QMainWindow):
 
         # 延迟初始化主题管理器(避免同步文件I/O阻塞UI)
         self.theme_manager = None
+        # 延迟初始化模板管理器
+        self.template_manager = None
+        self.schedule_manager = None
 
         # 先初始化UI,让窗口快速显示
         self.init_ui()
-        
+
         # UI显示后再异步加载配置和任务
         QTimer.singleShot(50, self._load_config_and_tasks)
 
         # UI显示后再异步初始化主题管理器和AI组件
         QTimer.singleShot(100, self._init_theme_manager)
+        QTimer.singleShot(150, self._init_template_manager)
+        QTimer.singleShot(160, self._init_schedule_manager)
         QTimer.singleShot(200, self._init_ai_components)
 
     def _load_config_and_tasks(self):
@@ -215,6 +220,773 @@ class ConfigManager(QMainWindow):
             logging.info("主题管理器初始化完成")
         except Exception as e:
             logging.error(f"初始化主题管理器失败: {e}")
+
+    def _init_template_manager(self):
+        """延迟初始化模板管理器(在后台运行,不阻塞UI)"""
+        try:
+            from pydaybar.core.template_manager import TemplateManager
+            self.template_manager = TemplateManager(self.app_dir, logging.getLogger(__name__))
+            logging.info("模板管理器初始化完成")
+
+            # 如果模板UI已创建,刷新显示
+            if hasattr(self, 'template_auto_apply_table'):
+                self._load_template_auto_apply_settings()
+        except Exception as e:
+            logging.error(f"初始化模板管理器失败: {e}")
+
+
+
+    def _init_schedule_manager(self):
+        """延迟初始化时间表管理器"""
+        try:
+            from pydaybar.core.schedule_manager import ScheduleManager
+            self.schedule_manager = ScheduleManager(self.app_dir, logging.getLogger(__name__))
+            logging.info("时间表管理器初始化完成")
+
+            # 如果时间表UI已创建，刷新显示
+            if hasattr(self, 'schedule_table'):
+                self._load_schedule_table()
+        except Exception as e:
+            logging.error(f"初始化时间表管理器失败: {e}")
+
+    def _load_schedule_table(self):
+        """加载时间表规则到表格"""
+        try:
+            if not hasattr(self, 'schedule_manager') or not self.schedule_manager:
+                logging.warning("ScheduleManager未初始化，延迟500ms后重试")
+                QTimer.singleShot(500, self._load_schedule_table)
+                return
+
+            schedules = self.schedule_manager.get_all_schedules()
+            self.schedule_table.setRowCount(len(schedules))
+
+            # 获取模板名称映射
+            template_names = {}
+            if hasattr(self, 'template_manager') and self.template_manager:
+                for template in self.template_manager.get_all_templates():
+                    template_names[template['id']] = template['name']
+
+            for row, schedule in enumerate(schedules):
+                # 模板名称
+                template_id = schedule.get('template_id', '')
+                template_name = template_names.get(template_id, template_id)
+                name_item = QTableWidgetItem(template_name)
+                name_item.setFlags(name_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                self.schedule_table.setItem(row, 0, name_item)
+
+                # 应用时间描述
+                time_desc = self.schedule_manager._describe_schedule(schedule)
+                time_item = QTableWidgetItem(time_desc)
+                time_item.setFlags(time_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                self.schedule_table.setItem(row, 1, time_item)
+
+                # 状态
+                enabled = schedule.get('enabled', True)
+                status_item = QTableWidgetItem("✅ 启用" if enabled else "❌ 禁用")
+                status_item.setFlags(status_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                self.schedule_table.setItem(row, 2, status_item)
+
+                # 操作按钮容器
+                actions_widget = QWidget()
+                actions_layout = QHBoxLayout(actions_widget)
+                actions_layout.setContentsMargins(4, 2, 4, 2)
+                actions_layout.setSpacing(4)
+
+                # 切换启用状态按钮
+                toggle_btn = QPushButton("⏸️" if enabled else "▶️")
+                toggle_btn.setToolTip("禁用" if enabled else "启用")
+                toggle_btn.setFixedSize(30, 25)
+                toggle_btn.clicked.connect(lambda checked, r=row: self._toggle_schedule(r))
+                actions_layout.addWidget(toggle_btn)
+
+                # 编辑按钮
+                edit_btn = QPushButton("✏️")
+                edit_btn.setToolTip("编辑")
+                edit_btn.setFixedSize(30, 25)
+                edit_btn.clicked.connect(lambda checked, r=row: self._edit_schedule(r))
+                actions_layout.addWidget(edit_btn)
+
+                # 删除按钮
+                delete_btn = QPushButton("🗑️")
+                delete_btn.setToolTip("删除")
+                delete_btn.setFixedSize(30, 25)
+                delete_btn.clicked.connect(lambda checked, r=row: self._delete_schedule(r))
+                actions_layout.addWidget(delete_btn)
+
+                actions_layout.addStretch()
+
+                self.schedule_table.setCellWidget(row, 3, actions_widget)
+
+            logging.info(f"已加载 {len(schedules)} 条时间表规则")
+
+        except Exception as e:
+            logging.error(f"加载时间表规则失败: {e}")
+
+    def _add_schedule_dialog(self):
+        """打开添加时间表规则对话框"""
+        try:
+            if not hasattr(self, 'schedule_manager') or not self.schedule_manager:
+                QMessageBox.warning(self, "警告", "时间表管理器未初始化")
+                return
+
+            if not hasattr(self, 'template_manager') or not self.template_manager:
+                QMessageBox.warning(self, "警告", "模板管理器未初始化")
+                return
+
+            from PySide6.QtWidgets import (
+                QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
+                QRadioButton, QButtonGroup, QCheckBox, QPushButton,
+                QDateEdit, QSpinBox, QGroupBox
+            )
+            from datetime import date
+
+            dialog = QDialog(self)
+            dialog.setWindowTitle("添加模板应用规则")
+            dialog.setMinimumWidth(500)
+
+            layout = QVBoxLayout()
+
+            # 模板选择
+            template_layout = QHBoxLayout()
+            template_layout.addWidget(QLabel("选择模板:"))
+
+            template_combo = QComboBox()
+            templates = self.template_manager.get_all_templates()
+            for template in templates:
+                template_combo.addItem(template['name'], template['id'])
+            template_layout.addWidget(template_combo)
+            template_layout.addStretch()
+
+            layout.addLayout(template_layout)
+
+            # 规则类型选择
+            type_group = QGroupBox("规则类型")
+            type_layout = QVBoxLayout()
+
+            rule_type_group = QButtonGroup()
+            weekdays_radio = QRadioButton("按星期重复")
+            monthly_radio = QRadioButton("每月重复")
+            specific_radio = QRadioButton("特定日期")
+
+            rule_type_group.addButton(weekdays_radio, 1)
+            rule_type_group.addButton(monthly_radio, 2)
+            rule_type_group.addButton(specific_radio, 3)
+
+            type_layout.addWidget(weekdays_radio)
+            type_layout.addWidget(monthly_radio)
+            type_layout.addWidget(specific_radio)
+
+            type_group.setLayout(type_layout)
+            layout.addWidget(type_group)
+
+            # 星期选择（weekdays）
+            weekdays_widget = QWidget()
+            weekdays_layout = QHBoxLayout()
+            weekdays_checks = {}
+            for i, name in [(1, "周一"), (2, "周二"), (3, "周三"), (4, "周四"),
+                           (5, "周五"), (6, "周六"), (7, "周日")]:
+                check = QCheckBox(name)
+                weekdays_checks[i] = check
+                weekdays_layout.addWidget(check)
+            weekdays_widget.setLayout(weekdays_layout)
+            weekdays_widget.setVisible(False)
+
+            # 每月日期选择（monthly）
+            monthly_widget = QWidget()
+            monthly_layout = QVBoxLayout()
+            monthly_label = QLabel("每月的哪些天?（用逗号分隔，例如: 1,15,28）")
+            monthly_layout.addWidget(monthly_label)
+
+            from PySide6.QtWidgets import QLineEdit
+            monthly_input = QLineEdit()
+            monthly_input.setPlaceholderText("1,15,28")
+            monthly_layout.addWidget(monthly_input)
+
+            monthly_widget.setLayout(monthly_layout)
+            monthly_widget.setVisible(False)
+
+            # 具体日期选择（specific_dates）
+            specific_widget = QWidget()
+            specific_layout = QVBoxLayout()
+            specific_label = QLabel("选择具体日期:")
+            specific_layout.addWidget(specific_label)
+
+            dates_list_widget = QWidget()
+            dates_list_layout = QVBoxLayout()
+            dates_list_layout.setContentsMargins(0, 0, 0, 0)
+            dates_list_widget.setLayout(dates_list_layout)
+
+            specific_layout.addWidget(dates_list_widget)
+
+            add_date_layout = QHBoxLayout()
+            date_picker = QDateEdit()
+            date_picker.setCalendarPopup(True)
+            date_picker.setDate(date.today())
+
+            add_date_btn = QPushButton("+ 添加日期")
+
+            specific_dates = []
+
+            def add_specific_date():
+                selected_date = date_picker.date().toString("yyyy-MM-dd")
+                if selected_date not in specific_dates:
+                    specific_dates.append(selected_date)
+
+                    # 创建日期标签和删除按钮
+                    date_row = QWidget()
+                    date_row_layout = QHBoxLayout()
+                    date_row_layout.setContentsMargins(0, 2, 0, 2)
+
+                    date_label = QLabel(selected_date)
+                    date_row_layout.addWidget(date_label)
+
+                    remove_btn = QPushButton("×")
+                    remove_btn.setFixedSize(25, 25)
+                    remove_btn.clicked.connect(lambda: remove_date(date_row, selected_date))
+                    date_row_layout.addWidget(remove_btn)
+
+                    date_row_layout.addStretch()
+
+                    date_row.setLayout(date_row_layout)
+                    dates_list_layout.addWidget(date_row)
+
+            def remove_date(widget, date_str):
+                widget.deleteLater()
+                if date_str in specific_dates:
+                    specific_dates.remove(date_str)
+
+            add_date_btn.clicked.connect(add_specific_date)
+
+            add_date_layout.addWidget(date_picker)
+            add_date_layout.addWidget(add_date_btn)
+            add_date_layout.addStretch()
+
+            specific_layout.addLayout(add_date_layout)
+
+            specific_widget.setLayout(specific_layout)
+            specific_widget.setVisible(False)
+
+            layout.addWidget(weekdays_widget)
+            layout.addWidget(monthly_widget)
+            layout.addWidget(specific_widget)
+
+            # 规则类型切换
+            def on_rule_type_changed():
+                checked_id = rule_type_group.checkedId()
+                weekdays_widget.setVisible(checked_id == 1)
+                monthly_widget.setVisible(checked_id == 2)
+                specific_widget.setVisible(checked_id == 3)
+
+            weekdays_radio.toggled.connect(on_rule_type_changed)
+            monthly_radio.toggled.connect(on_rule_type_changed)
+            specific_radio.toggled.connect(on_rule_type_changed)
+
+            weekdays_radio.setChecked(True)  # 默认选择星期
+
+            # 按钮组
+            button_layout = QHBoxLayout()
+            button_layout.addStretch()
+
+            cancel_btn = QPushButton("取消")
+            cancel_btn.clicked.connect(dialog.reject)
+            button_layout.addWidget(cancel_btn)
+
+            save_btn = QPushButton("保存")
+            save_btn.setStyleSheet("QPushButton { background-color: #4CAF50; color: white; padding: 8px; }")
+            save_btn.clicked.connect(dialog.accept)
+            button_layout.addWidget(save_btn)
+
+            layout.addLayout(button_layout)
+
+            dialog.setLayout(layout)
+
+            if dialog.exec() == QDialog.Accepted:
+                # 获取选择的模板ID
+                template_id = template_combo.currentData()
+
+                # 根据规则类型保存
+                checked_id = rule_type_group.checkedId()
+
+                if checked_id == 1:  # 星期
+                    weekdays = [i for i, check in weekdays_checks.items() if check.isChecked()]
+                    if not weekdays:
+                        QMessageBox.warning(self, "警告", "请至少选择一个星期")
+                        return
+
+                    success = self.schedule_manager.add_schedule(
+                        template_id=template_id,
+                        schedule_type='weekdays',
+                        weekdays=weekdays
+                    )
+
+                elif checked_id == 2:  # 每月
+                    days_text = monthly_input.text().strip()
+                    if not days_text:
+                        QMessageBox.warning(self, "警告", "请输入每月的日期")
+                        return
+
+                    try:
+                        days_of_month = [int(d.strip()) for d in days_text.split(',')]
+                        # 验证日期范围
+                        if any(d < 1 or d > 31 for d in days_of_month):
+                            QMessageBox.warning(self, "警告", "日期必须在1-31之间")
+                            return
+
+                        success = self.schedule_manager.add_schedule(
+                            template_id=template_id,
+                            schedule_type='monthly',
+                            days_of_month=days_of_month
+                        )
+
+                    except ValueError:
+                        QMessageBox.warning(self, "警告", "日期格式错误，请使用逗号分隔的数字")
+                        return
+
+                elif checked_id == 3:  # 具体日期
+                    if not specific_dates:
+                        QMessageBox.warning(self, "警告", "请至少添加一个日期")
+                        return
+
+                    success = self.schedule_manager.add_schedule(
+                        template_id=template_id,
+                        schedule_type='specific_dates',
+                        dates=specific_dates
+                    )
+
+                else:
+                    QMessageBox.warning(self, "警告", "请选择规则类型")
+                    return
+
+                if success:
+                    QMessageBox.information(self, "成功", "时间表规则已添加")
+                    self._load_schedule_table()  # 刷新表格
+                else:
+                    QMessageBox.warning(self, "冲突", "该规则与现有规则冲突，请检查")
+
+        except Exception as e:
+            logging.error(f"添加时间表规则失败: {e}")
+            QMessageBox.critical(self, "错误", f"添加规则失败:\n{str(e)}")
+
+    def _edit_schedule(self, row):
+        """编辑时间表规则"""
+        try:
+            if not hasattr(self, 'schedule_manager') or not self.schedule_manager:
+                QMessageBox.warning(self, "警告", "时间表管理器未初始化")
+                return
+
+            if not hasattr(self, 'template_manager') or not self.template_manager:
+                QMessageBox.warning(self, "警告", "模板管理器未初始化")
+                return
+
+            # 获取当前规则
+            schedules = self.schedule_manager.get_all_schedules()
+            if row < 0 or row >= len(schedules):
+                QMessageBox.warning(self, "警告", "无效的规则索引")
+                return
+
+            current_schedule = schedules[row]
+
+            from PySide6.QtWidgets import (
+                QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
+                QRadioButton, QButtonGroup, QCheckBox, QPushButton,
+                QDateEdit, QSpinBox, QGroupBox, QLineEdit
+            )
+            from datetime import date, datetime
+
+            dialog = QDialog(self)
+            dialog.setWindowTitle("编辑模板应用规则")
+            dialog.setMinimumWidth(500)
+
+            layout = QVBoxLayout()
+
+            # 模板选择
+            template_layout = QHBoxLayout()
+            template_layout.addWidget(QLabel("选择模板:"))
+
+            template_combo = QComboBox()
+            templates = self.template_manager.get_all_templates()
+            current_template_id = current_schedule.get('template_id', '')
+
+            for i, template in enumerate(templates):
+                template_combo.addItem(template['name'], template['id'])
+                if template['id'] == current_template_id:
+                    template_combo.setCurrentIndex(i)
+
+            template_layout.addWidget(template_combo)
+            template_layout.addStretch()
+
+            layout.addLayout(template_layout)
+
+            # 规则类型选择
+            type_group = QGroupBox("规则类型")
+            type_layout = QVBoxLayout()
+
+            rule_type_group = QButtonGroup()
+            weekdays_radio = QRadioButton("按星期重复")
+            monthly_radio = QRadioButton("每月重复")
+            specific_radio = QRadioButton("特定日期")
+
+            rule_type_group.addButton(weekdays_radio, 1)
+            rule_type_group.addButton(monthly_radio, 2)
+            rule_type_group.addButton(specific_radio, 3)
+
+            type_layout.addWidget(weekdays_radio)
+            type_layout.addWidget(monthly_radio)
+            type_layout.addWidget(specific_radio)
+
+            type_group.setLayout(type_layout)
+            layout.addWidget(type_group)
+
+            # 星期选择（weekdays）
+            weekdays_widget = QWidget()
+            weekdays_layout = QHBoxLayout()
+            weekdays_checks = {}
+            for i, name in [(1, "周一"), (2, "周二"), (3, "周三"), (4, "周四"),
+                           (5, "周五"), (6, "周六"), (7, "周日")]:
+                check = QCheckBox(name)
+                weekdays_checks[i] = check
+                weekdays_layout.addWidget(check)
+            weekdays_widget.setLayout(weekdays_layout)
+            weekdays_widget.setVisible(False)
+
+            # 每月日期选择（monthly）
+            monthly_widget = QWidget()
+            monthly_layout = QVBoxLayout()
+            monthly_label = QLabel("每月的哪些天?（用逗号分隔，例如: 1,15,28）")
+            monthly_layout.addWidget(monthly_label)
+
+            from PySide6.QtWidgets import QLineEdit
+            monthly_input = QLineEdit()
+            monthly_input.setPlaceholderText("1,15,28")
+            monthly_layout.addWidget(monthly_input)
+
+            monthly_widget.setLayout(monthly_layout)
+            monthly_widget.setVisible(False)
+
+            # 具体日期选择（specific_dates）
+            specific_widget = QWidget()
+            specific_layout = QVBoxLayout()
+            specific_label = QLabel("选择具体日期:")
+            specific_layout.addWidget(specific_label)
+
+            dates_list_widget = QWidget()
+            dates_list_layout = QVBoxLayout()
+            dates_list_layout.setContentsMargins(0, 0, 0, 0)
+            dates_list_widget.setLayout(dates_list_layout)
+
+            specific_layout.addWidget(dates_list_widget)
+
+            add_date_layout = QHBoxLayout()
+            date_picker = QDateEdit()
+            date_picker.setCalendarPopup(True)
+            date_picker.setDate(date.today())
+
+            add_date_btn = QPushButton("+ 添加日期")
+
+            specific_dates = []
+
+            def add_specific_date():
+                selected_date = date_picker.date().toString("yyyy-MM-dd")
+                if selected_date not in specific_dates:
+                    specific_dates.append(selected_date)
+
+                    # 创建日期标签和删除按钮
+                    date_row = QWidget()
+                    date_row_layout = QHBoxLayout()
+                    date_row_layout.setContentsMargins(0, 2, 0, 2)
+
+                    date_label = QLabel(selected_date)
+                    date_row_layout.addWidget(date_label)
+
+                    remove_btn = QPushButton("×")
+                    remove_btn.setFixedSize(25, 25)
+                    remove_btn.clicked.connect(lambda: remove_date(date_row, selected_date))
+                    date_row_layout.addWidget(remove_btn)
+
+                    date_row_layout.addStretch()
+
+                    date_row.setLayout(date_row_layout)
+                    dates_list_layout.addWidget(date_row)
+
+            def remove_date(widget, date_str):
+                widget.deleteLater()
+                if date_str in specific_dates:
+                    specific_dates.remove(date_str)
+
+            add_date_btn.clicked.connect(add_specific_date)
+
+            add_date_layout.addWidget(date_picker)
+            add_date_layout.addWidget(add_date_btn)
+            add_date_layout.addStretch()
+
+            specific_layout.addLayout(add_date_layout)
+
+            specific_widget.setLayout(specific_layout)
+            specific_widget.setVisible(False)
+
+            layout.addWidget(weekdays_widget)
+            layout.addWidget(monthly_widget)
+            layout.addWidget(specific_widget)
+
+            # 预填充现有规则数据
+            schedule_type = current_schedule.get('schedule_type', '')
+
+            if schedule_type == 'weekdays':
+                weekdays_radio.setChecked(True)
+                for day in current_schedule.get('weekdays', []):
+                    if day in weekdays_checks:
+                        weekdays_checks[day].setChecked(True)
+            elif schedule_type == 'monthly':
+                monthly_radio.setChecked(True)
+                days = current_schedule.get('days_of_month', [])
+                monthly_input.setText(','.join(map(str, days)))
+            elif schedule_type == 'specific_dates':
+                specific_radio.setChecked(True)
+                for date_str in current_schedule.get('dates', []):
+                    specific_dates.append(date_str)
+                    # 创建日期标签和删除按钮
+                    date_row = QWidget()
+                    date_row_layout = QHBoxLayout()
+                    date_row_layout.setContentsMargins(0, 2, 0, 2)
+
+                    date_label = QLabel(date_str)
+                    date_row_layout.addWidget(date_label)
+
+                    remove_btn = QPushButton("×")
+                    remove_btn.setFixedSize(25, 25)
+                    remove_btn.clicked.connect(lambda checked, w=date_row, d=date_str: remove_date(w, d))
+                    date_row_layout.addWidget(remove_btn)
+
+                    date_row_layout.addStretch()
+
+                    date_row.setLayout(date_row_layout)
+                    dates_list_layout.addWidget(date_row)
+
+            # 规则类型切换
+            def on_rule_type_changed():
+                checked_id = rule_type_group.checkedId()
+                weekdays_widget.setVisible(checked_id == 1)
+                monthly_widget.setVisible(checked_id == 2)
+                specific_widget.setVisible(checked_id == 3)
+
+            weekdays_radio.toggled.connect(on_rule_type_changed)
+            monthly_radio.toggled.connect(on_rule_type_changed)
+            specific_radio.toggled.connect(on_rule_type_changed)
+
+            # 触发一次以显示正确的widget
+            on_rule_type_changed()
+
+            # 按钮组
+            button_layout = QHBoxLayout()
+            button_layout.addStretch()
+
+            cancel_btn = QPushButton("取消")
+            cancel_btn.clicked.connect(dialog.reject)
+            button_layout.addWidget(cancel_btn)
+
+            save_btn = QPushButton("保存")
+            save_btn.setStyleSheet("QPushButton { background-color: #4CAF50; color: white; padding: 8px; }")
+            save_btn.clicked.connect(dialog.accept)
+            button_layout.addWidget(save_btn)
+
+            layout.addLayout(button_layout)
+
+            dialog.setLayout(layout)
+
+            if dialog.exec() == QDialog.Accepted:
+                # 获取选择的模板ID
+                template_id = template_combo.currentData()
+
+                # 根据规则类型保存
+                checked_id = rule_type_group.checkedId()
+
+                update_data = {'template_id': template_id}
+
+                if checked_id == 1:  # 星期
+                    weekdays = [i for i, check in weekdays_checks.items() if check.isChecked()]
+                    if not weekdays:
+                        QMessageBox.warning(self, "警告", "请至少选择一个星期")
+                        return
+
+                    update_data['schedule_type'] = 'weekdays'
+                    update_data['weekdays'] = weekdays
+
+                elif checked_id == 2:  # 每月
+                    days_text = monthly_input.text().strip()
+                    if not days_text:
+                        QMessageBox.warning(self, "警告", "请输入每月的日期")
+                        return
+
+                    try:
+                        days_of_month = [int(d.strip()) for d in days_text.split(',')]
+                        # 验证日期范围
+                        if any(d < 1 or d > 31 for d in days_of_month):
+                            QMessageBox.warning(self, "警告", "日期必须在1-31之间")
+                            return
+
+                        update_data['schedule_type'] = 'monthly'
+                        update_data['days_of_month'] = days_of_month
+
+                    except ValueError:
+                        QMessageBox.warning(self, "警告", "日期格式错误，请使用逗号分隔的数字")
+                        return
+
+                elif checked_id == 3:  # 具体日期
+                    if not specific_dates:
+                        QMessageBox.warning(self, "警告", "请至少添加一个日期")
+                        return
+
+                    update_data['schedule_type'] = 'specific_dates'
+                    update_data['dates'] = specific_dates
+
+                else:
+                    QMessageBox.warning(self, "警告", "请选择规则类型")
+                    return
+
+                success = self.schedule_manager.update_schedule(row, **update_data)
+
+                if success:
+                    QMessageBox.information(self, "成功", "时间表规则已更新")
+                    self._load_schedule_table()  # 刷新表格
+                else:
+                    QMessageBox.warning(self, "失败", "更新规则失败，请检查")
+
+        except Exception as e:
+            logging.error(f"编辑时间表规则失败: {e}")
+            QMessageBox.critical(self, "错误", f"编辑规则失败:\n{str(e)}")
+
+    def _toggle_schedule(self, row):
+        """切换时间表规则的启用状态"""
+        try:
+            success = self.schedule_manager.toggle_schedule(row)
+            if success:
+                self._load_schedule_table()  # 刷新表格
+        except Exception as e:
+            logging.error(f"切换规则状态失败: {e}")
+            QMessageBox.critical(self, "错误", f"操作失败:\n{str(e)}")
+
+    def _delete_schedule(self, row):
+        """删除时间表规则"""
+        try:
+            from PySide6.QtWidgets import QMessageBox
+            reply = QMessageBox.question(
+                self,
+                "确认删除",
+                "确定要删除这条规则吗?",
+                QMessageBox.Yes | QMessageBox.No
+            )
+
+            if reply == QMessageBox.Yes:
+                success = self.schedule_manager.remove_schedule(row)
+                if success:
+                    self._load_schedule_table()  # 刷新表格
+                    QMessageBox.information(self, "成功", "规则已删除")
+
+        except Exception as e:
+            logging.error(f"删除规则失败: {e}")
+            QMessageBox.critical(self, "错误", f"删除失败:\n{str(e)}")
+
+    def _test_date_matching(self):
+        """测试指定日期会匹配到哪个模板"""
+        try:
+            if not hasattr(self, 'schedule_manager') or not self.schedule_manager:
+                QMessageBox.warning(self, "警告", "时间表管理器未初始化")
+                return
+
+            from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QDateEdit, QPushButton, QTextEdit
+            from datetime import datetime
+
+            dialog = QDialog(self)
+            dialog.setWindowTitle("测试日期匹配")
+            dialog.setMinimumWidth(500)
+            dialog.setMinimumHeight(350)
+
+            layout = QVBoxLayout()
+
+            # 说明
+            hint_label = QLabel("选择一个日期，查看该日期会匹配到哪个模板：")
+            hint_label.setStyleSheet("font-weight: bold; margin-bottom: 10px;")
+            layout.addWidget(hint_label)
+
+            # 日期选择器
+            date_edit = QDateEdit()
+            date_edit.setCalendarPopup(True)
+            date_edit.setDate(datetime.now().date())
+            date_edit.setDisplayFormat("yyyy-MM-dd")
+            layout.addWidget(date_edit)
+
+            # 结果显示区域
+            result_text = QTextEdit()
+            result_text.setReadOnly(True)
+            result_text.setMinimumHeight(150)
+            layout.addWidget(result_text)
+
+            def perform_test():
+                selected_date = date_edit.date().toPython()
+
+                # 获取匹配的模板
+                matched_template_id = self.schedule_manager.get_template_for_date(selected_date)
+
+                # 获取该日期的所有冲突模板
+                all_matched = self.schedule_manager.get_conflicts_for_date(selected_date)
+
+                # 构建结果文本
+                result_lines = []
+                result_lines.append(f"测试日期: {selected_date.strftime('%Y-%m-%d %A')}")
+                result_lines.append("")
+
+                if matched_template_id:
+                    # 获取模板名称
+                    template_name = matched_template_id
+                    if hasattr(self, 'template_manager') and self.template_manager:
+                        template = self.template_manager.get_template_by_id(matched_template_id)
+                        if template:
+                            template_name = template['name']
+
+                    result_lines.append(f"✅ 该日期会自动加载模板: {template_name}")
+                    result_lines.append("")
+
+                    if len(all_matched) > 1:
+                        result_lines.append(f"⚠️ 警告：该日期有 {len(all_matched)} 个模板规则冲突！")
+                        result_lines.append("冲突的模板：")
+                        for tid in all_matched:
+                            tname = tid
+                            if hasattr(self, 'template_manager') and self.template_manager:
+                                t = self.template_manager.get_template_by_id(tid)
+                                if t:
+                                    tname = t['name']
+                            result_lines.append(f"  - {tname}")
+                        result_lines.append("")
+                        result_lines.append("建议：删除或禁用其中某些规则，避免冲突")
+
+                else:
+                    result_lines.append("❌ 该日期没有匹配到任何模板规则")
+                    result_lines.append("")
+                    result_lines.append("将使用默认24小时模板")
+
+                result_text.setText("\n".join(result_lines))
+
+            # 测试按钮
+            test_btn = QPushButton("🔍 执行测试")
+            test_btn.setStyleSheet("QPushButton { background-color: #2196F3; color: white; padding: 8px; }")
+            test_btn.clicked.connect(perform_test)
+            layout.addWidget(test_btn)
+
+            # 关闭按钮
+            close_btn = QPushButton("关闭")
+            close_btn.clicked.connect(dialog.accept)
+            layout.addWidget(close_btn)
+
+            dialog.setLayout(layout)
+
+            # 初始执行一次测试
+            perform_test()
+
+            dialog.exec()
+
+        except Exception as e:
+            logging.error(f"测试日期匹配失败: {e}")
+            QMessageBox.critical(self, "错误", f"测试失败:\n{str(e)}")
 
     def _init_ai_components(self):
         """延迟初始化AI相关组件(在后台运行,不阻塞UI)"""
@@ -379,7 +1151,7 @@ class ConfigManager(QMainWindow):
 
         # 创建标签页(使用懒加载,只在切换到标签页时才创建内容)
         tabs = QTabWidget()
-        
+
         # 立即创建外观配置和任务管理标签页(基础功能)
         tabs.addTab(self.create_config_tab(), "外观配置")
         tabs.addTab(self.create_tasks_tab(), "任务管理")
@@ -387,7 +1159,7 @@ class ConfigManager(QMainWindow):
         # 延迟创建通知设置标签页(避免初始化时阻塞)
         self.notification_tab_widget = None
         tabs.addTab(QWidget(), "🔔 通知设置")  # 占位widget
-        
+
         # 连接标签页切换信号,实现懒加载
         tabs.currentChanged.connect(self.on_tab_changed)
         # 连接标签页切换信号,控制AI状态定时器
@@ -872,63 +1644,63 @@ class ConfigManager(QMainWindow):
         top_layout.addWidget(theme_group)
 
         # 模板加载区域 - 单行显示所有模板
-        template_group = QGroupBox("📋 预设模板")
-        template_layout = QHBoxLayout()
+        self.template_group = QGroupBox("📋 预设模板")
+        self.template_layout = QHBoxLayout()
 
         template_label = QLabel("快速加载:")
-        template_layout.addWidget(template_label)
+        self.template_layout.addWidget(template_label)
 
-        # 24小时模板按钮
-        template_24h_btn = QPushButton("24小时")
-        template_24h_btn.clicked.connect(lambda: self.load_template("tasks_template_24h.json"))
-        template_24h_btn.setStyleSheet("QPushButton { background-color: #4CAF50; color: white; padding: 6px; }")
-        template_layout.addWidget(template_24h_btn)
+        # 动态生成所有模板按钮（从templates_config.json，只显示预设模板）
+        if hasattr(self, 'template_manager') and self.template_manager:
+            templates = self.template_manager.get_all_templates(include_custom=False)
+            for template in templates:
+                btn = QPushButton(template['name'])
+                btn.clicked.connect(lambda checked, t=template: self.load_template(t['filename']))
+                btn.setStyleSheet(f"QPushButton {{ background-color: {template['button_color']}; color: white; padding: 6px; }}")
+                btn.setToolTip(template.get('description', ''))
+                self.template_layout.addWidget(btn)
+        else:
+            # 备用：如果template_manager未初始化，显示提示
+            fallback_label = QLabel("模板加载中...")
+            fallback_label.setStyleSheet("color: #999; font-style: italic;")
+            self.template_layout.addWidget(fallback_label)
+            # 延迟重新创建模板按钮
+            QTimer.singleShot(500, self._reload_template_buttons)
 
-        # 工作日模板按钮
-        template_work_btn = QPushButton("工作日")
-        template_work_btn.clicked.connect(lambda: self.load_template("tasks_template_workday.json"))
-        template_work_btn.setStyleSheet("QPushButton { background-color: #2196F3; color: white; padding: 6px; }")
-        template_layout.addWidget(template_work_btn)
+        self.template_layout.addStretch()
+        self.template_group.setLayout(self.template_layout)
+        top_layout.addWidget(self.template_group)
 
-        # 学生模板按钮
-        template_student_btn = QPushButton("学生")
-        template_student_btn.clicked.connect(lambda: self.load_template("tasks_template_student.json"))
-        template_student_btn.setStyleSheet("QPushButton { background-color: #9C27B0; color: white; padding: 6px; }")
-        template_layout.addWidget(template_student_btn)
+        # 我的模板区域 - 下拉框选择样式
+        self.custom_template_group = QGroupBox("💾 我的模板")
+        self.custom_template_layout = QHBoxLayout()
 
-        # 自由职业者模板
-        template_freelancer_btn = QPushButton("自由职业")
-        template_freelancer_btn.clicked.connect(lambda: self.load_template("tasks_template_freelancer.json"))
-        template_freelancer_btn.setStyleSheet("QPushButton { background-color: #00BCD4; color: white; padding: 6px; }")
-        template_layout.addWidget(template_freelancer_btn)
+        custom_label = QLabel("选择模板:")
+        self.custom_template_layout.addWidget(custom_label)
 
-        # 夜班作息模板
-        template_night_btn = QPushButton("夜班")
-        template_night_btn.clicked.connect(lambda: self.load_template("tasks_template_night_shift.json"))
-        template_night_btn.setStyleSheet("QPushButton { background-color: #3F51B5; color: white; padding: 6px; }")
-        template_layout.addWidget(template_night_btn)
+        # 创建自定义模板下拉框
+        self.custom_template_combo = QComboBox()
+        self.custom_template_combo.setMinimumWidth(200)
+        self.custom_template_layout.addWidget(self.custom_template_combo)
 
-        # 内容创作者模板
-        template_creator_btn = QPushButton("创作者")
-        template_creator_btn.clicked.connect(lambda: self.load_template("tasks_template_creator.json"))
-        template_creator_btn.setStyleSheet("QPushButton { background-color: #E91E63; color: white; padding: 6px; }")
-        template_layout.addWidget(template_creator_btn)
+        # 加载按钮
+        load_custom_btn = QPushButton("📂 加载")
+        load_custom_btn.setToolTip("加载选中的自定义模板")
+        load_custom_btn.clicked.connect(self._load_selected_custom_template)
+        self.custom_template_layout.addWidget(load_custom_btn)
 
-        # 健身达人模板
-        template_fitness_btn = QPushButton("健身")
-        template_fitness_btn.clicked.connect(lambda: self.load_template("tasks_template_fitness.json"))
-        template_fitness_btn.setStyleSheet("QPushButton { background-color: #FF5722; color: white; padding: 6px; }")
-        template_layout.addWidget(template_fitness_btn)
+        # 删除按钮
+        delete_custom_btn = QPushButton("🗑️ 删除")
+        delete_custom_btn.setToolTip("删除选中的自定义模板")
+        delete_custom_btn.clicked.connect(self._delete_selected_custom_template)
+        self.custom_template_layout.addWidget(delete_custom_btn)
 
-        # 创业者模板
-        template_entrepreneur_btn = QPushButton("创业者")
-        template_entrepreneur_btn.clicked.connect(lambda: self.load_template("tasks_template_entrepreneur.json"))
-        template_entrepreneur_btn.setStyleSheet("QPushButton { background-color: #FF9800; color: white; padding: 6px; }")
-        template_layout.addWidget(template_entrepreneur_btn)
+        # 动态加载自定义模板列表
+        self._reload_custom_template_combo()
 
-        template_layout.addStretch()
-        template_group.setLayout(template_layout)
-        top_layout.addWidget(template_group)
+        self.custom_template_layout.addStretch()
+        self.custom_template_group.setLayout(self.custom_template_layout)
+        top_layout.addWidget(self.custom_template_group)
 
         layout.addLayout(top_layout)
 
@@ -994,6 +1766,54 @@ class ConfigManager(QMainWindow):
         button_layout.addStretch()
 
         layout.addLayout(button_layout)
+
+        # ========== 模板自动应用管理（放在最底部） ==========
+        schedule_panel = QGroupBox("📅 模板自动应用管理")
+        schedule_layout = QVBoxLayout()
+
+        # 说明文字
+        schedule_hint = QLabel("💡 为每个模板设置自动应用的日期规则，到了指定时间会自动加载对应模板")
+        schedule_hint.setStyleSheet("color: #666; font-style: italic; padding: 5px;")
+        schedule_layout.addWidget(schedule_hint)
+
+        # 已配置规则表格
+        self.schedule_table = QTableWidget()
+        self.schedule_table.setColumnCount(4)
+        self.schedule_table.setHorizontalHeaderLabels([
+            "模板名称", "应用时间", "状态", "操作"
+        ])
+        self.schedule_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.schedule_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+        self.schedule_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.schedule_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        self.schedule_table.setMaximumHeight(200)
+        self.schedule_table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.schedule_table.setSelectionMode(QTableWidget.SingleSelection)
+
+        # 延迟加载时间表数据
+        QTimer.singleShot(300, self._load_schedule_table)
+
+        schedule_layout.addWidget(self.schedule_table)
+
+        # 操作按钮行
+        button_row = QHBoxLayout()
+
+        add_schedule_btn = QPushButton("➕ 添加规则")
+        add_schedule_btn.setStyleSheet("QPushButton { background-color: #4CAF50; color: white; padding: 8px; }")
+        add_schedule_btn.clicked.connect(self._add_schedule_dialog)
+        button_row.addWidget(add_schedule_btn)
+
+        test_date_btn = QPushButton("🔍 测试日期")
+        test_date_btn.setToolTip("测试指定日期会匹配到哪个模板")
+        test_date_btn.clicked.connect(self._test_date_matching)
+        button_row.addWidget(test_date_btn)
+
+        button_row.addStretch()
+
+        schedule_layout.addLayout(button_row)
+
+        schedule_panel.setLayout(schedule_layout)
+        layout.addWidget(schedule_panel)
 
         return widget
 
@@ -1765,13 +2585,48 @@ class ConfigManager(QMainWindow):
         template_path = self.app_dir / template_filename
 
         try:
+            # 保存任务文件
             with open(template_path, 'w', encoding='utf-8') as f:
                 json.dump(tasks, f, indent=4, ensure_ascii=False)
+
+            # 保存元数据
+            from datetime import datetime
+            meta_data = self._get_custom_templates_meta()
+
+            # 检查是否已存在同名模板
+            existing_template = None
+            for t in meta_data['templates']:
+                if t['filename'] == template_filename:
+                    existing_template = t
+                    break
+
+            if existing_template:
+                # 更新现有模板
+                existing_template['task_count'] = len(tasks)
+                existing_template['updated_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            else:
+                # 添加新模板
+                import uuid
+                template_meta = {
+                    "id": f"custom_{uuid.uuid4().hex[:8]}",
+                    "name": template_name,
+                    "filename": template_filename,
+                    "description": f"自定义模板 ({len(tasks)}个任务)",
+                    "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    "task_count": len(tasks)
+                }
+                meta_data['templates'].append(template_meta)
+
+            # 保存元数据
+            self._save_custom_templates_meta(meta_data)
+
+            # 刷新"我的模板"UI
+            self._reload_custom_template_combo()
 
             QMessageBox.information(
                 self,
                 "保存成功",
-                f"模板已保存:\n{template_filename}\n\n可以通过【加载自定义模板】按钮加载此模板。"
+                f"模板已保存:\n{template_filename}\n\n已添加到【我的模板】列表中。"
             )
         except Exception as e:
             QMessageBox.critical(self, "保存失败", f"无法保存模板:\n{str(e)}")
@@ -1844,6 +2699,429 @@ class ConfigManager(QMainWindow):
             QMessageBox.critical(self, "错误", f"模板文件格式错误:\n{str(e)}")
         except Exception as e:
             QMessageBox.critical(self, "错误", f"加载模板失败:\n{str(e)}")
+
+
+    def _reload_template_buttons(self):
+        """重新加载模板按钮（当template_manager延迟初始化完成后调用）"""
+        try:
+            if not hasattr(self, 'template_manager') or not self.template_manager:
+                logging.warning("TemplateManager尚未初始化，延迟500ms后重试")
+                # 延迟重试
+                QTimer.singleShot(500, self._reload_template_buttons)
+                return
+
+            if not hasattr(self, 'template_layout'):
+                logging.error("template_layout未找到，无法重新加载模板按钮")
+                return
+
+            logging.info("TemplateManager已初始化，重新构建模板按钮")
+
+            # 清空布局中的所有控件
+            while self.template_layout.count():
+                item = self.template_layout.takeAt(0)
+                if item.widget():
+                    item.widget().deleteLater()
+
+            # 重新添加"快速加载:"标签
+            template_label = QLabel("快速加载:")
+            self.template_layout.addWidget(template_label)
+
+            # 重新添加所有模板按钮（只显示预设模板）
+            templates = self.template_manager.get_all_templates(include_custom=False)
+            for template in templates:
+                btn = QPushButton(template['name'])
+                btn.clicked.connect(lambda checked, t=template: self.load_template(t['filename']))
+                btn.setStyleSheet(f"QPushButton {{ background-color: {template['button_color']}; color: white; padding: 6px; }}")
+                btn.setToolTip(template.get('description', ''))
+                self.template_layout.addWidget(btn)
+
+            # 添加弹性空间
+            self.template_layout.addStretch()
+
+            logging.info(f"成功加载 {len(templates)} 个模板按钮")
+
+        except Exception as e:
+            logging.error(f"重新加载模板按钮失败: {e}")
+
+
+    def _get_custom_templates_meta(self):
+        """获取自定义模板元数据"""
+        meta_file = self.app_dir / "custom_templates_meta.json"
+
+        if not meta_file.exists():
+            return {"version": "1.0", "templates": []}
+
+        try:
+            with open(meta_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            logging.error(f"加载自定义模板元数据失败: {e}")
+            return {"version": "1.0", "templates": []}
+
+
+    def _save_custom_templates_meta(self, meta_data):
+        """保存自定义模板元数据"""
+        meta_file = self.app_dir / "custom_templates_meta.json"
+
+        try:
+            with open(meta_file, 'w', encoding='utf-8') as f:
+                json.dump(meta_data, f, indent=4, ensure_ascii=False)
+            return True
+        except Exception as e:
+            logging.error(f"保存自定义模板元数据失败: {e}")
+            return False
+
+
+    def _reload_custom_template_combo(self):
+        """重新加载自定义模板下拉框"""
+        try:
+            if not hasattr(self, 'custom_template_combo'):
+                logging.warning("custom_template_combo未找到")
+                return
+
+            # 清空下拉框
+            self.custom_template_combo.clear()
+
+            # 获取自定义模板元数据
+            meta_data = self._get_custom_templates_meta()
+            templates = meta_data.get('templates', [])
+
+            if not templates:
+                # 没有自定义模板时显示提示
+                self.custom_template_combo.addItem("(暂无自定义模板)", None)
+            else:
+                # 添加自定义模板到下拉框
+                for template in templates:
+                    display_name = f"{template['name']} ({template.get('task_count', 0)}个任务)"
+                    self.custom_template_combo.addItem(display_name, template)
+
+            logging.info(f"成功加载 {len(templates)} 个自定义模板到下拉框")
+
+        except Exception as e:
+            logging.error(f"重新加载自定义模板下拉框失败: {e}")
+
+
+    def _load_selected_custom_template(self):
+        """加载选中的自定义模板"""
+        if not hasattr(self, 'custom_template_combo'):
+            return
+
+        index = self.custom_template_combo.currentIndex()
+        if index < 0:
+            return
+
+        template = self.custom_template_combo.itemData(index)
+        if not template:
+            QMessageBox.information(self, "提示", "请先创建自定义模板")
+            return
+
+        filename = template['filename']
+        self._load_custom_template_by_filename(filename)
+
+
+    def _delete_selected_custom_template(self):
+        """删除选中的自定义模板"""
+        if not hasattr(self, 'custom_template_combo'):
+            return
+
+        index = self.custom_template_combo.currentIndex()
+        if index < 0:
+            return
+
+        template = self.custom_template_combo.itemData(index)
+        if not template:
+            QMessageBox.information(self, "提示", "请先创建自定义模板")
+            return
+
+        self._delete_custom_template(template)
+
+
+    def _load_custom_template_by_filename(self, filename):
+        """通过文件名加载自定义模板"""
+        template_path = self.app_dir / filename
+
+        if not template_path.exists():
+            QMessageBox.warning(self, "错误", f"模板文件不存在:\n{filename}")
+            return
+
+        try:
+            with open(template_path, 'r', encoding='utf-8') as f:
+                template_tasks = json.load(f)
+
+            # 确认加载
+            reply = QMessageBox.question(
+                self,
+                '确认加载模板',
+                f'即将加载自定义模板: {filename}\n\n包含 {len(template_tasks)} 个任务\n\n当前表格中的任务将被替换,是否继续?',
+                QMessageBox.Yes | QMessageBox.No
+            )
+
+            if reply == QMessageBox.Yes:
+                # 清空当前任务
+                self.tasks_table.setRowCount(0)
+
+                # 加载模板任务
+                self.tasks = template_tasks
+                self.load_tasks_to_table()
+
+                # 刷新时间轴（延迟执行）
+                if hasattr(self, 'timeline_editor') and self.timeline_editor:
+                    QTimer.singleShot(50, lambda: self.timeline_editor.set_tasks(template_tasks) if self.timeline_editor else None)
+
+                QMessageBox.information(
+                    self,
+                    "加载成功",
+                    f"已加载 {len(template_tasks)} 个任务\n\n记得点击【保存所有设置】按钮来应用更改"
+                )
+
+        except json.JSONDecodeError as e:
+            QMessageBox.critical(self, "错误", f"模板文件格式错误:\n{str(e)}")
+        except Exception as e:
+            QMessageBox.critical(self, "错误", f"加载模板失败:\n{str(e)}")
+
+
+    def _delete_custom_template(self, template):
+        """删除自定义模板"""
+        try:
+            # 确认删除
+            reply = QMessageBox.question(
+                self,
+                '确认删除',
+                f'确定要删除模板 "{template["name"]}" 吗?\n\n此操作不可撤销!',
+                QMessageBox.Yes | QMessageBox.No
+            )
+
+            if reply != QMessageBox.Yes:
+                return
+
+            # 删除模板文件
+            template_path = self.app_dir / template['filename']
+            if template_path.exists():
+                template_path.unlink()
+
+            # 从元数据中移除
+            meta_data = self._get_custom_templates_meta()
+            meta_data['templates'] = [t for t in meta_data['templates'] if t['filename'] != template['filename']]
+            self._save_custom_templates_meta(meta_data)
+
+            # 刷新UI
+            self._reload_custom_template_combo()
+
+            QMessageBox.information(self, "删除成功", f"模板 \"{template['name']}\" 已删除")
+
+        except Exception as e:
+            QMessageBox.critical(self, "删除失败", f"无法删除模板:\n{str(e)}")
+
+
+    def _load_template_auto_apply_settings(self):
+        """加载模板自动应用设置到表格"""
+        try:
+            if not hasattr(self, 'template_manager') or not self.template_manager:
+                logging.warning("TemplateManager未初始化，延迟加载自动应用设置")
+                # 延迟重试
+                QTimer.singleShot(500, self._load_template_auto_apply_settings)
+                return
+
+            # 模板自动应用只针对预设模板（自定义模板使用时间表规则）
+            templates = self.template_manager.get_all_templates(include_custom=False)
+            self.template_auto_apply_table.setRowCount(len(templates))
+
+            for row, template in enumerate(templates):
+                # 模板名称（只读）
+                name_item = QTableWidgetItem(template['name'])
+                name_item.setFlags(name_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                name_item.setToolTip(template.get('description', ''))
+                self.template_auto_apply_table.setItem(row, 0, name_item)
+
+                # 启用自动应用（复选框）
+                auto_apply = template.get('auto_apply', {})
+                enabled_check = QCheckBox()
+                enabled_check.setChecked(auto_apply.get('enabled', False))
+                enabled_check.setStyleSheet("QCheckBox { margin-left: 20%; }")
+                self.template_auto_apply_table.setCellWidget(row, 1, enabled_check)
+
+                # 工作日复选框
+                weekday_check = QCheckBox()
+                conditions = auto_apply.get('conditions', [])
+                weekday_check.setChecked('weekday' in conditions)
+                weekday_check.setStyleSheet("QCheckBox { margin-left: 20%; }")
+                self.template_auto_apply_table.setCellWidget(row, 2, weekday_check)
+
+                # 周末复选框
+                weekend_check = QCheckBox()
+                weekend_check.setChecked('weekend' in conditions)
+                weekend_check.setStyleSheet("QCheckBox { margin-left: 20%; }")
+                self.template_auto_apply_table.setCellWidget(row, 3, weekend_check)
+
+                # 节假日复选框
+                holiday_check = QCheckBox()
+                holiday_check.setChecked('holiday' in conditions)
+                holiday_check.setStyleSheet("QCheckBox { margin-left: 20%; }")
+                self.template_auto_apply_table.setCellWidget(row, 4, holiday_check)
+
+            logging.info(f"已加载 {len(templates)} 个模板的自动应用设置")
+
+        except Exception as e:
+            logging.error(f"加载模板自动应用设置失败: {e}")
+
+    def _save_template_auto_apply_settings(self):
+        """保存表格中的自动应用设置到templates_config.json"""
+        try:
+            if not hasattr(self, 'template_manager') or not self.template_manager:
+                QMessageBox.warning(self, "警告", "模板管理器未初始化")
+                return
+
+            # 模板自动应用只针对预设模板（自定义模板使用时间表规则）
+            templates = self.template_manager.get_all_templates(include_custom=False)
+            row_count = self.template_auto_apply_table.rowCount()
+
+            updated_count = 0
+            for row in range(row_count):
+                if row >= len(templates):
+                    break
+
+                template = templates[row]
+                template_id = template['id']
+
+                # 读取复选框状态
+                enabled_widget = self.template_auto_apply_table.cellWidget(row, 1)
+                weekday_widget = self.template_auto_apply_table.cellWidget(row, 2)
+                weekend_widget = self.template_auto_apply_table.cellWidget(row, 3)
+                holiday_widget = self.template_auto_apply_table.cellWidget(row, 4)
+
+                enabled = enabled_widget.isChecked() if enabled_widget else False
+
+                # 构建conditions列表
+                conditions = []
+                if weekday_widget and weekday_widget.isChecked():
+                    conditions.append('weekday')
+                if weekend_widget and weekend_widget.isChecked():
+                    conditions.append('weekend')
+                if holiday_widget and holiday_widget.isChecked():
+                    conditions.append('holiday')
+
+                # 使用TemplateManager的set_auto_apply方法保存
+                success = self.template_manager.set_auto_apply(
+                    template_id=template_id,
+                    enabled=enabled,
+                    conditions=conditions,
+                    priority=5 if enabled else 0  # 启用时设置默认优先级
+                )
+
+                if success:
+                    updated_count += 1
+
+            if updated_count > 0:
+                QMessageBox.information(
+                    self,
+                    "保存成功",
+                    f"已保存 {updated_count} 个模板的自动应用设置"
+                )
+                logging.info(f"已保存 {updated_count} 个模板的自动应用设置")
+            else:
+                QMessageBox.warning(self, "警告", "没有设置被保存")
+
+        except Exception as e:
+            logging.error(f"保存模板自动应用设置失败: {e}")
+            QMessageBox.critical(self, "错误", f"保存失败:\n{str(e)}")
+
+    def _test_template_matching(self):
+        """测试日期匹配功能"""
+        try:
+            from datetime import datetime
+            from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QDateEdit, QPushButton, QTextEdit
+
+            if not hasattr(self, 'template_manager') or not self.template_manager:
+                QMessageBox.warning(self, "警告", "模板管理器未初始化")
+                return
+
+            # 创建测试对话框
+            dialog = QDialog(self)
+            dialog.setWindowTitle("测试模板匹配")
+            dialog.setMinimumWidth(500)
+            dialog.setMinimumHeight(350)
+
+            layout = QVBoxLayout()
+
+            # 说明
+            hint_label = QLabel("选择一个日期，查看该日期会匹配到哪个模板：")
+            hint_label.setStyleSheet("font-weight: bold; margin-bottom: 10px;")
+            layout.addWidget(hint_label)
+
+            # 日期选择器
+            date_edit = QDateEdit()
+            date_edit.setCalendarPopup(True)
+            date_edit.setDate(datetime.now().date())
+            date_edit.setDisplayFormat("yyyy-MM-dd")
+            layout.addWidget(date_edit)
+
+            # 结果显示区域
+            result_text = QTextEdit()
+            result_text.setReadOnly(True)
+            result_text.setMinimumHeight(150)
+            layout.addWidget(result_text)
+
+            def perform_test():
+                selected_date = date_edit.date().toPython()
+                test_datetime = datetime(selected_date.year, selected_date.month, selected_date.day)
+
+                # 获取日期类型
+                date_type = self.template_manager.get_date_type(test_datetime)
+
+                # 获取匹配的模板
+                matching_templates = self.template_manager.get_matching_templates(test_datetime)
+                best_match = self.template_manager.get_best_match_template(test_datetime)
+
+                # 构建结果文本
+                result_lines = []
+                result_lines.append(f"测试日期: {test_datetime.strftime('%Y-%m-%d %A')}")
+                result_lines.append(f"\n日期类型: {date_type}")
+                result_lines.append(f"  - weekday: 工作日")
+                result_lines.append(f"  - weekend: 周末")
+                result_lines.append(f"  - holiday: 节假日")
+
+                result_lines.append(f"\n匹配到 {len(matching_templates)} 个启用自动应用的模板:")
+
+                if matching_templates:
+                    for i, tmpl in enumerate(matching_templates, 1):
+                        auto_apply = tmpl.get('auto_apply', {})
+                        priority = auto_apply.get('priority', 0)
+                        conditions = auto_apply.get('conditions', [])
+                        result_lines.append(
+                            f"  {i}. {tmpl['name']} (优先级: {priority}, 条件: {', '.join(conditions) if conditions else '任意'})"
+                        )
+
+                    if best_match:
+                        result_lines.append(f"\n✅ 最佳匹配（优先级最高）: {best_match['name']}")
+                        result_lines.append(f"   → 将自动加载: {best_match['filename']}")
+                else:
+                    result_lines.append("  (无匹配模板)")
+                    result_lines.append("\n❌ 没有模板会在该日期自动应用")
+                    result_lines.append("   → 将使用默认24小时模板")
+
+                result_text.setText("\n".join(result_lines))
+
+            # 测试按钮
+            test_btn = QPushButton("🔍 执行测试")
+            test_btn.setStyleSheet("QPushButton { background-color: #2196F3; color: white; padding: 8px; }")
+            test_btn.clicked.connect(perform_test)
+            layout.addWidget(test_btn)
+
+            # 关闭按钮
+            close_btn = QPushButton("关闭")
+            close_btn.clicked.connect(dialog.accept)
+            layout.addWidget(close_btn)
+
+            dialog.setLayout(layout)
+
+            # 初始执行一次测试
+            perform_test()
+
+            dialog.exec()
+
+        except Exception as e:
+            logging.error(f"测试模板匹配失败: {e}")
+            QMessageBox.critical(self, "错误", f"测试失败:\n{str(e)}")
 
     def load_template(self, template_filename):
         """加载预设模板"""
