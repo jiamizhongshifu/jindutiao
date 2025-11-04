@@ -4,11 +4,11 @@
 
 ### 这是病毒吗？
 
-**不是！** PyDayBar 是完全开源的桌面应用程序，所有源代码公开透明可审计。
+**不是！** Gaiya (盖亚) 是完全开源的桌面应用程序，所有源代码公开透明可审计。
 
 ### 为什么会被杀毒软件报毒？
 
-PyDayBar 使用 **PyInstaller** 打包，这是 Python 应用的标准打包方式。部分杀毒软件可能因以下原因误报：
+Gaiya 使用 **PyInstaller** 打包，这是 Python 应用的标准打包方式。部分杀毒软件可能因以下原因误报：
 
 1. **打包方式特征**
    - PyInstaller 将 Python 解释器和代码打包成单个可执行文件
@@ -31,7 +31,7 @@ PyDayBar 使用 **PyInstaller** 打包，这是 Python 应用的标准打包方�
 
 ### 1. 开源透明
 
-- **GitHub仓库**: [https://github.com/[你的用户名]/PyDayBar](https://github.com/[你的用户名]/PyDayBar)
+- **GitHub仓库**: [https://github.com/jiamizhongshifu/jindutiao](https://github.com/jiamizhongshifu/jindutiao)
 - **完整源代码**: 所有功能的实现代码完全公开
 - **可审计性**: 任何人都可以审查代码逻辑
 - **社区监督**: 接受开源社区的安全审查
@@ -89,11 +89,11 @@ certutil -hashfile PyDayBar-v1.4.exe SHA256
 
 ## 🔐 隐私保护
 
-### PyDayBar 收集哪些数据？
+### Gaiya 收集哪些数据？
 
 **我们不收集任何个人数据！**
 
-PyDayBar 是完全本地运行的应用：
+Gaiya 是完全本地运行的应用：
 - ✅ 所有数据存储在本地（`%APPDATA%\PyDayBar\`）
 - ✅ 无需注册、无需登录
 - ✅ 无后台上传
@@ -181,7 +181,7 @@ pyinstaller PyDayBar.spec
 
 ### 关键安全文件
 
-如果您想审计 PyDayBar 的安全性，建议重点查看：
+如果您想审计 Gaiya 的安全性，建议重点查看：
 
 1. **注册表操作**
    - 文件：`autostart_manager.py`
@@ -242,12 +242,12 @@ pyinstaller PyDayBar.spec
 
 ## 📜 许可证
 
-PyDayBar 遵循 [MIT License](LICENSE) 开源协议。
+Gaiya 遵循 [MIT License](LICENSE) 开源协议。
 
 ```
 MIT License
 
-Copyright (c) 2025 PyDayBar Project
+Copyright (c) 2025 Gaiya Project
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

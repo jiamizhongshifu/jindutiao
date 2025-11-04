@@ -1,5 +1,6 @@
-# PyDayBar v1.4 Release Notes
+# Gaiya (盖亚) v1.4 Release Notes
 
+> 🌍 **守护你的每一分钟**
 > 🎉 **发布日期**: 2025-11-04
 > 📦 **版本号**: v1.4.0
 > 🔖 **代号**: Template Enhancement & Security Update
@@ -83,7 +84,7 @@ Get-FileHash -Path "PyDayBar-v1.4.exe" -Algorithm SHA256
 
 ### 为什么会误报？
 
-PyDayBar使用PyInstaller打包，这是Python应用的标准打包方式。部分杀毒软件可能因以下原因误报：
+Gaiya 使用PyInstaller打包，这是Python应用的标准打包方式。部分杀毒软件可能因以下原因误报：
 - PyInstaller自解压行为类似压缩包病毒
 - 访问Windows注册表实现开机自启
 - 软件知名度较低，缺乏信誉积累
@@ -207,8 +208,8 @@ python main.py
 
 ## 📄 许可证
 
-PyDayBar 遵循 [MIT License](https://github.com/[你的用户名]/PyDayBar/blob/main/LICENSE) 开源协议。
+Gaiya 遵循 [MIT License](https://github.com/jiamizhongshifu/jindutiao/blob/main/LICENSE) 开源协议。
 
 ---
 
-**🌟 如果 PyDayBar 对你有帮助，请给我们一个 Star！**
+**🌟 如果 Gaiya 对你有帮助，请给我们一个 Star！**

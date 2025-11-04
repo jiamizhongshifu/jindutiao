@@ -1,6 +1,8 @@
-# PyDayBar - 桌面日历进度条 📅
+# Gaiya (盖亚) - 桌面时间可视化工具 🌍
 
 <div align="center">
+
+**守护你的每一分钟** ⏱️
 
 一个简洁优雅的桌面时间进度条工具,实时可视化您的每日任务安排
 
@@ -11,7 +13,7 @@
 [![License](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com)
 
-**📥 [下载 PyDayBar v1.4.0 (Windows 64-bit)](https://github.com/jiamizhongshifu/jindutiao/releases/download/v1.4.0/PyDayBar-v1.4.exe)**
+**📥 [下载 Gaiya v1.4.0 (Windows 64-bit)](https://github.com/jiamizhongshifu/jindutiao/releases/download/v1.4.0/PyDayBar-v1.4.exe)**
 
 **当前版本: v1.4.0** | 最后更新: 2025-11-04 | 智能模板管理 + 安全增强 ✅
 
@@ -38,7 +40,7 @@
 
 ## 🔒 关于杀毒软件误报
 
-**PyDayBar 是完全开源的软件,所有代码公开可审计。**
+**Gaiya 是完全开源的软件,所有代码公开可审计。**
 
 部分杀毒软件可能因PyInstaller打包方式误报,这是Python应用的常见问题。
 
@@ -347,7 +349,7 @@ dist/PyDayBar-v1.4.exe
 ## 📁 项目结构
 
 ```
-PyDayBar/
+Gaiya/
 ├── main.py                      # 主程序入口
 ├── config_gui.py                # 配置管理器(已集成)
 ├── ai_client.py                 # AI客户端(调用Vercel API)
@@ -433,15 +435,15 @@ PyDayBar/
 
 Windows:
 - 按 `Win+R`,输入 `shell:startup`
-- 将 PyDayBar 的快捷方式复制到打开的文件夹
+- 将 Gaiya 的快捷方式复制到打开的文件夹
 
 Linux:
-- 创建 `~/.config/autostart/pydaybar.desktop`
+- 创建 `~/.config/autostart/gaiya.desktop`
 - 添加应用启动命令
 
 macOS:
 - 系统偏好设置 → 用户与群组 → 登录项
-- 添加 PyDayBar 应用
+- 添加 Gaiya 应用
 
 ### Q6: 配额什么时候重置?
 
@@ -638,7 +640,7 @@ MIT License - 详见 [LICENSE](LICENSE) 文件
 
 <div align="center">
 
-Made with ❤️ by PyDayBar Team
+Made with ❤️ by Gaiya Team
 
 ⭐ 如果觉得这个项目不错,请给我们一个Star! ⭐
 
