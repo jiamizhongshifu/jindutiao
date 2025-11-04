@@ -21,7 +21,7 @@ def load_config(app_dir, logger):
 
     # 默认配置
     default_config = {
-        "bar_height": 20,
+        "bar_height": 10,
         "position": "bottom",
         "background_color": "#505050",
         "background_opacity": 180,
@@ -29,8 +29,10 @@ def load_config(app_dir, logger):
         "marker_width": 2,
         "marker_type": "gif",  # "line", "image", "gif"
         "marker_image_path": "kun.webp",  # 默认使用kun.webp
-        "marker_size": 50,  # 标记图片大小(像素)
-        "marker_y_offset": 0,  # 标记图片 Y 轴偏移(像素,正值向上,负值向下)
+        "marker_size": 100,  # 标记图片大小(像素)
+        "marker_speed": 100,  # 动画播放速度(百分比, 100=标准速度)
+        "marker_x_offset": 0,  # 标记图片 X 轴偏移(像素,正值向右,负值向左)
+        "marker_y_offset": -28,  # 标记图片 Y 轴偏移(像素,正值向上,负值向下)
         "screen_index": 0,
         "update_interval": 1000,
         "enable_shadow": True,
