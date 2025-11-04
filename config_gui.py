@@ -11,7 +11,8 @@ from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QTabWidget, QLabel, QLineEdit, QSpinBox, QPushButton, QColorDialog,
     QComboBox, QCheckBox, QTableWidget, QTableWidgetItem, QHeaderView,
-    QMessageBox, QTimeEdit, QGroupBox, QFormLayout, QFileDialog
+    QMessageBox, QTimeEdit, QGroupBox, QFormLayout, QFileDialog, QDialog,
+    QDialogButtonBox
 )
 from PySide6.QtCore import Qt, QTime, Signal, QThread, QTimer
 from PySide6.QtGui import QColor, QIcon
@@ -43,6 +44,119 @@ class AIWorker(QThread):
             self.finished.emit(result)
         except Exception as e:
             self.error.emit(str(e))
+
+
+class SaveTemplateDialog(QDialog):
+    """保存模板对话框 - 智能适应有无历史模板的情况"""
+
+    def __init__(self, existing_templates, parent=None):
+        """
+        初始化对话框
+
+        Args:
+            existing_templates: 现有模板列表 [{"name": "模板名", ...}, ...]
+            parent: 父窗口
+        """
+        super().__init__(parent)
+        self.existing_templates = existing_templates
+        self.template_name = None
+        self.init_ui()
+
+    def init_ui(self):
+        """初始化UI"""
+        self.setWindowTitle("保存为模板")
+        self.setMinimumWidth(400)
+
+        layout = QVBoxLayout()
+
+        # 提示文本
+        if self.existing_templates:
+            hint_label = QLabel("选择要覆盖的模板或输入新的模板名称:")
+        else:
+            hint_label = QLabel("请输入模板名称:")
+
+        layout.addWidget(hint_label)
+
+        # 根据是否有历史模板决定使用下拉框还是输入框
+        if self.existing_templates:
+            # 有历史模板,使用可编辑的下拉框
+            self.input_widget = QComboBox()
+            self.input_widget.setEditable(True)
+            self.input_widget.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+
+            # 添加历史模板到下拉框
+            for template in self.existing_templates:
+                template_name = template.get('name', '')
+                task_count = template.get('task_count', 0)
+                display_text = f"{template_name} ({task_count}个任务)"
+                self.input_widget.addItem(display_text, template_name)
+
+            # 设置当前文本为空,引导用户选择或输入
+            self.input_widget.setCurrentIndex(-1)
+            self.input_widget.setPlaceholderText("选择历史模板或输入新名称")
+        else:
+            # 无历史模板,使用普通输入框
+            self.input_widget = QLineEdit()
+            self.input_widget.setPlaceholderText("例如: 工作日模板")
+
+        layout.addWidget(self.input_widget)
+
+        # 提示信息
+        if self.existing_templates:
+            tip_label = QLabel(
+                "💡 提示:\n"
+                "• 选择历史模板将直接覆盖该模板\n"
+                "• 输入新名称将创建新的模板"
+            )
+            tip_label.setStyleSheet("color: #666; font-size: 11px; padding: 10px;")
+            layout.addWidget(tip_label)
+
+        # 按钮
+        button_box = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+        button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
+        layout.addWidget(button_box)
+
+        self.setLayout(layout)
+
+    def accept(self):
+        """确定按钮点击"""
+        # 获取模板名称
+        if isinstance(self.input_widget, QComboBox):
+            # 下拉框:可能是选择的历史模板,也可能是手动输入的新名称
+            current_text = self.input_widget.currentText()
+
+            # 检查是否选择了历史模板(通过匹配显示文本)
+            current_data = self.input_widget.currentData()
+            if current_data:
+                # 选择了历史模板
+                self.template_name = current_data
+            else:
+                # 手动输入的新名称
+                # 需要去掉可能的任务数量后缀
+                template_name = current_text.strip()
+                # 如果输入的恰好和某个显示文本一致,提取实际名称
+                for i in range(self.input_widget.count()):
+                    if self.input_widget.itemText(i) == template_name:
+                        template_name = self.input_widget.itemData(i)
+                        break
+                self.template_name = template_name
+        else:
+            # 输入框
+            self.template_name = self.input_widget.text().strip()
+
+        # 验证名称不为空
+        if not self.template_name:
+            QMessageBox.warning(self, "输入错误", "模板名称不能为空!")
+            return
+
+        super().accept()
+
+    def get_template_name(self):
+        """获取用户输入/选择的模板名称"""
+        return self.template_name
 
 
 class ConfigManager(QMainWindow):
@@ -2533,24 +2647,22 @@ class ConfigManager(QMainWindow):
 
     def save_as_template(self):
         """将当前任务保存为自定义模板"""
-        from PySide6.QtWidgets import QInputDialog, QFileDialog
-
         if self.tasks_table.rowCount() == 0:
             QMessageBox.warning(self, "无法保存", "当前没有任何任务,无法保存为模板!")
             return
 
-        # 询问模板名称
-        template_name, ok = QInputDialog.getText(
-            self,
-            "保存模板",
-            "请输入模板名称(不需要输入.json后缀):",
-            text="我的自定义模板"
-        )
+        # 获取现有模板列表
+        meta_data = self._get_custom_templates_meta()
+        existing_templates = meta_data.get('templates', [])
 
-        if not ok or not template_name.strip():
+        # 显示智能保存对话框
+        dialog = SaveTemplateDialog(existing_templates, self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
             return
 
-        template_name = template_name.strip()
+        template_name = dialog.get_template_name()
+        if not template_name:
+            return
 
         # 收集当前所有任务
         tasks = []
@@ -2595,9 +2707,11 @@ class ConfigManager(QMainWindow):
 
             # 检查是否已存在同名模板
             existing_template = None
+            is_update = False
             for t in meta_data['templates']:
                 if t['filename'] == template_filename:
                     existing_template = t
+                    is_update = True
                     break
 
             if existing_template:
@@ -2623,10 +2737,16 @@ class ConfigManager(QMainWindow):
             # 刷新"我的模板"UI
             self._reload_custom_template_combo()
 
+            # 根据是新建还是更新显示不同的提示
+            if is_update:
+                success_msg = f"模板已更新:\n{template_filename}\n\n包含 {len(tasks)} 个任务。"
+            else:
+                success_msg = f"模板已创建:\n{template_filename}\n\n已添加到【我的模板】列表中,包含 {len(tasks)} 个任务。"
+
             QMessageBox.information(
                 self,
                 "保存成功",
-                f"模板已保存:\n{template_filename}\n\n已添加到【我的模板】列表中。"
+                success_msg
             )
         except Exception as e:
             QMessageBox.critical(self, "保存失败", f"无法保存模板:\n{str(e)}")

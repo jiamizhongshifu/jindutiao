@@ -5,6 +5,7 @@ PyDayBar - 桌面日历进度条
 
 import sys
 import json
+import copy
 import logging
 import platform
 from pathlib import Path
@@ -44,6 +45,18 @@ class TimeProgressBar(QWidget):
         self.calculate_time_range()  # 计算任务的时间范围
         self.current_time_percentage = 0.0  # 初始化时间百分比
         self.hovered_task_index = -1  # 当前悬停的任务索引(-1表示没有悬停)
+
+        # 编辑模式状态管理
+        self.edit_mode = False  # 编辑模式标志
+        self.temp_tasks = None  # 临时任务数据副本（用于编辑时的临时修改）
+        self.dragging = False  # 拖拽状态
+        self.drag_task_index = -1  # 正在拖拽的任务索引
+        self.drag_edge = None  # 拖拽的边缘：'left' or 'right'
+        self.drag_start_x = 0  # 拖拽开始的X坐标
+        self.drag_start_minutes = 0  # 拖拽开始时的分钟数
+        self.hover_edge = None  # 悬停在哪个边缘：'left' or 'right'
+        self.edge_detect_width = 8  # 边缘检测宽度（像素）
+        self.min_task_duration = 15  # 最小任务时长（分钟）
 
         # 初始化时间标记相关变量
         self.marker_pixmap = None  # 静态图片
@@ -473,8 +486,14 @@ class TimeProgressBar(QWidget):
 
         将任务按时间顺序排列,计算每个任务在进度条上的位置
         忽略任务之间的时间间隔,所有任务紧密排列
+
+        注意：在编辑模式下，使用temp_tasks而不是tasks，确保视觉反馈正确
         """
-        result = task_calculator.calculate_task_positions(self.tasks, self.logger)
+        # 在编辑模式下使用临时任务数据，否则使用实际任务数据
+        # 使用hasattr检查edit_mode是否存在，避免初始化阶段的AttributeError
+        tasks_to_use = self.temp_tasks if (hasattr(self, 'edit_mode') and self.edit_mode and self.temp_tasks) else self.tasks
+
+        result = task_calculator.calculate_task_positions(tasks_to_use, self.logger)
         self.task_positions = result['task_positions']
         self.time_range_start = result['time_range_start']
         self.time_range_end = result['time_range_end']
@@ -515,6 +534,24 @@ class TimeProgressBar(QWidget):
 
         # 创建右键菜单
         tray_menu = QMenu()
+
+        # 编辑任务时间动作（动态文字）
+        self.edit_mode_action = QAction('✏️ 编辑任务时间', self)
+        self.edit_mode_action.triggered.connect(self.toggle_edit_mode)
+        tray_menu.addAction(self.edit_mode_action)
+
+        # 保存/取消动作（仅在编辑模式下可见）
+        self.save_edit_action = QAction('💾 保存修改', self)
+        self.save_edit_action.triggered.connect(self.save_edit_changes)
+        self.save_edit_action.setVisible(False)
+        tray_menu.addAction(self.save_edit_action)
+
+        self.cancel_edit_action = QAction('❌ 取消编辑', self)
+        self.cancel_edit_action.triggered.connect(self.cancel_edit)
+        self.cancel_edit_action.setVisible(False)
+        tray_menu.addAction(self.cancel_edit_action)
+
+        tray_menu.addSeparator()
 
         # 打开配置界面动作
         config_action = QAction('⚙️ 打开配置', self)
@@ -826,6 +863,118 @@ class TimeProgressBar(QWidget):
             json.dump(self.config, f, indent=4)
         self.setup_geometry()
 
+    def toggle_edit_mode(self):
+        """切换编辑模式"""
+        if self.edit_mode:
+            # 退出编辑模式（相当于取消）
+            self.cancel_edit()
+        else:
+            # 进入编辑模式
+            self.enter_edit_mode()
+
+    def enter_edit_mode(self):
+        """进入编辑模式"""
+        self.logger.info("进入编辑模式")
+        self.edit_mode = True
+
+        # 创建临时任务副本
+        import copy
+        self.temp_tasks = copy.deepcopy(self.tasks)
+
+        # 更新菜单文字
+        self.edit_mode_action.setText('🔒 退出编辑模式')
+        self.save_edit_action.setVisible(True)
+        self.cancel_edit_action.setVisible(True)
+
+        # 显示提示
+        self.tray_icon.showMessage(
+            "编辑模式",
+            "进入编辑模式\n拖拽任务边缘调整时间\n完成后请到托盘菜单保存",
+            QSystemTrayIcon.Information,
+            3000
+        )
+
+        # 刷新显示
+        self.update()
+
+    def save_edit_changes(self):
+        """保存编辑的修改"""
+        if not self.edit_mode or self.temp_tasks is None:
+            return
+
+        self.logger.info("保存任务时间修改")
+
+        try:
+            # 将临时任务数据写入tasks.json
+            tasks_file = self.app_dir / 'tasks.json'
+            with open(tasks_file, 'w', encoding='utf-8') as f:
+                json.dump(self.temp_tasks, f, indent=4, ensure_ascii=False)
+
+            # 更新当前任务数据
+            self.tasks = copy.deepcopy(self.temp_tasks)
+
+            # 重新计算时间范围
+            self.calculate_time_range()
+
+            # 退出编辑模式
+            self.exit_edit_mode()
+
+            # 显示成功提示
+            self.tray_icon.showMessage(
+                "保存成功",
+                "任务时间已保存",
+                QSystemTrayIcon.Information,
+                2000
+            )
+
+            self.logger.info("任务时间保存成功")
+
+        except Exception as e:
+            self.logger.error(f"保存任务时间失败: {e}", exc_info=True)
+            self.tray_icon.showMessage(
+                "保存失败",
+                f"保存失败: {str(e)}",
+                QSystemTrayIcon.Critical,
+                5000
+            )
+
+    def cancel_edit(self):
+        """取消编辑"""
+        if not self.edit_mode:
+            return
+
+        self.logger.info("取消编辑")
+
+        # 丢弃临时数据
+        self.temp_tasks = None
+
+        # 退出编辑模式
+        self.exit_edit_mode()
+
+        # 显示提示
+        self.tray_icon.showMessage(
+            "已取消",
+            "已取消编辑，未保存修改",
+            QSystemTrayIcon.Information,
+            2000
+        )
+
+    def exit_edit_mode(self):
+        """退出编辑模式（内部方法）"""
+        self.edit_mode = False
+        self.dragging = False
+        self.drag_task_index = -1
+        self.drag_edge = None
+        self.hover_edge = None
+
+        # 恢复菜单文字
+        self.edit_mode_action.setText('✏️ 编辑任务时间')
+        self.save_edit_action.setVisible(False)
+        self.cancel_edit_action.setVisible(False)
+
+        # 刷新显示
+        self.update()
+
     def init_file_watcher(self):
         """初始化文件监视器"""
         # 禁用文件监视器以避免Windows上QFileSystemWatcher的bug
@@ -1116,11 +1265,25 @@ class TimeProgressBar(QWidget):
             self.logger.error(f"更新任务统计失败: {e}", exc_info=True)
 
     def mouseMoveEvent(self, event):
-        """鼠标移动事件 - 检测悬停在哪个任务上(紧凑模式)"""
+        """鼠标移动事件 - 检测悬停在哪个任务上(紧凑模式) + 编辑模式下的拖拽"""
         mouse_x = event.position().x()
+        mouse_y = event.position().y()
         width = self.width()
+        height = self.height()
+        bar_height = self.config['bar_height']
+        bar_y_offset = height - bar_height
 
-        # 计算鼠标位置对应的百分比
+        # 编辑模式下的拖拽处理
+        if self.edit_mode:
+            if self.dragging:
+                # 正在拖拽：处理拖拽逻辑
+                self.handle_drag(mouse_x, mouse_y)
+                return
+            else:
+                # 未拖拽：检测边缘悬停
+                self.update_hover_edge(mouse_x, mouse_y, bar_y_offset, bar_height)
+
+        # 普通模式：计算鼠标位置对应的百分比
         mouse_percentage = mouse_x / width if width > 0 else 0
 
         # 查找鼠标所在的任务(使用紧凑位置)
@@ -1143,7 +1306,208 @@ class TimeProgressBar(QWidget):
         if self.hovered_task_index != -1:
             self.hovered_task_index = -1
             self.update()
+        # 清除编辑模式的悬停状态
+        if self.edit_mode and self.hover_edge is not None:
+            self.hover_edge = None
+            self.update()
         super().leaveEvent(event)
+
+    def mousePressEvent(self, event):
+        """鼠标按下事件 - 编辑模式下检测边缘点击"""
+        if not self.edit_mode or event.button() != Qt.LeftButton:
+            return super().mousePressEvent(event)
+
+        mouse_x = event.position().x()
+        mouse_y = event.position().y()
+        width = self.width()
+        height = self.height()
+        bar_height = self.config['bar_height']
+        bar_y_offset = height - bar_height
+
+        # 检查鼠标是否在进度条区域内
+        if not (bar_y_offset <= mouse_y <= height):
+            return super().mousePressEvent(event)
+
+        # 检测是否点击在任务边缘
+        for i, pos in enumerate(self.task_positions):
+            start_pct = pos['compact_start_pct']
+            end_pct = pos['compact_end_pct']
+
+            start_x = start_pct * width
+            end_x = end_pct * width
+
+            # 检测左边缘
+            if abs(mouse_x - start_x) <= self.edge_detect_width:
+                self.dragging = True
+                self.drag_task_index = i
+                self.drag_edge = 'left'
+                self.drag_start_x = mouse_x
+                # 获取当前任务的开始时间（分钟）
+                task = self.temp_tasks[i] if self.temp_tasks else self.tasks[i]
+                self.drag_start_minutes = self.time_to_minutes(task['start'])
+                self.logger.debug(f"开始拖拽任务 {i} 的左边缘")
+                return
+
+            # 检测右边缘
+            if abs(mouse_x - end_x) <= self.edge_detect_width:
+                self.dragging = True
+                self.drag_task_index = i
+                self.drag_edge = 'right'
+                self.drag_start_x = mouse_x
+                # 获取当前任务的结束时间（分钟）
+                task = self.temp_tasks[i] if self.temp_tasks else self.tasks[i]
+                self.drag_start_minutes = self.time_to_minutes(task['end'])
+                self.logger.debug(f"开始拖拽任务 {i} 的右边缘")
+                return
+
+        super().mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        """鼠标释放事件 - 停止拖拽"""
+        if self.dragging:
+            self.logger.debug(f"停止拖拽任务 {self.drag_task_index}")
+            self.dragging = False
+            self.drag_task_index = -1
+            self.drag_edge = None
+            # 重新计算任务位置（因为temp_tasks已被修改）
+            self.calculate_time_range()
+            self.update()
+        super().mouseReleaseEvent(event)
+
+    def update_hover_edge(self, mouse_x, mouse_y, bar_y_offset, bar_height):
+        """更新边缘悬停状态（编辑模式）"""
+        width = self.width()
+        height = self.height()
+
+        # 检查鼠标是否在进度条区域内
+        if not (bar_y_offset <= mouse_y <= height):
+            if self.hover_edge is not None:
+                self.hover_edge = None
+                self.update()
+            return
+
+        old_hover_edge = self.hover_edge
+        self.hover_edge = None
+
+        # 检测悬停在哪个边缘
+        for i, pos in enumerate(self.task_positions):
+            start_pct = pos['compact_start_pct']
+            end_pct = pos['compact_end_pct']
+
+            start_x = start_pct * width
+            end_x = end_pct * width
+
+            # 检测左边缘
+            if abs(mouse_x - start_x) <= self.edge_detect_width:
+                self.hover_edge = ('left', i)
+                break
+
+            # 检测右边缘
+            if abs(mouse_x - end_x) <= self.edge_detect_width:
+                self.hover_edge = ('right', i)
+                break
+
+        # 如果悬停状态改变，刷新显示
+        if old_hover_edge != self.hover_edge:
+            self.update()
+
+    def handle_drag(self, mouse_x, mouse_y):
+        """处理拖拽逻辑（核心方法）"""
+        if self.drag_task_index < 0 or not self.temp_tasks:
+            return
+
+        width = self.width()
+        delta_x = mouse_x - self.drag_start_x
+
+        # 计算总时长（所有任务的总分钟数）
+        total_minutes = 0
+        for t in self.temp_tasks:
+            start_min = self.time_to_minutes(t['start'])
+            end_min = self.time_to_minutes(t['end'])
+            duration = end_min - start_min
+            if duration < 0:
+                duration += 1440  # 跨午夜
+            total_minutes += duration
+
+        if total_minutes == 0:
+            return
+
+        # 将像素转换为分钟
+        minutes_per_pixel = total_minutes / width
+        delta_minutes = int(delta_x * minutes_per_pixel)
+
+        if self.drag_edge == 'right':
+            # 拖动右边缘：调整当前任务的结束时间
+            current_task = self.temp_tasks[self.drag_task_index]
+            start_min = self.time_to_minutes(current_task['start'])
+            new_end_min = self.drag_start_minutes + delta_minutes
+
+            # 限制最小时长
+            if new_end_min - start_min < self.min_task_duration:
+                new_end_min = start_min + self.min_task_duration
+
+            # 如果有下一个任务，确保不会让下一个任务小于最小时长
+            if self.drag_task_index < len(self.temp_tasks) - 1:
+                next_task = self.temp_tasks[self.drag_task_index + 1]
+                next_end_min = self.time_to_minutes(next_task['end'])
+                min_next_start = next_end_min - self.min_task_duration
+                if new_end_min > min_next_start:
+                    new_end_min = min_next_start
+
+            # 更新当前任务和下一个任务
+            current_task['end'] = self.minutes_to_time(new_end_min)
+            if self.drag_task_index < len(self.temp_tasks) - 1:
+                next_task = self.temp_tasks[self.drag_task_index + 1]
+                next_task['start'] = self.minutes_to_time(new_end_min)
+
+        elif self.drag_edge == 'left':
+            # 拖动左边缘：调整当前任务的开始时间
+            current_task = self.temp_tasks[self.drag_task_index]
+            end_min = self.time_to_minutes(current_task['end'])
+            new_start_min = self.drag_start_minutes + delta_minutes
+
+            # 限制最小时长
+            if end_min - new_start_min < self.min_task_duration:
+                new_start_min = end_min - self.min_task_duration
+
+            # 如果有上一个任务，确保不会让上一个任务小于最小时长
+            if self.drag_task_index > 0:
+                prev_task = self.temp_tasks[self.drag_task_index - 1]
+                prev_start_min = self.time_to_minutes(prev_task['start'])
+                max_prev_end = prev_start_min + self.min_task_duration
+                if new_start_min < max_prev_end:
+                    new_start_min = max_prev_end
+
+            # 更新当前任务和上一个任务
+            current_task['start'] = self.minutes_to_time(new_start_min)
+            if self.drag_task_index > 0:
+                prev_task = self.temp_tasks[self.drag_task_index - 1]
+                prev_task['end'] = self.minutes_to_time(new_start_min)
+
+        # 重新计算任务位置
+        # calculate_time_range会自动检测编辑模式并使用temp_tasks
+        self.calculate_time_range()
+
+        self.update()
+
+    def time_to_minutes(self, time_str):
+        """将 HH:MM 转换为分钟数"""
+        try:
+            hours, minutes = map(int, time_str.split(':'))
+            if hours == 24 and minutes == 0:
+                return 1440
+            return hours * 60 + minutes
+        except:
+            return 0
+
+    def minutes_to_time(self, minutes):
+        """将分钟数转换为 HH:MM"""
+        minutes = int(minutes) % 1440  # 确保在 0-1439 范围内
+        hours = minutes // 60
+        mins = minutes % 60
+        if hours == 24:
+            return "24:00"
+        return f"{hours:02d}:{mins:02d}"
 
     def paintEvent(self, event):
         """自定义绘制事件"""
@@ -1212,6 +1576,53 @@ class TimeProgressBar(QWidget):
                 )
             else:
                 painter.fillRect(rect, color)
+
+            # 编辑模式下的视觉反馈
+            if self.edit_mode:
+                # 1. 金色边缘高亮（悬停或拖拽）
+                if self.hover_edge and self.hover_edge[1] == i:
+                    edge_type = self.hover_edge[0]
+                    painter.setPen(QPen(QColor("#FFD700"), 3))  # 金色，3像素
+                    if edge_type == 'left':
+                        # 左边缘高亮
+                        painter.drawLine(int(rect.left()), int(rect.top()),
+                                       int(rect.left()), int(rect.bottom()))
+                    elif edge_type == 'right':
+                        # 右边缘高亮
+                        painter.drawLine(int(rect.right()), int(rect.top()),
+                                       int(rect.right()), int(rect.bottom()))
+
+                # 2. 拖拽中的任务高亮
+                if self.dragging and self.drag_task_index == i:
+                    # 绘制半透明金色覆盖层
+                    overlay_color = QColor("#FFD700")
+                    overlay_color.setAlpha(50)
+                    painter.fillRect(rect, overlay_color)
+
+                    # 绘制拖拽边缘的粗线
+                    painter.setPen(QPen(QColor("#FFD700"), 4))
+                    if self.drag_edge == 'left':
+                        painter.drawLine(int(rect.left()), int(rect.top()),
+                                       int(rect.left()), int(rect.bottom()))
+                    elif self.drag_edge == 'right':
+                        painter.drawLine(int(rect.right()), int(rect.top()),
+                                       int(rect.right()), int(rect.bottom()))
+
+                # 3. 绘制拖拽手柄图标（⋮⋮）
+                if task_width > 20:  # 宽度足够才绘制
+                    painter.setPen(QColor("#FFFFFF"))
+                    painter.setFont(QFont("Arial", 12, QFont.Bold))
+
+                    # 左边缘手柄
+                    handle_text = "⋮"
+                    handle_rect_left = QRectF(rect.left() + 2, rect.top(),
+                                              10, rect.height())
+                    painter.drawText(handle_rect_left, Qt.AlignCenter, handle_text)
+
+                    # 右边缘手柄
+                    handle_rect_right = QRectF(rect.right() - 12, rect.top(),
+                                               10, rect.height())
+                    painter.drawText(handle_rect_right, Qt.AlignCenter, handle_text)
 
             # 如果是悬停任务,保存信息稍后绘制
             if i == self.hovered_task_index:
@@ -1372,6 +1783,83 @@ class TimeProgressBar(QWidget):
                 text_color = QColor(theme.get('text_color', '#FFFFFF')) if theme else QColor(255, 255, 255)
             painter.setPen(text_color)
             painter.drawText(hover_rect, Qt.AlignCenter, task_text)
+
+        # 5. 编辑模式的提示框和拖拽时间显示
+        if self.edit_mode:
+            # 5.1 编辑模式提示框（右下角，进度条上方，参考番茄钟尺寸）
+            tip_width = 300  # 比番茄钟稍宽一点
+            tip_height = 60
+            tip_padding = 10  # 距离边缘的间距
+
+            # 计算提示框位置（右下角，进度条上方，额外向上移动40避免遮挡任务提示）
+            tip_x = width - tip_width - tip_padding
+            tip_y = bar_y_offset - tip_height - tip_padding - 40
+
+            tip_rect = QRectF(tip_x, tip_y, tip_width, tip_height)
+
+            # 半透明深色背景（带圆角）
+            tip_bg = QColor(30, 30, 30, 230)
+            painter.setBrush(tip_bg)
+            painter.setPen(QPen(QColor("#FFD700"), 2))  # 金色边框
+            painter.drawRoundedRect(tip_rect, 8, 8)
+
+            # 提示文字（两行）
+            painter.setPen(QColor("#FFD700"))  # 金色
+            painter.setFont(QFont("Microsoft YaHei", 9, QFont.Bold))
+
+            # 第一行：标题
+            title_rect = QRectF(tip_x, tip_y + 8, tip_width, 20)
+            painter.drawText(title_rect, Qt.AlignCenter, "✏️ 编辑模式")
+
+            # 第二行：操作提示
+            painter.setFont(QFont("Microsoft YaHei", 8))
+            painter.setPen(QColor("#FFFFFF"))  # 白色
+            hint_rect = QRectF(tip_x, tip_y + 28, tip_width, 25)
+            painter.drawText(hint_rect, Qt.AlignCenter, "拖拽任务边缘调整时间\n完成后请到托盘菜单保存")
+
+            # 5.2 拖拽时的实时时间提示
+            if self.dragging and 0 <= self.drag_task_index < len(self.temp_tasks):
+                task = self.temp_tasks[self.drag_task_index]
+                time_text = f"{task['start']} - {task['end']}"
+
+                # 在拖拽任务的上方显示时间
+                pos = self.task_positions[self.drag_task_index]
+                start_pct = pos['compact_start_pct']
+                end_pct = pos['compact_end_pct']
+                task_x = start_pct * width
+                task_w = (end_pct - start_pct) * width
+
+                # 计算时间提示框的位置
+                time_font = QFont("Arial", 11, QFont.Bold)
+                painter.setFont(time_font)
+                font_metrics = painter.fontMetrics()
+                time_width = font_metrics.horizontalAdvance(time_text)
+                time_height = font_metrics.height()
+
+                time_padding = 20
+                time_box_width = time_width + time_padding
+                time_box_height = time_height + 10
+
+                time_box_x = task_x + (task_w - time_box_width) / 2
+                time_box_y = bar_y_offset - time_box_height - 35  # 在悬停提示上方
+
+                # 确保不超出边界
+                time_box_x = max(0, min(time_box_x, width - time_box_width))
+                time_box_y = max(0, time_box_y)
+
+                time_box_rect = QRectF(time_box_x, time_box_y,
+                                      time_box_width, time_box_height)
+
+                # 绘制时间提示框（金色背景）
+                time_box_color = QColor("#FFD700")
+                time_box_color.setAlpha(220)
+                painter.setBrush(time_box_color)
+                painter.setPen(QPen(QColor("#FFFFFF"), 2))
+                painter.drawRoundedRect(time_box_rect, 5, 5)
+
+                # 绘制时间文字（黑色）
+                painter.setPen(QColor("#000000"))
+                painter.drawText(time_box_rect, Qt.AlignCenter, time_text)
 
         painter.end()
     
