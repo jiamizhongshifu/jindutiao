@@ -27,6 +27,14 @@ from pydaybar.core.notification_manager import NotificationManager
 from pydaybar.ui.pomodoro_panel import PomodoroPanel, PomodoroSettingsDialog
 from pydaybar.utils import time_utils, path_utils, data_loader, task_calculator
 
+# Qt-Material主题支持
+try:
+    from qt_material import apply_stylesheet
+    QT_MATERIAL_AVAILABLE = True
+except ImportError:
+    QT_MATERIAL_AVAILABLE = False
+    logging.warning("qt-material未安装，将使用系统默认样式")
+
 # Windows 特定导入
 if platform.system() == 'Windows':
     import ctypes
@@ -1953,6 +1961,19 @@ def main():
         format='%(asctime)s - %(levelname)s - %(message)s'
     )
     logger = logging.getLogger(__name__)
+
+    # 应用Qt-Material主题
+    if QT_MATERIAL_AVAILABLE:
+        try:
+            extra = {
+                'density_scale': '0',
+                'font_family': 'Microsoft YaHei',
+                'font_size': '13px',
+            }
+            apply_stylesheet(app, theme='dark_teal.xml', extra=extra)
+            logger.info("✨ 已应用Qt-Material主题: dark_teal")
+        except Exception as e:
+            logger.warning(f"应用Material主题失败: {e}，使用默认样式")
 
     # 创建并显示主窗口（先创建窗口，再启动后台服务）
     window = TimeProgressBar()

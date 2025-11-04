@@ -25,6 +25,13 @@ from pydaybar.core.theme_ai_helper import ThemeAIHelper
 import logging
 from pydaybar.utils import path_utils, time_utils, data_loader
 
+# Qt-Material主题支持
+try:
+    from qt_material import apply_stylesheet
+    QT_MATERIAL_AVAILABLE = True
+except ImportError:
+    QT_MATERIAL_AVAILABLE = False
+
 
 class AIWorker(QThread):
     """AI请求工作线程,防止阻塞UI"""
@@ -3938,8 +3945,22 @@ def main():
     """主程序入口"""
     app = QApplication(sys.argv)
 
-    # 设置应用样式
-    app.setStyle("Fusion")
+    # 应用Qt-Material主题
+    if QT_MATERIAL_AVAILABLE:
+        try:
+            extra = {
+                'density_scale': '0',
+                'font_family': 'Microsoft YaHei',
+                'font_size': '13px',
+            }
+            apply_stylesheet(app, theme='dark_teal.xml', extra=extra)
+            print("✨ 已应用Qt-Material主题: dark_teal")
+        except Exception as e:
+            print(f"应用Material主题失败: {e}，使用默认样式")
+            app.setStyle("Fusion")
+    else:
+        # 设置应用样式（备用方案）
+        app.setStyle("Fusion")
 
     window = ConfigManager()
     window.show()
