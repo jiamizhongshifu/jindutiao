@@ -9,6 +9,47 @@
 
 ---
 
+## [v1.5.0] - 2025-11-04
+
+### 🌍 品牌升级 / Branding
+
+- **品牌正式升级**
+  - 产品英文名：PyDayBar → Gaiya
+  - 产品中文名：盖亚
+  - 品牌口号：守护你的每一分钟
+  - 文件命名：PyDayBar-v1.4.exe → Gaiya-v1.5.exe
+  - Spec文件：PyDayBar.spec → Gaiya.spec
+
+### 📝 文档更新 / Documentation
+
+- **全面文档品牌化**
+  - README.md - 添加品牌故事和Slogan
+  - CHANGELOG.md - 更新日志头部品牌化
+  - SECURITY.md - 安全文档品牌更新
+  - RELEASE_NOTES_v1.4.md - 发布说明品牌更新
+  - GITHUB_RELEASE_DESCRIPTION.md - Release描述品牌化
+  - 反病毒误报解决方案.md - 白名单申请模板更新
+
+### 🎨 品牌故事 / Brand Story
+
+**表层含义（专业版）**：
+- Gaiya源自希腊神话大地女神Gaia
+- 象征承载时间的大地
+- 守护用户的每一分钟
+
+**深层含义（梗文化）**：
+- 灵感来自游戏主播卢本伟的"哎呀"惨叫
+- 联想《盖亚·奥特曼》的变身呐喊
+- 从"哎呀"到时间管理高手的变身
+
+### 🔄 兼容性 / Compatibility
+
+- ✅ 完全兼容v1.4配置和数据
+- ✅ 所有功能保持不变
+- ✅ 仅品牌和文件命名更新
+
+---
+
 ## [v1.4.0] - 2025-11-04
 
 ### ✨ 新增 / Added

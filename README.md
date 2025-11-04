@@ -13,28 +13,33 @@
 [![License](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com)
 
-**📥 [下载 Gaiya v1.4.0 (Windows 64-bit)](https://github.com/jiamizhongshifu/jindutiao/releases/download/v1.4.0/PyDayBar-v1.4.exe)**
+**📥 [下载 Gaiya v1.5.0 (Windows 64-bit)](https://github.com/jiamizhongshifu/jindutiao/releases/download/v1.5.0/Gaiya-v1.5.exe)**
 
-**当前版本: v1.4.0** | 最后更新: 2025-11-04 | 智能模板管理 + 安全增强 ✅
+**当前版本: v1.5.0** | 最后更新: 2025-11-04 | 品牌正式升级 🌍 ✅
 
 </div>
 
 ---
 
-## 🎉 v1.4.0 最新更新
+## 🎉 v1.5.0 最新更新
 
-### ✨ 智能模板保存交互
-- 🎯 **智能对话框**: 根据历史模板自动调整UI
-- 📋 **直观选择**: 下拉框显示所有模板及任务数
-- 🔄 **一键覆盖**: 选择即覆盖,无需二次确认
-- ➕ **快速新建**: 直接输入新名称创建模板
+### 🌍 品牌正式升级
+- ✨ **全新命名**: PyDayBar → Gaiya (盖亚)
+- 🎯 **品牌口号**: 守护你的每一分钟
+- 📦 **文件命名**: 统一使用 Gaiya-v1.5.exe
+- 📝 **文档更新**: 所有文档完成品牌升级
 
-### 🔒 安全性增强（重要！）
-- 🚫 **减少误报50-70%**: 禁用UPX压缩
-- 📄 **增加正规性**: 添加Windows版本信息
-- 🛡️ **白名单申请**: 已向主流杀毒软件提交
+### 📚 品牌故事
+**表层（专业版）**：Gaiya源自希腊神话大地女神Gaia，象征承载时间的大地
 
-**详细说明**: [查看完整更新日志](#v140-2025-11-04---智能模板保存--安全性增强-) | [安全说明](SECURITY.md)
+**深层（梗文化）**：灵感来自游戏主播的"哎呀"惨叫和《盖亚·奥特曼》变身，从"哎呀"到时间管理高手的变身工具！
+
+### 🔄 从v1.4升级
+- v1.4 为过渡版本（文档已更新，文件名未变）
+- v1.5 完整品牌升级（文档+文件名统一）
+- 所有配置和数据完全兼容
+
+**详细说明**: [查看完整更新日志](#v150-2025-11-04---品牌正式升级-) | [v1.4更新](# v140-2025-11-04---智能模板保存--安全性增强-)
 
 ---
 
@@ -323,17 +328,17 @@
 
 ### 使用PyInstaller打包
 
-项目提供了打包配置文件 `PyDayBar.spec`:
+项目提供了打包配置文件 `Gaiya.spec`:
 
 ```bash
 # 清理旧文件
 rm -rf build dist
 
 # 打包
-pyinstaller PyDayBar.spec
+pyinstaller Gaiya.spec
 
 # 生成的exe位于
-dist/PyDayBar-v1.4.exe
+dist/Gaiya-v1.5.exe
 ```
 
 **打包特点:**
@@ -358,7 +363,7 @@ Gaiya/
 ├── notification_manager.py      # 通知管理器
 ├── statistics_manager.py        # 统计管理器
 ├── autostart_manager.py         # 开机自启动管理器
-├── PyDayBar.spec                # PyInstaller打包配置
+├── Gaiya.spec                   # PyInstaller打包配置
 ├── requirements.txt             # Python依赖
 ├── config.json                  # 配置文件(自动生成)
 ├── tasks.json                   # 任务数据(自动生成)
@@ -473,6 +478,32 @@ macOS:
 - [📅 v1.5开发路线图](ROADMAP_v1.5.md) - 下一阶段的功能规划和开发计划
 
 ## 🔄 更新日志
+
+### v1.5.0 (2025-11-04) - 品牌正式升级 🌍
+
+**🌍 品牌升级**
+- **产品命名**: PyDayBar → Gaiya (盖亚)
+- **品牌口号**: 守护你的每一分钟
+- **文件命名**: Gaiya-v1.5.exe（统一品牌）
+- **Spec文件**: Gaiya.spec
+
+**📝 全面文档更新**
+- README.md - 添加品牌故事和双重调性说明
+- CHANGELOG.md - 更新日志品牌化
+- SECURITY.md / RELEASE_NOTES / 反病毒误报解决方案 - 品牌更新
+
+**🎨 品牌故事**
+- **表层**: Gaiya源自希腊神话大地女神Gaia，象征承载时间
+- **深层**: 灵感来自"哎呀"惨叫和《盖亚·奥特曼》变身（懂的都懂）
+
+**🔄 兼容性**
+- ✅ 完全兼容v1.4配置和数据
+- ✅ 所有功能保持不变
+- ✅ 仅品牌和文件命名更新
+
+**📥 下载**: [Gaiya-v1.5.exe](https://github.com/jiamizhongshifu/jindutiao/releases/download/v1.5.0/Gaiya-v1.5.exe)
+
+---
 
 ### v1.4.0 (2025-11-04) - 智能模板保存 + 安全性增强 ✅
 
