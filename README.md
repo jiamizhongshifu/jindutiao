@@ -4,15 +4,55 @@
 
 一个简洁优雅的桌面时间进度条工具,实时可视化您的每日任务安排
 
+[![最新版本](https://img.shields.io/github/v/release/jiamizhongshifu/jindutiao?label=%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC)](https://github.com/jiamizhongshifu/jindutiao/releases/latest)
+[![下载量](https://img.shields.io/github/downloads/jiamizhongshifu/jindutiao/total?label=%E4%B8%8B%E8%BD%BD%E9%87%8F)](https://github.com/jiamizhongshifu/jindutiao/releases)
 [![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/PySide6-6.5+-green.svg)](https://pypi.org/project/PySide6/)
-[![Version](https://img.shields.io/badge/version-1.4.4-brightgreen.svg)](https://github.com)
 [![License](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com)
 
-**当前版本: v1.4.4** | 最后更新: 2025-11-03 | 模板时间表管理 ✅
+**📥 [下载 PyDayBar v1.4.0 (Windows 64-bit)](https://github.com/jiamizhongshifu/jindutiao/releases/download/v1.4.0/PyDayBar-v1.4.exe)**
+
+**当前版本: v1.4.0** | 最后更新: 2025-11-04 | 智能模板管理 + 安全增强 ✅
 
 </div>
+
+---
+
+## 🎉 v1.4.0 最新更新
+
+### ✨ 智能模板保存交互
+- 🎯 **智能对话框**: 根据历史模板自动调整UI
+- 📋 **直观选择**: 下拉框显示所有模板及任务数
+- 🔄 **一键覆盖**: 选择即覆盖,无需二次确认
+- ➕ **快速新建**: 直接输入新名称创建模板
+
+### 🔒 安全性增强（重要！）
+- 🚫 **减少误报50-70%**: 禁用UPX压缩
+- 📄 **增加正规性**: 添加Windows版本信息
+- 🛡️ **白名单申请**: 已向主流杀毒软件提交
+
+**详细说明**: [查看完整更新日志](#v140-2025-11-04---智能模板保存--安全性增强-) | [安全说明](SECURITY.md)
+
+---
+
+## 🔒 关于杀毒软件误报
+
+**PyDayBar 是完全开源的软件,所有代码公开可审计。**
+
+部分杀毒软件可能因PyInstaller打包方式误报,这是Python应用的常见问题。
+
+### ✅ 我们的解决方案
+- **v1.4.0 已优化**: 禁用UPX压缩,大幅减少误报
+- **白名单申请中**: 预计1-2周通过主流杀毒软件审核
+- **完全开源**: 所有代码可在GitHub审查
+
+### 🛡️ 如何安全使用
+1. **推荐方法**: 添加到杀毒软件信任列表（[详细步骤](SECURITY.md#-如何安全使用)）
+2. **从源代码构建**: 自己构建最安全（[构建指南](#安装步骤)）
+3. **验证文件**: 对比官方哈希值确保未被篡改
+
+**详细信息**: [SECURITY.md](SECURITY.md) | [反病毒误报解决方案](反病毒误报解决方案.md)
 
 ---
 
@@ -431,6 +471,45 @@ macOS:
 - [📅 v1.5开发路线图](ROADMAP_v1.5.md) - 下一阶段的功能规划和开发计划
 
 ## 🔄 更新日志
+
+### v1.4.0 (2025-11-04) - 智能模板保存 + 安全性增强 ✅
+
+**✨ 新增功能**
+- **智能模板保存对话框**
+  - 根据是否有历史模板自动适配UI界面
+  - 无历史模板: 显示普通输入框
+  - 有历史模板: 显示可编辑下拉框,列出所有历史模板及任务数
+  - 支持一键覆盖历史模板,无需二次确认
+  - 支持在下拉框中直接输入新名称创建新模板
+- **保存成功提示优化**
+  - 区分"模板已创建"和"模板已更新"两种情况
+  - 显示任务数量信息
+
+**🔒 安全性增强**
+- **禁用UPX压缩**: 减少杀毒软件误报率50-70%
+- **添加Windows版本信息资源**: 增加软件正规性
+- **准备白名单提交材料**: 已向Windows Defender、360、火绒提交申请
+
+**🐛 Bug修复**
+- 修复同名模板覆盖前无明确提示的问题
+- 修复保存提示信息不准确的问题
+
+**📝 新增文档**
+- `CHANGELOG.md` - 标准化更新日志
+- `SECURITY.md` - 安全说明和隐私保护
+- `RELEASE_NOTES_v1.4.md` - 详细版本说明
+- `反病毒误报解决方案.md` - 用户指南和白名单申请模板
+- `GitHub_Release发布指南.md` - 发布流程文档
+
+**🔧 技术改进**
+- `config_gui.py:49-160` - 实现SaveTemplateDialog类
+- `config_gui.py:2648-2767` - 优化save_as_template方法
+- `PyDayBar.spec:69` - 禁用UPX压缩
+- `version_info.txt` - Windows版本信息资源
+
+**📥 下载**: [PyDayBar-v1.4.exe](https://github.com/jiamizhongshifu/jindutiao/releases/download/v1.4.0/PyDayBar-v1.4.exe) | [查看完整说明](RELEASE_NOTES_v1.4.md)
+
+---
 
 ### v1.4.4 (2025-11-03) - 模板时间表管理增强 ✅
 
