@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PyDayBar AI Client
+GaiYa每日进度条 - AI Client
 客户端封装,用于在GUI中调用AI功能
 统一使用代理服务器，保护API密钥安全
 """
@@ -10,8 +10,8 @@ from typing import Dict, List, Optional
 from PySide6.QtWidgets import QMessageBox
 
 
-class PyDayBarAIClient:
-    """PyDayBar AI 功能客户端"""
+class GaiyaAIClient:
+    """GaiYa每日进度条 - AI功能客户端"""
 
     def __init__(self, backend_url: Optional[str] = None, user_id: str = "user_demo"):
         """
@@ -24,7 +24,7 @@ class PyDayBarAIClient:
         # 使用Vercel云端服务（避免本地API密钥泄露）
         if backend_url is None:
             backend_url = os.getenv(
-                "PYDAYBAR_API_URL",
+                "GAIYA_API_URL",
                 "https://jindutiao.vercel.app"  # 默认Vercel服务器URL
             )
 

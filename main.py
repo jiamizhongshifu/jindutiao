@@ -1,5 +1,6 @@
 """
-PyDayBar - 桌面日历进度条
+GaiYa每日进度条 - 桌面时间可视化工具
+用进度条让时间流逝清晰可见
 一个透明、置顶、可点击穿透的桌面时间进度条应用
 """
 
@@ -18,14 +19,14 @@ from enum import Enum
 from statistics_manager import StatisticsManager
 # 已切换到Vercel云服务，无需本地后端管理器
 # from backend_manager import BackendManager
-from pydaybar.core.theme_manager import ThemeManager
+from gaiya.core.theme_manager import ThemeManager
 # 确保 config_gui 模块被 PyInstaller 检测到（必须在顶部导入）
 import config_gui
 from config_gui import ConfigManager
-from pydaybar.core.pomodoro_state import PomodoroState
-from pydaybar.core.notification_manager import NotificationManager
-from pydaybar.ui.pomodoro_panel import PomodoroPanel, PomodoroSettingsDialog
-from pydaybar.utils import time_utils, path_utils, data_loader, task_calculator
+from gaiya.core.pomodoro_state import PomodoroState
+from gaiya.core.notification_manager import NotificationManager
+from gaiya.ui.pomodoro_panel import PomodoroPanel, PomodoroSettingsDialog
+from gaiya.utils import time_utils, path_utils, data_loader, task_calculator
 
 # Qt-Material主题支持
 try:
@@ -275,7 +276,7 @@ class TimeProgressBar(QWidget):
 
     def setup_logging(self):
         """设置日志系统"""
-        log_file = self.app_dir / 'pydaybar.log'
+        log_file = self.app_dir / 'gaiya.log'
 
         logging.basicConfig(
             level=logging.INFO,
@@ -538,7 +539,7 @@ class TimeProgressBar(QWidget):
             self.style().StandardPixmap.SP_ComputerIcon
         )
         self.tray_icon.setIcon(icon)
-        self.tray_icon.setToolTip('PyDayBar - 桌面日历进度条')
+        self.tray_icon.setToolTip('GaiYa每日进度条 - 守护你的每一分钟')
 
         # 创建右键菜单
         tray_menu = QMenu()

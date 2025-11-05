@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 > nul
 echo ========================================
-echo PyDayBar 单文件打包脚本
+echo Gaiya 单文件打包脚本
 echo ========================================
 echo.
 
@@ -30,10 +30,10 @@ echo.
 
 echo [3/3] 开始打包为单个EXE文件...
 echo.
-echo 注意: 使用 PyDayBar.spec 文件进行打包，确保包含所有资源文件
+echo 注意: 使用 Gaiya.spec 文件进行打包，确保包含所有资源文件
 echo 配置管理器已集成在主程序中，无需单独打包
 echo.
-pyinstaller --clean --noconfirm PyDayBar.spec
+pyinstaller --clean --noconfirm Gaiya.spec
 
 echo.
 echo ========================================
@@ -41,10 +41,10 @@ echo 打包完成！
 echo ========================================
 echo.
 echo 可执行文件位置:
-echo   - dist\PyDayBar-v1.4.exe (主程序，包含集成配置管理器)
+echo   - dist\Gaiya-v1.5.exe (主程序，包含集成配置管理器)
 echo.
 echo 使用说明:
-echo 1. 将 PyDayBar-v1.4.exe 复制到任意目录
+echo 1. 将 Gaiya-v1.5.exe 复制到任意目录
 echo 2. 双击运行，程序会自动创建配置文件
 echo 3. 右键点击系统托盘图标选择"打开配置"即可打开配置管理器
 echo.

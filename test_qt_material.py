@@ -1,6 +1,6 @@
 """
 Qt-Material 主题效果测试
-测试Gaiya项目常用组件在Material Design下的显示效果
+测试GaiYa每日进度条项目常用组件在Material Design下的显示效果
 """
 import sys
 from PySide6.QtWidgets import (
@@ -17,7 +17,7 @@ class MaterialTestWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Gaiya - Qt-Material 主题测试")
+        self.setWindowTitle("GaiYa每日进度条 - Qt-Material 主题测试")
         self.setGeometry(100, 100, 800, 600)
 
         # 创建中央widget
@@ -64,7 +64,7 @@ class MaterialTestWindow(QMainWindow):
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
-        # 配置项示例（模拟Gaiya配置管理器）
+        # 配置项示例（模拟GaiYa每日进度条配置管理器）
         form_group = QGroupBox("⚙️ 配置项示例")
         form_layout = QVBoxLayout(form_group)
 

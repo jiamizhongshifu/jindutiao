@@ -1,6 +1,6 @@
 {
-  "name": "pydaybar-api",
+  "name": "gaiya-api",
   "version": "1.0.0",
-  "description": "PyDayBar Serverless API",
+  "description": "Gaiya Serverless API",
   "private": true
 }

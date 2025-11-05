@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PyDayBar v1.4 智能主题系统测试脚本
+GaiYa每日进度条 v1.4 智能主题系统测试脚本
 """
 
 import sys
@@ -125,10 +125,10 @@ def test_theme_ai_helper():
     
     try:
         from theme_ai_helper import ThemeAIHelper
-        from ai_client import PyDayBarAIClient
-        
+        from ai_client import GaiyaAIClient
+
         # 初始化AI客户端和助手
-        ai_client = PyDayBarAIClient()
+        ai_client = GaiyaAIClient()
         ai_helper = ThemeAIHelper(ai_client)
         print("✓ ThemeAIHelper 初始化成功")
         
@@ -244,7 +244,7 @@ def test_backend_api():
 def main():
     """主测试函数"""
     print("\n" + "=" * 60)
-    print("PyDayBar v1.4 智能主题系统 - 测试报告")
+    print("GaiYa每日进度条 v1.4 智能主题系统 - 测试报告")
     print("=" * 60 + "\n")
     
     results = []

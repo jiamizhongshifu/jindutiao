@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 > nul
 echo ========================================
-echo PyDayBar 打包脚本
+echo Gaiya 打包脚本
 echo ========================================
 echo.
 
@@ -28,19 +28,19 @@ echo    请确保用户数据文件（config.json, tasks.json, statistics.json �
 echo    不在项目根目录的 dist 文件夹中，否则会被删除！
 echo.
 echo 使用 PyInstaller 打包 (单目录模式)...
-echo 注意: 使用 PyDayBar.spec 文件进行打包，确保包含所有资源文件
-pyinstaller --clean --noconfirm PyDayBar.spec
+echo 注意: 使用 Gaiya.spec 文件进行打包，确保包含所有资源文件
+pyinstaller --clean --noconfirm Gaiya.spec
 
 echo.
 echo ========================================
 echo 打包完成！
 echo ========================================
 echo.
-echo 可执行文件位置: dist\PyDayBar\PyDayBar.exe
+echo 可执行文件位置: dist\Gaiya\Gaiya.exe
 echo.
 echo 首次运行说明:
-echo 1. 进入 dist\PyDayBar 目录
-echo 2. 双击 PyDayBar.exe 运行程序
+echo 1. 进入 dist\Gaiya 目录
+echo 2. 双击 Gaiya.exe 运行程序
 echo 3. 程序会在同目录下自动创建 config.json 和 tasks.json
 echo.
 echo 按任意键退出...

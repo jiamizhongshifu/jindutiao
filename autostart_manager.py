@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PyDayBar 开机自启动管理器
+GaiYa每日进度条 - 开机自启动管理器
 使用Windows注册表实现开机自启动功能
 """
 import winreg
@@ -16,7 +16,7 @@ class AutoStartManager:
     # 注册表路径
     REG_PATH = r"Software\Microsoft\Windows\CurrentVersion\Run"
     # 应用程序名称（在注册表中的键名）
-    APP_NAME = "PyDayBar"
+    APP_NAME = "Gaiya"
 
     def __init__(self):
         """初始化自启动管理器"""

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PyDayBar 可视化配置界面
+GaiYa每日进度条 - 可视化配置界面
 提供图形化界面来管理配置和任务
 """
 
@@ -17,13 +17,13 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QTime, Signal, QThread, QTimer
 from PySide6.QtGui import QColor, QIcon
 from timeline_editor import TimelineEditor
-from ai_client import PyDayBarAIClient
+from ai_client import GaiyaAIClient
 from autostart_manager import AutoStartManager
 import requests
-from pydaybar.core.theme_manager import ThemeManager
-from pydaybar.core.theme_ai_helper import ThemeAIHelper
+from gaiya.core.theme_manager import ThemeManager
+from gaiya.core.theme_ai_helper import ThemeAIHelper
 import logging
-from pydaybar.utils import path_utils, time_utils, data_loader
+from gaiya.utils import path_utils, time_utils, data_loader
 
 # Qt-Material主题支持
 try:
@@ -345,7 +345,7 @@ class ConfigManager(QMainWindow):
     def _init_template_manager(self):
         """延迟初始化模板管理器(在后台运行,不阻塞UI)"""
         try:
-            from pydaybar.core.template_manager import TemplateManager
+            from gaiya.core.template_manager import TemplateManager
             self.template_manager = TemplateManager(self.app_dir, logging.getLogger(__name__))
             logging.info("模板管理器初始化完成")
 
@@ -360,7 +360,7 @@ class ConfigManager(QMainWindow):
     def _init_schedule_manager(self):
         """延迟初始化时间表管理器"""
         try:
-            from pydaybar.core.schedule_manager import ScheduleManager
+            from gaiya.core.schedule_manager import ScheduleManager
             self.schedule_manager = ScheduleManager(self.app_dir, logging.getLogger(__name__))
             logging.info("时间表管理器初始化完成")
 
@@ -1119,7 +1119,7 @@ class ConfigManager(QMainWindow):
         """延迟初始化AI相关组件(在后台运行,不阻塞UI)"""
         try:
             # 初始化AI客户端（默认使用代理服务器）
-            self.ai_client = PyDayBarAIClient()
+            self.ai_client = GaiyaAIClient()
             
             # 注意：使用代理服务器模式时，不需要启动本地后端服务
             # BackendManager仅用于向后兼容（如果用户需要本地模式）
@@ -1137,14 +1137,14 @@ class ConfigManager(QMainWindow):
             # 初始化后端管理器（仅用于向后兼容，代理模式下不启动本地服务）
             # 获取根logger，它应该已经配置了文件处理器
             root_logger = logging.getLogger()
-            # 如果根logger没有文件处理器，添加一个（指向pydaybar.log）
+            # 如果根logger没有文件处理器，添加一个（指向gaiya.log）
             if not any(isinstance(h, logging.FileHandler) for h in root_logger.handlers):
                 # 获取应用目录（支持打包后的环境）
                 if getattr(sys, 'frozen', False):
                     app_dir = Path(sys.executable).parent
                 else:
                     app_dir = Path(__file__).parent
-                log_file = app_dir / "pydaybar.log"
+                log_file = app_dir / "gaiya.log"
                 file_handler = logging.FileHandler(log_file, encoding='utf-8')
                 file_handler.setLevel(logging.INFO)
                 file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
@@ -1266,7 +1266,7 @@ class ConfigManager(QMainWindow):
 
     def init_ui(self):
         """初始化界面"""
-        self.setWindowTitle('PyDayBar 配置管理器')
+        self.setWindowTitle('GaiYa每日进度条 - 配置管理器')
         self.setFixedSize(1000, 900)  # 固定窗口大小，防止拉伸导致控件变形
 
         # 创建中心部件
@@ -1439,7 +1439,7 @@ class ConfigManager(QMainWindow):
         autostart_layout.setContentsMargins(0, 0, 0, 0)
 
         self.autostart_check = QCheckBox("开机自动启动")
-        self.autostart_check.setToolTip("勾选后，PyDayBar将在Windows开机时自动启动")
+        self.autostart_check.setToolTip("勾选后，GaiYa每日进度条将在Windows开机时自动启动")
         # 从注册表读取当前状态
         if self.autostart_manager:
             self.autostart_check.setChecked(self.autostart_manager.is_enabled())
@@ -3771,7 +3771,7 @@ class ConfigManager(QMainWindow):
             with open(self.tasks_file, 'w', encoding='utf-8') as f:
                 json.dump(tasks, f, indent=4, ensure_ascii=False)
 
-            QMessageBox.information(self, "成功", "配置和任务已保存!\n\n如果 PyDayBar 正在运行,更改会自动生效。")
+            QMessageBox.information(self, "成功", "配置和任务已保存!\n\n如果 Gaiya 正在运行,更改会自动生效。")
             self.config_saved.emit()
 
         except Exception as e:

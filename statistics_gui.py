@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QFont, QPainter, QPen
 from statistics_manager import StatisticsManager
-from pydaybar.core.theme_manager import ThemeManager
+from gaiya.core.theme_manager import ThemeManager
 from pathlib import Path
 import logging
 import sys
@@ -145,7 +145,7 @@ class StatisticsWindow(QWidget):
 
     def init_ui(self):
         """初始化用户界面"""
-        self.setWindowTitle('📊 任务统计报告 - PyDayBar')
+        self.setWindowTitle('📊 任务统计报告 - GaiYa每日进度条')
         self.setGeometry(100, 100, 900, 700)
 
         # 主布局
