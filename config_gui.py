@@ -115,7 +115,7 @@ class SaveTemplateDialog(QDialog):
                 "• 选择历史模板将直接覆盖该模板\n"
                 "• 输入新名称将创建新的模板"
             )
-            tip_label.setStyleSheet("color: #666; font-size: 11px; padding: 10px;")
+            tip_label.setStyleSheet("color: white; font-size: 11px; padding: 10px;")
             layout.addWidget(tip_label)
 
         # 按钮
@@ -388,6 +388,9 @@ class ConfigManager(QMainWindow):
                     template_names[template['id']] = template['name']
 
             for row, schedule in enumerate(schedules):
+                # 设置行高以适配36px按钮
+                self.schedule_table.setRowHeight(row, 48)
+
                 # 模板名称
                 template_id = schedule.get('template_id', '')
                 template_name = template_names.get(template_id, template_id)
@@ -416,21 +419,24 @@ class ConfigManager(QMainWindow):
                 # 切换启用状态按钮
                 toggle_btn = QPushButton("⏸️" if enabled else "▶️")
                 toggle_btn.setToolTip("禁用" if enabled else "启用")
-                toggle_btn.setFixedSize(30, 25)
+                toggle_btn.setFixedSize(36, 36)
+                toggle_btn.setStyleSheet("QPushButton { padding: 4px; font-size: 14px; }")
                 toggle_btn.clicked.connect(lambda checked, r=row: self._toggle_schedule(r))
                 actions_layout.addWidget(toggle_btn)
 
                 # 编辑按钮
                 edit_btn = QPushButton("✏️")
                 edit_btn.setToolTip("编辑")
-                edit_btn.setFixedSize(30, 25)
+                edit_btn.setFixedSize(36, 36)
+                edit_btn.setStyleSheet("QPushButton { padding: 4px; font-size: 14px; }")
                 edit_btn.clicked.connect(lambda checked, r=row: self._edit_schedule(r))
                 actions_layout.addWidget(edit_btn)
 
                 # 删除按钮
                 delete_btn = QPushButton("🗑️")
                 delete_btn.setToolTip("删除")
-                delete_btn.setFixedSize(30, 25)
+                delete_btn.setFixedSize(36, 36)
+                delete_btn.setStyleSheet("QPushButton { padding: 4px; font-size: 14px; }")
                 delete_btn.clicked.connect(lambda checked, r=row: self._delete_schedule(r))
                 actions_layout.addWidget(delete_btn)
 
@@ -1261,7 +1267,7 @@ class ConfigManager(QMainWindow):
     def init_ui(self):
         """初始化界面"""
         self.setWindowTitle('PyDayBar 配置管理器')
-        self.setMinimumSize(800, 600)
+        self.setFixedSize(1000, 900)  # 固定窗口大小，防止拉伸导致控件变形
 
         # 创建中心部件
         central_widget = QWidget()
@@ -1274,8 +1280,8 @@ class ConfigManager(QMainWindow):
         tabs = QTabWidget()
 
         # 立即创建外观配置和任务管理标签页(基础功能)
-        tabs.addTab(self.create_config_tab(), "外观配置")
-        tabs.addTab(self.create_tasks_tab(), "任务管理")
+        tabs.addTab(self.create_config_tab(), "🎨 外观配置")
+        tabs.addTab(self.create_tasks_tab(), "📋 任务管理")
 
         # 延迟创建通知设置标签页(避免初始化时阻塞)
         self.notification_tab_widget = None
@@ -1294,10 +1300,13 @@ class ConfigManager(QMainWindow):
 
         save_btn = QPushButton("保存所有设置")
         save_btn.clicked.connect(self.save_all)
-        save_btn.setStyleSheet("QPushButton { background-color: #4CAF50; color: white; padding: 8px; font-weight: bold; }")
+        save_btn.setFixedHeight(36)
+        save_btn.setStyleSheet("QPushButton { background-color: #4CAF50; color: white; padding: 8px 20px; font-weight: bold; border-radius: 4px; }")
 
         cancel_btn = QPushButton("取消")
         cancel_btn.clicked.connect(self.close)
+        cancel_btn.setFixedHeight(36)
+        cancel_btn.setStyleSheet("QPushButton { padding: 8px 20px; border-radius: 4px; }")
 
         button_layout.addStretch()
         button_layout.addWidget(save_btn)
@@ -1338,12 +1347,22 @@ class ConfigManager(QMainWindow):
 
     def create_config_tab(self):
         """创建外观配置标签页"""
+        # 创建滚动区域容器
+        from PySide6.QtWidgets import QScrollArea
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+        # 创建内容widget
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
         # 基本设置组
-        basic_group = QGroupBox("基本设置")
+        basic_group = QGroupBox("🔧 基本设置")
+        basic_group.setStyleSheet("QGroupBox::title { color: white; font-weight: bold; font-size: 15px; }")
         basic_layout = QFormLayout()
+        basic_layout.setVerticalSpacing(12)
+        basic_layout.setHorizontalSpacing(10)
 
         # 进度条高度 - 预设档位 + 自定义
         height_container = QWidget()
@@ -1428,7 +1447,7 @@ class ConfigManager(QMainWindow):
 
         # 添加状态提示标签
         self.autostart_status_label = QLabel()
-        self.autostart_status_label.setStyleSheet("color: #999; font-size: 11px;")
+        self.autostart_status_label.setStyleSheet("color: white; font-size: 11px;")
         self._update_autostart_status_label()
         autostart_layout.addWidget(self.autostart_status_label)
         autostart_layout.addStretch()
@@ -1442,20 +1461,28 @@ class ConfigManager(QMainWindow):
         layout.addWidget(basic_group)
 
         # 颜色设置组
-        color_group = QGroupBox("颜色设置")
+        color_group = QGroupBox("🎨 颜色设置")
+        color_group.setStyleSheet("QGroupBox::title { color: white; font-weight: bold; font-size: 15px; }")
         color_layout = QFormLayout()
+        color_layout.setVerticalSpacing(12)
+        color_layout.setHorizontalSpacing(10)
 
         # 背景颜色
         bg_color_layout = QHBoxLayout()
         bg_color = self.config.get('background_color', '#505050') if self.config else '#505050'
         self.bg_color_input = QLineEdit(bg_color)
+        self.bg_color_input.setMaximumWidth(100)
+        self.bg_color_input.setFixedHeight(36)
         self.bg_color_btn = QPushButton("选择颜色")
+        self.bg_color_btn.setFixedSize(80, 36)
+        self.bg_color_btn.setStyleSheet("QPushButton { padding: 8px 12px; font-size: 12px; }")
         self.bg_color_btn.clicked.connect(lambda: self.choose_color(self.bg_color_input))
         self.bg_color_preview = QLabel()
         self.update_color_preview(self.bg_color_input, self.bg_color_preview)
         bg_color_layout.addWidget(self.bg_color_input)
         bg_color_layout.addWidget(self.bg_color_btn)
         bg_color_layout.addWidget(self.bg_color_preview)
+        bg_color_layout.addStretch()
         color_layout.addRow("背景颜色:", bg_color_layout)
 
         # 背景透明度
@@ -1468,13 +1495,18 @@ class ConfigManager(QMainWindow):
         marker_color_layout = QHBoxLayout()
         marker_color = self.config.get('marker_color', '#FF0000') if self.config else '#FF0000'
         self.marker_color_input = QLineEdit(marker_color)
+        self.marker_color_input.setMaximumWidth(100)
+        self.marker_color_input.setFixedHeight(36)
         self.marker_color_btn = QPushButton("选择颜色")
+        self.marker_color_btn.setFixedSize(80, 36)
+        self.marker_color_btn.setStyleSheet("QPushButton { padding: 8px 12px; font-size: 12px; }")
         self.marker_color_btn.clicked.connect(lambda: self.choose_color(self.marker_color_input))
         self.marker_color_preview = QLabel()
         self.update_color_preview(self.marker_color_input, self.marker_color_preview)
         marker_color_layout.addWidget(self.marker_color_input)
         marker_color_layout.addWidget(self.marker_color_btn)
         marker_color_layout.addWidget(self.marker_color_preview)
+        marker_color_layout.addStretch()
         color_layout.addRow("时间标记颜色:", marker_color_layout)
 
         # 时间标记宽度
@@ -1494,7 +1526,7 @@ class ConfigManager(QMainWindow):
         marker_type_layout.addWidget(self.marker_type_combo)
 
         marker_type_hint = QLabel("(line=线条, image=图片, gif=动画)")
-        marker_type_hint.setStyleSheet("color: #666; font-size: 9pt;")
+        marker_type_hint.setStyleSheet("color: white; font-size: 9pt;")
         marker_type_layout.addWidget(marker_type_hint)
         marker_type_layout.addStretch()
 
@@ -1509,7 +1541,8 @@ class ConfigManager(QMainWindow):
 
         marker_image_btn = QPushButton("📁 浏览")
         marker_image_btn.clicked.connect(self.choose_marker_image)
-        marker_image_btn.setMaximumWidth(80)
+        marker_image_btn.setFixedSize(70, 36)
+        marker_image_btn.setStyleSheet("QPushButton { padding: 8px 12px; font-size: 12px; }")
         marker_image_layout.addWidget(marker_image_btn)
 
         color_layout.addRow("标记图片:", marker_image_layout)
@@ -1570,7 +1603,7 @@ class ConfigManager(QMainWindow):
         self.marker_x_offset_spin.setSuffix(" px")
         self.marker_x_offset_spin.setMaximumWidth(100)
         x_offset_hint = QLabel("(正值向右,负值向左)")
-        x_offset_hint.setStyleSheet("color: #666; font-size: 9pt;")
+        x_offset_hint.setStyleSheet("color: white; font-size: 9pt;")
         x_offset_layout = QHBoxLayout()
         x_offset_layout.addWidget(self.marker_x_offset_spin)
         x_offset_layout.addWidget(x_offset_hint)
@@ -1584,7 +1617,7 @@ class ConfigManager(QMainWindow):
         self.marker_y_offset_spin.setSuffix(" px")
         self.marker_y_offset_spin.setMaximumWidth(100)
         y_offset_hint = QLabel("(正值向上,负值向下)")
-        y_offset_hint.setStyleSheet("color: #666; font-size: 9pt;")
+        y_offset_hint.setStyleSheet("color: white; font-size: 9pt;")
         y_offset_layout = QHBoxLayout()
         y_offset_layout.addWidget(self.marker_y_offset_spin)
         y_offset_layout.addWidget(y_offset_hint)
@@ -1599,7 +1632,7 @@ class ConfigManager(QMainWindow):
         self.marker_speed_spin.setSingleStep(10)
         self.marker_speed_spin.setMaximumWidth(100)
         speed_hint = QLabel("(100%=原速, 200%=2倍速)")
-        speed_hint.setStyleSheet("color: #666; font-size: 9pt;")
+        speed_hint.setStyleSheet("color: white; font-size: 9pt;")
         speed_layout = QHBoxLayout()
         speed_layout.addWidget(self.marker_speed_spin)
         speed_layout.addWidget(speed_hint)
@@ -1613,8 +1646,11 @@ class ConfigManager(QMainWindow):
         self.on_marker_type_changed(self.marker_type_combo.currentText())
 
         # 效果设置组
-        effect_group = QGroupBox("视觉效果")
+        effect_group = QGroupBox("✨ 视觉效果")
+        effect_group.setStyleSheet("QGroupBox::title { color: white; font-weight: bold; font-size: 15px; }")
         effect_layout = QFormLayout()
+        effect_layout.setVerticalSpacing(12)
+        effect_layout.setHorizontalSpacing(10)
 
         # 启用阴影
         self.shadow_check = QCheckBox("启用阴影效果")
@@ -1632,10 +1668,19 @@ class ConfigManager(QMainWindow):
         layout.addWidget(effect_group)
 
         layout.addStretch()
-        return widget
+        # 将内容widget设置到滚动区域
+        scroll_area.setWidget(widget)
+        return scroll_area
 
     def create_tasks_tab(self):
         """创建任务管理标签页"""
+        # 创建滚动区域容器
+        from PySide6.QtWidgets import QScrollArea
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+        # 创建内容widget
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
@@ -1644,6 +1689,7 @@ class ConfigManager(QMainWindow):
 
         # AI任务规划区域
         ai_group = QGroupBox("🤖 AI智能规划")
+        ai_group.setStyleSheet("QGroupBox::title { color: white; font-weight: bold; font-size: 15px; }")
         ai_layout = QVBoxLayout()
 
         # 说明标签
@@ -1671,6 +1717,7 @@ class ConfigManager(QMainWindow):
         # AI生成按钮
         self.generate_btn = QPushButton("✨ 智能生成任务")
         self.generate_btn.clicked.connect(self.on_ai_generate_clicked)
+        self.generate_btn.setFixedHeight(36)
         self.generate_btn.setStyleSheet("""
             QPushButton {
                 background-color: #FF6B00;
@@ -1692,17 +1739,18 @@ class ConfigManager(QMainWindow):
 
         # 配额状态标签
         self.quota_label = QLabel("配额状态: 加载中...")
-        self.quota_label.setStyleSheet("color: #666; padding: 5px;")
+        self.quota_label.setStyleSheet("color: white; padding: 5px;")
         ai_button_layout.addWidget(self.quota_label)
 
         # 刷新配额按钮
         refresh_quota_btn = QPushButton("🔄 刷新配额")
         refresh_quota_btn.clicked.connect(self.refresh_quota_status)
+        refresh_quota_btn.setFixedHeight(36)
         refresh_quota_btn.setStyleSheet("""
             QPushButton {
                 background-color: #4CAF50;
                 color: white;
-                padding: 6px 12px;
+                padding: 8px 12px;
                 border-radius: 4px;
             }
             QPushButton:hover {
@@ -1729,11 +1777,12 @@ class ConfigManager(QMainWindow):
 
         # 说明标签
         info_label = QLabel("双击表格单元格可以编辑任务内容")
-        info_label.setStyleSheet("color: #666; font-style: italic;")
+        info_label.setStyleSheet("color: white; font-style: italic;")
         top_layout.addWidget(info_label)
 
         # 预设主题选择区域
         theme_group = QGroupBox("🎨 预设主题配色")
+        theme_group.setStyleSheet("QGroupBox::title { color: white; font-weight: bold; font-size: 15px; }")
         theme_layout = QHBoxLayout()
 
         theme_label = QLabel("选择主题:")
@@ -1751,7 +1800,7 @@ class ConfigManager(QMainWindow):
 
         # 主题配色预览区域
         preview_label = QLabel("配色预览:")
-        preview_label.setStyleSheet("color: #666; margin-left: 10px;")
+        preview_label.setStyleSheet("color: white; margin-left: 10px;")
         theme_layout.addWidget(preview_label)
 
         self.colors_preview_widget = QWidget()
@@ -1766,6 +1815,7 @@ class ConfigManager(QMainWindow):
 
         # 模板加载区域 - 单行显示所有模板
         self.template_group = QGroupBox("📋 预设模板")
+        self.template_group.setStyleSheet("QGroupBox::title { color: white; font-weight: bold; font-size: 15px; }")
         self.template_layout = QHBoxLayout()
 
         template_label = QLabel("快速加载:")
@@ -1783,7 +1833,7 @@ class ConfigManager(QMainWindow):
         else:
             # 备用：如果template_manager未初始化，显示提示
             fallback_label = QLabel("模板加载中...")
-            fallback_label.setStyleSheet("color: #999; font-style: italic;")
+            fallback_label.setStyleSheet("color: white; font-style: italic;")
             self.template_layout.addWidget(fallback_label)
             # 延迟重新创建模板按钮
             QTimer.singleShot(500, self._reload_template_buttons)
@@ -1794,6 +1844,7 @@ class ConfigManager(QMainWindow):
 
         # 我的模板区域 - 下拉框选择样式
         self.custom_template_group = QGroupBox("💾 我的模板")
+        self.custom_template_group.setStyleSheet("QGroupBox::title { color: white; font-weight: bold; font-size: 15px; }")
         self.custom_template_layout = QHBoxLayout()
 
         custom_label = QLabel("选择模板:")
@@ -1807,12 +1858,16 @@ class ConfigManager(QMainWindow):
         # 加载按钮
         load_custom_btn = QPushButton("📂 加载")
         load_custom_btn.setToolTip("加载选中的自定义模板")
+        load_custom_btn.setFixedHeight(36)
+        load_custom_btn.setStyleSheet("QPushButton { padding: 8px 12px; border-radius: 4px; }")
         load_custom_btn.clicked.connect(self._load_selected_custom_template)
         self.custom_template_layout.addWidget(load_custom_btn)
 
         # 删除按钮
         delete_custom_btn = QPushButton("🗑️ 删除")
         delete_custom_btn.setToolTip("删除选中的自定义模板")
+        delete_custom_btn.setFixedHeight(36)
+        delete_custom_btn.setStyleSheet("QPushButton { padding: 8px 12px; border-radius: 4px; }")
         delete_custom_btn.clicked.connect(self._delete_selected_custom_template)
         self.custom_template_layout.addWidget(delete_custom_btn)
 
@@ -1827,6 +1882,7 @@ class ConfigManager(QMainWindow):
 
         # 可视化时间轴编辑器（延迟创建，避免初始化时阻塞）
         timeline_group = QGroupBox("🎨 可视化时间轴编辑器")
+        timeline_group.setStyleSheet("QGroupBox::title { color: white; font-weight: bold; font-size: 15px; }")
         timeline_layout = QVBoxLayout()
 
         timeline_hint = QLabel("💡 提示：拖动色块边缘可调整任务时长")
@@ -1852,6 +1908,7 @@ class ConfigManager(QMainWindow):
         self.tasks_table.setColumnCount(6)
         self.tasks_table.setHorizontalHeaderLabels(["开始时间", "结束时间", "任务名称", "背景颜色", "文字颜色", "操作"])
         self.tasks_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
+        self.tasks_table.setMinimumHeight(300)
 
         # 监听表格项的变化,实时同步到时间轴
         self.tasks_table.itemChanged.connect(self.on_table_item_changed)
@@ -1866,19 +1923,23 @@ class ConfigManager(QMainWindow):
 
         add_btn = QPushButton("➕ 添加任务")
         add_btn.clicked.connect(self.add_task)
-        add_btn.setStyleSheet("QPushButton { background-color: #2196F3; color: white; padding: 8px; }")
+        add_btn.setFixedHeight(36)
+        add_btn.setStyleSheet("QPushButton { background-color: #2196F3; color: white; padding: 8px 16px; border-radius: 4px; }")
 
         save_template_btn = QPushButton("💾 保存为模板")
         save_template_btn.clicked.connect(self.save_as_template)
-        save_template_btn.setStyleSheet("QPushButton { background-color: #FF9800; color: white; padding: 8px; }")
+        save_template_btn.setFixedHeight(36)
+        save_template_btn.setStyleSheet("QPushButton { background-color: #FF9800; color: white; padding: 8px 16px; border-radius: 4px; }")
 
         load_custom_btn = QPushButton("📂 加载自定义模板")
         load_custom_btn.clicked.connect(self.load_custom_template)
-        load_custom_btn.setStyleSheet("QPushButton { background-color: #9C27B0; color: white; padding: 8px; }")
+        load_custom_btn.setFixedHeight(36)
+        load_custom_btn.setStyleSheet("QPushButton { background-color: #9C27B0; color: white; padding: 8px 16px; border-radius: 4px; }")
 
         clear_btn = QPushButton("🗑️ 清空所有任务")
         clear_btn.clicked.connect(self.clear_all_tasks)
-        clear_btn.setStyleSheet("QPushButton { background-color: #f44336; color: white; padding: 8px; }")
+        clear_btn.setFixedHeight(36)
+        clear_btn.setStyleSheet("QPushButton { background-color: #f44336; color: white; padding: 8px 16px; border-radius: 4px; }")
 
         button_layout.addWidget(add_btn)
         button_layout.addWidget(save_template_btn)
@@ -1890,11 +1951,12 @@ class ConfigManager(QMainWindow):
 
         # ========== 模板自动应用管理（放在最底部） ==========
         schedule_panel = QGroupBox("📅 模板自动应用管理")
+        schedule_panel.setStyleSheet("QGroupBox::title { color: white; font-weight: bold; font-size: 15px; }")
         schedule_layout = QVBoxLayout()
 
         # 说明文字
         schedule_hint = QLabel("💡 为每个模板设置自动应用的日期规则，到了指定时间会自动加载对应模板")
-        schedule_hint.setStyleSheet("color: #666; font-style: italic; padding: 5px;")
+        schedule_hint.setStyleSheet("color: white; font-style: italic; padding: 5px;")
         schedule_layout.addWidget(schedule_hint)
 
         # 已配置规则表格
@@ -1907,7 +1969,8 @@ class ConfigManager(QMainWindow):
         self.schedule_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
         self.schedule_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
         self.schedule_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        self.schedule_table.setMaximumHeight(200)
+        self.schedule_table.setMinimumHeight(150)
+        self.schedule_table.setMaximumHeight(300)
         self.schedule_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.schedule_table.setSelectionMode(QTableWidget.SingleSelection)
 
@@ -1920,12 +1983,15 @@ class ConfigManager(QMainWindow):
         button_row = QHBoxLayout()
 
         add_schedule_btn = QPushButton("➕ 添加规则")
-        add_schedule_btn.setStyleSheet("QPushButton { background-color: #4CAF50; color: white; padding: 8px; }")
+        add_schedule_btn.setFixedHeight(36)
+        add_schedule_btn.setStyleSheet("QPushButton { background-color: #4CAF50; color: white; padding: 8px 16px; border-radius: 4px; }")
         add_schedule_btn.clicked.connect(self._add_schedule_dialog)
         button_row.addWidget(add_schedule_btn)
 
         test_date_btn = QPushButton("🔍 测试日期")
         test_date_btn.setToolTip("测试指定日期会匹配到哪个模板")
+        test_date_btn.setFixedHeight(36)
+        test_date_btn.setStyleSheet("QPushButton { padding: 8px 16px; border-radius: 4px; }")
         test_date_btn.clicked.connect(self._test_date_matching)
         button_row.addWidget(test_date_btn)
 
@@ -1936,7 +2002,9 @@ class ConfigManager(QMainWindow):
         schedule_panel.setLayout(schedule_layout)
         layout.addWidget(schedule_panel)
 
-        return widget
+        # 将内容widget设置到滚动区域
+        scroll_area.setWidget(widget)
+        return scroll_area
 
 
     def update_colors_preview(self, task_colors):
@@ -2137,38 +2205,43 @@ class ConfigManager(QMainWindow):
 
         # 说明标签
         info_label = QLabel("配置任务提醒通知,让您不会错过任何重要时刻")
-        info_label.setStyleSheet("color: #666; font-style: italic; padding: 5px;")
+        info_label.setStyleSheet("color: white; font-style: italic; padding: 5px;")
         layout.addWidget(info_label)
 
         # 基础设置组
-        basic_group = QGroupBox("基础设置")
+        basic_group = QGroupBox("⚙️ 基础设置")
+        basic_group.setStyleSheet("QGroupBox::title { color: white; font-weight: bold; font-size: 15px; }")
         basic_layout = QFormLayout()
 
         # 启用通知
         self.notify_enabled_check = QCheckBox("启用任务提醒通知")
         notification_config = self.config.get('notification', {})
         self.notify_enabled_check.setChecked(notification_config.get('enabled', True))
+        self.notify_enabled_check.setMinimumHeight(36)
         self.notify_enabled_check.setStyleSheet("font-weight: bold;")
         basic_layout.addRow(self.notify_enabled_check)
 
         # 启用声音
         self.notify_sound_check = QCheckBox("播放提示音")
         self.notify_sound_check.setChecked(notification_config.get('sound_enabled', True))
+        self.notify_sound_check.setMinimumHeight(36)
         basic_layout.addRow(self.notify_sound_check)
 
         basic_group.setLayout(basic_layout)
         layout.addWidget(basic_group)
 
         # 提醒时机设置组
-        timing_group = QGroupBox("提醒时机")
+        timing_group = QGroupBox("⏰ 提醒时机")
+        timing_group.setStyleSheet("QGroupBox::title { color: white; font-weight: bold; font-size: 15px; }")
         timing_layout = QVBoxLayout()
 
         # 任务开始前提醒
-        before_start_group = QGroupBox("任务开始前提醒")
+        before_start_group = QGroupBox("🔔 任务开始前提醒")
+        before_start_group.setStyleSheet("QGroupBox::title { color: white; font-weight: bold; font-size: 15px; }")
         before_start_layout = QVBoxLayout()
 
         before_start_hint = QLabel("选择在任务开始前多久提醒(可多选):")
-        before_start_hint.setStyleSheet("color: #666; font-size: 9pt;")
+        before_start_hint.setStyleSheet("color: white; font-size: 9pt;")
         before_start_layout.addWidget(before_start_hint)
 
         before_start_minutes = notification_config.get('before_start_minutes', [10, 5])
@@ -2180,6 +2253,7 @@ class ConfigManager(QMainWindow):
         for minutes in [30, 15, 10, 5]:
             checkbox = QCheckBox(f"提前 {minutes} 分钟")
             checkbox.setChecked(minutes in before_start_minutes)
+            checkbox.setMinimumHeight(36)
             self.notify_before_start_checks[minutes] = checkbox
             before_start_checkboxes_layout.addWidget(checkbox)
 
@@ -2192,15 +2266,17 @@ class ConfigManager(QMainWindow):
         # 任务开始时提醒
         self.notify_on_start_check = QCheckBox("任务开始时提醒")
         self.notify_on_start_check.setChecked(notification_config.get('on_start', True))
+        self.notify_on_start_check.setMinimumHeight(36)
         self.notify_on_start_check.setStyleSheet("padding: 5px;")
         timing_layout.addWidget(self.notify_on_start_check)
 
         # 任务结束前提醒
-        before_end_group = QGroupBox("任务结束前提醒")
+        before_end_group = QGroupBox("🔕 任务结束前提醒")
+        before_end_group.setStyleSheet("QGroupBox::title { color: white; font-weight: bold; font-size: 15px; }")
         before_end_layout = QVBoxLayout()
 
         before_end_hint = QLabel("选择在任务结束前多久提醒(可多选):")
-        before_end_hint.setStyleSheet("color: #666; font-size: 9pt;")
+        before_end_hint.setStyleSheet("color: white; font-size: 9pt;")
         before_end_layout.addWidget(before_end_hint)
 
         before_end_minutes = notification_config.get('before_end_minutes', [5])
@@ -2211,6 +2287,7 @@ class ConfigManager(QMainWindow):
         for minutes in [10, 5, 3]:
             checkbox = QCheckBox(f"提前 {minutes} 分钟")
             checkbox.setChecked(minutes in before_end_minutes)
+            checkbox.setMinimumHeight(36)
             self.notify_before_end_checks[minutes] = checkbox
             before_end_checkboxes_layout.addWidget(checkbox)
 
@@ -2223,6 +2300,7 @@ class ConfigManager(QMainWindow):
         # 任务结束时提醒
         self.notify_on_end_check = QCheckBox("任务结束时提醒")
         self.notify_on_end_check.setChecked(notification_config.get('on_end', False))
+        self.notify_on_end_check.setMinimumHeight(36)
         self.notify_on_end_check.setStyleSheet("padding: 5px;")
         timing_layout.addWidget(self.notify_on_end_check)
 
@@ -2230,7 +2308,8 @@ class ConfigManager(QMainWindow):
         layout.addWidget(timing_group)
 
         # 免打扰时段设置组
-        quiet_group = QGroupBox("免打扰时段")
+        quiet_group = QGroupBox("🌙 免打扰时段")
+        quiet_group.setStyleSheet("QGroupBox::title { color: white; font-weight: bold; font-size: 15px; }")
         quiet_layout = QFormLayout()
 
         quiet_hours = notification_config.get('quiet_hours', {})
@@ -2238,17 +2317,19 @@ class ConfigManager(QMainWindow):
         # 启用免打扰
         self.quiet_enabled_check = QCheckBox("启用免打扰时段")
         self.quiet_enabled_check.setChecked(quiet_hours.get('enabled', False))
+        self.quiet_enabled_check.setMinimumHeight(36)
         quiet_layout.addRow(self.quiet_enabled_check)
 
         # 免打扰开始时间
         quiet_start_layout = QHBoxLayout()
         self.quiet_start_time = QTimeEdit()
         self.quiet_start_time.setDisplayFormat("HH:mm")
+        self.quiet_start_time.setFixedHeight(36)
         start_time_str = quiet_hours.get('start', '22:00')
         self.quiet_start_time.setTime(QTime.fromString(start_time_str, "HH:mm"))
         quiet_start_layout.addWidget(self.quiet_start_time)
         quiet_start_hint = QLabel("(在此时间后不发送通知)")
-        quiet_start_hint.setStyleSheet("color: #666; font-size: 9pt;")
+        quiet_start_hint.setStyleSheet("color: white; font-size: 9pt;")
         quiet_start_layout.addWidget(quiet_start_hint)
         quiet_start_layout.addStretch()
         quiet_layout.addRow("开始时间:", quiet_start_layout)
@@ -2257,17 +2338,18 @@ class ConfigManager(QMainWindow):
         quiet_end_layout = QHBoxLayout()
         self.quiet_end_time = QTimeEdit()
         self.quiet_end_time.setDisplayFormat("HH:mm")
+        self.quiet_end_time.setFixedHeight(36)
         end_time_str = quiet_hours.get('end', '08:00')
         self.quiet_end_time.setTime(QTime.fromString(end_time_str, "HH:mm"))
         quiet_end_layout.addWidget(self.quiet_end_time)
         quiet_end_hint = QLabel("(在此时间前不发送通知)")
-        quiet_end_hint.setStyleSheet("color: #666; font-size: 9pt;")
+        quiet_end_hint.setStyleSheet("color: white; font-size: 9pt;")
         quiet_end_layout.addWidget(quiet_end_hint)
         quiet_end_layout.addStretch()
         quiet_layout.addRow("结束时间:", quiet_end_layout)
 
         quiet_example = QLabel("示例: 22:00 - 08:00 表示晚上10点到早上8点不打扰")
-        quiet_example.setStyleSheet("color: #999; font-size: 8pt; font-style: italic;")
+        quiet_example.setStyleSheet("color: white; font-size: 8pt; font-style: italic;")
         quiet_layout.addRow(quiet_example)
 
         quiet_group.setLayout(quiet_layout)
@@ -2383,6 +2465,9 @@ class ConfigManager(QMainWindow):
 
         # 批量创建UI组件，使用延迟刷新避免阻塞
         for row, task in enumerate(self.tasks):
+            # 设置行高以适配36px按钮
+            self.tasks_table.setRowHeight(row, 48)
+
             # 开始时间
             start_time = QTimeEdit()
             start_time.setDisplayFormat("HH:mm")
@@ -2415,10 +2500,12 @@ class ConfigManager(QMainWindow):
             color_layout.setContentsMargins(4, 4, 4, 4)
 
             color_input = QLineEdit(task['color'])
-            color_input.setMaximumWidth(100)
+            color_input.setMaximumWidth(80)
+            color_input.setFixedHeight(36)
 
             color_btn = QPushButton("选色")
-            color_btn.setMaximumWidth(50)
+            color_btn.setFixedSize(50, 36)
+            color_btn.setStyleSheet("QPushButton { padding: 8px; font-size: 12px; }")
             color_btn.clicked.connect(lambda checked, inp=color_input: self.choose_color(inp))
 
             color_preview = QLabel()
@@ -2454,10 +2541,12 @@ class ConfigManager(QMainWindow):
             text_color_layout.setContentsMargins(4, 4, 4, 4)
 
             text_color_input = QLineEdit(text_color)
-            text_color_input.setMaximumWidth(100)
+            text_color_input.setMaximumWidth(80)
+            text_color_input.setFixedHeight(36)
 
             text_color_btn = QPushButton("选色")
-            text_color_btn.setMaximumWidth(50)
+            text_color_btn.setFixedSize(50, 36)
+            text_color_btn.setStyleSheet("QPushButton { padding: 8px; font-size: 12px; }")
             text_color_btn.clicked.connect(lambda checked, inp=text_color_input: self.choose_color(inp))
 
             text_color_preview = QLabel()
@@ -2489,7 +2578,8 @@ class ConfigManager(QMainWindow):
             # 删除按钮
             delete_btn = QPushButton("🗑️ 删除")
             delete_btn.clicked.connect(lambda checked, r=row: self.delete_task(r))
-            delete_btn.setStyleSheet("QPushButton { background-color: #f44336; color: white; }")
+            delete_btn.setFixedHeight(36)
+            delete_btn.setStyleSheet("QPushButton { background-color: #f44336; color: white; padding: 8px 10px; font-size: 12px; border-radius: 4px; }")
             self.tasks_table.setCellWidget(row, 5, delete_btn)
 
         # 恢复UI更新
@@ -2509,6 +2599,9 @@ class ConfigManager(QMainWindow):
         """添加新任务,自动接续上一个任务的结束时间"""
         row = self.tasks_table.rowCount()
         self.tasks_table.insertRow(row)
+
+        # 设置行高以适配36px按钮
+        self.tasks_table.setRowHeight(row, 48)
 
         # 智能计算开始时间:接续上一个任务的结束时间
         if row > 0:
@@ -2552,10 +2645,12 @@ class ConfigManager(QMainWindow):
         color_layout.setContentsMargins(4, 4, 4, 4)
 
         color_input = QLineEdit(default_color)
-        color_input.setMaximumWidth(100)
+        color_input.setMaximumWidth(80)
+        color_input.setFixedHeight(36)
 
         color_btn = QPushButton("选色")
-        color_btn.setMaximumWidth(50)
+        color_btn.setFixedSize(50, 36)
+        color_btn.setStyleSheet("QPushButton { padding: 8px; font-size: 12px; }")
         color_btn.clicked.connect(lambda checked, inp=color_input: self.choose_color(inp))
 
         color_preview = QLabel()
@@ -2576,10 +2671,12 @@ class ConfigManager(QMainWindow):
         text_color_layout.setContentsMargins(4, 4, 4, 4)
 
         text_color_input = QLineEdit("#FFFFFF")
-        text_color_input.setMaximumWidth(100)
+        text_color_input.setMaximumWidth(80)
+        text_color_input.setFixedHeight(36)
 
         text_color_btn = QPushButton("选色")
-        text_color_btn.setMaximumWidth(50)
+        text_color_btn.setFixedSize(50, 36)
+        text_color_btn.setStyleSheet("QPushButton { padding: 8px; font-size: 12px; }")
         text_color_btn.clicked.connect(lambda checked, inp=text_color_input: self.choose_color(inp))
 
         text_color_preview = QLabel()
@@ -2597,7 +2694,8 @@ class ConfigManager(QMainWindow):
         # 删除按钮
         delete_btn = QPushButton("🗑️ 删除")
         delete_btn.clicked.connect(lambda checked, r=row: self.delete_task(r))
-        delete_btn.setStyleSheet("QPushButton { background-color: #f44336; color: white; }")
+        delete_btn.setFixedHeight(36)
+        delete_btn.setStyleSheet("QPushButton { background-color: #f44336; color: white; padding: 8px 10px; font-size: 12px; border-radius: 4px; }")
         self.tasks_table.setCellWidget(row, 5, delete_btn)
 
         # 刷新时间轴
@@ -3353,7 +3451,7 @@ class ConfigManager(QMainWindow):
             self.autostart_status_label.setStyleSheet("color: #4CAF50; font-size: 11px;")
         else:
             self.autostart_status_label.setText("(未启用)")
-            self.autostart_status_label.setStyleSheet("color: #999; font-size: 11px;")
+            self.autostart_status_label.setStyleSheet("color: white; font-size: 11px;")
 
     def on_marker_type_changed(self, marker_type):
         """时间标记类型改变时的处理"""
@@ -3945,7 +4043,7 @@ def main():
     """主程序入口"""
     app = QApplication(sys.argv)
 
-    # 应用Qt-Material主题
+    # 应用Qt-Material深色主题（固定使用dark_teal.xml）
     if QT_MATERIAL_AVAILABLE:
         try:
             extra = {
@@ -3954,7 +4052,7 @@ def main():
                 'font_size': '13px',
             }
             apply_stylesheet(app, theme='dark_teal.xml', extra=extra)
-            print("✨ 已应用Qt-Material主题: dark_teal")
+            print("[主题] 已应用Qt-Material深色主题: dark_teal.xml")
         except Exception as e:
             print(f"应用Material主题失败: {e}，使用默认样式")
             app.setStyle("Fusion")

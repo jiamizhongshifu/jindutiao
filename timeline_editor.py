@@ -41,8 +41,8 @@ class TimelineEditor(QWidget):
         self.hover_edge = None
 
         # 设置最小高度
-        self.setMinimumHeight(100)
-        self.setMaximumHeight(100)
+        self.setMinimumHeight(80)
+        self.setMaximumHeight(80)
 
         # 启用鼠标跟踪
         self.setMouseTracking(True)

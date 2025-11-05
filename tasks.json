@@ -3,84 +3,98 @@
         "start": "00:00",
         "end": "06:00",
         "task": "深度睡眠",
-        "color": "#1A237E"
+        "color": "#1976D2",
+        "text_color": "#FFFFFF"
     },
     {
         "start": "06:00",
         "end": "07:00",
         "task": "起床准备",
-        "color": "#00897B"
+        "color": "#388E3C",
+        "text_color": "#FFFFFF"
     },
     {
         "start": "07:00",
         "end": "08:00",
         "task": "早餐时间",
-        "color": "#FDD835"
+        "color": "#F57C00",
+        "text_color": "#FFFFFF"
     },
     {
         "start": "08:00",
         "end": "09:00",
         "task": "晨间通勤",
-        "color": "#8D6E63"
+        "color": "#7B1FA2",
+        "text_color": "#FFFFFF"
     },
     {
         "start": "09:00",
         "end": "12:00",
         "task": "上午工作",
-        "color": "#4CAF50"
+        "color": "#1976D2",
+        "text_color": "#FFFFFF"
     },
     {
         "start": "12:00",
         "end": "13:00",
         "task": "午餐休息",
-        "color": "#FF9800"
+        "color": "#388E3C",
+        "text_color": "#FFFFFF"
     },
     {
         "start": "13:00",
         "end": "14:00",
         "task": "午休小憩",
-        "color": "#FFEB3B"
+        "color": "#F57C00",
+        "text_color": "#FFFFFF"
     },
     {
         "start": "14:00",
         "end": "18:00",
         "task": "下午工作",
-        "color": "#2196F3"
+        "color": "#7B1FA2",
+        "text_color": "#FFFFFF"
     },
     {
         "start": "18:00",
         "end": "19:00",
         "task": "晚间通勤",
-        "color": "#8D6E63"
+        "color": "#1976D2",
+        "text_color": "#FFFFFF"
     },
     {
         "start": "19:00",
         "end": "20:00",
         "task": "晚餐时间",
-        "color": "#FF5722"
+        "color": "#388E3C",
+        "text_color": "#FFFFFF"
     },
     {
         "start": "20:00",
         "end": "21:00",
         "task": "健身运动",
-        "color": "#E91E63"
+        "color": "#F57C00",
+        "text_color": "#FFFFFF"
     },
     {
         "start": "21:00",
         "end": "22:00",
         "task": "学习充电",
-        "color": "#9C27B0"
+        "color": "#7B1FA2",
+        "text_color": "#FFFFFF"
     },
     {
         "start": "22:00",
         "end": "23:00",
         "task": "休闲娱乐",
-        "color": "#673AB7"
+        "color": "#1976D2",
+        "text_color": "#FFFFFF"
     },
     {
         "start": "23:00",
         "end": "24:00",
         "task": "洗漱准备",
-        "color": "#3F51B5"
+        "color": "#388E3C",
+        "text_color": "#FFFFFF"
     }
 ]

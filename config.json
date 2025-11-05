@@ -15,7 +15,13 @@
     "update_interval": 1000,
     "enable_shadow": true,
     "corner_radius": 0,
-    "autostart_enabled": true,
+    "autostart_enabled": false,
+    "ui_theme": "light_blue.xml",
+    "theme": {
+        "mode": "preset",
+        "current_theme_id": "business",
+        "auto_apply_task_colors": false
+    },
     "notification": {
         "enabled": true,
         "before_start_minutes": [
