@@ -22,9 +22,10 @@ class AuthDialog(QDialog):
     # 信号：登录成功时发出
     login_success = Signal(dict)  # 传递user_info
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, auth_client=None):
         super().__init__(parent)
-        self.auth_client = AuthClient()
+        # 使用传入的auth_client实例，如果没有则创建新的
+        self.auth_client = auth_client if auth_client is not None else AuthClient()
         self.init_ui()
 
     def init_ui(self):
@@ -248,8 +249,6 @@ class AuthDialog(QDialog):
                 "user_tier": result.get("user_tier", "free")
             }
 
-            QMessageBox.information(self, "登录成功", f"欢迎回来！\n会员等级: {user_info['user_tier']}")
-
             # 发出登录成功信号
             self.login_success.emit(user_info)
 
@@ -301,24 +300,20 @@ class AuthDialog(QDialog):
         signup_button.setText("注册")
 
         if result.get("success"):
-            # 注册成功
+            # 注册成功（方案A: 禁用邮箱确认，直接登录）
             user_info = {
                 "user_id": result.get("user_id"),
                 "email": result.get("email"),
                 "user_tier": "free"
             }
 
-            QMessageBox.information(
-                self,
-                "注册成功",
-                f"注册成功！\n邮箱: {email}\n会员等级: 免费版\n\n您已自动登录。"
-            )
-
             # 发出登录成功信号
             self.login_success.emit(user_info)
 
             # 关闭对话框
             self.accept()
+
+            # 方案C（OTP验证）已禁用，如需启用请参考 docs/desktop-email-verification-guide.md
         else:
             # 注册失败
             error_msg = result.get("error", "注册失败")

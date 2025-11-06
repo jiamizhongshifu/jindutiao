@@ -1953,15 +1953,31 @@ def main():
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
     )
 
-    # 创建应用实例
-    app = QApplication(sys.argv)
-
     # 初始化日志
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(levelname)s - %(message)s'
     )
     logger = logging.getLogger(__name__)
+
+    # 创建应用实例
+    app = QApplication(sys.argv)
+
+    # ⚠️ 关键修复：强制统一样式引擎，解决打包后QFrame边框渲染差异
+    # 开发环境使用 windows11，打包环境默认为空，导致CSS边框渲染效果不同
+    from PySide6.QtWidgets import QStyleFactory
+    available_styles = QStyleFactory.keys()
+    logger.info(f"Available Qt styles: {available_styles}")
+
+    # 优先使用windows11（与开发环境一致），否则使用Fusion（跨平台一致性最好）
+    if "windows11" in available_styles:
+        app.setStyle("windows11")
+        logger.info("Forced Qt style: windows11")
+    else:
+        app.setStyle("fusion")
+        logger.info("Forced Qt style: fusion (windows11 not available)")
+
+    logger.info(f"Final Qt style: {app.style().objectName()}")
 
     # 应用Qt-Material主题
     if QT_MATERIAL_AVAILABLE:

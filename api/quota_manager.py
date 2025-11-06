@@ -67,17 +67,13 @@ class QuotaManager:
             quotas = {
                 "daily_plan_total": 50,
                 "weekly_report_total": 10,
-                "chat_total": 100,
-                "theme_recommend_total": 50,
-                "theme_generate_total": 50
+                "chat_total": 100
             }
         else:
             quotas = {
                 "daily_plan_total": 3,
                 "weekly_report_total": 1,
-                "chat_total": 10,
-                "theme_recommend_total": 5,
-                "theme_generate_total": 3
+                "chat_total": 10
             }
 
         new_user = {
@@ -87,13 +83,9 @@ class QuotaManager:
             "daily_plan_used": 0,
             "weekly_report_used": 0,
             "chat_used": 0,
-            "theme_recommend_used": 0,
-            "theme_generate_used": 0,
             "daily_plan_reset_at": tomorrow_midnight.isoformat(),
             "weekly_report_reset_at": next_week_midnight.isoformat(),
-            "chat_reset_at": tomorrow_midnight.isoformat(),
-            "theme_recommend_reset_at": tomorrow_midnight.isoformat(),
-            "theme_generate_reset_at": tomorrow_midnight.isoformat()
+            "chat_reset_at": tomorrow_midnight.isoformat()
         }
 
         try:
@@ -128,20 +120,6 @@ class QuotaManager:
                 updates["chat_used"] = 0
                 next_reset = (now_china + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
                 updates["chat_reset_at"] = next_reset.isoformat()
-
-        if user_quota.get("theme_recommend_reset_at"):
-            reset_time = datetime.fromisoformat(user_quota["theme_recommend_reset_at"].replace("Z", "+00:00"))
-            if now_china >= reset_time:
-                updates["theme_recommend_used"] = 0
-                next_reset = (now_china + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
-                updates["theme_recommend_reset_at"] = next_reset.isoformat()
-
-        if user_quota.get("theme_generate_reset_at"):
-            reset_time = datetime.fromisoformat(user_quota["theme_generate_reset_at"].replace("Z", "+00:00"))
-            if now_china >= reset_time:
-                updates["theme_generate_used"] = 0
-                next_reset = (now_china + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
-                updates["theme_generate_reset_at"] = next_reset.isoformat()
 
         # 检查周配额
         if user_quota.get("weekly_report_reset_at"):
@@ -231,9 +209,7 @@ class QuotaManager:
             "remaining": {
                 "daily_plan": user_quota.get("daily_plan_total", 3) - user_quota.get("daily_plan_used", 0),
                 "weekly_report": user_quota.get("weekly_report_total", 1) - user_quota.get("weekly_report_used", 0),
-                "chat": user_quota.get("chat_total", 10) - user_quota.get("chat_used", 0),
-                "theme_recommend": user_quota.get("theme_recommend_total", 5) - user_quota.get("theme_recommend_used", 0),
-                "theme_generate": user_quota.get("theme_generate_total", 3) - user_quota.get("theme_generate_used", 0)
+                "chat": user_quota.get("chat_total", 10) - user_quota.get("chat_used", 0)
             },
             "user_tier": user_quota.get("user_tier", user_tier)
         }
@@ -248,10 +224,6 @@ class QuotaManager:
                 "weekly_report_used": 0,
                 "chat_total": 100,
                 "chat_used": 0,
-                "theme_recommend_total": 50,
-                "theme_recommend_used": 0,
-                "theme_generate_total": 50,
-                "theme_generate_used": 0,
                 "user_tier": user_tier
             }
         else:
@@ -262,9 +234,5 @@ class QuotaManager:
                 "weekly_report_used": 0,
                 "chat_total": 10,
                 "chat_used": 0,
-                "theme_recommend_total": 5,
-                "theme_recommend_used": 0,
-                "theme_generate_total": 3,
-                "theme_generate_used": 0,
                 "user_tier": user_tier
             }

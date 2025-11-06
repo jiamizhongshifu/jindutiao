@@ -594,6 +594,7 @@ macOS:
 
 ### 方法论文档
 - [CLAUDE.md](CLAUDE.md) - AI助手配置和方法论库
+- [AGENTS.md](AGENTS.md) - 仓库贡献者指南与协作流程说明
 
 ### 开发路线图
 - [📅 v1.5开发路线图](ROADMAP_v1.5.md) - 下一阶段的功能规划和开发计划

@@ -46,6 +46,7 @@ class AuthManager:
 
         try:
             # 1. 创建Supabase Auth用户
+            # 方案A: 禁用邮箱确认，用户注册后立即可登录
             auth_response = self.client.auth.sign_up({
                 "email": email,
                 "password": password
@@ -386,4 +387,69 @@ class AuthManager:
 
         except Exception as e:
             print(f"Error deleting user: {e}", file=sys.stderr)
+            return {"success": False, "error": str(e)}
+
+    def send_otp_email(self, email: str, otp_code: str, purpose: str) -> Dict:
+        """
+        发送OTP验证码邮件（使用Supabase邮件功能或第三方邮件服务）
+
+        Args:
+            email: 邮箱地址
+            otp_code: 6位数字验证码
+            purpose: 用途（signup, password_reset）
+
+        Returns:
+            发送结果
+        """
+        if not self.client:
+            return {"success": False, "error": "Supabase not configured"}
+
+        try:
+            # 使用Supabase的自定义邮件模板
+            # 注意: 这需要在Supabase控制台配置自定义邮件模板
+
+            # 简化版本：使用Supabase Auth的OTP功能
+            # Supabase会自动发送OTP邮件
+            from supabase.lib.client_options import ClientOptions
+
+            # 发送OTP邮件
+            # 注意: 这里简化处理,实际应使用SMTP或邮件服务API
+            print(f"[DEV] OTP Code for {email}: {otp_code}", file=sys.stderr)
+
+            # TODO: 集成真实的邮件发送服务（SendGrid, Resend, AWS SES等）
+            # 这里返回成功，让OTP在控制台输出（开发模式）
+            return {
+                "success": True,
+                "message": "OTP sent (dev mode: check server logs)"
+            }
+
+        except Exception as e:
+            print(f"Error sending OTP email: {e}", file=sys.stderr)
+            return {"success": False, "error": str(e)}
+
+    def mark_email_verified(self, email: str) -> Dict:
+        """
+        标记邮箱为已验证
+
+        Args:
+            email: 邮箱地址
+
+        Returns:
+            更新结果
+        """
+        if not self.client:
+            return {"success": False, "error": "Supabase not configured"}
+
+        try:
+            # 更新数据库中的email_verified字段
+            response = self.client.table("users").update({
+                "email_verified": True
+            }).eq("email", email).execute()
+
+            print(f"Email marked as verified: {email}", file=sys.stderr)
+
+            return {"success": True}
+
+        except Exception as e:
+            print(f"Error marking email as verified: {e}", file=sys.stderr)
             return {"success": False, "error": str(e)}

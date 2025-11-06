@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
     QTabWidget, QLabel, QLineEdit, QSpinBox, QPushButton, QColorDialog,
     QComboBox, QCheckBox, QTableWidget, QTableWidgetItem, QHeaderView,
     QMessageBox, QTimeEdit, QGroupBox, QFormLayout, QFileDialog, QDialog,
-    QDialogButtonBox
+    QDialogButtonBox, QButtonGroup, QRadioButton
 )
 from PySide6.QtCore import Qt, QTime, Signal, QThread, QTimer
 from PySide6.QtGui import QColor, QIcon
@@ -1287,6 +1287,10 @@ class ConfigManager(QMainWindow):
         self.notification_tab_widget = None
         tabs.addTab(QWidget(), "🔔 通知设置")  # 占位widget
 
+        # 延迟创建账户标签页
+        self.account_tab_widget = None
+        tabs.addTab(QWidget(), "👤 账户")  # 占位widget
+
         # 连接标签页切换信号,实现懒加载
         tabs.currentChanged.connect(self.on_tab_changed)
         # 连接标签页切换信号,控制AI状态定时器
@@ -1319,6 +1323,10 @@ class ConfigManager(QMainWindow):
         if index == 2:  # 通知设置标签页（主题设置已移除）
             if self.notification_tab_widget is None:
                 self._load_notification_tab()
+        elif index == 3:  # 账户标签页
+            if self.account_tab_widget is None:
+                self._load_account_tab()
+
     
     def _load_notification_tab(self):
         """加载通知设置标签页"""
@@ -1344,6 +1352,32 @@ class ConfigManager(QMainWindow):
             self.notification_tab_widget = error_widget
             self.tabs.removeTab(2)
             self.tabs.insertTab(2, self.notification_tab_widget, "🔔 通知设置")
+
+
+    def _load_account_tab(self):  
+        """加载账户标签页"""  
+        if self.account_tab_widget is not None:  
+            return  # 已经加载过了  
+  
+        try:  
+            self.account_tab_widget = self._create_account_tab()  
+            self.tabs.setTabEnabled(3, True)  # 确保标签页可用  
+            # 替换占位widget  
+            self.tabs.removeTab(3)  
+            self.tabs.insertTab(3, self.account_tab_widget, "👤 账户")  
+            self.tabs.setCurrentIndex(3)  # 切换到账户标签页  
+        except Exception as e:  
+            import logging  
+            logging.error(f"加载账户标签页失败: {e}")  
+            from PySide6.QtWidgets import QLabel  
+            error_widget = QWidget()  
+            error_layout = QVBoxLayout(error_widget)  
+            error_label = QLabel(f"加载账户标签页失败: {e}")  
+            error_label.setStyleSheet("color: red; padding: 20px;")  
+            error_layout.addWidget(error_label)  
+            self.account_tab_widget = error_widget  
+            self.tabs.removeTab(3)  
+            self.tabs.insertTab(3, self.account_tab_widget, "👤 账户")  
 
     def create_config_tab(self):
         """创建外观配置标签页"""
@@ -2357,6 +2391,347 @@ class ConfigManager(QMainWindow):
 
         layout.addStretch()
         return widget
+
+
+    def _create_account_tab(self):
+        """创建账户标签页"""
+        from PySide6.QtWidgets import QScrollArea
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+        content_widget = QWidget()
+        layout = QVBoxLayout(content_widget)
+        layout.setSpacing(20)
+        layout.setContentsMargins(30, 30, 30, 30)
+
+        title_label = QLabel("账户信息")
+        title_label.setStyleSheet("font-size: 20px; font-weight: bold; color: white; margin-bottom: 10px;")
+        layout.addWidget(title_label)
+
+        from gaiya.core.auth_client import AuthClient
+        auth_client = AuthClient()
+
+        email = auth_client.get_user_email() or "未登录"
+        user_tier = auth_client.get_user_tier()
+
+        if email != "未登录":
+
+            email_label = QLabel(f"邮箱：{email}")
+            email_label.setStyleSheet("color: white; font-size: 14px; margin-bottom: 15px;")
+            layout.addWidget(email_label)
+
+            tier_names = {"free": "免费用户", "pro": "专业版", "lifetime": "终身会员"}
+            tier_name = tier_names.get(user_tier, user_tier)
+            tier_label = QLabel(f"会员等级：{tier_name}")
+            tier_label.setStyleSheet("color: white; font-size: 14px; margin-bottom: 20px;")
+            layout.addWidget(tier_label)
+
+            if user_tier == "free":
+                tip_label = QLabel("选择适合你的套餐：")
+                tip_label.setStyleSheet("color: white; font-size: 15px; font-weight: bold; margin-bottom: 10px;")
+                layout.addWidget(tip_label)
+
+                cards_layout = QHBoxLayout()
+                cards_layout.setSpacing(12)
+
+                plans = [
+                    {"id": "pro_monthly", "name": "专业版 - 月付", "price": "¥29", "period": "/月", "color": "#FF6B6B", "features": ["50次/天 任务规划", "10次/周 进度报告", "100次/天 AI对话"]},
+                    {"id": "pro_yearly", "name": "专业版 - 年付", "price": "¥199", "period": "/年", "color": "#4ECDC4", "features": ["50次/天 任务规划", "10次/周 进度报告", "100次/天 AI对话", "💰 省30%"]},
+                    {"id": "lifetime", "name": "终身会员", "price": "¥499", "period": "买断", "color": "#95A99C", "features": ["无限使用所有功能", "一次付费永久使用", "⭐ 最超值"]}
+                ]
+
+                self.plan_cards = []
+                self.selected_plan_id = "pro_yearly"
+                for i, plan in enumerate(plans):
+                    card = self._create_simple_plan_card(plan, i == 1)
+                    cards_layout.addWidget(card)
+                    self.plan_cards.append(card)
+
+                layout.addLayout(cards_layout)
+
+                # 添加支付方式选择
+                payment_container = QWidget()
+                payment_container.setStyleSheet("""
+                    QWidget {
+                        background-color: rgba(248, 249, 250, 0.1);
+                        border-radius: 12px;
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                    }
+                """)
+                payment_layout = QVBoxLayout(payment_container)
+                payment_layout.setContentsMargins(30, 20, 30, 20)
+                payment_layout.setSpacing(12)
+
+                payment_title = QLabel("选择支付方式")
+                payment_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                payment_title.setStyleSheet("""
+                    QLabel {
+                        color: white;
+                        font-size: 15px;
+                        font-weight: 600;
+                        background: transparent;
+                        border: none;
+                    }
+                """)
+                payment_layout.addWidget(payment_title)
+
+                payment_options_layout = QHBoxLayout()
+                payment_options_layout.addStretch()
+
+                self.payment_method_group = QButtonGroup()
+
+                alipay_radio = QRadioButton("支付宝")
+                alipay_radio.setProperty("pay_type", "alipay")
+                alipay_radio.setChecked(True)
+                alipay_radio.setStyleSheet("""
+                    QRadioButton {
+                        color: white;
+                        font-size: 14px;
+                        spacing: 8px;
+                        background: transparent;
+                    }
+                    QRadioButton::indicator {
+                        width: 18px;
+                        height: 18px;
+                    }
+                    QRadioButton::indicator:checked {
+                        background-color: #0071e3;
+                        border: 2px solid #0071e3;
+                        border-radius: 9px;
+                    }
+                    QRadioButton::indicator:unchecked {
+                        background-color: rgba(255, 255, 255, 0.2);
+                        border: 2px solid rgba(255, 255, 255, 0.5);
+                        border-radius: 9px;
+                    }
+                """)
+                self.payment_method_group.addButton(alipay_radio)
+                payment_options_layout.addWidget(alipay_radio)
+
+                wxpay_radio = QRadioButton("微信支付")
+                wxpay_radio.setProperty("pay_type", "wxpay")
+                wxpay_radio.setStyleSheet(alipay_radio.styleSheet())
+                self.payment_method_group.addButton(wxpay_radio)
+                payment_options_layout.addWidget(wxpay_radio)
+
+                payment_options_layout.addStretch()
+                payment_layout.addLayout(payment_options_layout)
+
+                layout.addSpacing(20)
+                layout.addWidget(payment_container)
+                layout.addSpacing(20)
+
+                # 创建按钮容器以居中显示
+                button_container = QHBoxLayout()
+                button_container.addStretch()
+
+                purchase_button = QPushButton("前往付费")
+                purchase_button.setFixedSize(320, 72)  # 增加高度到72px确保文字完整显示
+                purchase_button.setStyleSheet("""
+                    QPushButton {
+                        background-color: #FF9800;
+                        color: white;
+                        border: none;
+                        border-radius: 6px;
+                        padding: 20px 24px;
+                        font-size: 18px;
+                        font-weight: bold;
+                        margin-top: 15px;
+                    }
+                    QPushButton:hover {
+                        background-color: #F57C00;
+                    }
+                    QPushButton:pressed {
+                        background-color: #E65100;
+                    }
+                """)
+                purchase_button.clicked.connect(self._on_purchase_clicked)
+                button_container.addWidget(purchase_button)
+                button_container.addStretch()
+
+                layout.addLayout(button_container)
+            else:
+                info_label = QLabel("感谢您的支持！")
+                info_label.setStyleSheet("color: white; font-size: 14px;")
+                layout.addWidget(info_label)
+        else:
+            login_label = QLabel("请先登录")
+            login_label.setStyleSheet("color: white; font-size: 14px;")
+            layout.addWidget(login_label)
+
+        layout.addStretch()
+        scroll_area.setWidget(content_widget)
+        return scroll_area
+
+    def _create_simple_plan_card(self, plan: dict, is_selected: bool = False):
+        """创建简单的套餐卡片"""
+        from PySide6.QtWidgets import QFrame
+        card = QFrame()
+        card.setObjectName(f"plan_card_{plan['id']}")
+        card.setFixedSize(220, 200)
+        card.setCursor(Qt.CursorShape.PointingHandCursor)
+
+        border_color = "#4ECDC4" if is_selected else "#555"  # 使用绿色作为选中描边
+        border_width = "3px" if is_selected else "2px"
+
+        card.setStyleSheet(f"""
+            QFrame#plan_card_{plan['id']} {{
+                background-color: rgba(40, 40, 40, 200);
+                border: {border_width} solid {border_color};
+                border-radius: 12px;
+            }}
+        """)
+
+        layout = QVBoxLayout(card)
+        layout.setSpacing(8)
+        layout.setContentsMargins(15, 15, 15, 15)
+
+        name_label = QLabel(plan['name'])
+        name_label.setStyleSheet("font-size: 14px; font-weight: bold; color: white; background: transparent;")
+        name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(name_label)
+
+        price_layout = QHBoxLayout()
+        price_layout.setSpacing(2)
+        price_label = QLabel(plan['price'])
+        price_label.setStyleSheet("font-size: 24px; font-weight: bold; color: white; background: transparent;")
+        period_label = QLabel(plan['period'])
+        period_label.setStyleSheet("font-size: 13px; color: rgba(255,255,255,0.8); background: transparent;")
+        period_label.setAlignment(Qt.AlignmentFlag.AlignBottom)
+        price_layout.addStretch()
+        price_layout.addWidget(price_label)
+        price_layout.addWidget(period_label)
+        price_layout.addStretch()
+        layout.addLayout(price_layout)
+
+        layout.addSpacing(5)
+
+        for feature in plan['features']:
+            feature_label = QLabel(f"• {feature}")
+            feature_label.setStyleSheet("font-size: 11px; color: rgba(255,255,255,0.85); background: transparent;")
+            layout.addWidget(feature_label)
+
+        layout.addStretch()
+        card.plan_id = plan['id']
+        card.mousePressEvent = lambda e: self._on_plan_card_clicked(plan['id'])
+        return card
+
+    def _on_plan_card_clicked(self, plan_id: str):
+        """处理套餐卡片点击"""
+        self.selected_plan_id = plan_id
+        plans_data = [
+            {"id": "pro_monthly", "color": "#FF6B6B"},
+            {"id": "pro_yearly", "color": "#4ECDC4"},
+            {"id": "lifetime", "color": "#95A99C"}
+        ]
+
+        for i, card in enumerate(self.plan_cards):
+            plan = plans_data[i]
+            is_selected = (plan['id'] == plan_id)
+            border_color = "#4ECDC4" if is_selected else "#555"  # 使用绿色作为选中描边
+            border_width = "3px" if is_selected else "2px"
+            card.setStyleSheet(f"""
+                QFrame#plan_card_{plan['id']} {{
+                    background-color: rgba(40, 40, 40, 200);
+                    border: {border_width} solid {border_color};
+                    border-radius: 12px;
+                }}
+            """)
+
+    def _on_purchase_clicked(self):
+        """处理前往付费按钮点击 - 使用真实支付流程"""
+        from PySide6.QtWidgets import QMessageBox
+        from PySide6.QtCore import QUrl, QTimer
+        from PySide6.QtGui import QDesktopServices
+        from gaiya.core.auth_client import AuthClient
+
+        # 获取选中的支付方式
+        selected_button = self.payment_method_group.checkedButton()
+        if not selected_button:
+            QMessageBox.warning(self, "提示", "请选择支付方式")
+            return
+
+        pay_type = selected_button.property("pay_type")
+
+        # 创建订单
+        auth_client = AuthClient()
+        result = auth_client.create_payment_order(
+            plan_type=self.selected_plan_id,
+            pay_type=pay_type
+        )
+
+        if result.get("success"):
+            # 订单创建成功，直接打开支付页面
+            payment_url = result.get("payment_url")
+            params = result.get("params", {})
+            out_trade_no = result.get("out_trade_no")
+
+            # 拼接支付参数到URL
+            from urllib.parse import urlencode
+            query_string = urlencode(params)
+            full_payment_url = f"{payment_url}?{query_string}"
+
+            # 在浏览器中打开支付URL
+            QDesktopServices.openUrl(QUrl(full_payment_url))
+
+            # 显示等待支付对话框（非阻塞）
+            self.payment_polling_dialog = QMessageBox(self)
+            self.payment_polling_dialog.setWindowTitle("等待支付")
+            self.payment_polling_dialog.setText(
+                "正在等待支付完成...\n\n"
+                "请在打开的浏览器页面中完成支付。\n"
+                "支付完成后，此窗口将自动关闭。"
+            )
+            self.payment_polling_dialog.setStandardButtons(QMessageBox.StandardButton.Cancel)
+            self.payment_polling_dialog.setIcon(QMessageBox.Icon.Information)
+
+            # 创建定时器轮询支付状态
+            self.payment_timer = QTimer()
+            self.payment_timer.setInterval(3000)  # 每3秒查询一次
+            self.payment_timer.timeout.connect(lambda: self._check_payment_status(out_trade_no, auth_client))
+            self.payment_timer.start()
+
+            # 监听取消按钮
+            self.payment_polling_dialog.rejected.connect(self._stop_payment_polling)
+
+            # 显示对话框（非阻塞）
+            self.payment_polling_dialog.show()
+        else:
+            # 订单创建失败
+            error_msg = result.get("error", "创建订单失败")
+            QMessageBox.critical(self, "创建订单失败", f"创建订单失败：{error_msg}")
+
+    def _check_payment_status(self, out_trade_no: str, auth_client):
+        """检查支付状态"""
+        from PySide6.QtWidgets import QMessageBox
+        result = auth_client.query_payment_order(out_trade_no)
+
+        if result.get("success"):
+            order = result.get("order", {})
+            status = order.get("status")
+
+            if status == "paid":
+                # 支付成功
+                self._stop_payment_polling()
+
+                QMessageBox.information(
+                    self,
+                    "支付成功",
+                    "支付已完成！\n您的会员权益已激活。\n\n请重新启动应用以生效。"
+                )
+
+                # 重新加载账户tab以刷新会员状态
+                self.account_tab_widget = None
+                self._load_account_tab()
+
+    def _stop_payment_polling(self):
+        """停止支付状态轮询"""
+        if hasattr(self, 'payment_timer'):
+            self.payment_timer.stop()
+
+        if hasattr(self, 'payment_polling_dialog'):
+            self.payment_polling_dialog.close()
 
     def on_timeline_task_changed(self, task_index, new_start_minutes, new_end_minutes):
         """时间轴任务时间改变时更新表格"""
