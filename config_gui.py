@@ -2279,11 +2279,15 @@ class ConfigManager(QMainWindow):
         timing_group = QGroupBox("⏰ 提醒时机")
         timing_group.setStyleSheet("QGroupBox::title { color: white; font-weight: bold; font-size: 15px; }")
         timing_layout = QVBoxLayout()
+        timing_layout.setSpacing(15)  # 设置子元素之间的间距
 
         # 任务开始前提醒
         before_start_group = QGroupBox("🔔 任务开始前提醒")
         before_start_group.setStyleSheet("QGroupBox::title { color: white; font-weight: bold; font-size: 15px; }")
+        before_start_group.setMinimumHeight(110)  # 增加高度，防止文案被截断
         before_start_layout = QVBoxLayout()
+        before_start_layout.setSpacing(8)  # 设置提示文本和复选框之间的间距
+        before_start_layout.setContentsMargins(10, 15, 10, 10)  # 设置内边距 (左, 上, 右, 下)
 
         before_start_hint = QLabel("选择在任务开始前多久提醒(可多选):")
         before_start_hint.setStyleSheet("color: white; font-size: 9pt;")
@@ -2312,13 +2316,16 @@ class ConfigManager(QMainWindow):
         self.notify_on_start_check = QCheckBox("任务开始时提醒")
         self.notify_on_start_check.setChecked(notification_config.get('on_start', True))
         self.notify_on_start_check.setMinimumHeight(36)
-        self.notify_on_start_check.setStyleSheet("padding: 5px;")
+        self.notify_on_start_check.setStyleSheet("padding: 12px 5px;")  # 增加上下padding，避免与边框重叠
         timing_layout.addWidget(self.notify_on_start_check)
 
         # 任务结束前提醒
         before_end_group = QGroupBox("🔕 任务结束前提醒")
         before_end_group.setStyleSheet("QGroupBox::title { color: white; font-weight: bold; font-size: 15px; }")
+        before_end_group.setMinimumHeight(110)  # 增加高度，防止文案被截断
         before_end_layout = QVBoxLayout()
+        before_end_layout.setSpacing(8)  # 设置提示文本和复选框之间的间距
+        before_end_layout.setContentsMargins(10, 15, 10, 10)  # 设置内边距 (左, 上, 右, 下)
 
         before_end_hint = QLabel("选择在任务结束前多久提醒(可多选):")
         before_end_hint.setStyleSheet("color: white; font-size: 9pt;")
@@ -2346,7 +2353,7 @@ class ConfigManager(QMainWindow):
         self.notify_on_end_check = QCheckBox("任务结束时提醒")
         self.notify_on_end_check.setChecked(notification_config.get('on_end', False))
         self.notify_on_end_check.setMinimumHeight(36)
-        self.notify_on_end_check.setStyleSheet("padding: 5px;")
+        self.notify_on_end_check.setStyleSheet("padding: 12px 5px;")  # 增加上下padding，避免与边框重叠
         timing_layout.addWidget(self.notify_on_end_check)
 
         timing_group.setLayout(timing_layout)
