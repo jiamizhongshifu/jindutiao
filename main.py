@@ -11,6 +11,7 @@ import logging
 import platform
 from pathlib import Path
 from datetime import datetime, date
+from version import __version__, VERSION_STRING, VERSION_STRING_ZH, get_version_info
 from PySide6.QtWidgets import (QApplication, QWidget, QSystemTrayIcon, QMenu, QToolTip, QLabel,
                                 QHBoxLayout, QVBoxLayout, QDialog, QFormLayout, QSpinBox, QPushButton)
 from PySide6.QtCore import Qt, QRectF, QTimer, QTime, QFileSystemWatcher, QPoint, Signal, QEventLoop, QSize
@@ -114,8 +115,8 @@ class TimeProgressBar(QWidget):
 
     def init_ui(self):
         """初始化用户界面"""
-        # 设置窗口标题(虽然无边框窗口看不到)
-        self.setWindowTitle('PyDayBar - 桌面日历进度条')
+        # 设置窗口标题(虽然无边框窗口看不到，但在任务管理器中可见)
+        self.setWindowTitle(f'{VERSION_STRING_ZH}')
 
         # 窗口标志组合
         # 移除 WindowTransparentForInput 以支持鼠标交互
@@ -287,7 +288,18 @@ class TimeProgressBar(QWidget):
             ]
         )
         self.logger = logging.getLogger(__name__)
-        self.logger.info("PyDayBar 启动")
+
+        # 输出版本信息
+        version_info = get_version_info()
+        self.logger.info("=" * 60)
+        self.logger.info(f"{VERSION_STRING_ZH} 启动")
+        self.logger.info(f"版本: {version_info['version']}")
+        self.logger.info(f"发布日期: {version_info['release_date']}")
+        self.logger.info(f"构建类型: {version_info['build_type']}")
+        self.logger.info(f"可执行文件: {version_info['exe_name']}")
+        self.logger.info(f"Python: {sys.version.split()[0]}")
+        self.logger.info(f"系统: {platform.system()} {platform.release()}")
+        self.logger.info("=" * 60)
 
 
     def init_marker_image(self):

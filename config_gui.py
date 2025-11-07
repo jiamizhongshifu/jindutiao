@@ -24,6 +24,7 @@ from gaiya.core.theme_manager import ThemeManager
 from gaiya.core.theme_ai_helper import ThemeAIHelper
 import logging
 from gaiya.utils import path_utils, time_utils, data_loader
+from version import __version__, VERSION_STRING, VERSION_STRING_ZH, get_about_text
 
 # Qt-Material主题支持
 try:
@@ -1266,8 +1267,18 @@ class ConfigManager(QMainWindow):
 
     def init_ui(self):
         """初始化界面"""
-        self.setWindowTitle('GaiYa每日进度条 - 配置管理器')
+        self.setWindowTitle(f'{VERSION_STRING_ZH} - 配置管理器')
         self.setFixedSize(1000, 900)  # 固定窗口大小，防止拉伸导致控件变形
+
+        # 创建菜单栏
+        menubar = self.menuBar()
+
+        # 帮助菜单
+        help_menu = menubar.addMenu('帮助(&H)')
+
+        # 关于菜单项
+        about_action = help_menu.addAction('关于 GaiYa(&A)')
+        about_action.triggered.connect(self.show_about_dialog)
 
         # 创建中心部件
         central_widget = QWidget()
@@ -4431,6 +4442,10 @@ class ConfigManager(QMainWindow):
             # 恢复按钮状态
             self.generate_btn.setEnabled(True)
             self.generate_btn.setText("✨ 智能生成任务")
+
+    def show_about_dialog(self):
+        """显示关于对话框"""
+        QMessageBox.about(self, "关于 GaiYa", get_about_text())
 
     def closeEvent(self, event):
         """窗口关闭事件，清理所有资源"""
