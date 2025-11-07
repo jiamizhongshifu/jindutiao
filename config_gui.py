@@ -2450,77 +2450,108 @@ class ConfigManager(QMainWindow):
 
                 layout.addLayout(cards_layout)
 
-                # 添加支付方式选择
-                payment_container = QWidget()
-                payment_container.setStyleSheet("""
-                    QWidget {
-                        background-color: rgba(248, 249, 250, 0.1);
-                        border-radius: 12px;
-                        border: 1px solid rgba(255, 255, 255, 0.1);
-                    }
-                """)
-                payment_layout = QVBoxLayout(payment_container)
-                payment_layout.setContentsMargins(30, 20, 30, 20)
-                payment_layout.setSpacing(12)
+                # 添加支付方式选择 - 已屏蔽，默认使用微信支付
+                # payment_container = QWidget()
+                # payment_container.setStyleSheet("""
+                #     QWidget {
+                #         background-color: rgba(248, 249, 250, 0.1);
+                #         border-radius: 12px;
+                #         border: none;
+                #     }
+                # """)
+                # payment_layout = QVBoxLayout(payment_container)
+                # payment_layout.setContentsMargins(60, 20, 60, 20)
+                # payment_layout.setSpacing(12)
 
-                payment_title = QLabel("选择支付方式")
-                payment_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-                payment_title.setStyleSheet("""
-                    QLabel {
-                        color: white;
-                        font-size: 15px;
-                        font-weight: 600;
-                        background: transparent;
-                        border: none;
-                    }
-                """)
-                payment_layout.addWidget(payment_title)
+                # payment_title = QLabel("选择支付方式")
+                # payment_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                # payment_title.setStyleSheet("""
+                #     QLabel {
+                #         color: white;
+                #         font-size: 15px;
+                #         font-weight: 600;
+                #         background: transparent;
+                #         border: none;
+                #     }
+                # """)
+                # payment_layout.addWidget(payment_title)
 
-                payment_options_layout = QHBoxLayout()
-                payment_options_layout.addStretch()
+                # payment_options_layout = QHBoxLayout()
+                # payment_options_layout.addStretch()
 
-                self.payment_method_group = QButtonGroup()
+                # self.payment_method_group = QButtonGroup()
 
-                alipay_radio = QRadioButton("支付宝")
-                alipay_radio.setProperty("pay_type", "alipay")
-                alipay_radio.setChecked(True)
-                alipay_radio.setStyleSheet("""
-                    QRadioButton {
-                        color: white;
-                        font-size: 14px;
-                        spacing: 8px;
-                        background: transparent;
-                    }
-                    QRadioButton::indicator {
-                        width: 18px;
-                        height: 18px;
-                    }
-                    QRadioButton::indicator:checked {
-                        background-color: #0071e3;
-                        border: 2px solid #0071e3;
-                        border-radius: 9px;
-                    }
-                    QRadioButton::indicator:unchecked {
-                        background-color: rgba(255, 255, 255, 0.2);
-                        border: 2px solid rgba(255, 255, 255, 0.5);
-                        border-radius: 9px;
-                    }
-                """)
-                self.payment_method_group.addButton(alipay_radio)
-                payment_options_layout.addWidget(alipay_radio)
+                # alipay_radio = QRadioButton("支付宝")
+                # alipay_radio.setProperty("pay_type", "alipay")
+                # alipay_radio.setChecked(True)
 
-                wxpay_radio = QRadioButton("微信支付")
-                wxpay_radio.setProperty("pay_type", "wxpay")
-                wxpay_radio.setStyleSheet(alipay_radio.styleSheet())
-                self.payment_method_group.addButton(wxpay_radio)
-                payment_options_layout.addWidget(wxpay_radio)
+                # # ⚠️ 关键修复：禁用焦点策略，防止Windows绘制焦点框
+                # alipay_radio.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
-                payment_options_layout.addStretch()
-                payment_layout.addLayout(payment_options_layout)
+                # # ⚠️ 底层修复：使用Qt属性完全禁用系统默认绘制
+                # alipay_radio.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground, True)
+                # alipay_radio.setAutoFillBackground(False)
 
-                layout.addSpacing(20)
-                layout.addWidget(payment_container)
-                layout.addSpacing(20)
+                # alipay_radio.setStyleSheet("""
+                #     QRadioButton {
+                #         color: white;
+                #         font-size: 14px;
+                #         spacing: 8px;
+                #         background: transparent;
+                #         border: none;
+                #         outline: none;
+                #     }
+                #     QRadioButton::indicator {
+                #         width: 20px;
+                #         height: 20px;
+                #         border: none;
+                #         outline: none;
+                #     }
+                #     QRadioButton::indicator:checked {
+                #         background-color: #00b8a9;
+                #         border: none;
+                #         border-radius: 10px;
+                #     }
+                #     QRadioButton::indicator:unchecked {
+                #         background-color: rgba(255, 255, 255, 0.08);
+                #         border: 1px solid rgba(255, 255, 255, 0.15);
+                #         border-radius: 10px;
+                #     }
+                #     QRadioButton::indicator:hover:unchecked {
+                #         background-color: rgba(255, 255, 255, 0.12);
+                #         border: 1px solid rgba(255, 255, 255, 0.25);
+                #     }
+                #     QRadioButton:focus {
+                #         border: none;
+                #         outline: none;
+                #     }
+                # """)
+                # self.payment_method_group.addButton(alipay_radio)
+                # payment_options_layout.addWidget(alipay_radio)
+
+                # # 增加两个单选按钮之间的间距
+                # payment_options_layout.addSpacing(20)
+
+                # wxpay_radio = QRadioButton("微信支付")
+                # wxpay_radio.setProperty("pay_type", "wxpay")
+
+                # # ⚠️ 关键修复：禁用焦点策略，防止Windows绘制焦点框
+                # wxpay_radio.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+
+                # # ⚠️ 底层修复：使用Qt属性完全禁用系统默认绘制
+                # wxpay_radio.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground, True)
+                # wxpay_radio.setAutoFillBackground(False)
+
+                # wxpay_radio.setStyleSheet(alipay_radio.styleSheet())
+                # self.payment_method_group.addButton(wxpay_radio)
+                # payment_options_layout.addWidget(wxpay_radio)
+
+                # payment_options_layout.addStretch()
+                # payment_layout.addLayout(payment_options_layout)
+
+                # layout.addSpacing(20)
+                # layout.addWidget(payment_container)
+                # layout.addSpacing(20)
 
                 # 创建按钮容器以居中显示
                 button_container = QHBoxLayout()
@@ -2646,13 +2677,15 @@ class ConfigManager(QMainWindow):
         from PySide6.QtGui import QDesktopServices
         from gaiya.core.auth_client import AuthClient
 
-        # 获取选中的支付方式
-        selected_button = self.payment_method_group.checkedButton()
-        if not selected_button:
-            QMessageBox.warning(self, "提示", "请选择支付方式")
-            return
+        # 默认使用微信支付（支付方式选择UI已屏蔽）
+        pay_type = "wxpay"
 
-        pay_type = selected_button.property("pay_type")
+        # 获取选中的支付方式（已屏蔽）
+        # selected_button = self.payment_method_group.checkedButton()
+        # if not selected_button:
+        #     QMessageBox.warning(self, "提示", "请选择支付方式")
+        #     return
+        # pay_type = selected_button.property("pay_type")
 
         # 创建订单
         auth_client = AuthClient()
@@ -2671,6 +2704,9 @@ class ConfigManager(QMainWindow):
             from urllib.parse import urlencode
             query_string = urlencode(params)
             full_payment_url = f"{payment_url}?{query_string}"
+
+            logging.info(f"[PAYMENT] Opening payment URL: {full_payment_url[:100]}...")
+            logging.info(f"[PAYMENT] Order No: {out_trade_no}, Type: {pay_type}")
 
             # 在浏览器中打开支付URL
             QDesktopServices.openUrl(QUrl(full_payment_url))
@@ -2700,7 +2736,24 @@ class ConfigManager(QMainWindow):
         else:
             # 订单创建失败
             error_msg = result.get("error", "创建订单失败")
-            QMessageBox.critical(self, "创建订单失败", f"创建订单失败：{error_msg}")
+
+            # 针对支付渠道错误给出更详细的提示
+            if "MERCHANT_STATUS_NOT_NORMAL" in error_msg or "渠道" in error_msg:
+                detailed_msg = (
+                    f"支付渠道暂时不可用：{error_msg}\n\n"
+                    "可能的原因：\n"
+                    "• 支付渠道临时维护中\n"
+                    "• 需要在商户后台完成渠道签约\n\n"
+                    "建议操作：\n"
+                    "1. 稍后重试（5-10分钟后）\n"
+                    "2. 尝试切换支付方式（支付宝/微信）\n"
+                    "3. 联系支付服务商客服（zpayz.cn）"
+                )
+                logging.error(f"[PAYMENT] Channel error: {error_msg}")
+            else:
+                detailed_msg = f"创建订单失败：{error_msg}"
+
+            QMessageBox.critical(self, "创建订单失败", detailed_msg)
 
     def _check_payment_status(self, out_trade_no: str, auth_client):
         """检查支付状态"""

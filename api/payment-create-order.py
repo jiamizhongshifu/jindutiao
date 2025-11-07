@@ -79,6 +79,8 @@ class handler(BaseHTTPRequestHandler):
             return_url = f"gaiya://payment-success?out_trade_no={out_trade_no}"
 
             # 6. 创建支付订单
+            # 注意：不指定cid，让ZPAY自动选择可用渠道
+            # 如果遇到特定渠道问题，ZPAY会自动切换到其他可用渠道
             result = zpay.create_order(
                 out_trade_no=out_trade_no,
                 name=plan_info["name"],

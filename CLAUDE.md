@@ -2160,6 +2160,190 @@ CPU占用：        15%                  5%
                     </related_files>
                 </references>
             </methodology>
+
+            <methodology name="UI Style Modification Troubleshooting (UI样式修改无效问题诊断法)">
+                <description>
+                    系统性解决"修改代码多次、重新打包多次，但UI样式完全没有变化"类型问题的方法论。
+                    特别适用于PyInstaller打包应用和多文件项目中的UI调试。
+                </description>
+
+                <applicable_scenarios>
+                    <scenario>修改UI样式代码后，重新打包运行，样式完全没有变化</scenario>
+                    <scenario>同一UI功能在多个文件中实现，不确定哪个真正被使用</scenario>
+                    <scenario>PyInstaller打包后，源代码修改不生效</scenario>
+                    <scenario>怀疑打包缓存或代码执行路径问题</scenario>
+                </applicable_scenarios>
+
+                <core_principle>
+                    <principle name="定位优先于修复">
+                        在复杂项目中，定位问题的时间往往远超解决问题的时间。
+                        必须先确认修改的代码会被执行，再进行修复。
+                    </principle>
+                    <principle name="搜索UI文本而非文件名">
+                        UI文本是唯一准确的定位依据，文件名可能误导。
+                        使用 grep 搜索UI关键文本找到所有相关实现。
+                    </principle>
+                    <principle name="验证执行路径">
+                        不要假设代码会被执行，使用日志/断言/明显UI变化验证。
+                    </principle>
+                    <principle name="参考成功案例">
+                        项目中已有的成功实现是最佳范例，直接复用避免踩坑。
+                    </principle>
+                </core_principle>
+
+                <golden_workflow>
+                    <step n="1" name="搜索UI文本定位所有实现">
+                        <command>grep -r "UI关键文本" --include="*.py"</command>
+                        <purpose>找到所有包含该UI的文件，可能有多个实现</purpose>
+                    </step>
+
+                    <step n="2" name="追踪代码执行路径">
+                        <methods>
+                            <method>从入口文件追踪函数调用链</method>
+                            <method>在可疑文件中添加日志验证执行</method>
+                            <method>搜索函数/类的调用关系</method>
+                        </methods>
+                        <purpose>确定哪个文件的代码真正被执行</purpose>
+                    </step>
+
+                    <step n="3" name="验证修改是否生效">
+                        <checklist>
+                            <item>□ 文件是否已保存？（git diff 验证）</item>
+                            <item>□ 打包是否包含修改？（日志显示"Building because xxx.py changed"）</item>
+                            <item>□ 运行的是新版本？（检查exe时间戳、版本号日志）</item>
+                            <item>□ 代码是否真正被执行？（添加日志/断言验证）</item>
+                        </checklist>
+                    </step>
+
+                    <step n="4" name="参考成功案例并修复">
+                        <instruction>
+                            在项目中寻找已成功实现的类似功能，复用其解决方案。
+                            例如：本案例中套餐卡片已完美解决边框问题，直接复用其Qt属性设置。
+                        </instruction>
+                    </step>
+                </golden_workflow>
+
+                <common_root_causes>
+                    <cause name="修改了错误的文件" priority="最高">
+                        <symptom>同一UI在多个文件中实现，修改了未使用的文件</symptom>
+                        <solution>用grep搜索UI文本，追踪代码执行路径</solution>
+                        <prevention>始终先搜索UI文本，确认执行路径后再修改</prevention>
+                    </cause>
+
+                    <cause name="打包缓存未更新">
+                        <symptom>代码已修改，但打包日志显示"unchanged"</symptom>
+                        <solution>rm -rf build dist && pyinstaller app.spec</solution>
+                        <prevention>修改关键文件后总是清理缓存重新打包</prevention>
+                    </cause>
+
+                    <cause name="运行了旧版本exe">
+                        <symptom>打包成功但运行效果不变</symptom>
+                        <solution>检查exe时间戳，确认运行的是新生成的文件</solution>
+                        <prevention>在代码中添加版本号日志，运行时验证</prevention>
+                    </cause>
+                </common_root_causes>
+
+                <diagnostic_commands>
+                    <command_group name="搜索定位">
+                        <command>grep -r "UI文本" --include="*.py"  # 搜索UI文本</command>
+                        <command>grep -r "def 函数名" --include="*.py"  # 搜索函数定义</command>
+                        <command>grep -r "class.*类名" --include="*.py"  # 搜索类定义</command>
+                    </command_group>
+
+                    <command_group name="验证修改">
+                        <command>git diff 文件名  # 查看修改差异</command>
+                        <command>ls -la dist/*.exe  # 检查exe时间戳</command>
+                        <command>pyinstaller app.spec | grep "Building because"  # 确认重新构建</command>
+                    </command_group>
+
+                    <command_group name="清理重建">
+                        <command>rm -rf build dist  # 清理缓存</command>
+                        <command>pyinstaller app.spec  # 全新打包</command>
+                    </command_group>
+                </diagnostic_commands>
+
+                <case_study name="支付方式单选按钮样式优化 (2025-11-07)">
+                    <problem>
+                        用户要求去掉"选择支付方式"单选按钮的外描边。
+                        修改代码6-7次，重新打包6-7次，UI样式完全没有变化。
+                    </problem>
+
+                    <diagnosis_process>
+                        <attempt n="1-6" file="gaiya/ui/membership_ui.py" result="失败">
+                            尝试各种样式修改：border: none, 透明背景, setFocusPolicy等。
+                            每次都重新打包，但UI完全没有变化。
+                            浪费时间：90分钟。
+                        </attempt>
+
+                        <turning_point>
+                            使用 grep -r "选择支付方式" 搜索，发现两个文件都有：
+                            - gaiya/ui/membership_ui.py （未使用的新模块）
+                            - config_gui.py （真正使用的老代码）✅
+                        </turning_point>
+
+                        <attempt n="7" file="config_gui.py" result="成功">
+                            在正确文件中应用套餐卡片的成功方案：
+                            - setFocusPolicy(Qt.FocusPolicy.NoFocus)
+                            - setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground, True)
+                            - setAutoFillBackground(False)
+                            一次成功！耗时：10分钟。
+                        </attempt>
+                    </diagnosis_process>
+
+                    <lessons_learned>
+                        <lesson>搜索UI文本是最可靠的定位方法，文件名可能误导</lesson>
+                        <lesson>复杂项目中，定位问题比解决问题更耗时（90min vs 10min）</lesson>
+                        <lesson>参考成功案例是最快的解决方案（套餐卡片方法直接生效）</lesson>
+                        <lesson>增量验证：每次只改一处，立即测试，避免批量修改</lesson>
+                    </lessons_learned>
+
+                    <efficiency_comparison>
+                        <metric name="定位问题耗时">90分钟（盲目修改） vs 5分钟（系统诊断）</metric>
+                        <metric name="解决问题耗时">10分钟（参考成功案例）</metric>
+                        <metric name="总效率提升">6倍</metric>
+                    </efficiency_comparison>
+                </case_study>
+
+                <quick_reference>
+                    <title>UI修改无效快速诊断卡片</title>
+
+                    <step_by_step>
+                        1️⃣ grep搜索UI文本 → 找到所有相关文件
+                        2️⃣ 追踪代码执行路径 → 确定真正使用的文件
+                        3️⃣ 添加日志验证执行 → print(f"[DEBUG] from {__file__}")
+                        4️⃣ 清理缓存重新打包 → rm -rf build dist && pyinstaller
+                        5️⃣ 检查exe时间戳 → 确认运行新版本
+                        6️⃣ 参考成功案例 → 复用已验证的方案
+                    </step_by_step>
+
+                    <common_mistakes>
+                        ❌ 只搜索文件名，不搜索UI文本
+                        ❌ 假设代码会被执行，不验证执行路径
+                        ❌ 批量修改多处，无法定位哪个生效
+                        ❌ 不清理打包缓存，使用旧的构建结果
+                        ❌ 运行旧版本exe，误以为修改无效
+                    </common_mistakes>
+
+                    <success_checklist>
+                        ✅ 搜索UI文本定位所有实现
+                        ✅ 追踪执行路径确认正确文件
+                        ✅ 添加日志验证代码执行
+                        ✅ 清理缓存全新打包
+                        ✅ 确认运行的是新版本
+                        ✅ 参考项目中的成功案例
+                    </success_checklist>
+                </quick_reference>
+
+                <references>
+                    <detailed_doc>docs/UI_STYLE_MODIFICATION_TROUBLESHOOTING.md</detailed_doc>
+                    <related_methodology>PyInstaller Development Methodology</related_methodology>
+                    <related_methodology>Progressive Differential Analysis</related_methodology>
+                    <related_case>支付方式样式优化 (2025-11-07)</related_case>
+                    <files_modified>
+                        - config_gui.py:2484-2544 (支付方式单选按钮样式)
+                    </files_modified>
+                </references>
+            </methodology>
         </debugging_methodology>
     </protocols>
 

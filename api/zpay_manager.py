@@ -72,6 +72,11 @@ class ZPayManager:
             if param:
                 params["param"] = param
 
+            # 临时方案：明确指定使用渠道8180（已确认可用的渠道）
+            # 渠道8191可能需要完成支付宝官方签约，暂时使用8180
+            params["cid"] = "8180"
+            print(f"[ZPAY] Using channel 8180 to avoid channel 8191 issue", file=sys.stderr)
+
             # 2. 生成签名
             sign = self._generate_sign(params)
             params["sign"] = sign

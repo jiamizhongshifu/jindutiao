@@ -584,6 +584,7 @@ macOS:
 
 ### 开发文档
 - [PyInstaller开发方法论](PYINSTALLER_DEVELOPMENT_METHODOLOGY.md) - 打包应用的开发调试最佳实践
+- [UI样式修改无效问题诊断法](docs/UI_STYLE_MODIFICATION_TROUBLESHOOTING.md) - 系统性解决"修改代码多次但UI完全没变化"的调试方法 ⭐ **新增**
 - [UI状态同步问题诊断法](CLAUDE.md#ui-state-synchronization-troubleshooting) - GUI状态同步问题的系统化诊断方法
 - [任务配色重置Bug修复记录](TASK_COLOR_RESET_FIX.md) - 完整的问题诊断和修复过程
 
