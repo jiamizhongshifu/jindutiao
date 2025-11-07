@@ -10,25 +10,31 @@
 
 ### 商户配置
 
+⚠️ **安全提示**: 以下为示例值，请替换为你的真实凭证
+
 ```bash
 # 接口地址
 ZPAY_API_URL=https://zpayz.cn
 
-# 商户ID
-ZPAY_PID=2025040215385823
+# 商户ID（示例值，请替换为真实PID）
+ZPAY_PID=your_merchant_id_here
 
-# 商户密钥
-ZPAY_PKEY=Ltb8ZL7kuFg7ZgtnIbuIpJ350FoTXdqu
+# 商户密钥（示例值，请替换为真实PKEY）
+ZPAY_PKEY=your_merchant_key_here
 ```
 
 ### 环境变量配置
 
 在Vercel中配置以下环境变量：
 
+⚠️ **重要**: 不要将真实凭证提交到Git仓库！
+
 ```bash
-ZPAY_PID=2025040215385823
-ZPAY_PKEY=Ltb8ZL7kuFg7ZgtnIbuIpJ350FoTXdqu
+ZPAY_PID=your_merchant_id_here
+ZPAY_PKEY=your_merchant_key_here
 ```
+
+**获取凭证**: 登录 [ZPAY商户后台](https://zpayz.cn) → API配置 → 查看商户ID和密钥
 
 ---
 

@@ -12,7 +12,7 @@
 
 **📥 [下载 Windows 版本](https://github.com/jiamizhongshifu/jindutiao/releases/latest)**
 
-当前版本: **v1.6.0** | 最后更新: 2025-11-07
+当前版本: **v1.5.0** | 最后更新: 2025-11-04
 
 </div>
 
@@ -36,7 +36,7 @@
 
 ### 方式一：下载可执行文件（推荐）
 
-1. **下载最新版本**: [Gaiya-v1.6.exe](https://github.com/jiamizhongshifu/jindutiao/releases/latest)
+1. **下载最新版本**: [Gaiya-v1.5.exe](https://github.com/jiamizhongshifu/jindutiao/releases/latest)
 2. **运行程序**: 双击 exe 文件
 3. **打开配置**: 右键系统托盘图标 → "⚙️ 配置"
 
@@ -132,7 +132,7 @@ rm -rf build dist
 pyinstaller Gaiya.spec
 
 # 生成文件
-dist/Gaiya-v1.6.exe  # 约 57 MB
+dist/Gaiya-v1.5.exe  # 约 57 MB
 ```
 
 **重要**: 修改源代码后必须重新打包才能在 exe 中生效。详见 [PyInstaller 开发方法论](PYINSTALLER_DEVELOPMENT_METHODOLOGY.md)
@@ -161,7 +161,12 @@ dist/Gaiya-v1.6.exe  # 约 57 MB
 
 ## 🔄 最新更新
 
-### v1.6.0 (2025-11-07) - 商业化功能上线
+### v1.5.0 (2025-11-04) - 品牌升级与会员系统
+
+**🌍 品牌升级**
+- ✅ 产品名称：PyDayBar → GaiYa（盖亚）
+- ✅ 品牌口号：守护你的每一分钟
+- ✅ 全面文档品牌化
 
 **🔐 认证与会员系统**
 - ✅ 手机号登录/注册
@@ -169,14 +174,13 @@ dist/Gaiya-v1.6.exe  # 约 57 MB
 - ✅ 会员功能解锁（AI 配额、高级统计）
 
 **💳 支付集成**
-- ✅ 支持微信支付（默认）
+- ✅ 支持微信支付
 - ✅ ZPAY 支付网关集成
 - ✅ 订单状态轮询与通知
 
 **🎨 UI 优化**
 - ✅ 会员卡片样式升级
-- ✅ 禁用控制台窗口
-- ✅ 支付流程优化
+- ✅ Material Design 主题集成
 
 **详细说明**: [查看完整更新日志](CHANGELOG.md)
 

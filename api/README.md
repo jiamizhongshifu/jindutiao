@@ -31,14 +31,24 @@
    - Build Command: 留空
    - Output Directory: 留空
 
-4. **设置环境变量**
+4. **设置环境变量** ⚠️ **重要！**
    - 在项目设置中找到 "Environment Variables"
-   - 添加以下环境变量：
+   - 添加以下环境变量（参考根目录的 `.env.example`）：
+
+     **ZPAY支付网关配置:**
      ```
-     TUZI_API_KEY=your_api_key_here
-     TUZI_BASE_URL=https://api.tu-zi.com/v1
+     ZPAY_PID=your_merchant_id_here
+     ZPAY_PKEY=your_merchant_key_here
      ```
-   - 确保环境变量设置为 **Production** 环境
+
+     **Supabase数据库配置:**
+     ```
+     SUPABASE_URL=https://your-project.supabase.co
+     SUPABASE_ANON_KEY=your_supabase_anon_key_here
+     ```
+
+   - 确保环境变量应用于所有环境：**Production + Preview + Development**
+   - **安全提示**: 不要将真实凭证提交到Git仓库
 
 5. **部署**
    - 点击 "Deploy"

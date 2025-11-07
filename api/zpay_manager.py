@@ -11,9 +11,11 @@ from typing import Dict, Optional
 import sys
 
 # ZPAY配置
+# 注意：敏感凭证必须通过环境变量配置，不要硬编码到代码中
+# 在Vercel部署时，请在项目设置 → Environment Variables 中配置
 ZPAY_API_URL = "https://zpayz.cn"
-ZPAY_PID = os.getenv("ZPAY_PID", "2025040215385823")
-ZPAY_PKEY = os.getenv("ZPAY_PKEY", "Ltb8ZL7kuFg7ZgtnIbuIpJ350FoTXdqu")
+ZPAY_PID = os.getenv("ZPAY_PID")
+ZPAY_PKEY = os.getenv("ZPAY_PKEY")
 
 
 class ZPayManager:

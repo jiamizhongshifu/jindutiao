@@ -1,9 +1,12 @@
 API信息（兼容 易支付 接口）
 接口地址：https://zpayz.cn/
 
-商户ID（PID）：2025040215385823
+⚠️ **安全警告**: 以下凭证为示例值，请替换为你的真实凭证
+商户ID（PID）：your_merchant_id_here
 
-商户密钥（PKEY）：Ltb8ZL7kuFg7ZgtnIbuIpJ350FoTXdqu
+商户密钥（PKEY）：your_merchant_key_here
+
+💡 **获取凭证**: 登录ZPAY商户后台 → API配置 → 查看
 
 页面跳转支付
 请求URL
