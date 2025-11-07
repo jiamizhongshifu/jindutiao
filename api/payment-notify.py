@@ -65,8 +65,12 @@ class handler(BaseHTTPRequestHandler):
                 param_data = json.loads(param_str)
                 user_id = param_data.get("user_id")
                 plan_type = param_data.get("plan_type")
-            except:
-                print(f"[PAYMENT-NOTIFY] Failed to parse param: {param_str}", file=sys.stderr)
+            except json.JSONDecodeError as e:
+                print(f"[PAYMENT-NOTIFY] Invalid JSON param: {param_str}, error: {e}", file=sys.stderr)
+                self._send_response("fail")
+                return
+            except Exception as e:
+                print(f"[PAYMENT-NOTIFY] Unexpected error parsing param: {e}", file=sys.stderr)
                 self._send_response("fail")
                 return
 

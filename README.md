@@ -155,7 +155,6 @@ dist/Gaiya-v1.5.exe  # 约 57 MB
 - [更新日志](CHANGELOG.md) - 完整版本历史
 - [安全说明](SECURITY.md) - 隐私保护与杀毒软件误报
 - [开发路线图](ROADMAP_v1.5.md) - 功能规划
-- [产品策略](docs/PRODUCT_STRATEGY.md) - 定位与竞品分析
 
 ---
 
@@ -226,8 +225,6 @@ dist/Gaiya-v1.5.exe  # 约 57 MB
 - macOS: 系统偏好设置 → 用户与群组 → 登录项
 </details>
 
-**更多问题**: [查看完整 FAQ](docs/FAQ.md)
-
 ---
 
 ## 🤝 参与贡献
@@ -236,7 +233,7 @@ dist/Gaiya-v1.5.exe  # 约 57 MB
 
 - 🐛 **报告 Bug**: [提交 Issue](https://github.com/jiamizhongshifu/jindutiao/issues)
 - 💡 **功能建议**: [讨论区](https://github.com/jiamizhongshifu/jindutiao/discussions)
-- 🔧 **代码贡献**: [Pull Request 指南](CONTRIBUTING.md)
+- 🔧 **代码贡献**: 提交 Pull Request 前请先创建 Issue 讨论
 - 📖 **文档改进**: 欢迎优化文档表述
 
 ---

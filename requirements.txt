@@ -1,4 +1,4 @@
-# PyDayBar 客户端依赖
+# GaiYa每日进度条 - 客户端依赖
 # 注意: 只包含客户端需要的依赖
 # Vercel云端依赖请参考 api/requirements.txt
 

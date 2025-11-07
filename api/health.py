@@ -10,7 +10,7 @@ class handler(BaseHTTPRequestHandler):
         response_data = {
             "status": "ok",
             "timestamp": datetime.now().isoformat(),
-            "service": "PyDayBar API Proxy (Vercel)",
+            "service": "GaiYa API Service (Vercel)",
             "message": "Health check successful"
         }
         

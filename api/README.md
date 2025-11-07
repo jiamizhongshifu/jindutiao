@@ -1,4 +1,4 @@
-# PyDayBar Vercel API代理服务器
+# GaiYa每日进度条 - Vercel API服务
 
 ## 🚀 快速部署指南
 
@@ -85,7 +85,7 @@ curl https://your-project-name.vercel.app/api/health
 {
   "status": "ok",
   "timestamp": "2025-11-01T...",
-  "service": "PyDayBar API Proxy (Vercel)"
+  "service": "GaiYa API Service (Vercel)"
 }
 ```
 
