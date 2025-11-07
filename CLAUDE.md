@@ -2344,6 +2344,460 @@ CPU占用：        15%                  5%
                     </files_modified>
                 </references>
             </methodology>
+
+            <methodology name="Qt Widget Positioning Troubleshooting (Qt Widget 位置调整方法论)">
+                <description>
+                    系统性解决Qt/PySide6桌面应用中"Widget位置调整"问题的诊断方法论。
+                    特别适用于需要精确控制单个UI元素位置，但遇到"元素不移动"、"内容消失"、"截断"等问题的场景。
+                </description>
+
+                <applicable_scenarios>
+                    <scenario>调整Widget位置后，元素周围有空白但元素本身没有移动</scenario>
+                    <scenario>元素位置正确了，但文字消失或被截断</scenario>
+                    <scenario>源码测试正常，打包后exe显示异常</scenario>
+                    <scenario>需要精确控制单个元素的垂直/水平位置</scenario>
+                </applicable_scenarios>
+
+                <core_principles>
+                    <principle name="Padding vs Margin 本质区别">
+                        Padding（内边距）在元素内部增加空白，不移动元素；
+                        Margin（外边距）推动整个元素移动。
+                        **调整位置必须用 Margin，而非 Padding**。
+                    </principle>
+                    <principle name="Widget高度必须适配Margin">
+                        在Qt中，CSS Margin占用Widget的总高度空间。
+                        **setMinimumHeight ≥ margin-top + margin-bottom + 实际内容高度**。
+                    </principle>
+                    <principle name="PyInstaller打包强制刷新">
+                        打包后的exe是代码快照，修改源码必须重新打包才能生效。
+                        **改代码必打包，打包后必测试**。
+                    </principle>
+                    <principle name="三层调整体系">
+                        Layout层（统一间距）→ CSS Margin层（精确定位）→ Widget Size层（确保空间）。
+                        根据需求选择合适的层次进行调整。
+                    </principle>
+                </core_principles>
+
+                <diagnosis_workflow>
+                    <phase n="1" name="问题分类">
+                        <question>需要调整什么？</question>
+                        <options>
+                            <option>多个元素的统一间距 → Layout.addSpacing()</option>
+                            <option>单个元素的精确位置 → CSS margin-top/margin-left</option>
+                            <option>元素的显示空间 → setMinimumHeight/Width</option>
+                        </options>
+                    </phase>
+
+                    <phase n="2" name="Padding vs Margin 验证">
+                        <symptom>元素周围有空白，但内容没有移动</symptom>
+                        <root_cause>误用了 padding 而非 margin</root_cause>
+                        <visualization>
+                            <![CDATA[
+Padding 效果（错误）:
+┌─────────────────────────────┐
+│     (padding 空白区域)        │
+│  ┌────────────────────────┐  │
+│  │  ☑ 任务开始时提醒       │  │  ← 内容位置不变
+│  └────────────────────────┘  │
+└─────────────────────────────┘
+
+Margin 效果（正确）:
+         ↓ margin-top 推动整个元素
+┌─────────────────────────────┐
+│  ☑ 任务开始时提醒            │  ← 整体向下移动
+└─────────────────────────────┘
+                            ]]>
+                        </visualization>
+                        <fix>将 padding 改为 margin-top/margin-left</fix>
+                    </phase>
+
+                    <phase n="3" name="Widget高度验证">
+                        <symptom>位置正确，但文字消失或复选框被截断</symptom>
+                        <root_cause>setMinimumHeight 小于 margin + 内容高度</root_cause>
+                        <math_check>
+                            <![CDATA[
+当前配置：
+  setMinimumHeight(36)
+  margin-top: 30px
+
+计算：36 - 30 = 6px
+结果：复选框和文字要挤在 6px 空间里 → 截断/消失
+
+正确配置：
+  setMinimumHeight(70)  # 30px margin + 40px 内容
+  margin-top: 30px
+                            ]]>
+                        </math_check>
+                        <fix>增加 setMinimumHeight 到 margin + 内容高度</fix>
+                    </phase>
+
+                    <phase n="4" name="打包验证">
+                        <symptom>python main.py 正常，但 exe 显示异常</symptom>
+                        <root_cause>未重新打包，运行的是旧版本代码</root_cause>
+                        <fix_workflow>
+                            <![CDATA[
+1. 修改源码
+2. 清理旧文件：rm -rf build dist
+3. 重新打包：pyinstaller Gaiya.spec
+4. 验证exe：./dist/GaiYa-v1.5.exe
+5. 确认时间戳：ls -lh dist/
+                            ]]>
+                        </fix_workflow>
+                    </phase>
+
+                    <phase n="5" name="渐进式调整">
+                        <principle>每次只修改一个参数，立即验证效果</principle>
+                        <workflow>
+                            <![CDATA[
+迭代1：调整 Layout Spacing
+  → 验证：元素间距是否增加
+
+迭代2：调整 CSS Margin
+  → 验证：元素是否真正移动
+
+迭代3：调整 Widget Height
+  → 验证：内容是否完整显示
+
+迭代4：用户确认
+  → 最终验收标准
+                            ]]>
+                        </workflow>
+                    </phase>
+                </diagnosis_workflow>
+
+                <three_layer_system>
+                    <layer name="Layout层" priority="1">
+                        <purpose>控制多个元素之间的统一间距</purpose>
+                        <tools>
+                            <tool>layout.addSpacing(n)</tool>
+                            <tool>layout.setSpacing(n)</tool>
+                            <tool>layout.setContentsMargins(l,t,r,b)</tool>
+                        </tools>
+                        <when_to_use>需要统一调整多个元素的间距</when_to_use>
+                        <example>
+                            <![CDATA[
+timing_layout.addSpacing(20)  # GroupBox 和复选框之间统一间距
+                            ]]>
+                        </example>
+                    </layer>
+
+                    <layer name="CSS Margin层" priority="2">
+                        <purpose>精确控制单个元素的位置</purpose>
+                        <tools>
+                            <tool>widget.setStyleSheet("margin-top: 30px;")</tool>
+                            <tool>widget.setStyleSheet("margin-left: 10px;")</tool>
+                        </tools>
+                        <when_to_use>需要精确移动单个元素的位置</when_to_use>
+                        <critical_note>
+                            **这是位置调整的核心层**
+                            使用 margin 而非 padding 才能真正移动元素
+                        </critical_note>
+                        <example>
+                            <![CDATA[
+# ✅ 正确：使用 margin 推动元素向下 30px
+checkbox.setStyleSheet("margin-top: 30px; padding: 5px;")
+
+# ❌ 错误：padding 只增加内部空白，不移动元素
+checkbox.setStyleSheet("padding: 30px 5px;")
+                            ]]>
+                        </example>
+                    </layer>
+
+                    <layer name="Widget Size层" priority="3">
+                        <purpose>确保元素有足够的显示空间</purpose>
+                        <tools>
+                            <tool>widget.setMinimumHeight(n)</tool>
+                            <tool>widget.setMinimumWidth(n)</tool>
+                        </tools>
+                        <when_to_use>使用了较大的 margin 后必须调整</when_to_use>
+                        <golden_rule>
+                            <![CDATA[
+setMinimumHeight ≥ margin-top + margin-bottom + 实际内容高度
+
+例如：
+  margin-top: 30px
+  内容高度: 40px (复选框 + 文字)
+  → setMinimumHeight(70)  # 至少 70px
+                            ]]>
+                        </golden_rule>
+                        <example>
+                            <![CDATA[
+# margin 较大时，必须同步增加 Widget 高度
+checkbox.setMinimumHeight(70)  # ✅ 足够容纳 30px margin + 40px 内容
+checkbox.setStyleSheet("margin-top: 30px; padding: 5px;")
+                            ]]>
+                        </example>
+                    </layer>
+                </three_layer_system>
+
+                <case_study name="通知设置复选框位置调整 (2025-11-07)">
+                    <problem_description>
+                        用户需要调整"任务开始时提醒"和"任务结束时提醒"两个复选框的垂直位置，
+                        要求向下移动一定距离，与上方的 GroupBox 保持视觉间距。
+                    </problem_description>
+
+                    <iteration_history>
+                        <iteration n="1" status="部分成功">
+                            <issue>GroupBox 内部文案被截断</issue>
+                            <action>增加 GroupBox 的 setMinimumHeight 到 110px</action>
+                            <result>✅ 文案显示完整</result>
+                        </iteration>
+
+                        <iteration n="2" status="部分成功">
+                            <issue>复选框与 GroupBox 重叠</issue>
+                            <action>添加 layout.addSpacing(20)</action>
+                            <result>✅ 元素不再重叠</result>
+                        </iteration>
+
+                        <iteration n="3" status="失败 - 关键转折点">
+                            <issue>用户要求复选框向下移动 10px</issue>
+                            <wrong_approach>使用 padding: 12px 5px</wrong_approach>
+                            <user_feedback>
+                                "我看到你移动的复选框,没有移动到文字和按钮区域,只是移动到了空的位置"
+                            </user_feedback>
+                            <diagnosis>
+                                Padding 只在元素内部增加空白，不移动元素本身。
+                                这是最容易犯的错误：混淆了 Padding 和 Margin 的作用。
+                            </diagnosis>
+                        </iteration>
+
+                        <iteration n="4" status="成功">
+                            <fix>改用 margin-top: 10px; padding: 5px;</fix>
+                            <result>✅ 复选框和文字真正向下移动了</result>
+                            <key_lesson>
+                                **Padding 是墙内装修，Margin 是房子搬迁**
+                                位置调整必须用 Margin，而非 Padding
+                            </key_lesson>
+                        </iteration>
+
+                        <iteration n="5" status="成功">
+                            <issue>用户要求继续向下移动 20px</issue>
+                            <action>将 margin-top 从 10px 增加到 30px</action>
+                            <result>✅ 位置符合预期</result>
+                        </iteration>
+
+                        <iteration n="6" status="失败 - 最终陷阱">
+                            <user_feedback>
+                                "勾选框我看到位置对了,但是旁边的文字不见了,而且能看到单选框还被截断了"
+                            </user_feedback>
+                            <diagnosis>
+                                <![CDATA[
+配置：
+  setMinimumHeight(36)
+  margin-top: 30px
+
+问题：
+  Widget 总高度只有 36px
+  margin-top 占用了 30px
+  剩余空间只有 6px (36 - 30 = 6)
+  复选框和文字要挤在 6px 里 → 截断/消失
+
+根本原因：
+  Qt 的 Margin 虽然是"外边距"，但仍占用 Widget 的高度空间
+  必须确保：setMinimumHeight ≥ margin + 内容高度
+                                ]]>
+                            </diagnosis>
+                        </iteration>
+
+                        <iteration n="7" status="完全成功">
+                            <fix>将 setMinimumHeight 从 36px 增加到 70px</fix>
+                            <calculation>
+                                <![CDATA[
+70px = 30px (margin-top) + 40px (复选框+文字内容)
+                                ]]>
+                            </calculation>
+                            <result>
+                                ✅ 位置正确
+                                ✅ 文字完整显示
+                                ✅ 复选框不再截断
+                            </result>
+                        </iteration>
+                    </iteration_history>
+
+                    <files_modified>
+                        <file path="config_gui.py" lines="2307-2311, 2346-2350">
+                            <change>
+                                setMinimumHeight(36) → setMinimumHeight(70)
+                                新增 setStyleSheet("margin-top: 30px; padding: 5px;")
+                            </change>
+                        </file>
+                    </files_modified>
+
+                    <commits>
+                        <commit hash="3119255">首次使用 margin-top 替代 padding</commit>
+                        <commit hash="539b065">增加 Layout Spacing 到 20px</commit>
+                        <commit hash="0896308">最终修复：增加 setMinimumHeight 到 70px</commit>
+                    </commits>
+
+                    <key_lessons>
+                        <lesson name="Padding vs Margin 混淆">
+                            这是最容易犯且最隐蔽的错误。
+                            用户反馈"看到空白但元素没移动"是典型症状。
+                            必须从根本上理解：Padding不移动元素，Margin才移动元素。
+                        </lesson>
+                        <lesson name="Widget高度陷阱">
+                            Margin 虽然是"外边距"，但在 Qt 中仍占用 Widget 高度。
+                            这个陷阱最隐蔽：位置看起来对了，但内容消失/截断。
+                        </lesson>
+                        <lesson name="PyInstaller强制重打包">
+                            源码修改后必须重新打包，否则运行的是旧版本。
+                            这在PyInstaller项目中是强制要求，不可遗漏。
+                        </lesson>
+                    </key_lessons>
+                </case_study>
+
+                <best_practices>
+                    <practice name="位置调整决策树">
+                        <![CDATA[
+需要调整元素位置？
+│
+├─ 问：影响多个元素还是单个？
+│  ├─ 多个 → Layout.addSpacing()
+│  └─ 单个 → CSS margin-top/margin-left ✅
+│
+└─ 问：元素是否被截断？
+   ├─ 是 → 增加 setMinimumHeight
+   └─ 否 → 完成
+                        ]]>
+                    </practice>
+
+                    <practice name="三步验证法">
+                        <step n="1">修改后运行 python main.py 验证逻辑正确</step>
+                        <step n="2">清理打包：rm -rf build dist</step>
+                        <step n="3">打包测试：pyinstaller spec → 运行 exe 验证效果</step>
+                    </practice>
+
+                    <practice name="渐进式调整">
+                        每次只修改一个参数（spacing/margin/height），立即验证效果。
+                        避免同时修改多个参数导致无法定位哪个起作用。
+                    </practice>
+
+                    <practice name="用户反馈驱动">
+                        不要假设"应该够了"，每次修改后请用户确认实际视觉效果。
+                        用户的感受才是最终验收标准。
+                    </practice>
+
+                    <practice name="公式检查">
+                        <![CDATA[
+每次设置 margin 后，立即检查：
+  setMinimumHeight ≥ margin-top + margin-bottom + 内容高度
+
+如果不满足，立即调整 setMinimumHeight
+                        ]]>
+                    </practice>
+                </best_practices>
+
+                <anti_patterns>
+                    <anti_pattern name="Padding 误用">
+                        <symptom>元素周围有空白，但内容不移动</symptom>
+                        <wrong>checkbox.setStyleSheet("padding: 20px 5px;")</wrong>
+                        <correct>checkbox.setStyleSheet("margin-top: 20px; padding: 5px;")</correct>
+                        <memory_aid>**Padding是墙内装修，Margin是房子搬迁**</memory_aid>
+                    </anti_pattern>
+
+                    <anti_pattern name="忽略Widget高度">
+                        <symptom>位置正确但内容消失或截断</symptom>
+                        <wrong>
+                            <![CDATA[
+setMinimumHeight(36)
+setStyleSheet("margin-top: 30px;")  # 只剩 6px 空间！
+                            ]]>
+                        </wrong>
+                        <correct>
+                            <![CDATA[
+setMinimumHeight(70)  # 30px margin + 40px content
+setStyleSheet("margin-top: 30px;")
+                            ]]>
+                        </correct>
+                    </anti_pattern>
+
+                    <anti_pattern name="改代码不打包">
+                        <symptom>源码测试正常，exe显示异常</symptom>
+                        <wrong>修改代码 → 直接运行旧exe</wrong>
+                        <correct>修改代码 → 清理 → 打包 → 运行新exe</correct>
+                        <memory_aid>**改代码必打包，打包后必测试**</memory_aid>
+                    </anti_pattern>
+
+                    <anti_pattern name="批量修改参数">
+                        <symptom>不知道哪个修改起了作用</symptom>
+                        <wrong>同时修改 spacing、margin、height</wrong>
+                        <correct>每次只修改一个参数，立即验证</correct>
+                    </anti_pattern>
+                </anti_patterns>
+
+                <quick_reference>
+                    <title>Qt Widget 位置调整快速卡片</title>
+
+                    <core_concepts>
+                        <concept name="Padding vs Margin">
+                            | 属性 | 作用 | 是否移动元素 | 典型用途 |
+                            |------|------|--------------|----------|
+                            | **Padding** | 元素内部空白 | ❌ 不移动 | 内容与边框的距离 |
+                            | **Margin** | 元素外部空白 | ✅ **推动元素** | **精确定位元素** |
+                        </concept>
+
+                        <concept name="关键公式">
+                            setMinimumHeight ≥ margin-top + margin-bottom + 实际内容高度
+                        </concept>
+
+                        <concept name="三层体系">
+                            Layout层（统一间距）→ Margin层（精确定位）→ Size层（确保空间）
+                        </concept>
+                    </core_concepts>
+
+                    <common_code_patterns>
+                        <pattern name="向下移动元素">
+                            <![CDATA[
+# 1. 先确保高度充足
+widget.setMinimumHeight(70)  # margin + content
+
+# 2. 使用 margin 推动元素
+widget.setStyleSheet("margin-top: 30px; padding: 5px;")
+                            ]]>
+                        </pattern>
+
+                        <pattern name="增加元素间距">
+                            <![CDATA[
+# Layout 层统一间距
+layout.addSpacing(20)
+                            ]]>
+                        </pattern>
+
+                        <pattern name="PyInstaller 重打包">
+                            <![CDATA[
+# 1. 清理旧文件
+rm -rf build dist
+
+# 2. 重新打包
+pyinstaller Gaiya.spec
+
+# 3. 验证
+./dist/GaiYa-v1.5.exe
+ls -lh dist/  # 检查时间戳
+                            ]]>
+                        </pattern>
+                    </common_code_patterns>
+
+                    <diagnosis_checklist>
+                        <check>□ 元素是否真正移动了？（检查是否误用 padding）</check>
+                        <check>□ 内容是否完整显示？（检查 height ≥ margin + content）</check>
+                        <check>□ 是否重新打包了？（PyInstaller 项目必须）</check>
+                        <check>□ 是否运行新版本？（检查 exe 时间戳）</check>
+                        <check>□ 用户是否确认效果？（视觉验收）</check>
+                    </diagnosis_checklist>
+                </quick_reference>
+
+                <references>
+                    <detailed_doc>.claude/WIDGET_POSITIONING_METHODOLOGY.md</detailed_doc>
+                    <related_methodology>PyInstaller Development Methodology</related_methodology>
+                    <related_methodology>UI State Synchronization Troubleshooting</related_methodology>
+                    <related_case>通知设置复选框位置调整 (2025-11-07)</related_case>
+                    <files_modified>
+                        - config_gui.py:2307-2311 ("任务开始时提醒"复选框)
+                        - config_gui.py:2346-2350 ("任务结束时提醒"复选框)
+                    </files_modified>
+                </references>
+            </methodology>
         </debugging_methodology>
     </protocols>
 
