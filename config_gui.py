@@ -2301,7 +2301,7 @@ class ConfigManager(QMainWindow):
 
         before_start_group.setLayout(before_start_layout)
         timing_layout.addWidget(before_start_group)
-        timing_layout.addSpacing(50)  # 使用Layout Spacing代替CSS Margin，避免交互区域重叠
+        timing_layout.addSpacing(80)  # 使用Layout Spacing代替CSS Margin，避免交互区域重叠
 
         # 任务开始时提醒
         self.notify_on_start_check = QCheckBox("任务开始时提醒")
@@ -2339,7 +2339,7 @@ class ConfigManager(QMainWindow):
 
         before_end_group.setLayout(before_end_layout)
         timing_layout.addWidget(before_end_group)
-        timing_layout.addSpacing(50)  # 使用Layout Spacing代替CSS Margin，避免交互区域重叠
+        timing_layout.addSpacing(80)  # 使用Layout Spacing代替CSS Margin，避免交互区域重叠
 
         # 任务结束时提醒
         self.notify_on_end_check = QCheckBox("任务结束时提醒")
