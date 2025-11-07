@@ -2273,7 +2273,16 @@ class ConfigManager(QMainWindow):
 
         # 任务开始前提醒
         before_start_group = QGroupBox("🔔 任务开始前提醒")
-        before_start_group.setStyleSheet("QGroupBox::title { color: white; font-weight: bold; font-size: 15px; }")
+        before_start_group.setStyleSheet("""
+            QGroupBox {
+                margin-bottom: 30px;
+            }
+            QGroupBox::title {
+                color: white;
+                font-weight: bold;
+                font-size: 15px;
+            }
+        """)
         before_start_group.setMinimumHeight(110)  # 增加高度，防止文案被截断
         before_start_layout = QVBoxLayout()
         before_start_layout.setSpacing(8)  # 设置提示文本和复选框之间的间距
@@ -2301,18 +2310,27 @@ class ConfigManager(QMainWindow):
 
         before_start_group.setLayout(before_start_layout)
         timing_layout.addWidget(before_start_group)
-        timing_layout.addSpacing(80)  # 使用Layout Spacing代替CSS Margin，避免交互区域重叠
+        # GroupBox已有margin-bottom:30px，这里不需要额外spacing
 
         # 任务开始时提醒
         self.notify_on_start_check = QCheckBox("任务开始时提醒")
         self.notify_on_start_check.setChecked(notification_config.get('on_start', True))
-        self.notify_on_start_check.setMinimumHeight(36)  # 恢复正常高度，不占用额外空间
+        self.notify_on_start_check.setMinimumHeight(36)
         timing_layout.addWidget(self.notify_on_start_check)
         timing_layout.addSpacing(20)  # 复选框和下一个GroupBox之间的合理间距
 
         # 任务结束前提醒
         before_end_group = QGroupBox("🔕 任务结束前提醒")
-        before_end_group.setStyleSheet("QGroupBox::title { color: white; font-weight: bold; font-size: 15px; }")
+        before_end_group.setStyleSheet("""
+            QGroupBox {
+                margin-bottom: 30px;
+            }
+            QGroupBox::title {
+                color: white;
+                font-weight: bold;
+                font-size: 15px;
+            }
+        """)
         before_end_group.setMinimumHeight(110)  # 增加高度，防止文案被截断
         before_end_layout = QVBoxLayout()
         before_end_layout.setSpacing(8)  # 设置提示文本和复选框之间的间距
@@ -2339,12 +2357,12 @@ class ConfigManager(QMainWindow):
 
         before_end_group.setLayout(before_end_layout)
         timing_layout.addWidget(before_end_group)
-        timing_layout.addSpacing(80)  # 使用Layout Spacing代替CSS Margin，避免交互区域重叠
+        # GroupBox已有margin-bottom:30px，这里不需要额外spacing
 
         # 任务结束时提醒
         self.notify_on_end_check = QCheckBox("任务结束时提醒")
         self.notify_on_end_check.setChecked(notification_config.get('on_end', False))
-        self.notify_on_end_check.setMinimumHeight(36)  # 恢复正常高度，不占用额外空间
+        self.notify_on_end_check.setMinimumHeight(36)
         timing_layout.addWidget(self.notify_on_end_check)
 
         timing_group.setLayout(timing_layout)
