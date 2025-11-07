@@ -2301,14 +2301,14 @@ class ConfigManager(QMainWindow):
 
         before_start_group.setLayout(before_start_layout)
         timing_layout.addWidget(before_start_group)
-        timing_layout.addSpacing(60)  # 增加GroupBox和复选框之间的间距(30px → 60px)
+        timing_layout.addSpacing(40)  # GroupBox和复选框之间的合理间距
 
         # 任务开始时提醒
         self.notify_on_start_check = QCheckBox("任务开始时提醒")
         self.notify_on_start_check.setChecked(notification_config.get('on_start', True))
-        self.notify_on_start_check.setMinimumHeight(36)  # 使用正常高度
+        self.notify_on_start_check.setMinimumHeight(36)
         timing_layout.addWidget(self.notify_on_start_check)
-        timing_layout.addSpacing(60)  # 增加复选框和下一个GroupBox之间的间距(30px → 60px)
+        timing_layout.addSpacing(40)  # 复选框和下一个GroupBox之间的合理间距
 
         # 任务结束前提醒
         before_end_group = QGroupBox("🔕 任务结束前提醒")
@@ -2339,12 +2339,12 @@ class ConfigManager(QMainWindow):
 
         before_end_group.setLayout(before_end_layout)
         timing_layout.addWidget(before_end_group)
-        timing_layout.addSpacing(60)  # 增加GroupBox和复选框之间的间距(30px → 60px)
+        timing_layout.addSpacing(40)  # GroupBox和复选框之间的合理间距
 
         # 任务结束时提醒
         self.notify_on_end_check = QCheckBox("任务结束时提醒")
         self.notify_on_end_check.setChecked(notification_config.get('on_end', False))
-        self.notify_on_end_check.setMinimumHeight(36)  # 使用正常高度
+        self.notify_on_end_check.setMinimumHeight(36)
         timing_layout.addWidget(self.notify_on_end_check)
 
         timing_group.setLayout(timing_layout)
