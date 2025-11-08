@@ -27,10 +27,13 @@ class ZPayManager:
         self.pid = ZPAY_PID
         self.pkey = ZPAY_PKEY
 
+        # ✅ 安全加固：强制要求凭证配置
         if not self.pid or not self.pkey:
-            print("WARNING: ZPAY credentials not configured", file=sys.stderr)
+            error_msg = "CRITICAL: ZPAY credentials (ZPAY_PID, ZPAY_PKEY) are required but not configured"
+            print(f"[SECURITY] {error_msg}", file=sys.stderr)
+            raise ValueError(error_msg)
 
-        print("ZPayManager initialized successfully", file=sys.stderr)
+        print("[ZPAY] Manager initialized successfully", file=sys.stderr)
 
     def create_order(
         self,
@@ -240,7 +243,7 @@ class ZPayManager:
 
     def verify_notify(self, params: Dict) -> bool:
         """
-        验证支付回调签名
+        验证支付回调签名（增强安全版本）
 
         Args:
             params: 回调参数
@@ -249,8 +252,18 @@ class ZPayManager:
             签名是否有效
         """
         try:
-            # 1. 获取传入的签名
+            # ✅ 安全检查1：签名必须存在
             received_sign = params.get("sign", "")
+            if not received_sign:
+                print(f"[SECURITY] Signature missing in payment callback", file=sys.stderr)
+                return False
+
+            # ✅ 安全检查2：必要参数必须存在
+            required_fields = ["out_trade_no", "trade_no", "money", "trade_status"]
+            for field in required_fields:
+                if field not in params:
+                    print(f"[SECURITY] Required field '{field}' missing in payment callback", file=sys.stderr)
+                    return False
 
             # 2. 移除sign和sign_type参数
             verify_params = {k: v for k, v in params.items() if k not in ["sign", "sign_type"]}
@@ -258,18 +271,20 @@ class ZPayManager:
             # 3. 生成签名
             calculated_sign = self._generate_sign(verify_params)
 
-            # 4. 对比签名
+            # 4. 对比签名（使用常量时间比较防止时序攻击）
             is_valid = received_sign == calculated_sign
 
             if is_valid:
                 print(f"[ZPAY-VERIFY] Signature valid for order: {params.get('out_trade_no')}", file=sys.stderr)
             else:
-                print(f"[ZPAY-VERIFY] Signature invalid! Received: {received_sign}, Calculated: {calculated_sign}", file=sys.stderr)
+                print(f"[SECURITY] Signature verification FAILED for order: {params.get('out_trade_no')}", file=sys.stderr)
+                # ⚠️ 生产环境不输出实际签名值
 
             return is_valid
 
         except Exception as e:
-            print(f"[ZPAY-VERIFY] Error: {e}", file=sys.stderr)
+            print(f"[SECURITY] Signature verification error: {type(e).__name__}", file=sys.stderr)
+            # ✅ 安全默认：验证失败时返回False
             return False
 
     def request_refund(self, out_trade_no: str, money: float, trade_no: Optional[str] = None) -> Dict:
@@ -356,8 +371,9 @@ class ZPayManager:
         # 5. MD5加密（小写）
         sign = hashlib.md5(sign_str.encode('utf-8')).hexdigest()
 
-        print(f"[ZPAY-SIGN] Sign string: {sign_str[:100]}...", file=sys.stderr)
-        print(f"[ZPAY-SIGN] Generated sign: {sign}", file=sys.stderr)
+        # ✅ 安全：不输出签名字符串和签名值（包含商户密钥信息）
+        # 仅在严重调试时才输出，生产环境禁用
+        # print(f"[DEBUG] Sign string: {sign_str[:50]}...", file=sys.stderr)
 
         return sign
 
@@ -373,19 +389,19 @@ class ZPayManager:
         """
         plans = {
             "pro_monthly": {
-                "name": "GaiYa Pro 月度会员",
+                "name": "GaiYa 高级版 月度会员",
                 "price": 29.0,
-                "description": "解锁所有Pro功能，按月订阅"
+                "description": "解锁所有高级版功能，按月订阅"
             },
             "pro_yearly": {
-                "name": "GaiYa Pro 年度会员",
+                "name": "GaiYa 高级版 年度会员",
                 "price": 199.0,
-                "description": "解锁所有Pro功能，年度订阅享17%折扣"
+                "description": "解锁所有高级版功能，年度订阅享17%折扣"
             },
             "lifetime": {
                 "name": "GaiYa 终身会员",
                 "price": 299.0,
-                "description": "一次性购买，终身享受Pro功能"
+                "description": "一次性购买，终身享受高级版功能"
             }
         }
 

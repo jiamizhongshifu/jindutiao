@@ -2,6 +2,65 @@
 
 > ⚠️ 本配置的核心行为逻辑（如反馈、音效）依赖于外部脚本，如 `$HOME/.claude/feedback_common.md`。
 
+---
+
+## 📋 项目最新更新 (v1.5.1 - 2025-11-08)
+
+### 架构变更
+
+**1. 免费版水印系统**
+- **文件**: `main.py:24, 100, 1889-1922`
+- **功能**: 集成 `AuthClient` 检测用户等级，免费用户进度条右侧显示"激活高级版,解锁更多服务"水印
+- **实现细节**:
+  - 在 `paintEvent()` 中使用 `auth_client.get_user_tier()` 判断
+  - 半透明黑色背景 (alpha=100) + 半透明白色文字 (alpha=180)
+  - 定位：进度条右侧，距右边缘10px
+  - 异常处理：捕获并记录警告日志，不中断主绘制流程
+
+**2. 定价策略调整**
+- **影响文件**:
+  - 后端：`api/zpay_manager.py:377,382,387`, `api/subscription_manager.py:23,28,35`
+  - 前端：`gaiya/ui/membership_ui.py:522-565`, `config_gui.py:2466-2469`
+- **变更内容**:
+  - 月度会员：19元 → **29元**
+  - 年度会员：保持 **199元**（相当于16.6元/月，年省149元）
+  - 终身会员：**暂时隐藏**（代码注释保留，后续调整价格后启用）
+
+**3. Freemium 商业模式**
+- **策略来源**: 参考 StageTimer 案例
+- **核心逻辑**:
+  - 免费版：3次/天 AI任务规划 + 完整核心功能 + 品牌水印
+  - 付费版：解锁AI配额限制 + 移除水印 + 高级功能
+  - 年付优惠：30%+ 折扣鼓励长期订阅
+- **增长驱动**: 免费版水印作为品牌传播窗口，平衡用户体验与商业转化
+
+### 关键技术点
+
+**AuthClient 集成模式**
+```python
+# main.py:100
+self.auth_client = AuthClient()
+
+# main.py:1889-1922 (paintEvent中)
+try:
+    user_tier = self.auth_client.get_user_tier()
+    if user_tier == "free":
+        # 绘制水印...
+except Exception as e:
+    self.logger.warning(f"绘制水印失败: {e}")
+```
+
+**价格一致性检查点**
+- 后端API（2个文件）: `zpay_manager.py`, `subscription_manager.py`
+- 前端UI（2个文件）: `membership_ui.py`, `config_gui.py`
+- **关键原则**: 4个文件价格必须完全一致，修改时使用全局搜索确认
+
+**部署流程**
+1. 修改源代码 → 2. Git提交推送 → 3. Vercel自动部署（1-3分钟）
+4. 本地重新打包 → 5. 测试验证
+
+---
+
 <claude_configuration>
 
     <!-- ====================================================================== -->

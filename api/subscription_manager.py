@@ -104,7 +104,7 @@ class SubscriptionManager:
             if user_tier in ["pro", "lifetime"]:
                 self.client.table("user_quotas").update({
                     "user_tier": user_tier,
-                    "daily_plan_total": 50,
+                    "daily_plan_total": 20,
                     "weekly_report_total": 10,
                     "chat_total": 100
                 }).eq("user_id", user_id).execute()
@@ -443,20 +443,14 @@ class SubscriptionManager:
         """获取计划功能列表"""
         if plan_type in ["pro_monthly", "pro_yearly"]:
             return [
-                "高级进度条样式（12+种）",
-                "动态时间标记（GIF/WebP）",
-                "AI任务规划：50次/天",
-                "AI周报生成：10次/周",
-                "AI对话查询：100次/天",
-                "多设备数据同步",
-                "配置自动备份（30天）",
-                "高级统计报告",
-                "样式商店积分（10积分/月）",
-                "创作者分成（70%）"
+                "20次/天 AI智能规划",
+                "去除进度条水印",
+                "抢先体验后续更新的新功能",
+                "加入VIP会员群，参与后续功能规划"
             ]
         elif plan_type == "lifetime":
             return [
-                "所有Pro功能",
+                "所有高级版功能",
                 "终身免费更新",
                 "优先客服支持",
                 "未来新功能抢先体验",

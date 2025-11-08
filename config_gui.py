@@ -1292,6 +1292,10 @@ class ConfigManager(QMainWindow):
         self.account_tab_widget = None
         tabs.addTab(QWidget(), "👤 账户")  # 占位widget
 
+        # 延迟创建关于标签页
+        self.about_tab_widget = None
+        tabs.addTab(QWidget(), "📖 关于")  # 占位widget
+
         # 连接标签页切换信号,实现懒加载
         tabs.currentChanged.connect(self.on_tab_changed)
         # 连接标签页切换信号,控制AI状态定时器
@@ -1327,6 +1331,9 @@ class ConfigManager(QMainWindow):
         elif index == 3:  # 账户标签页
             if self.account_tab_widget is None:
                 self._load_account_tab()
+        elif index == 4:  # 关于标签页
+            if self.about_tab_widget is None:
+                self._load_about_tab()
 
     
     def _load_notification_tab(self):
@@ -1377,8 +1384,33 @@ class ConfigManager(QMainWindow):
             error_label.setStyleSheet("color: red; padding: 20px;")  
             error_layout.addWidget(error_label)  
             self.account_tab_widget = error_widget  
-            self.tabs.removeTab(3)  
-            self.tabs.insertTab(3, self.account_tab_widget, "👤 账户")  
+            self.tabs.removeTab(3)
+            self.tabs.insertTab(3, self.account_tab_widget, "👤 账户")
+
+    def _load_about_tab(self):
+        """加载关于标签页"""
+        if self.about_tab_widget is not None:
+            return  # 已经加载过了
+
+        try:
+            self.about_tab_widget = self.create_about_tab()
+            self.tabs.setTabEnabled(4, True)  # 确保标签页可用
+            # 替换占位widget
+            self.tabs.removeTab(4)
+            self.tabs.insertTab(4, self.about_tab_widget, "📖 关于")
+            self.tabs.setCurrentIndex(4)  # 切换到关于标签页
+        except Exception as e:
+            import logging
+            logging.error(f"加载关于标签页失败: {e}")
+            from PySide6.QtWidgets import QLabel
+            error_widget = QWidget()
+            error_layout = QVBoxLayout(error_widget)
+            error_label = QLabel(f"加载关于标签页失败: {e}")
+            error_label.setStyleSheet("color: red; padding: 20px;")
+            error_layout.addWidget(error_label)
+            self.about_tab_widget = error_widget
+            self.tabs.removeTab(4)
+            self.tabs.insertTab(4, self.about_tab_widget, "📖 关于")
 
     def create_config_tab(self):
         """创建外观配置标签页"""
@@ -2275,7 +2307,7 @@ class ConfigManager(QMainWindow):
         before_start_group = QGroupBox("🔔 任务开始前提醒")
         before_start_group.setStyleSheet("""
             QGroupBox {
-                margin-bottom: 30px;
+                margin-bottom: 10px;
             }
             QGroupBox::title {
                 color: white;
@@ -2283,14 +2315,26 @@ class ConfigManager(QMainWindow):
                 font-size: 15px;
             }
         """)
-        before_start_group.setMinimumHeight(110)  # 增加高度，防止文案被截断
+        before_start_group.setMinimumHeight(110)
         before_start_layout = QVBoxLayout()
-        before_start_layout.setSpacing(8)  # 设置提示文本和复选框之间的间距
-        before_start_layout.setContentsMargins(10, 15, 10, 10)  # 设置内边距 (左, 上, 右, 下)
+        before_start_layout.setSpacing(8)
+        before_start_layout.setContentsMargins(10, 15, 10, 10)
 
+        # 标题行布局：提示文本 + "任务开始时提醒"复选框
+        before_start_title_row = QHBoxLayout()
         before_start_hint = QLabel("选择在任务开始前多久提醒(可多选):")
         before_start_hint.setStyleSheet("color: white; font-size: 9pt;")
-        before_start_layout.addWidget(before_start_hint)
+        before_start_title_row.addWidget(before_start_hint)
+
+        before_start_title_row.addStretch()
+
+        # "任务开始时提醒"复选框放在右侧
+        self.notify_on_start_check = QCheckBox("任务开始时提醒")
+        self.notify_on_start_check.setChecked(notification_config.get('on_start', True))
+        self.notify_on_start_check.setMinimumHeight(36)
+        before_start_title_row.addWidget(self.notify_on_start_check)
+
+        before_start_layout.addLayout(before_start_title_row)
 
         before_start_minutes = notification_config.get('before_start_minutes', [10, 5])
 
@@ -2310,20 +2354,12 @@ class ConfigManager(QMainWindow):
 
         before_start_group.setLayout(before_start_layout)
         timing_layout.addWidget(before_start_group)
-        # GroupBox已有margin-bottom:30px，这里不需要额外spacing
-
-        # 任务开始时提醒
-        self.notify_on_start_check = QCheckBox("任务开始时提醒")
-        self.notify_on_start_check.setChecked(notification_config.get('on_start', True))
-        self.notify_on_start_check.setMinimumHeight(36)
-        timing_layout.addWidget(self.notify_on_start_check)
-        timing_layout.addSpacing(20)  # 复选框和下一个GroupBox之间的合理间距
 
         # 任务结束前提醒
         before_end_group = QGroupBox("🔕 任务结束前提醒")
         before_end_group.setStyleSheet("""
             QGroupBox {
-                margin-bottom: 30px;
+                margin-bottom: 10px;
             }
             QGroupBox::title {
                 color: white;
@@ -2331,14 +2367,26 @@ class ConfigManager(QMainWindow):
                 font-size: 15px;
             }
         """)
-        before_end_group.setMinimumHeight(110)  # 增加高度，防止文案被截断
+        before_end_group.setMinimumHeight(110)
         before_end_layout = QVBoxLayout()
-        before_end_layout.setSpacing(8)  # 设置提示文本和复选框之间的间距
-        before_end_layout.setContentsMargins(10, 15, 10, 10)  # 设置内边距 (左, 上, 右, 下)
+        before_end_layout.setSpacing(8)
+        before_end_layout.setContentsMargins(10, 15, 10, 10)
 
+        # 标题行布局：提示文本 + "任务结束时提醒"复选框
+        before_end_title_row = QHBoxLayout()
         before_end_hint = QLabel("选择在任务结束前多久提醒(可多选):")
         before_end_hint.setStyleSheet("color: white; font-size: 9pt;")
-        before_end_layout.addWidget(before_end_hint)
+        before_end_title_row.addWidget(before_end_hint)
+
+        before_end_title_row.addStretch()
+
+        # "任务结束时提醒"复选框放在右侧
+        self.notify_on_end_check = QCheckBox("任务结束时提醒")
+        self.notify_on_end_check.setChecked(notification_config.get('on_end', False))
+        self.notify_on_end_check.setMinimumHeight(36)
+        before_end_title_row.addWidget(self.notify_on_end_check)
+
+        before_end_layout.addLayout(before_end_title_row)
 
         before_end_minutes = notification_config.get('before_end_minutes', [5])
 
@@ -2357,13 +2405,6 @@ class ConfigManager(QMainWindow):
 
         before_end_group.setLayout(before_end_layout)
         timing_layout.addWidget(before_end_group)
-        # GroupBox已有margin-bottom:30px，这里不需要额外spacing
-
-        # 任务结束时提醒
-        self.notify_on_end_check = QCheckBox("任务结束时提醒")
-        self.notify_on_end_check.setChecked(notification_config.get('on_end', False))
-        self.notify_on_end_check.setMinimumHeight(36)
-        timing_layout.addWidget(self.notify_on_end_check)
 
         timing_group.setLayout(timing_layout)
         layout.addWidget(timing_group)
@@ -2448,14 +2489,14 @@ class ConfigManager(QMainWindow):
             email_label.setStyleSheet("color: white; font-size: 14px; margin-bottom: 15px;")
             layout.addWidget(email_label)
 
-            tier_names = {"free": "免费用户", "pro": "专业版", "lifetime": "终身会员"}
+            tier_names = {"free": "免费用户", "pro": "高级版", "lifetime": "终身会员"}
             tier_name = tier_names.get(user_tier, user_tier)
             tier_label = QLabel(f"会员等级：{tier_name}")
             tier_label.setStyleSheet("color: white; font-size: 14px; margin-bottom: 20px;")
             layout.addWidget(tier_label)
 
             if user_tier == "free":
-                tip_label = QLabel("选择适合你的套餐：")
+                tip_label = QLabel("购买GaiYa每日进度条高级版")
                 tip_label.setStyleSheet("color: white; font-size: 15px; font-weight: bold; margin-bottom: 10px;")
                 layout.addWidget(tip_label)
 
@@ -2463,8 +2504,8 @@ class ConfigManager(QMainWindow):
                 cards_layout.setSpacing(12)
 
                 plans = [
-                    {"id": "pro_monthly", "name": "专业版 - 月付", "price": "¥29", "period": "/月", "color": "#FF6B6B", "features": ["50次/天 任务规划", "10次/周 进度报告", "100次/天 AI对话"]},
-                    {"id": "pro_yearly", "name": "专业版 - 年付", "price": "¥199", "period": "/年", "color": "#4ECDC4", "features": ["50次/天 任务规划", "10次/周 进度报告", "100次/天 AI对话", "💰 省30%"]},
+                    {"id": "pro_monthly", "name": "高级版 - 月付", "price": "¥29", "period": "/月", "color": "#FF6B6B", "features": ["20次/天 AI智能规划", "去除进度条水印", "抢先体验新功能", "加入VIP会员群"]},
+                    {"id": "pro_yearly", "name": "高级版 - 年付", "price": "¥199", "period": "/年", "color": "#4ECDC4", "features": ["20次/天 AI智能规划", "去除进度条水印", "抢先体验新功能", "加入VIP会员群", "💰 省30%"]},
                     # 终身会员暂时隐藏，后续调整价格后再启用
                     # {"id": "lifetime", "name": "终身会员", "price": "¥299", "period": "买断", "color": "#95A99C", "features": ["无限使用所有功能", "一次付费永久使用", "⭐ 最超值"]}
                 ]
@@ -4459,6 +4500,295 @@ class ConfigManager(QMainWindow):
             # 恢复按钮状态
             self.generate_btn.setEnabled(True)
             self.generate_btn.setText("✨ 智能生成任务")
+
+    def create_about_tab(self):
+        """创建关于标签页"""
+        from version import __version__, __app_name_zh__, __slogan__, APP_METADATA
+
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.setContentsMargins(40, 40, 40, 40)
+
+        # Logo区域（使用大号文字代替图片）
+        logo_label = QLabel(__app_name_zh__)
+        logo_label.setStyleSheet("""
+            QLabel {
+                font-size: 48px;
+                font-weight: bold;
+                color: #4CAF50;
+                padding: 20px;
+            }
+        """)
+        logo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(logo_label)
+
+        # Slogan
+        slogan_label = QLabel(__slogan__)
+        slogan_label.setStyleSheet("""
+            QLabel {
+                font-size: 16px;
+                color: #888;
+                padding: 10px;
+            }
+        """)
+        slogan_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(slogan_label)
+
+        # 版本号
+        version_label = QLabel(f"版本 v{__version__}")
+        version_label.setStyleSheet("""
+            QLabel {
+                font-size: 14px;
+                color: #666;
+                padding: 5px;
+            }
+        """)
+        version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(version_label)
+
+        layout.addSpacing(30)
+
+        # 检查更新按钮
+        self.check_update_btn = QPushButton("检查更新")
+        self.check_update_btn.setFixedSize(200, 40)
+        self.check_update_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #2196F3;
+                color: white;
+                font-size: 14px;
+                font-weight: bold;
+                border-radius: 20px;
+                padding: 10px 20px;
+            }
+            QPushButton:hover {
+                background-color: #1976D2;
+            }
+            QPushButton:pressed {
+                background-color: #0D47A1;
+            }
+        """)
+        self.check_update_btn.clicked.connect(self._check_for_updates)
+
+        # 居中按钮
+        btn_layout = QHBoxLayout()
+        btn_layout.addStretch()
+        btn_layout.addWidget(self.check_update_btn)
+        btn_layout.addStretch()
+        layout.addLayout(btn_layout)
+
+        layout.addSpacing(20)
+
+        # 反馈链接
+        feedback_link = QLabel('<a href="#" style="color: #2196F3; text-decoration: none;">直接向创始人反馈问题</a>')
+        feedback_link.setStyleSheet("""
+            QLabel {
+                font-size: 13px;
+                padding: 5px;
+            }
+        """)
+        feedback_link.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        feedback_link.setOpenExternalLinks(False)  # 禁用默认的外部链接打开
+        feedback_link.linkActivated.connect(self._show_wechat_qrcode)
+        layout.addWidget(feedback_link)
+
+        layout.addStretch()
+
+        # 底部版权信息
+        copyright_label = QLabel(f"© 2025 {APP_METADATA['author']}")
+        copyright_label.setStyleSheet("""
+            QLabel {
+                font-size: 11px;
+                color: #666;
+                padding: 10px;
+            }
+        """)
+        copyright_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(copyright_label)
+
+        return widget
+
+    def _check_for_updates(self):
+        """检查更新"""
+        from version import __version__, APP_METADATA
+        import requests
+        from PySide6.QtWidgets import QMessageBox
+
+        # 更新按钮状态
+        self.check_update_btn.setEnabled(False)
+        self.check_update_btn.setText("检查中...")
+
+        try:
+            # 调用GitHub API获取最新版本
+            repo = APP_METADATA['repository'].replace('https://github.com/', '')
+            api_url = f"https://api.github.com/repos/{repo}/releases/latest"
+
+            response = requests.get(api_url, timeout=10)
+            response.raise_for_status()
+
+            latest_release = response.json()
+            latest_version = latest_release['tag_name'].lstrip('v')
+            current_version = __version__
+
+            # 比较版本号
+            if self._compare_versions(latest_version, current_version) > 0:
+                # 有新版本
+                self.check_update_btn.setText(f"v{latest_version} 可更新")
+                self.check_update_btn.setStyleSheet("""
+                    QPushButton {
+                        background-color: #FF5722;
+                        color: white;
+                        font-size: 14px;
+                        font-weight: bold;
+                        border-radius: 20px;
+                        padding: 10px 20px;
+                    }
+                    QPushButton:hover {
+                        background-color: #E64A19;
+                    }
+                    QPushButton:pressed {
+                        background-color: #BF360C;
+                    }
+                """)
+
+                # 弹出更新提示
+                msg = QMessageBox(self)
+                msg.setIcon(QMessageBox.Icon.Information)
+                msg.setWindowTitle("发现新版本")
+                msg.setText(f"发现新版本 v{latest_version}")
+                msg.setInformativeText(f"当前版本: v{current_version}\n\n{latest_release.get('body', '无更新说明')}")
+                msg.setStandardButtons(QMessageBox.StandardButton.Ok)
+                download_btn = msg.addButton("前往下载", QMessageBox.ButtonRole.AcceptRole)
+                msg.exec()
+
+                if msg.clickedButton() == download_btn:
+                    # 打开下载页面
+                    from PySide6.QtGui import QDesktopServices
+                    from PySide6.QtCore import QUrl
+                    QDesktopServices.openUrl(QUrl(latest_release['html_url']))
+            else:
+                # 已是最新版本
+                QMessageBox.information(
+                    self,
+                    "已是最新版本",
+                    f"当前版本 v{current_version} 已是最新版本！"
+                )
+                self.check_update_btn.setText("检查更新")
+
+        except requests.exceptions.Timeout:
+            QMessageBox.warning(self, "检查更新失败", "网络请求超时，请检查网络连接")
+            self.check_update_btn.setText("检查更新")
+        except requests.exceptions.RequestException as e:
+            QMessageBox.warning(self, "检查更新失败", f"无法连接到更新服务器\n\n{str(e)}")
+            self.check_update_btn.setText("检查更新")
+        except Exception as e:
+            import logging
+            logging.error(f"检查更新失败: {e}")
+            QMessageBox.warning(self, "检查更新失败", f"发生未知错误\n\n{str(e)}")
+            self.check_update_btn.setText("检查更新")
+        finally:
+            self.check_update_btn.setEnabled(True)
+
+    def _compare_versions(self, version1, version2):
+        """比较版本号
+
+        Returns:
+            1: version1 > version2
+            0: version1 == version2
+            -1: version1 < version2
+        """
+        v1_parts = [int(x) for x in version1.split('.')]
+        v2_parts = [int(x) for x in version2.split('.')]
+
+        # 补齐长度
+        max_len = max(len(v1_parts), len(v2_parts))
+        v1_parts.extend([0] * (max_len - len(v1_parts)))
+        v2_parts.extend([0] * (max_len - len(v2_parts)))
+
+        for v1, v2 in zip(v1_parts, v2_parts):
+            if v1 > v2:
+                return 1
+            elif v1 < v2:
+                return -1
+
+        return 0
+
+    def _show_wechat_qrcode(self):
+        """显示微信二维码弹窗"""
+        from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel
+        from PySide6.QtGui import QPixmap
+        from PySide6.QtCore import Qt
+        import os
+        import sys
+
+        # 创建对话框
+        dialog = QDialog(self)
+        dialog.setWindowTitle("添加创始人微信")
+        dialog.setFixedSize(550, 750)
+
+        layout = QVBoxLayout(dialog)
+        layout.setContentsMargins(30, 30, 30, 30)
+
+        # 标题
+        title_label = QLabel("扫描二维码，直接反馈问题")
+        title_label.setStyleSheet("""
+            QLabel {
+                font-size: 18px;
+                font-weight: bold;
+                color: white;
+                padding: 10px;
+            }
+        """)
+        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(title_label)
+
+        # 加载二维码图片（兼容打包后的路径）
+        if hasattr(sys, '_MEIPASS'):
+            # PyInstaller打包后的临时目录
+            qrcode_path = os.path.join(sys._MEIPASS, "qun.jpg")
+        else:
+            # 开发环境
+            qrcode_path = os.path.join(os.path.dirname(__file__), "qun.jpg")
+
+        if os.path.exists(qrcode_path):
+            pixmap = QPixmap(qrcode_path)
+            if not pixmap.isNull():
+                # 缩放图片以适应对话框
+                scaled_pixmap = pixmap.scaled(
+                    480, 600,
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation
+                )
+
+                qrcode_label = QLabel()
+                qrcode_label.setPixmap(scaled_pixmap)
+                qrcode_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                layout.addWidget(qrcode_label)
+            else:
+                error_label = QLabel("无法加载二维码图片")
+                error_label.setStyleSheet("color: red; padding: 20px;")
+                error_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                layout.addWidget(error_label)
+        else:
+            error_label = QLabel(f"二维码图片不存在\n路径: {qrcode_path}")
+            error_label.setStyleSheet("color: red; padding: 20px;")
+            error_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            layout.addWidget(error_label)
+
+        # 提示文字
+        hint_label = QLabel("扫一扫上面的二维码图案，加我为朋友。")
+        hint_label.setStyleSheet("""
+            QLabel {
+                font-size: 13px;
+                color: #888;
+                padding: 10px;
+            }
+        """)
+        hint_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(hint_label)
+
+        # 显示对话框
+        dialog.exec()
 
     def closeEvent(self, event):
         """窗口关闭事件，清理所有资源"""

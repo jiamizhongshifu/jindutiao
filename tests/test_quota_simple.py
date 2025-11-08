@@ -1,9 +1,18 @@
-"""Simple quota test"""
+"""
+Simple quota test
+
+Required environment variables:
+- SUPABASE_URL
+- SUPABASE_ANON_KEY
+"""
 import os
 import sys
 
-os.environ["SUPABASE_URL"] = "https://qpgypaxwjgcirssydgqh.supabase.co"
-os.environ["SUPABASE_ANON_KEY"] = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFwZ3lwYXh3amdjaXJzc3lkZ3FoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIwNzcwNDksImV4cCI6MjA3NzY1MzA0OX0.19xAKHuvJtOl3Jca-O7z3dOhsIyiIfPBo2IJHRvA9U8"
+# Check required environment variables
+if not os.getenv("SUPABASE_URL") or not os.getenv("SUPABASE_ANON_KEY"):
+    print("ERROR: Missing required environment variables")
+    print("Please set SUPABASE_URL and SUPABASE_ANON_KEY")
+    sys.exit(1)
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'api'))
 from quota_manager import QuotaManager

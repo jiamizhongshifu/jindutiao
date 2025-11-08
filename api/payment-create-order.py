@@ -15,12 +15,14 @@ import time
 try:
     from zpay_manager import ZPayManager
     from subscription_manager import SubscriptionManager
+    from validators import validate_user_id, validate_plan_type, validate_payment_amount
 except ImportError:
     import os
     import sys
     sys.path.insert(0, os.path.dirname(__file__))
     from zpay_manager import ZPayManager
     from subscription_manager import SubscriptionManager
+    from validators import validate_user_id, validate_plan_type, validate_payment_amount
 
 
 class handler(BaseHTTPRequestHandler):
@@ -46,28 +48,39 @@ class handler(BaseHTTPRequestHandler):
             body = self.rfile.read(content_length).decode('utf-8')
             data = json.loads(body)
 
-            # 2. 验证参数
+            # 2. ✅ 安全验证：使用validators模块
             user_id = data.get("user_id")
             plan_type = data.get("plan_type")
             pay_type = data.get("pay_type", "alipay")  # 默认支付宝
 
-            if not user_id or not plan_type:
-                self._send_error(400, "Missing user_id or plan_type")
+            # 验证user_id
+            is_valid, error_msg = validate_user_id(user_id)
+            if not is_valid:
+                self._send_error(400, error_msg)
                 return
 
-            if plan_type not in ["pro_monthly", "pro_yearly", "lifetime"]:
-                self._send_error(400, "Invalid plan_type")
+            # 验证plan_type并获取正确价格
+            is_valid, error_msg, correct_price = validate_plan_type(plan_type)
+            if not is_valid:
+                self._send_error(400, error_msg)
                 return
 
+            # ✅ 安全：验证支付方式
             if pay_type not in ["alipay", "wxpay"]:
                 self._send_error(400, "Invalid pay_type")
                 return
 
-            print(f"[PAYMENT-CREATE] User {user_id} requesting {plan_type} via {pay_type}", file=sys.stderr)
+            print(f"[PAYMENT-CREATE] User {user_id} requesting {plan_type} (¥{correct_price}) via {pay_type}", file=sys.stderr)
 
-            # 3. 获取计划信息
+            # 3. 获取计划信息（现在价格已经从validators获取，确保一致）
             zpay = ZPayManager()
             plan_info = zpay.get_plan_info(plan_type)
+
+            # ✅ 双重验证：确保price与validators的价格一致
+            if abs(plan_info["price"] - correct_price) > 0.01:
+                print(f"[SECURITY] Price mismatch detected for {plan_type}", file=sys.stderr)
+                self._send_error(500, "Internal price configuration error")
+                return
 
             # 4. 生成唯一订单号
             out_trade_no = self._generate_order_no(user_id)

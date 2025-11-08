@@ -1,14 +1,22 @@
 """
 重置用户配额脚本
 用于手动重置测试用户的配额
+
+使用前请设置环境变量：
+export SUPABASE_URL="your_supabase_url"
+export SUPABASE_ANON_KEY="your_supabase_anon_key"
 """
 import os
 import sys
 from datetime import datetime, timezone, timedelta
 
-# 设置环境变量
-os.environ["SUPABASE_URL"] = "https://qpgypaxwjgcirssydgqh.supabase.co"
-os.environ["SUPABASE_ANON_KEY"] = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFwZ3lwYXh3amdjaXJzc3lkZ3FoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIwNzcwNDksImV4cCI6MjA3NzY1MzA0OX0.19xAKHuvJtOl3Jca-O7z3dOhsIyiIfPBo2IJHRvA9U8"
+# 检查环境变量
+if not os.getenv("SUPABASE_URL") or not os.getenv("SUPABASE_ANON_KEY"):
+    print("❌ 错误: 请先设置 SUPABASE_URL 和 SUPABASE_ANON_KEY 环境变量")
+    print("\n设置方法:")
+    print("  export SUPABASE_URL='your_supabase_url'")
+    print("  export SUPABASE_ANON_KEY='your_supabase_anon_key'")
+    sys.exit(1)
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'api'))
 from quota_manager import QuotaManager

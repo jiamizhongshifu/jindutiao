@@ -65,7 +65,7 @@ class QuotaManager:
         # 根据用户等级设置配额
         if user_tier == "pro":
             quotas = {
-                "daily_plan_total": 50,
+                "daily_plan_total": 20,
                 "weekly_report_total": 10,
                 "chat_total": 100
             }
@@ -218,7 +218,7 @@ class QuotaManager:
         """返回降级配额（当Supabase不可用时）"""
         if user_tier == "pro":
             return {
-                "daily_plan_total": 50,
+                "daily_plan_total": 20,
                 "daily_plan_used": 0,
                 "weekly_report_total": 10,
                 "weekly_report_used": 0,
