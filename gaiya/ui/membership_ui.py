@@ -508,10 +508,10 @@ class MembershipDialog(QDialog):
         monthly_plan = self._create_featured_card(
             plan_type="pro_monthly",
             title="连续包月",
-            price="9.9",
-            original_price="15",
+            price="19",
+            original_price="29",
             unit="元/月",
-            period_price="¥0.33/天",
+            period_price="¥0.63/天",
             badge="立即开通",
             features=[
                 "智能任务规划 50次/天",
@@ -528,14 +528,14 @@ class MembershipDialog(QDialog):
         yearly_plan = self._create_featured_card(
             plan_type="pro_yearly",
             title="连续包年",
-            price="99",
-            original_price="119",
+            price="199",
+            original_price="239",
             unit="元/年",
-            period_price="¥0.27/天",
+            period_price="¥0.55/天",
             badge="订阅特惠",
             features=[
                 "所有专业版功能",
-                "节省20元",
+                "节省40元",
                 "优先客服支持",
                 "新功能优先体验"
             ],
@@ -551,7 +551,7 @@ class MembershipDialog(QDialog):
             price="299",
             original_price="399",
             unit="元/终身",
-            period_price="¥0.82/天",
+            period_price="一次付费永久使用",
             badge="永久使用",
             features=[
                 "所有会员功能",

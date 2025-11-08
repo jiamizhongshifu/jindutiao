@@ -20,19 +20,19 @@ class SubscriptionManager:
     PLANS = {
         "pro_monthly": {
             "name": "Pro月度订阅",
-            "price": 9.9,
+            "price": 19.0,
             "currency": "CNY",
             "duration_days": 30
         },
         "pro_yearly": {
             "name": "Pro年度订阅",
-            "price": 59.0,
+            "price": 199.0,
             "currency": "CNY",
             "duration_days": 365
         },
         "lifetime": {
             "name": "终身会员",
-            "price": 199.0,
+            "price": 299.0,
             "currency": "CNY",
             "duration_days": None  # 永久
         }
