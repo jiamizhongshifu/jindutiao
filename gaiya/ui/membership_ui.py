@@ -508,10 +508,10 @@ class MembershipDialog(QDialog):
         monthly_plan = self._create_featured_card(
             plan_type="pro_monthly",
             title="连续包月",
-            price="19",
-            original_price="29",
+            price="29",
+            original_price="39",
             unit="元/月",
-            period_price="¥0.63/天",
+            period_price="¥0.97/天",
             badge="立即开通",
             features=[
                 "智能任务规划 50次/天",
@@ -544,25 +544,25 @@ class MembershipDialog(QDialog):
         )
         main_layout.addWidget(yearly_plan)
 
-        # 终身会员（紫色卡片）
-        lifetime_plan = self._create_featured_card(
-            plan_type="lifetime",
-            title="终身会员",
-            price="299",
-            original_price="399",
-            unit="元/终身",
-            period_price="一次付费永久使用",
-            badge="永久使用",
-            features=[
-                "所有会员功能",
-                "一次付费终身享受",
-                "未来新功能免费",
-                "VIP客服支持"
-            ],
-            bg_colors=["#b794f6", "#9f7aea"],  # 紫色渐变
-            is_recommended=False
-        )
-        main_layout.addWidget(lifetime_plan)
+        # 终身会员（紫色卡片）- 暂时隐藏，后续调整价格后再启用
+        # lifetime_plan = self._create_featured_card(
+        #     plan_type="lifetime",
+        #     title="终身会员",
+        #     price="299",
+        #     original_price="399",
+        #     unit="元/终身",
+        #     period_price="一次付费永久使用",
+        #     badge="永久使用",
+        #     features=[
+        #         "所有会员功能",
+        #         "一次付费终身享受",
+        #         "未来新功能免费",
+        #         "VIP客服支持"
+        #     ],
+        #     bg_colors=["#b794f6", "#9f7aea"],  # 紫色渐变
+        #     is_recommended=False
+        # )
+        # main_layout.addWidget(lifetime_plan)
 
         widget.setLayout(main_layout)
         return widget

@@ -21,6 +21,7 @@ from statistics_manager import StatisticsManager
 # 已切换到Vercel云服务，无需本地后端管理器
 # from backend_manager import BackendManager
 from gaiya.core.theme_manager import ThemeManager
+from gaiya.core.auth_client import AuthClient
 # 确保 config_gui 模块被 PyInstaller 检测到（必须在顶部导入）
 import config_gui
 from config_gui import ConfigManager
@@ -94,6 +95,9 @@ class TimeProgressBar(QWidget):
         # 暂时不注册UI组件，等窗口完全初始化后再注册
         # self.theme_manager.register_ui_component(self)
         # self.theme_manager.theme_changed.connect(self.apply_theme)
+
+        # 初始化用户认证客户端
+        self.auth_client = AuthClient()
 
         self.init_ui()
         self.init_timer()  # 初始化定时器
@@ -1881,6 +1885,41 @@ class TimeProgressBar(QWidget):
                 # 绘制时间文字（黑色）
                 painter.setPen(QColor("#000000"))
                 painter.drawText(time_box_rect, Qt.AlignCenter, time_text)
+
+        # 免费版水印：在进度条最右侧显示
+        try:
+            user_tier = self.auth_client.get_user_tier()
+            if user_tier == "free":
+                # 水印文本
+                watermark_text = "激活高级版,解锁更多服务"
+
+                # 设置字体（稍小一点，避免过于显眼）
+                watermark_font = QFont("Microsoft YaHei", 8)
+                painter.setFont(watermark_font)
+
+                # 计算文本宽度
+                from PySide6.QtGui import QFontMetrics
+                metrics = QFontMetrics(watermark_font)
+                text_width = metrics.horizontalAdvance(watermark_text)
+                text_height = metrics.height()
+
+                # 水印位置：进度条右侧，距离右边缘10px
+                watermark_x = width - text_width - 10
+                watermark_y = bar_y_offset + (bar_height - text_height) // 2
+                watermark_rect = QRectF(watermark_x, watermark_y, text_width, text_height)
+
+                # 绘制半透明背景（可选）
+                bg_color = QColor("#000000")
+                bg_color.setAlpha(100)
+                painter.fillRect(watermark_rect.adjusted(-4, -2, 4, 2), bg_color)
+
+                # 绘制水印文字（白色半透明）
+                text_color = QColor("#FFFFFF")
+                text_color.setAlpha(180)
+                painter.setPen(text_color)
+                painter.drawText(watermark_rect, Qt.AlignCenter, watermark_text)
+        except Exception as e:
+            self.logger.warning(f"绘制水印失败: {e}")
 
         painter.end()
     

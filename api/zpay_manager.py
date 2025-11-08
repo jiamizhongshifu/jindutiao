@@ -374,7 +374,7 @@ class ZPayManager:
         plans = {
             "pro_monthly": {
                 "name": "GaiYa Pro 月度会员",
-                "price": 19.0,
+                "price": 29.0,
                 "description": "解锁所有Pro功能，按月订阅"
             },
             "pro_yearly": {

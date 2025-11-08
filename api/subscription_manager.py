@@ -20,7 +20,7 @@ class SubscriptionManager:
     PLANS = {
         "pro_monthly": {
             "name": "Pro月度订阅",
-            "price": 19.0,
+            "price": 29.0,
             "currency": "CNY",
             "duration_days": 30
         },
