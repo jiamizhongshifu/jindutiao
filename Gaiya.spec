@@ -1,0 +1,87 @@
+# -*- mode: python ; coding: utf-8 -*-
+
+# 导入版本信息
+import sys
+import os
+# 将当前目录添加到 Python 路径，以便导入 version 模块
+sys.path.insert(0, os.getcwd())
+from version import get_exe_name
+
+a = Analysis(
+    ['main.py'],
+    pathex=[],
+    binaries=[],
+    datas=[
+        # 任务模板文件
+        ('tasks_template_24h.json', '.'),
+        ('tasks_template_workday.json', '.'),
+        ('tasks_template_student.json', '.'),
+        ('tasks_template_freelancer.json', '.'),
+        ('tasks_template_night_shift.json', '.'),
+        ('tasks_template_creator.json', '.'),
+        ('tasks_template_fitness.json', '.'),
+        ('tasks_template_entrepreneur.json', '.'),
+        ('tasks_template_remote_work.json', '.'),
+        ('tasks_template_part_time.json', '.'),
+        ('tasks_template_weekend_relax.json', '.'),
+        ('tasks_template_flexible.json', '.'),
+        # 模板配置文件
+        ('templates_config.json', '.'),
+        # 默认时间标记动图
+        ('kun.webp', '.'),
+        ('kun.gif', '.'),
+        ('kun_100x100.gif', '.'),
+        # 微信二维码图片
+        ('qun.jpg', '.'),
+        # AI客户端（调用Vercel云服务）
+        ('ai_client.py', '.'),
+        # 开机自启动管理器
+        ('autostart_manager.py', '.'),
+    ],
+    hiddenimports=[
+        'config_gui',
+        'theme_manager',
+        'theme_ai_helper',
+        'timeline_editor',
+        'statistics_manager',
+        'statistics_gui',
+        'ai_client',  # AI客户端（调用Vercel云服务）
+        'autostart_manager',  # 开机自启动管理器
+        'requests',  # HTTP请求库
+        'winreg',  # Windows注册表操作
+        'PySide6.QtWidgets',
+        'PySide6.QtCore',
+        'PySide6.QtGui',
+    ],
+    hookspath=[],
+    hooksconfig={},
+    runtime_hooks=[],
+    excludes=[],
+    noarchive=False,
+    optimize=0,
+)
+pyz = PYZ(a.pure)
+
+exe = EXE(
+    pyz,
+    a.scripts,
+    a.binaries,
+    a.datas,
+    [],
+    name=get_exe_name(),  # 从 version.py 自动获取版本号
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=False,  # 禁用UPX压缩,减少杀毒软件误报
+    upx_exclude=[],
+    runtime_tmpdir=None,
+    console=False,  # 禁用控制台窗口，提供更好的用户体验
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+    # Windows版本信息（暂时禁用，后续测试）
+    # version='version_info.txt',
+    icon=None,  # 可以添加图标文件路径
+)
