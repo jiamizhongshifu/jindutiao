@@ -399,9 +399,9 @@ class ZPayManager:
                 "description": "解锁所有高级版功能，年度订阅享17%折扣"
             },
             "lifetime": {
-                "name": "GaiYa 终身会员",
+                "name": "GaiYa 会员合伙人",
                 "price": 399.0,
-                "description": "一次性购买，终身享受高级版功能"
+                "description": "一次性购买，成为会员合伙人，共享价值"
             }
         }
 
