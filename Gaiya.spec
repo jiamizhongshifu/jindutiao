@@ -33,6 +33,9 @@ a = Analysis(
         ('kun_100x100.gif', '.'),
         # 微信二维码图片
         ('qun.jpg', '.'),
+        # 应用Logo图片
+        ('Gaiya-logo.png', '.'),
+        ('Gaiya-logo-wbk.png', '.'),
         # AI客户端（调用Vercel云服务）
         ('ai_client.py', '.'),
         # 开机自启动管理器

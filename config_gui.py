@@ -1401,16 +1401,19 @@ class ConfigManager(QMainWindow):
             self.tabs.setCurrentIndex(4)  # 切换到关于标签页
         except Exception as e:
             import logging
+            import traceback
             logging.error(f"加载关于标签页失败: {e}")
+            logging.error(traceback.format_exc())
             from PySide6.QtWidgets import QLabel
             error_widget = QWidget()
             error_layout = QVBoxLayout(error_widget)
-            error_label = QLabel(f"加载关于标签页失败: {e}")
+            error_label = QLabel(f"加载关于标签页失败: {e}\n\n请检查日志文件获取详细信息")
             error_label.setStyleSheet("color: red; padding: 20px;")
             error_layout.addWidget(error_label)
             self.about_tab_widget = error_widget
             self.tabs.removeTab(4)
             self.tabs.insertTab(4, self.about_tab_widget, "📖 关于")
+            self.tabs.setCurrentIndex(4)  # 确保切换到关于标签页显示错误信息
 
     def create_config_tab(self):
         """创建外观配置标签页"""
@@ -4504,24 +4507,55 @@ class ConfigManager(QMainWindow):
     def create_about_tab(self):
         """创建关于标签页"""
         from version import __version__, __app_name_zh__, __slogan__, APP_METADATA
+        from PySide6.QtGui import QPixmap
+        from gaiya.utils.path_utils import get_resource_path
 
         widget = QWidget()
         layout = QVBoxLayout(widget)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.setContentsMargins(40, 40, 40, 40)
 
-        # Logo区域（使用大号文字代替图片）
-        logo_label = QLabel(__app_name_zh__)
-        logo_label.setStyleSheet("""
-            QLabel {
-                font-size: 48px;
-                font-weight: bold;
-                color: #4CAF50;
-                padding: 20px;
-            }
-        """)
+        # 顶部弹性空间（实现垂直居中）
+        layout.addStretch()
+
+        # Logo区域（使用图片）
+        logo_label = QLabel()
+        logo_path = get_resource_path("Gaiya-logo.png")
+        logo_pixmap = QPixmap(str(logo_path))
+        if not logo_pixmap.isNull():
+            # 设置logo大小为150x150
+            scaled_pixmap = logo_pixmap.scaled(
+                150, 150,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation
+            )
+            logo_label.setPixmap(scaled_pixmap)
+        else:
+            # 如果图片加载失败，显示应用名称作为后备
+            logo_label.setText(__app_name_zh__)
+            logo_label.setStyleSheet("""
+                QLabel {
+                    font-size: 48px;
+                    font-weight: bold;
+                    color: #4CAF50;
+                    padding: 20px;
+                }
+            """)
         logo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(logo_label)
+
+        # 应用名称
+        app_name_label = QLabel("GaiYa")
+        app_name_label.setStyleSheet("""
+            QLabel {
+                font-size: 36px;
+                font-weight: bold;
+                color: #FFFFFF;
+                padding: 10px;
+            }
+        """)
+        app_name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(app_name_label)
 
         # Slogan
         slogan_label = QLabel(__slogan__)
@@ -4677,6 +4711,17 @@ class ConfigManager(QMainWindow):
 
         except requests.exceptions.Timeout:
             QMessageBox.warning(self, "检查更新失败", "网络请求超时，请检查网络连接")
+            self.check_update_btn.setText("检查更新")
+        except requests.exceptions.HTTPError as e:
+            # 特殊处理 404：表示仓库还没有发布任何 Release
+            if e.response.status_code == 404:
+                QMessageBox.information(
+                    self,
+                    "暂无发布版本",
+                    f"当前版本: v{__version__}\n\n项目仓库暂未发布正式版本，敬请期待！\n\n您可以访问 GitHub 仓库查看最新开发进展：\n{APP_METADATA['repository']}"
+                )
+            else:
+                QMessageBox.warning(self, "检查更新失败", f"无法连接到更新服务器\n\n{str(e)}")
             self.check_update_btn.setText("检查更新")
         except requests.exceptions.RequestException as e:
             QMessageBox.warning(self, "检查更新失败", f"无法连接到更新服务器\n\n{str(e)}")

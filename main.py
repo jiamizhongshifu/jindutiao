@@ -550,10 +550,17 @@ class TimeProgressBar(QWidget):
         # 创建托盘图标
         self.tray_icon = QSystemTrayIcon(self)
 
-        # 使用Qt内置图标(因为我们还没有自定义图标文件)
-        icon = self.style().standardIcon(
-            self.style().StandardPixmap.SP_ComputerIcon
-        )
+        # 使用自定义图标
+        from PySide6.QtGui import QIcon
+        from gaiya.utils.path_utils import get_resource_path
+
+        icon_path = get_resource_path("Gaiya-logo-wbk.png")
+        icon = QIcon(str(icon_path))
+        if icon.isNull():
+            # 如果自定义图标加载失败，使用Qt内置图标作为后备
+            icon = self.style().standardIcon(
+                self.style().StandardPixmap.SP_ComputerIcon
+            )
         self.tray_icon.setIcon(icon)
         self.tray_icon.setToolTip('GaiYa每日进度条 - 守护你的每一分钟')
 
