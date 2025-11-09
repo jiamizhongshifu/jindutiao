@@ -5,6 +5,7 @@ GaiYa每日进度条 - 可视化配置界面
 """
 
 import json
+import os
 import sys
 from pathlib import Path
 from PySide6.QtWidgets import (
@@ -452,6 +453,10 @@ class ConfigManager(QMainWindow):
 
     def _add_schedule_dialog(self):
         """打开添加时间表规则对话框"""
+        # 首先检查是否已登录
+        if not self._check_login_and_guide("模板自动应用"):
+            return
+
         try:
             if not hasattr(self, 'schedule_manager') or not self.schedule_manager:
                 QMessageBox.warning(self, "警告", "时间表管理器未初始化")
@@ -697,6 +702,10 @@ class ConfigManager(QMainWindow):
 
     def _edit_schedule(self, row):
         """编辑时间表规则"""
+        # 首先检查是否已登录
+        if not self._check_login_and_guide("模板自动应用"):
+            return
+
         try:
             if not hasattr(self, 'schedule_manager') or not self.schedule_manager:
                 QMessageBox.warning(self, "警告", "时间表管理器未初始化")
@@ -985,6 +994,10 @@ class ConfigManager(QMainWindow):
 
     def _toggle_schedule(self, row):
         """切换时间表规则的启用状态"""
+        # 首先检查是否已登录
+        if not self._check_login_and_guide("模板自动应用"):
+            return
+
         try:
             success = self.schedule_manager.toggle_schedule(row)
             if success:
@@ -995,6 +1008,10 @@ class ConfigManager(QMainWindow):
 
     def _delete_schedule(self, row):
         """删除时间表规则"""
+        # 首先检查是否已登录
+        if not self._check_login_and_guide("模板自动应用"):
+            return
+
         try:
             from PySide6.QtWidgets import QMessageBox
             reply = QMessageBox.question(
@@ -1268,6 +1285,13 @@ class ConfigManager(QMainWindow):
     def init_ui(self):
         """初始化界面"""
         self.setWindowTitle(f'{VERSION_STRING_ZH} - 配置管理器')
+
+        # 设置窗口图标
+        icon_path = self.get_resource_path('Gaiya-logo-wbk.png')
+        if os.path.exists(icon_path):
+            from PySide6.QtGui import QIcon
+            self.setWindowIcon(QIcon(str(icon_path)))
+
         self.setFixedSize(1000, 900)  # 固定窗口大小，防止拉伸导致控件变形
 
         # 创建中心部件
@@ -1288,9 +1312,9 @@ class ConfigManager(QMainWindow):
         self.notification_tab_widget = None
         tabs.addTab(QWidget(), "🔔 通知设置")  # 占位widget
 
-        # 延迟创建账户标签页
+        # 延迟创建个人中心标签页
         self.account_tab_widget = None
-        tabs.addTab(QWidget(), "👤 账户")  # 占位widget
+        tabs.addTab(QWidget(), "👤 个人中心")  # 占位widget
 
         # 延迟创建关于标签页
         self.about_tab_widget = None
@@ -1323,12 +1347,26 @@ class ConfigManager(QMainWindow):
 
         layout.addLayout(button_layout)
 
+        # 保存按钮引用，用于在不同标签页控制显示/隐藏
+        self.save_btn = save_btn
+        self.cancel_btn = cancel_btn
+
     def on_tab_changed(self, index):
         """标签页切换时的处理(实现懒加载)"""
+        # 控制底部按钮的显示/隐藏
+        # 在"个人中心"(3)和"关于"(4)页面隐藏按钮
+        if index in [3, 4]:  # 个人中心或关于页面
+            self.save_btn.hide()
+            self.cancel_btn.hide()
+        else:  # 其他页面显示按钮
+            self.save_btn.show()
+            self.cancel_btn.show()
+
+        # 懒加载各标签页
         if index == 2:  # 通知设置标签页（主题设置已移除）
             if self.notification_tab_widget is None:
                 self._load_notification_tab()
-        elif index == 3:  # 账户标签页
+        elif index == 3:  # 个人中心标签页
             if self.account_tab_widget is None:
                 self._load_account_tab()
         elif index == 4:  # 关于标签页
@@ -1362,30 +1400,30 @@ class ConfigManager(QMainWindow):
             self.tabs.insertTab(2, self.notification_tab_widget, "🔔 通知设置")
 
 
-    def _load_account_tab(self):  
-        """加载账户标签页"""  
+    def _load_account_tab(self):
+        """加载个人中心标签页"""  
         if self.account_tab_widget is not None:  
             return  # 已经加载过了  
   
         try:  
             self.account_tab_widget = self._create_account_tab()  
-            self.tabs.setTabEnabled(3, True)  # 确保标签页可用  
-            # 替换占位widget  
-            self.tabs.removeTab(3)  
-            self.tabs.insertTab(3, self.account_tab_widget, "👤 账户")  
-            self.tabs.setCurrentIndex(3)  # 切换到账户标签页  
-        except Exception as e:  
-            import logging  
-            logging.error(f"加载账户标签页失败: {e}")  
-            from PySide6.QtWidgets import QLabel  
-            error_widget = QWidget()  
-            error_layout = QVBoxLayout(error_widget)  
-            error_label = QLabel(f"加载账户标签页失败: {e}")  
-            error_label.setStyleSheet("color: red; padding: 20px;")  
-            error_layout.addWidget(error_label)  
-            self.account_tab_widget = error_widget  
+            self.tabs.setTabEnabled(3, True)  # 确保标签页可用
+            # 替换占位widget
             self.tabs.removeTab(3)
-            self.tabs.insertTab(3, self.account_tab_widget, "👤 账户")
+            self.tabs.insertTab(3, self.account_tab_widget, "👤 个人中心")
+            self.tabs.setCurrentIndex(3)  # 切换到个人中心标签页  
+        except Exception as e:
+            import logging
+            logging.error(f"加载个人中心标签页失败: {e}")
+            from PySide6.QtWidgets import QLabel
+            error_widget = QWidget()
+            error_layout = QVBoxLayout(error_widget)
+            error_label = QLabel(f"加载个人中心标签页失败: {e}")  
+            error_label.setStyleSheet("color: red; padding: 20px;")  
+            error_layout.addWidget(error_label)
+            self.account_tab_widget = error_widget
+            self.tabs.removeTab(3)
+            self.tabs.insertTab(3, self.account_tab_widget, "👤 个人中心")
 
     def _load_about_tab(self):
         """加载关于标签页"""
@@ -2465,7 +2503,7 @@ class ConfigManager(QMainWindow):
 
 
     def _create_account_tab(self):
-        """创建账户标签页"""
+        """创建个人中心标签页"""
         from PySide6.QtWidgets import QScrollArea
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
@@ -2476,9 +2514,12 @@ class ConfigManager(QMainWindow):
         layout.setSpacing(20)
         layout.setContentsMargins(30, 30, 30, 30)
 
-        title_label = QLabel("账户信息")
-        title_label.setStyleSheet("font-size: 20px; font-weight: bold; color: white; margin-bottom: 10px;")
-        layout.addWidget(title_label)
+        # 创建横向布局的头部（标题 + 用户信息）
+        header_layout = QHBoxLayout()
+
+        title_label = QLabel("个人中心")
+        title_label.setStyleSheet("font-size: 20px; font-weight: bold; color: white;")
+        header_layout.addWidget(title_label)
 
         from gaiya.core.auth_client import AuthClient
         auth_client = AuthClient()
@@ -2487,40 +2528,113 @@ class ConfigManager(QMainWindow):
         user_tier = auth_client.get_user_tier()
 
         if email != "未登录":
+            # 添加弹性空间，推动右侧内容到右边
+            header_layout.addStretch()
 
-            email_label = QLabel(f"邮箱：{email}")
-            email_label.setStyleSheet("color: white; font-size: 14px; margin-bottom: 15px;")
-            layout.addWidget(email_label)
-
+            # 合并邮箱和会员等级到一行，右对齐显示
             tier_names = {"free": "免费用户", "pro": "高级版", "lifetime": "终身会员"}
             tier_name = tier_names.get(user_tier, user_tier)
-            tier_label = QLabel(f"会员等级：{tier_name}")
-            tier_label.setStyleSheet("color: white; font-size: 14px; margin-bottom: 20px;")
-            layout.addWidget(tier_label)
+            info_label = QLabel(f"邮箱：{email}  |  会员等级：{tier_name}")
+            info_label.setStyleSheet("color: white; font-size: 14px;")
+            header_layout.addWidget(info_label)
 
+            # 添加退出登录按钮
+            header_layout.addSpacing(15)
+            logout_btn = QPushButton("退出登录")
+            logout_btn.setFixedSize(80, 28)
+            logout_btn.setStyleSheet("""
+                QPushButton {
+                    background-color: transparent;
+                    color: #888888;
+                    border: 1px solid #666666;
+                    border-radius: 4px;
+                    font-size: 13px;
+                }
+                QPushButton:hover {
+                    background-color: rgba(136, 136, 136, 0.15);
+                    color: #AAAAAA;
+                    border-color: #888888;
+                }
+                QPushButton:pressed {
+                    background-color: rgba(136, 136, 136, 0.25);
+                }
+            """)
+            logout_btn.clicked.connect(self._on_logout_clicked)
+            header_layout.addWidget(logout_btn)
+
+        # 将横向布局添加到主布局
+        layout.addLayout(header_layout)
+        layout.addSpacing(20)  # 添加间距与下方内容分隔
+
+        if email != "未登录":
             if user_tier == "free":
-                tip_label = QLabel("购买GaiYa每日进度条高级版")
-                tip_label.setStyleSheet("color: white; font-size: 15px; font-weight: bold; margin-bottom: 10px;")
+                tip_label = QLabel("会员套餐对比")
+                tip_label.setStyleSheet("color: white; font-size: 18px; font-weight: bold; margin-bottom: 15px;")
+                tip_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
                 layout.addWidget(tip_label)
 
                 cards_layout = QHBoxLayout()
-                cards_layout.setSpacing(12)
+                cards_layout.setSpacing(15)
+                cards_layout.addStretch()
 
+                # 三个套餐：月度、年度（中间突出）、终身
                 plans = [
-                    {"id": "pro_monthly", "name": "高级版 - 月付", "price": "¥29", "period": "/月", "color": "#FF6B6B", "features": ["20次/天 AI智能规划", "去除进度条水印", "抢先体验新功能", "加入VIP会员群"]},
-                    {"id": "pro_yearly", "name": "高级版 - 年付", "price": "¥199", "period": "/年", "color": "#4ECDC4", "features": ["20次/天 AI智能规划", "去除进度条水印", "抢先体验新功能", "加入VIP会员群", "💰 省30%"]},
-                    # 终身会员暂时隐藏，后续调整价格后再启用
-                    # {"id": "lifetime", "name": "终身会员", "price": "¥299", "period": "买断", "color": "#95A99C", "features": ["无限使用所有功能", "一次付费永久使用", "⭐ 最超值"]}
+                    {
+                        "id": "pro_monthly",
+                        "name": "Pro 月度",
+                        "price": "¥29",
+                        "period": "/月",
+                        "validity": "有效期30天",
+                        "renewal": "到期后不会自动扣费",
+                        "type": "monthly",
+                        "features": ["所有免费功能 +", "20次/天 AI智能规划", "去除进度条水印", "数据云同步", "抢先体验新功能", "加入VIP会员群"]
+                    },
+                    {
+                        "id": "pro_yearly",
+                        "name": "Pro 年度",
+                        "price": "¥199",
+                        "period": "/年",
+                        "monthly_price": "¥16.6",
+                        "original_price": "¥348",
+                        "discount_badge": "节省 40%",
+                        "validity": "有效期365天",
+                        "renewal": "到期后不会自动扣费",
+                        "type": "yearly",
+                        "features": ["所有免费功能 +", "20次/天 AI智能规划", "去除进度条水印", "数据云同步", "抢先体验新功能", "加入VIP会员群"]
+                    },
+                    {
+                        "id": "lifetime",
+                        "name": "Pro 终身",
+                        "price": "¥399",
+                        "period": "",
+                        "validity": "永久有效",
+                        "renewal": "一次购买,终身可用",
+                        "type": "lifetime",
+                        "features": ["所有免费功能 +", "无限次 AI智能规划", "去除进度条水印", "数据云同步", "抢先体验新功能", "加入VIP会员群"]
+                    },
                 ]
 
                 self.plan_cards = []
                 self.selected_plan_id = "pro_yearly"
+
                 for i, plan in enumerate(plans):
-                    card = self._create_simple_plan_card(plan, i == 1)
+                    if plan['type'] == 'yearly':
+                        card = self._create_featured_plan_card(plan, is_selected=True)
+                    elif plan['type'] == 'lifetime':
+                        card = self._create_lifetime_plan_card(plan)
+                    else:  # monthly
+                        card = self._create_regular_plan_card(plan)
+
                     cards_layout.addWidget(card)
                     self.plan_cards.append(card)
 
+                cards_layout.addStretch()
                 layout.addLayout(cards_layout)
+
+                # 新增会员提示区域
+                layout.addSpacing(30)
+                tips_frame = self._create_membership_tips()
+                layout.addWidget(tips_frame)
 
                 # 添加支付方式选择 - 已屏蔽，默认使用微信支付
                 # payment_container = QWidget()
@@ -2625,47 +2739,185 @@ class ConfigManager(QMainWindow):
                 # layout.addWidget(payment_container)
                 # layout.addSpacing(20)
 
-                # 创建按钮容器以居中显示
-                button_container = QHBoxLayout()
-                button_container.addStretch()
-
-                purchase_button = QPushButton("前往付费")
-                purchase_button.setFixedSize(320, 72)  # 增加高度到72px确保文字完整显示
-                purchase_button.setStyleSheet("""
-                    QPushButton {
-                        background-color: #FF9800;
-                        color: white;
-                        border: none;
-                        border-radius: 6px;
-                        padding: 20px 24px;
-                        font-size: 18px;
-                        font-weight: bold;
-                        margin-top: 15px;
-                    }
-                    QPushButton:hover {
-                        background-color: #F57C00;
-                    }
-                    QPushButton:pressed {
-                        background-color: #E65100;
-                    }
-                """)
-                purchase_button.clicked.connect(self._on_purchase_clicked)
-                button_container.addWidget(purchase_button)
-                button_container.addStretch()
-
-                layout.addLayout(button_container)
+                # "前往付费"按钮已移除 - 现在每个套餐卡片都有直接付费按钮
             else:
                 info_label = QLabel("感谢您的支持！")
                 info_label.setStyleSheet("color: white; font-size: 14px;")
                 layout.addWidget(info_label)
         else:
-            login_label = QLabel("请先登录")
-            login_label.setStyleSheet("color: white; font-size: 14px;")
-            layout.addWidget(login_label)
+            # 未登录状态：显示登录/注册UI
+            from gaiya.ui.auth_ui import AuthDialog
+
+            # 创建说明文字
+            welcome_label = QLabel("👋 欢迎使用 GaiYa 每日进度条")
+            welcome_label.setStyleSheet("font-size: 18px; font-weight: bold; color: white; margin-bottom: 10px;")
+            welcome_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            layout.addWidget(welcome_label)
+
+            tip_label = QLabel("登录后即可使用 AI智能规划、数据云同步等高级功能")
+            tip_label.setStyleSheet("color: #AAAAAA; font-size: 14px; margin-bottom: 20px;")
+            tip_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            layout.addWidget(tip_label)
+
+            # 创建登录按钮
+            login_button = QPushButton("🔑 点击登录 / 注册")
+            login_button.setFixedSize(300, 50)
+            login_button.setStyleSheet("""
+                QPushButton {
+                    background-color: #4CAF50;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    font-size: 16px;
+                    font-weight: bold;
+                }
+                QPushButton:hover {
+                    background-color: #45a049;
+                }
+                QPushButton:pressed {
+                    background-color: #3d8b40;
+                }
+            """)
+            login_button.clicked.connect(self._on_show_login_dialog)
+
+            # 居中显示按钮
+            button_layout = QHBoxLayout()
+            button_layout.addStretch()
+            button_layout.addWidget(login_button)
+            button_layout.addStretch()
+            layout.addLayout(button_layout)
+
+            layout.addSpacing(30)
+
+            # 功能介绍
+            features_label = QLabel("🎁 登录后享受的权益：")
+            features_label.setStyleSheet("color: white; font-size: 16px; font-weight: bold; margin-bottom: 15px;")
+            layout.addWidget(features_label)
+
+            features = [
+                "• 免费用户：每天 3 次 AI智能规划配额",
+                "• Pro会员：每天 20 次 AI智能规划配额",
+                "• 数据云同步：自定义模板和历史统计同步到云端",
+                "• 模板自动应用：根据日期规则自动切换任务模板",
+                "• 优先获取新功能和更新",
+                "• 加入专属VIP会员群，获取更多支持"
+            ]
+
+            for feature_text in features:
+                feature_label = QLabel(feature_text)
+                feature_label.setStyleSheet("color: #CCCCCC; font-size: 14px; margin: 5px 0px;")
+                layout.addWidget(feature_label)
 
         layout.addStretch()
         scroll_area.setWidget(content_widget)
         return scroll_area
+
+    def _on_show_login_dialog(self):
+        """显示登录/注册对话框"""
+        from gaiya.ui.auth_ui import AuthDialog
+
+        # 创建登录对话框
+        dialog = AuthDialog(self, self.auth_client if hasattr(self, 'auth_client') else None)
+
+        # 连接登录成功信号
+        dialog.login_success.connect(self._on_login_success)
+
+        # 显示对话框
+        dialog.exec()
+
+    def _on_login_success(self, user_info):
+        """处理登录成功"""
+        from PySide6.QtWidgets import QMessageBox
+
+        # 显示成功提示
+        QMessageBox.information(
+            self,
+            "登录成功",
+            f"欢迎回来，{user_info.get('email', '用户')}！\n\n"
+            f"您的账户信息已更新，现在可以使用所有高级功能。"
+        )
+
+        # 重新加载个人中心tab以显示登录后的内容
+        self.account_tab_widget = None
+        self._load_account_tab()
+
+    def _on_logout_clicked(self):
+        """处理退出登录按钮点击"""
+        from PySide6.QtWidgets import QMessageBox
+
+        # 确认对话框
+        reply = QMessageBox.question(
+            self,
+            "确认退出",
+            "确定要退出当前账号吗？\n\n退出后将以游客身份继续使用，免费用户功能将受到限制。",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
+            # 调用登出
+            from gaiya.core.auth_client import AuthClient
+            auth_client = AuthClient()
+            result = auth_client.signout()
+
+            if result.get("success"):
+                # 提示用户
+                QMessageBox.information(
+                    self,
+                    "退出成功",
+                    "已退出当前账号。\n\n请重新启动应用以切换到游客模式。"
+                )
+
+                # 关闭配置管理器
+                self.close()
+            else:
+                # 即使失败也提示成功（因为本地Token已清除）
+                QMessageBox.information(
+                    self,
+                    "退出成功",
+                    "已退出当前账号。\n\n请重新启动应用以切换到游客模式。"
+                )
+                self.close()
+
+    def _check_login_and_guide(self, feature_name: str = "此功能") -> bool:
+        """
+        检查用户是否已登录，如果未登录则显示引导对话框
+
+        Args:
+            feature_name: 功能名称，用于提示
+
+        Returns:
+            True: 已登录，可以继续
+            False: 未登录，已显示引导对话框
+        """
+        from gaiya.core.auth_client import AuthClient
+        from PySide6.QtWidgets import QMessageBox
+
+        auth_client = AuthClient()
+
+        # 检查是否已登录
+        if auth_client.is_logged_in():
+            return True
+
+        # 未登录，显示引导对话框
+        reply = QMessageBox.question(
+            self,
+            "需要登录",
+            f"💡 {feature_name}需要登录后才能使用。\n\n"
+            f"登录后您将享有：\n"
+            f"• 免费用户：3次/天 AI智能规划\n"
+            f"• Pro会员：20次/天 AI智能规划\n"
+            f"• 更多高级功能和服务\n\n"
+            f"是否前往个人中心登录？",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.Yes
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
+            # 切换到个人中心tab（index=3）
+            self.tabs.setCurrentIndex(3)
+
+        return False
 
     def _create_simple_plan_card(self, plan: dict, is_selected: bool = False):
         """创建简单的套餐卡片"""
@@ -2720,27 +2972,499 @@ class ConfigManager(QMainWindow):
         card.mousePressEvent = lambda e: self._on_plan_card_clicked(plan['id'])
         return card
 
+    def _create_featured_plan_card(self, plan: dict, is_selected: bool = False):
+        """创建年度卡片（中间，突出显示）"""
+        from PySide6.QtWidgets import QFrame
+        card = QFrame()
+        card.setObjectName(f"plan_card_{plan['id']}")
+        card.setFixedSize(240, 510)  # 高度从 460 增加到 510，容纳底部信息
+        card.setCursor(Qt.CursorShape.PointingHandCursor)
+
+        # 突出显示的样式
+        border_color = "#FF9800" if is_selected else "#666"
+        border_width = "3px" if is_selected else "2px"
+
+        card.setStyleSheet(f"""
+            QFrame#plan_card_{plan['id']} {{
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(60, 60, 60, 220),
+                    stop:1 rgba(40, 40, 40, 220));
+                border: {border_width} solid {border_color};
+                border-radius: 12px;
+            }}
+        """)
+
+        layout = QVBoxLayout(card)
+        layout.setSpacing(6)  # 减小默认间距，改用 addSpacing 精确控制
+        layout.setContentsMargins(15, 15, 15, 20)
+
+        # 顶部标题和徽章容器
+        header_layout = QHBoxLayout()
+
+        # 标题
+        name_label = QLabel(plan['name'])
+        name_label.setStyleSheet("font-size: 15px; font-weight: bold; color: white; background: transparent;")
+        header_layout.addWidget(name_label)
+
+        header_layout.addStretch()
+
+        # 徽章
+        if 'discount_badge' in plan:
+            badge = QLabel(plan['discount_badge'])
+            badge.setStyleSheet("""
+                QLabel {
+                    background-color: #FF5722;
+                    color: white;
+                    font-size: 11px;
+                    font-weight: bold;
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                }
+            """)
+            header_layout.addWidget(badge)
+
+        layout.addLayout(header_layout)
+
+        layout.addSpacing(12)  # 从 10 增加到 12
+
+        # 月均价格（大号突出）
+        if 'monthly_price' in plan:
+            monthly_price_label = QLabel(plan['monthly_price'])
+            monthly_price_label.setStyleSheet("font-size: 36px; font-weight: bold; color: #FF9800; background: transparent;")
+            monthly_price_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            layout.addWidget(monthly_price_label)
+
+            monthly_period_label = QLabel("/月")
+            monthly_period_label.setStyleSheet("font-size: 14px; color: rgba(255,255,255,0.8); background: transparent;")
+            monthly_period_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            layout.addWidget(monthly_period_label)
+
+        layout.addSpacing(8)  # 从 5 增加到 8
+
+        # 年费价格
+        price_label = QLabel(plan['price'] + plan['period'])
+        price_label.setStyleSheet("font-size: 16px; font-weight: 600; color: white; background: transparent;")
+        price_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(price_label)
+
+        # 原价（删除线）
+        if 'original_price' in plan:
+            original_price_label = QLabel(plan['original_price'] + plan['period'])
+            original_price_label.setStyleSheet("""
+                font-size: 13px;
+                color: rgba(255,255,255,0.5);
+                background: transparent;
+                text-decoration: line-through;
+            """)
+            original_price_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            layout.addWidget(original_price_label)
+
+        layout.addSpacing(15)  # 从 10 增加到 15
+
+        # 按钮（突出显示）
+        button = QPushButton("立即订阅")
+        button.setFixedHeight(40)
+        button.setStyleSheet("""
+            QPushButton {
+                background-color: #FF9800;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-size: 14px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #F57C00;
+            }
+            QPushButton:pressed {
+                background-color: #E65100;
+            }
+        """)
+        # 绑定点击事件：直接触发支付流程
+        button.clicked.connect(lambda: self._on_plan_button_clicked(plan['id']))
+        layout.addWidget(button)
+
+        layout.addSpacing(12)  # 从 8 增加到 12
+
+        # 功能列表
+        for i, feature in enumerate(plan['features']):
+            if i == 0:
+                # 第一项是标题
+                feature_label = QLabel(f"✓ {feature}")
+                feature_label.setStyleSheet("font-size: 12px; color: white; background: transparent; font-weight: 600;")
+            else:
+                feature_label = QLabel(f"✓ {feature}")
+                feature_label.setStyleSheet("font-size: 11px; color: rgba(255,255,255,0.9); background: transparent;")
+            layout.addWidget(feature_label)
+            if i < len(plan['features']) - 1:  # 除了最后一项，每项后添加间距
+                layout.addSpacing(4)
+
+        layout.addStretch()
+
+        # 底部信息：分隔线 + 有效期 + 续费说明
+        separator = QLabel("─" * 32)
+        separator.setStyleSheet("color: rgba(255,255,255,0.2); background: transparent; font-size: 10px;")
+        separator.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(separator)
+
+        layout.addSpacing(8)
+
+        validity_label = QLabel(plan['validity'])
+        validity_label.setStyleSheet("font-size: 11px; color: rgba(255,255,255,0.7); background: transparent;")
+        validity_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(validity_label)
+
+        layout.addSpacing(4)
+
+        renewal_label = QLabel(plan['renewal'])
+        renewal_label.setStyleSheet("font-size: 10px; color: rgba(255,255,255,0.6); background: transparent;")
+        renewal_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(renewal_label)
+
+        layout.addSpacing(10)
+
+        card.plan_id = plan['id']
+        card.mousePressEvent = lambda e: self._on_plan_card_clicked(plan['id'])
+        return card
+
+    def _create_regular_plan_card(self, plan: dict):
+        """创建月度卡片（普通样式）"""
+        from PySide6.QtWidgets import QFrame
+        card = QFrame()
+        card.setObjectName(f"plan_card_{plan['id']}")
+        card.setFixedSize(220, 480)  # 高度从 420 增加到 480，容纳底部信息
+        card.setCursor(Qt.CursorShape.PointingHandCursor)
+
+        card.setStyleSheet(f"""
+            QFrame#plan_card_{plan['id']} {{
+                background-color: rgba(40, 40, 40, 200);
+                border: 2px solid #555;
+                border-radius: 12px;
+            }}
+        """)
+
+        layout = QVBoxLayout(card)
+        layout.setSpacing(8)  # 减小默认间距，改用 addSpacing 精确控制
+        layout.setContentsMargins(15, 20, 15, 20)
+
+        # 标题
+        name_label = QLabel(plan['name'])
+        name_label.setStyleSheet("font-size: 14px; font-weight: bold; color: white; background: transparent;")
+        name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(name_label)
+
+        layout.addSpacing(15)  # 从 10 增加到 15
+
+        # 价格区域
+        price_layout = QHBoxLayout()
+        price_layout.setSpacing(2)
+        price_label = QLabel(plan['price'])
+        price_label.setStyleSheet("font-size: 32px; font-weight: bold; color: white; background: transparent;")
+        period_label = QLabel(plan['period'])
+        period_label.setStyleSheet("font-size: 14px; color: rgba(255,255,255,0.8); background: transparent;")
+        period_label.setAlignment(Qt.AlignmentFlag.AlignBottom)
+        price_layout.addStretch()
+        price_layout.addWidget(price_label)
+        price_layout.addWidget(period_label)
+        price_layout.addStretch()
+        layout.addLayout(price_layout)
+
+        # 年费价格
+        if 'yearly_price' in plan:
+            yearly_price_label = QLabel(plan['yearly_price'])
+            yearly_price_label.setStyleSheet("font-size: 12px; color: rgba(255,255,255,0.6); background: transparent;")
+            yearly_price_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            layout.addWidget(yearly_price_label)
+
+        layout.addSpacing(15)  # 从 10 增加到 15
+
+        # 按钮
+        button = QPushButton("开始试用")
+        button.setFixedHeight(36)
+        button.setStyleSheet("""
+            QPushButton {
+                background-color: rgba(255, 152, 0, 0.15);
+                color: #FF9800;
+                border: 1px solid #FF9800;
+                border-radius: 6px;
+                font-size: 13px;
+                font-weight: 600;
+            }
+            QPushButton:hover {
+                background-color: rgba(255, 152, 0, 0.25);
+            }
+            QPushButton:pressed {
+                background-color: rgba(255, 152, 0, 0.35);
+            }
+        """)
+        # 绑定点击事件：直接触发支付流程
+        button.clicked.connect(lambda: self._on_plan_button_clicked(plan['id']))
+        layout.addWidget(button)
+
+        layout.addSpacing(15)  # 从 10 增加到 15
+
+        # 功能列表
+        for i, feature in enumerate(plan['features']):
+            if i == 0:
+                # 第一项是标题
+                feature_label = QLabel(f"✓ {feature}")
+                feature_label.setStyleSheet("font-size: 12px; color: white; background: transparent; font-weight: 600;")
+            else:
+                feature_label = QLabel(f"✓ {feature}")
+                feature_label.setStyleSheet("font-size: 11px; color: rgba(255,255,255,0.85); background: transparent;")
+            layout.addWidget(feature_label)
+            if i < len(plan['features']) - 1:  # 除了最后一项，每项后添加间距
+                layout.addSpacing(3)
+
+        layout.addStretch()
+
+        # 底部信息：分隔线 + 有效期 + 续费说明
+        separator = QLabel("─" * 30)
+        separator.setStyleSheet("color: rgba(255,255,255,0.2); background: transparent; font-size: 10px;")
+        separator.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(separator)
+
+        layout.addSpacing(8)
+
+        validity_label = QLabel(plan['validity'])
+        validity_label.setStyleSheet("font-size: 11px; color: rgba(255,255,255,0.6); background: transparent;")
+        validity_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(validity_label)
+
+        layout.addSpacing(4)
+
+        renewal_label = QLabel(plan['renewal'])
+        renewal_label.setStyleSheet("font-size: 10px; color: rgba(255,255,255,0.5); background: transparent;")
+        renewal_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(renewal_label)
+
+        layout.addSpacing(10)
+
+        card.plan_id = plan['id']
+        card.mousePressEvent = lambda e: self._on_plan_card_clicked(plan['id'])
+        return card
+
+    def _create_lifetime_plan_card(self, plan: dict):
+        """创建终身卡片（右侧，特殊样式）"""
+        from PySide6.QtWidgets import QFrame
+        card = QFrame()
+        card.setObjectName(f"plan_card_{plan['id']}")
+        card.setFixedSize(220, 480)  # 与月度卡片高度一致
+        card.setCursor(Qt.CursorShape.PointingHandCursor)
+
+        card.setStyleSheet(f"""
+            QFrame#plan_card_{plan['id']} {{
+                background-color: rgba(50, 50, 50, 200);
+                border: 2px solid #888;
+                border-radius: 12px;
+            }}
+        """)
+
+        layout = QVBoxLayout(card)
+        layout.setSpacing(8)
+        layout.setContentsMargins(15, 20, 15, 20)
+
+        # 标题
+        name_label = QLabel(plan['name'])
+        name_label.setStyleSheet("font-size: 14px; font-weight: bold; color: white; background: transparent;")
+        name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(name_label)
+
+        layout.addSpacing(15)
+
+        # 价格区域
+        price_layout = QHBoxLayout()
+        price_layout.setSpacing(2)
+        price_label = QLabel(plan['price'])
+        price_label.setStyleSheet("font-size: 36px; font-weight: bold; color: #FFD700; background: transparent;")
+        price_layout.addStretch()
+        price_layout.addWidget(price_label)
+        price_layout.addStretch()
+        layout.addLayout(price_layout)
+
+        # 一次付费说明
+        onetime_label = QLabel("一次付费")
+        onetime_label.setStyleSheet("font-size: 12px; color: rgba(255,255,255,0.7); background: transparent;")
+        onetime_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(onetime_label)
+
+        # 终身可用强调
+        lifetime_label = QLabel("终身可用")
+        lifetime_label.setStyleSheet("font-size: 13px; font-weight: 600; color: #FFD700; background: transparent;")
+        lifetime_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(lifetime_label)
+
+        layout.addSpacing(15)
+
+        # 按钮（渐变样式）
+        button = QPushButton("永久解锁")
+        button.setFixedHeight(36)
+        button.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #FFD700,
+                    stop:1 #FFA500);
+                color: #333;
+                border: none;
+                border-radius: 6px;
+                font-size: 13px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #FFC700,
+                    stop:1 #FF9500);
+            }
+            QPushButton:pressed {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #FFB700,
+                    stop:1 #FF8500);
+            }
+        """)
+        # 绑定点击事件：直接触发支付流程
+        button.clicked.connect(lambda: self._on_plan_button_clicked(plan['id']))
+        layout.addWidget(button)
+
+        layout.addSpacing(15)
+
+        # 功能列表
+        for i, feature in enumerate(plan['features']):
+            if i == 0:
+                # 第一项是标题
+                feature_label = QLabel(f"✓ {feature}")
+                feature_label.setStyleSheet("font-size: 12px; color: white; background: transparent; font-weight: 600;")
+            else:
+                feature_label = QLabel(f"✓ {feature}")
+                feature_label.setStyleSheet("font-size: 11px; color: rgba(255,255,255,0.85); background: transparent;")
+            layout.addWidget(feature_label)
+            if i < len(plan['features']) - 1:
+                layout.addSpacing(3)
+
+        layout.addStretch()
+
+        # 底部信息：分隔线 + 有效期 + 续费说明
+        separator = QLabel("─" * 30)
+        separator.setStyleSheet("color: rgba(255,255,255,0.2); background: transparent; font-size: 10px;")
+        separator.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(separator)
+
+        layout.addSpacing(8)
+
+        validity_label = QLabel(plan['validity'])
+        validity_label.setStyleSheet("font-size: 11px; color: rgba(255,215,0,0.8); background: transparent; font-weight: 600;")
+        validity_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(validity_label)
+
+        layout.addSpacing(4)
+
+        renewal_label = QLabel(plan['renewal'])
+        renewal_label.setStyleSheet("font-size: 10px; color: rgba(255,255,255,0.6); background: transparent;")
+        renewal_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(renewal_label)
+
+        layout.addSpacing(10)
+
+        card.plan_id = plan['id']
+        card.mousePressEvent = lambda e: self._on_plan_card_clicked(plan['id'])
+        return card
+
+    def _create_membership_tips(self):
+        """创建会员提示区域"""
+        from PySide6.QtWidgets import QFrame, QTextEdit
+
+        tips_frame = QFrame()
+        tips_frame.setStyleSheet("""
+            QFrame {
+                background-color: rgba(50, 50, 50, 180);
+                border-radius: 8px;
+                padding: 0px;
+            }
+        """)
+
+        layout = QVBoxLayout(tips_frame)
+        layout.setContentsMargins(20, 15, 20, 15)
+        layout.setSpacing(10)
+
+        # 标题
+        title_label = QLabel("💡 会员提示")
+        title_label.setStyleSheet("font-size: 15px; font-weight: bold; color: white;")
+        layout.addWidget(title_label)
+
+        # 说明文字
+        tips_text = """GaiYa 致力于做优秀的时间管理工具，始终坚持无广告、无打扰、无冗余，简单而纯粹，我们将继续提供更加令人愉悦的用户体验。
+
+与此同时，我们深知，一个产品能够长久持续地运营下去，也需要有稳定的发展模式。如果你有意支持我们，可以开通会员，享受更丰富的 AI 功能，非常感谢你的支持！"""
+
+        tips_label = QLabel(tips_text)
+        tips_label.setStyleSheet("""
+            font-size: 13px;
+            color: rgba(255,255,255,0.85);
+            line-height: 1.6;
+        """)
+        tips_label.setWordWrap(True)
+        tips_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        layout.addWidget(tips_label)
+
+        return tips_frame
+
     def _on_plan_card_clicked(self, plan_id: str):
         """处理套餐卡片点击"""
-        self.selected_plan_id = plan_id
-        plans_data = [
-            {"id": "pro_monthly", "color": "#FF6B6B"},
-            {"id": "pro_yearly", "color": "#4ECDC4"},
-            {"id": "lifetime", "color": "#95A99C"}
-        ]
+        # 只处理付费套餐（月度、年度、终身）
+        if plan_id not in ["pro_monthly", "pro_yearly", "lifetime"]:
+            return
 
-        for i, card in enumerate(self.plan_cards):
-            plan = plans_data[i]
-            is_selected = (plan['id'] == plan_id)
-            border_color = "#4ECDC4" if is_selected else "#555"  # 使用绿色作为选中描边
-            border_width = "3px" if is_selected else "2px"
-            card.setStyleSheet(f"""
-                QFrame#plan_card_{plan['id']} {{
-                    background-color: rgba(40, 40, 40, 200);
-                    border: {border_width} solid {border_color};
-                    border-radius: 12px;
-                }}
-            """)
+        self.selected_plan_id = plan_id
+
+        # 更新卡片样式
+        for card in self.plan_cards:
+            if hasattr(card, 'plan_id'):
+                if card.plan_id == "pro_yearly":
+                    # 年度卡片
+                    is_selected = (card.plan_id == plan_id)
+                    border_color = "#FF9800" if is_selected else "#666"
+                    border_width = "3px" if is_selected else "2px"
+                    card.setStyleSheet(f"""
+                        QFrame#plan_card_{card.plan_id} {{
+                            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 rgba(60, 60, 60, 220),
+                                stop:1 rgba(40, 40, 40, 220));
+                            border: {border_width} solid {border_color};
+                            border-radius: 12px;
+                        }}
+                    """)
+                elif card.plan_id == "pro_monthly":
+                    # 月度卡片
+                    is_selected = (card.plan_id == plan_id)
+                    border_color = "#FF9800" if is_selected else "#555"
+                    border_width = "3px" if is_selected else "2px"
+                    card.setStyleSheet(f"""
+                        QFrame#plan_card_{card.plan_id} {{
+                            background-color: rgba(40, 40, 40, 200);
+                            border: {border_width} solid {border_color};
+                            border-radius: 12px;
+                        }}
+                    """)
+                elif card.plan_id == "lifetime":
+                    # 终身卡片
+                    is_selected = (card.plan_id == plan_id)
+                    border_color = "#FFD700" if is_selected else "#888"
+                    border_width = "3px" if is_selected else "2px"
+                    card.setStyleSheet(f"""
+                        QFrame#plan_card_{card.plan_id} {{
+                            background-color: rgba(50, 50, 50, 200);
+                            border: {border_width} solid {border_color};
+                            border-radius: 12px;
+                        }}
+                    """)
+
+    def _on_plan_button_clicked(self, plan_id: str):
+        """处理套餐按钮点击 - 直接触发支付流程"""
+        # 设置选中的套餐
+        self.selected_plan_id = plan_id
+        # 更新卡片样式（选中状态）
+        self._on_plan_card_clicked(plan_id)
+        # 直接触发支付
+        self._on_purchase_clicked()
 
     def _on_purchase_clicked(self):
         """处理前往付费按钮点击 - 使用真实支付流程"""
@@ -2761,10 +3485,17 @@ class ConfigManager(QMainWindow):
 
         # 创建订单
         auth_client = AuthClient()
+
+        # 添加日志输出以便调试
+        import logging
+        logging.info(f"[支付调试] 准备创建订单 - plan_type: {self.selected_plan_id}, pay_type: {pay_type}")
+
         result = auth_client.create_payment_order(
             plan_type=self.selected_plan_id,
             pay_type=pay_type
         )
+
+        logging.info(f"[支付调试] 订单创建结果: {result}")
 
         if result.get("success"):
             # 订单创建成功，直接打开支付页面
@@ -2823,7 +3554,14 @@ class ConfigManager(QMainWindow):
                 )
                 logging.error(f"[PAYMENT] Channel error: {error_msg}")
             else:
-                detailed_msg = f"创建订单失败：{error_msg}"
+                # 显示详细的调试信息
+                detailed_msg = (
+                    f"创建订单失败：{error_msg}\n\n"
+                    f"调试信息：\n"
+                    f"• 套餐类型: {self.selected_plan_id}\n"
+                    f"• 支付方式: {pay_type}"
+                )
+                logging.error(f"[PAYMENT] Create order failed - plan_type: {self.selected_plan_id}, error: {error_msg}")
 
             QMessageBox.critical(self, "创建订单失败", detailed_msg)
 
@@ -2846,7 +3584,7 @@ class ConfigManager(QMainWindow):
                     "支付已完成！\n您的会员权益已激活。\n\n请重新启动应用以生效。"
                 )
 
-                # 重新加载账户tab以刷新会员状态
+                # 重新加载个人中心tab以刷新会员状态
                 self.account_tab_widget = None
                 self._load_account_tab()
 
@@ -4383,6 +5121,10 @@ class ConfigManager(QMainWindow):
 
     def on_ai_generate_clicked(self):
         """处理AI生成按钮点击"""
+        # 首先检查是否已登录
+        if not self._check_login_and_guide("AI智能规划"):
+            return
+
         user_input = self.ai_input.text().strip()
 
         if not user_input:
