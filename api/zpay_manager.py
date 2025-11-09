@@ -400,7 +400,7 @@ class ZPayManager:
             },
             "lifetime": {
                 "name": "GaiYa 终身会员",
-                "price": 299.0,
+                "price": 399.0,
                 "description": "一次性购买，终身享受高级版功能"
             }
         }

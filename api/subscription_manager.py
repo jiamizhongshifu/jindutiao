@@ -32,7 +32,7 @@ class SubscriptionManager:
         },
         "lifetime": {
             "name": "终身会员",
-            "price": 299.0,
+            "price": 399.0,
             "currency": "CNY",
             "duration_days": None  # 永久
         }

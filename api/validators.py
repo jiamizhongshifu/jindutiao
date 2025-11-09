@@ -101,7 +101,7 @@ def validate_plan_type(plan_type: str) -> Tuple[bool, str, Optional[float]]:
     VALID_PLANS = {
         "pro_monthly": 29.0,
         "pro_yearly": 199.0,
-        # "lifetime": 299.0  # 暂时下架
+        "lifetime": 399.0
     }
 
     if not plan_type:
