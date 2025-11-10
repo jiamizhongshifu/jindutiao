@@ -2597,7 +2597,7 @@ class ConfigManager(QMainWindow):
                         "validity": "有效期30天",
                         "renewal": "到期后不会自动扣费",
                         "type": "monthly",
-                        "features": ["所有免费功能 +", "20次/天 AI智能规划", "统计报告分析", "去除进度条水印", "数据云同步", "抢先体验新功能", "加入VIP会员群"]
+                        "features": ["所有免费功能 +", "20次/天 AI智能规划", "统计报告分析", "去除进度条水印", "番茄时钟", "数据云同步", "抢先体验新功能", "加入VIP会员群"]
                     },
                     {
                         "id": "pro_yearly",
@@ -2610,7 +2610,7 @@ class ConfigManager(QMainWindow):
                         "validity": "有效期365天",
                         "renewal": "到期后不会自动扣费",
                         "type": "yearly",
-                        "features": ["所有免费功能 +", "20次/天 AI智能规划", "统计报告分析", "去除进度条水印", "数据云同步", "抢先体验新功能", "加入VIP会员群"]
+                        "features": ["所有免费功能 +", "20次/天 AI智能规划", "统计报告分析", "去除进度条水印", "番茄时钟", "数据云同步", "抢先体验新功能", "加入VIP会员群"]
                     },
                     {
                         "id": "lifetime",
@@ -2620,7 +2620,7 @@ class ConfigManager(QMainWindow):
                         "validity": "永久有效",
                         "renewal": "一次购买,终身可用",
                         "type": "lifetime",
-                        "features": ["所有免费功能 +", "无限次 AI智能规划", "统计报告分析", "去除进度条水印", "数据云同步", "33%引荐返现比例", "专属合伙人社群", "优先体验所有新功能", "专属1v1咨询服务", "共同成长,分享价值"]
+                        "features": ["所有免费功能 +", "无限次 AI智能规划", "统计报告分析", "去除进度条水印", "番茄时钟", "数据云同步", "33%引荐返现比例", "专属合伙人社群", "优先体验所有新功能", "专属1v1咨询服务", "共同成长,分享价值"]
                     },
                 ]
 
@@ -3870,6 +3870,15 @@ class ConfigManager(QMainWindow):
             {
                 "type": "feature",
                 "name": "主题自定义",
+                "free": "✗",
+                "monthly": "✓",
+                "yearly": "✓",
+                "lifetime": "✓",
+            },
+            # 番茄时钟
+            {
+                "type": "feature",
+                "name": "番茄时钟",
                 "free": "✗",
                 "monthly": "✓",
                 "yearly": "✓",
