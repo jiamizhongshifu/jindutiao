@@ -4,10 +4,12 @@ GaiYa每日进度条 - 认证UI模块
 """
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
-    QPushButton, QTabWidget, QWidget, QMessageBox, QCheckBox
+    QPushButton, QTabWidget, QWidget, QMessageBox, QCheckBox,
+    QStackedWidget, QFrame
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, QTimer, QUrl
 from PySide6.QtGui import QFont, QIcon
+from PySide6.QtWebEngineWidgets import QWebEngineView
 import sys
 import os
 
@@ -26,6 +28,11 @@ class AuthDialog(QDialog):
         super().__init__(parent)
         # 使用传入的auth_client实例，如果没有则创建新的
         self.auth_client = auth_client if auth_client is not None else AuthClient()
+
+        # 微信登录相关状态
+        self.wechat_state = None  # 微信登录state参数
+        self.polling_timer = None  # 轮询定时器
+
         self.init_ui()
 
     def init_ui(self):
@@ -54,18 +61,21 @@ class AuthDialog(QDialog):
         subtitle_label.setStyleSheet("color: #666; font-size: 12px;")
         main_layout.addWidget(subtitle_label)
 
-        # Tab切换（登录/注册）
-        self.tab_widget = QTabWidget()
+        # 创建StackedWidget（微信登录 vs 邮箱登录）
+        self.stacked_widget = QStackedWidget()
 
-        # 登录Tab
-        self.signin_widget = self._create_signin_tab()
-        self.tab_widget.addTab(self.signin_widget, "登录")
+        # 页面0: 微信登录（默认显示）
+        wechat_widget = self._create_wechat_login_widget()
+        self.stacked_widget.addWidget(wechat_widget)
 
-        # 注册Tab
-        self.signup_widget = self._create_signup_tab()
-        self.tab_widget.addTab(self.signup_widget, "注册")
+        # 页面1: 邮箱登录/注册
+        email_widget = self._create_email_login_widget()
+        self.stacked_widget.addWidget(email_widget)
 
-        main_layout.addWidget(self.tab_widget)
+        # 默认显示微信登录
+        self.stacked_widget.setCurrentIndex(0)
+
+        main_layout.addWidget(self.stacked_widget)
 
         # 底部说明
         info_label = QLabel("注册即表示同意服务条款和隐私政策")
@@ -351,6 +361,253 @@ class AuthDialog(QDialog):
         from PySide6.QtWidgets import QInputDialog
         text, ok = QInputDialog.getText(self, title, label)
         return text, ok
+
+    def _create_wechat_login_widget(self) -> QWidget:
+        """创建微信登录页面（带二维码）"""
+        widget = QWidget()
+        layout = QVBoxLayout()
+        layout.setSpacing(20)
+        layout.setContentsMargins(20, 20, 20, 20)
+
+        # 提示文字
+        tip_label = QLabel("请使用微信扫码登录")
+        tip_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        tip_label.setStyleSheet("font-size: 16px; font-weight: bold; color: #333;")
+        layout.addWidget(tip_label)
+
+        # QR码显示区域（使用QWebEngineView）
+        self.qr_code_view = QWebEngineView()
+        self.qr_code_view.setMinimumSize(300, 300)
+        self.qr_code_view.setMaximumSize(300, 300)
+
+        # 初始显示加载提示
+        self.qr_code_view.setHtml("""
+            <html>
+            <body style="display: flex; align-items: center; justify-content: center;
+                         height: 100%; margin: 0; font-family: Arial; color: #666;">
+                <div style="text-align: center;">
+                    <p style="font-size: 16px;">正在加载二维码...</p>
+                    <p style="font-size: 12px; color: #999;">请稍候</p>
+                </div>
+            </body>
+            </html>
+        """)
+
+        # 将QR码视图居中
+        qr_container = QWidget()
+        qr_layout = QHBoxLayout(qr_container)
+        qr_layout.addStretch()
+        qr_layout.addWidget(self.qr_code_view)
+        qr_layout.addStretch()
+        layout.addWidget(qr_container)
+
+        # 状态标签
+        self.status_label = QLabel("等待扫码...")
+        self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.status_label.setStyleSheet("color: #666; font-size: 14px;")
+        layout.addWidget(self.status_label)
+
+        layout.addSpacing(10)
+
+        # 分隔线
+        separator = QFrame()
+        separator.setFrameShape(QFrame.Shape.HLine)
+        separator.setFrameShadow(QFrame.Shadow.Sunken)
+        separator.setStyleSheet("background-color: #e0e0e0;")
+        layout.addWidget(separator)
+
+        # 切换到邮箱登录按钮
+        switch_button = QPushButton("使用邮箱登录 >")
+        switch_button.setFlat(True)
+        switch_button.setStyleSheet("""
+            QPushButton {
+                color: #2196F3;
+                font-size: 14px;
+                padding: 10px;
+                text-decoration: underline;
+            }
+            QPushButton:hover {
+                color: #0b7dda;
+            }
+        """)
+        switch_button.clicked.connect(self._switch_to_email_login)
+        layout.addWidget(switch_button, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        layout.addStretch()
+        widget.setLayout(layout)
+
+        # 启动微信登录流程
+        QTimer.singleShot(500, self._start_wechat_login)
+
+        return widget
+
+    def _create_email_login_widget(self) -> QWidget:
+        """创建邮箱登录/注册页面（包含原有Tab）"""
+        widget = QWidget()
+        layout = QVBoxLayout()
+        layout.setSpacing(15)
+        layout.setContentsMargins(10, 10, 10, 10)
+
+        # 原有的Tab切换（登录/注册）
+        self.tab_widget = QTabWidget()
+
+        # 登录Tab
+        self.signin_widget = self._create_signin_tab()
+        self.tab_widget.addTab(self.signin_widget, "登录")
+
+        # 注册Tab
+        self.signup_widget = self._create_signup_tab()
+        self.tab_widget.addTab(self.signup_widget, "注册")
+
+        layout.addWidget(self.tab_widget)
+
+        layout.addSpacing(10)
+
+        # 分隔线
+        separator = QFrame()
+        separator.setFrameShape(QFrame.Shape.HLine)
+        separator.setFrameShadow(QFrame.Shadow.Sunken)
+        separator.setStyleSheet("background-color: #e0e0e0;")
+        layout.addWidget(separator)
+
+        # 返回微信登录按钮
+        back_button = QPushButton("< 返回微信登录")
+        back_button.setFlat(True)
+        back_button.setStyleSheet("""
+            QPushButton {
+                color: #2196F3;
+                font-size: 14px;
+                padding: 10px;
+                text-decoration: underline;
+            }
+            QPushButton:hover {
+                color: #0b7dda;
+            }
+        """)
+        back_button.clicked.connect(self._switch_to_wechat_login)
+        layout.addWidget(back_button, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        widget.setLayout(layout)
+        return widget
+
+    def _switch_to_email_login(self):
+        """切换到邮箱登录模式"""
+        self.stacked_widget.setCurrentIndex(1)
+        # 停止微信登录轮询（如果正在进行）
+        if self.polling_timer and self.polling_timer.isActive():
+            self.polling_timer.stop()
+
+    def _switch_to_wechat_login(self):
+        """切换到微信登录模式"""
+        self.stacked_widget.setCurrentIndex(0)
+        # 重新启动微信登录流程
+        self._start_wechat_login()
+
+    def _start_wechat_login(self):
+        """启动微信登录流程（获取二维码URL）"""
+        try:
+            # 更新状态
+            self.status_label.setText("正在生成二维码...")
+
+            # 调用AuthClient获取微信二维码URL
+            result = self.auth_client.wechat_get_qr_code()
+
+            if result.get("success"):
+                # 获取二维码URL和state
+                qr_url = result.get("qr_url")
+                self.wechat_state = result.get("state")
+
+                # 在QWebEngineView中加载微信授权页面
+                self.qr_code_view.setUrl(QUrl(qr_url))
+
+                # 更新状态
+                self.status_label.setText("等待扫码...")
+
+                # 启动轮询定时器（每2秒检查一次）
+                if self.polling_timer is None:
+                    self.polling_timer = QTimer(self)
+                    self.polling_timer.timeout.connect(self._check_wechat_scan_status)
+
+                self.polling_timer.start(2000)  # 2秒轮询一次
+            else:
+                # 获取二维码失败
+                error_msg = result.get("error", "无法生成二维码")
+                self.status_label.setText(f"错误: {error_msg}")
+                self.qr_code_view.setHtml(f"""
+                    <html>
+                    <body style="display: flex; align-items: center; justify-content: center;
+                                 height: 100%; margin: 0; font-family: Arial; color: #f44336;">
+                        <div style="text-align: center;">
+                            <p style="font-size: 16px;">⚠️ {error_msg}</p>
+                            <p style="font-size: 12px; color: #999;">请尝试使用邮箱登录</p>
+                        </div>
+                    </body>
+                    </html>
+                """)
+        except Exception as e:
+            # 异常处理
+            self.status_label.setText(f"错误: {str(e)}")
+            self.qr_code_view.setHtml(f"""
+                <html>
+                <body style="display: flex; align-items: center; justify-content: center;
+                             height: 100%; margin: 0; font-family: Arial; color: #f44336;">
+                    <div style="text-align: center;">
+                        <p style="font-size: 16px;">⚠️ 加载失败</p>
+                        <p style="font-size: 12px; color: #999;">{str(e)}</p>
+                    </div>
+                </body>
+                </html>
+            """)
+
+    def _check_wechat_scan_status(self):
+        """轮询检查扫码状态（每2秒）"""
+        if not self.wechat_state:
+            return
+
+        try:
+            # 调用AuthClient检查扫码状态
+            result = self.auth_client.wechat_check_scan_status(self.wechat_state)
+
+            status = result.get("status")
+
+            if status == "pending":
+                # 仍在等待扫码
+                self.status_label.setText("等待扫码...")
+            elif status == "scanned":
+                # 已扫码，等待确认
+                self.status_label.setText("扫码成功，请在手机上确认...")
+            elif status == "success":
+                # 登录成功
+                self.status_label.setText("登录成功！")
+
+                # 停止轮询
+                if self.polling_timer:
+                    self.polling_timer.stop()
+
+                # 获取用户信息
+                user_info = result.get("user_info", {})
+
+                # 发出登录成功信号
+                self.login_success.emit(user_info)
+
+                # 关闭对话框
+                self.accept()
+            elif status == "expired":
+                # 二维码过期
+                self.status_label.setText("二维码已过期，正在刷新...")
+                if self.polling_timer:
+                    self.polling_timer.stop()
+                # 重新生成二维码
+                QTimer.singleShot(1000, self._start_wechat_login)
+            elif status == "error":
+                # 登录失败
+                error_msg = result.get("error", "登录失败")
+                self.status_label.setText(f"错误: {error_msg}")
+                if self.polling_timer:
+                    self.polling_timer.stop()
+        except Exception as e:
+            # 异常处理
+            self.status_label.setText(f"检查状态失败: {str(e)}")
 
 
 if __name__ == "__main__":

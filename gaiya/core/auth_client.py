@@ -415,3 +415,83 @@ class AuthClient:
                 },
                 "user_tier": user_tier
             }
+
+    # ==================== 微信登录API ====================
+
+    def wechat_get_qr_code(self) -> Dict:
+        """
+        获取微信登录二维码URL
+
+        Returns:
+            {"success": True/False, "qr_url": "...", "state": "...", "error": "..."}
+        """
+        try:
+            response = requests.get(
+                f"{self.backend_url}/api/auth-wechat-qrcode",
+                timeout=10
+            )
+
+            if response.status_code == 200:
+                return response.json()
+            else:
+                return {"success": False, "error": f"HTTP {response.status_code}"}
+
+        except requests.exceptions.Timeout:
+            return {"success": False, "error": "请求超时"}
+        except requests.exceptions.ConnectionError:
+            return {"success": False, "error": "无法连接到服务器"}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    def wechat_check_scan_status(self, state: str) -> Dict:
+        """
+        检查微信扫码登录状态
+
+        Args:
+            state: 登录state参数
+
+        Returns:
+            {
+                "status": "pending" | "scanned" | "success" | "expired" | "error",
+                "user_info": {...},  # 仅当status为success时返回
+                "error": "..."       # 仅当status为error时返回
+            }
+        """
+        try:
+            response = requests.get(
+                f"{self.backend_url}/api/auth-wechat-status",
+                params={"state": state},
+                timeout=10
+            )
+
+            if response.status_code == 200:
+                data = response.json()
+
+                # 如果登录成功，保存Token
+                if data.get("status") == "success":
+                    user_info = data.get("user_info", {})
+                    access_token = data.get("access_token")
+                    refresh_token = data.get("refresh_token")
+
+                    if access_token and refresh_token:
+                        self._save_tokens(
+                            access_token,
+                            refresh_token,
+                            {
+                                "user_id": user_info.get("user_id"),
+                                "email": user_info.get("email"),
+                                "username": user_info.get("username"),
+                                "user_tier": user_info.get("user_tier", "free")
+                            }
+                        )
+
+                return data
+            else:
+                return {"status": "error", "error": f"HTTP {response.status_code}"}
+
+        except requests.exceptions.Timeout:
+            return {"status": "error", "error": "请求超时"}
+        except requests.exceptions.ConnectionError:
+            return {"status": "error", "error": "无法连接到服务器"}
+        except Exception as e:
+            return {"status": "error", "error": str(e)}
