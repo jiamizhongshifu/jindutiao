@@ -3870,7 +3870,7 @@ class ConfigManager(QMainWindow):
             {
                 "type": "feature",
                 "name": "主题自定义",
-                "free": "✗",
+                "free": "✓",
                 "monthly": "✓",
                 "yearly": "✓",
                 "lifetime": "✓",
