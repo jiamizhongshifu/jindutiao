@@ -1522,12 +1522,6 @@ class ConfigManager(QMainWindow):
         # 延迟更新按钮状态，避免配置未加载时出错
         QTimer.singleShot(100, self.update_height_preset_buttons)
 
-        # 位置选择
-        self.position_combo = QComboBox()
-        self.position_combo.addItems(["bottom", "top"])
-        self.position_combo.setCurrentText(self.config.get('position', 'bottom') if self.config else 'bottom')
-        basic_layout.addRow("屏幕位置:", self.position_combo)
-
         # 显示器索引
         self.screen_spin = QSpinBox()
         self.screen_spin.setRange(0, 10)
@@ -2927,6 +2921,40 @@ class ConfigManager(QMainWindow):
             self.tabs.setCurrentIndex(3)
 
         return False
+
+    def _check_ai_quota(self) -> bool:
+        """检查AI配额是否充足
+
+        Returns:
+            True: 配额充足，可以继续
+            False: 配额已用完，显示升级对话框
+        """
+        from gaiya.core.auth_client import AuthClient
+        from gaiya.ui.onboarding import QuotaExhaustedDialog
+
+        auth_client = AuthClient()
+        user_tier = auth_client.get_user_tier()
+
+        # Pro会员或以上不受限制
+        if user_tier in ['pro', 'lifetime']:
+            return True
+
+        # 免费用户检查配额
+        remaining_quota = auth_client.get_quota_status().get('remaining', 0)
+
+        if remaining_quota <= 0:
+            # 配额已用完，显示升级对话框
+            dialog = QuotaExhaustedDialog(self)
+            dialog.upgrade_requested.connect(self._on_quota_upgrade_requested)
+            dialog.exec()
+            return False
+
+        return True
+
+    def _on_quota_upgrade_requested(self):
+        """配额用尽对话框中用户请求升级会员"""
+        # 切换到个人中心tab（index=3）
+        self.tabs.setCurrentIndex(3)
 
     def _create_simple_plan_card(self, plan: dict, is_selected: bool = False):
         """创建简单的套餐卡片"""
@@ -5392,7 +5420,7 @@ class ConfigManager(QMainWindow):
             # 保存配置
             config = {
                 "bar_height": self.height_spin.value(),
-                "position": self.position_combo.currentText(),
+                "position": "bottom",  # 固定位置为屏幕底部
                 "background_color": self.bg_color_input.text(),
                 "background_opacity": self.opacity_spin.value(),
                 "marker_color": self.marker_color_input.text(),
@@ -5624,6 +5652,10 @@ class ConfigManager(QMainWindow):
         """处理AI生成按钮点击"""
         # 首先检查是否已登录
         if not self._check_login_and_guide("AI智能规划"):
+            return
+
+        # 检查AI配额
+        if not self._check_ai_quota():
             return
 
         user_input = self.ai_input.text().strip()

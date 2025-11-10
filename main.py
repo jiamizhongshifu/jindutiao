@@ -117,6 +117,87 @@ class TimeProgressBar(QWidget):
         from PySide6.QtCore import QTimer
         QTimer.singleShot(100, self.apply_theme)
 
+        # 延迟检查是否首次运行，显示新手引导
+        QTimer.singleShot(500, self.check_first_run)
+
+    def check_first_run(self):
+        """检查是否首次运行，显示新手引导"""
+        from gaiya.utils.first_run import FirstRunDetector
+
+        detector = FirstRunDetector(self.app_dir)
+        if detector.is_first_run():
+            self.logger.info("检测到首次运行，显示新手引导")
+            self.show_onboarding()
+
+    def show_onboarding(self):
+        """显示新手引导流程"""
+        from gaiya.ui.onboarding import WelcomeDialog, SetupWizard
+        from gaiya.utils.first_run import FirstRunDetector
+
+        # 1. 显示欢迎对话框
+        welcome = WelcomeDialog(self)
+        if welcome.exec() == WelcomeDialog.DialogCode.Accepted:
+            # 用户选择"开始配置"
+            wizard = SetupWizard(self)
+
+            # 连接AI生成信号
+            wizard.ai_generate_requested.connect(self.on_onboarding_ai_requested)
+
+            if wizard.exec() == SetupWizard.DialogCode.Accepted:
+                # 用户完成了向导配置
+                template_id = wizard.get_selected_template()
+                self.logger.info(f"新手引导完成，选择模板: {template_id}")
+
+                # 应用选择的模板
+                self.apply_template(template_id)
+
+                # 标记新手引导已完成
+                detector = FirstRunDetector(self.app_dir)
+                detector.mark_completed()
+        else:
+            # 用户选择"暂时跳过"
+            self.logger.info("用户跳过新手引导")
+            # 仍然标记为已完成，避免下次再提示
+            detector = FirstRunDetector(self.app_dir)
+            detector.mark_completed()
+
+    def on_onboarding_ai_requested(self):
+        """新手引导中用户请求AI生成"""
+        self.logger.info("新手引导：用户请求AI生成任务")
+        # 标记新手引导完成
+        from gaiya.utils.first_run import FirstRunDetector
+        detector = FirstRunDetector(self.app_dir)
+        detector.mark_completed()
+
+        # 打开配置界面到任务管理标签页
+        self.open_config_gui(initial_tab=1)  # 1 = 任务管理标签页
+
+    def apply_template(self, template_id):
+        """应用任务模板
+
+        Args:
+            template_id: 模板ID（work_weekday, student, freelancer）
+        """
+        from gaiya.utils import templates
+
+        try:
+            # 获取模板任务
+            template_tasks = templates.get_template_tasks(template_id)
+            if template_tasks:
+                # 保存任务
+                tasks_file = self.app_dir / 'tasks.json'
+                import json
+                with open(tasks_file, 'w', encoding='utf-8') as f:
+                    json.dump(template_tasks, f, indent=4, ensure_ascii=False)
+
+                # 重新加载任务
+                self.reload_all()
+                self.logger.info(f"成功应用模板: {template_id}")
+            else:
+                self.logger.warning(f"模板不存在: {template_id}")
+        except Exception as e:
+            self.logger.error(f"应用模板失败: {e}", exc_info=True)
+
     def init_ui(self):
         """初始化用户界面"""
         # 设置窗口标题(虽然无边框窗口看不到，但在任务管理器中可见)
@@ -626,11 +707,6 @@ class TimeProgressBar(QWidget):
         reload_action.triggered.connect(self.reload_all)
         tray_menu.addAction(reload_action)
 
-        # 切换位置动作
-        toggle_position_action = QAction('↕️ 切换位置', self)
-        toggle_position_action.triggered.connect(self.toggle_position)
-        tray_menu.addAction(toggle_position_action)
-
         tray_menu.addSeparator()
 
         # 退出动作
@@ -820,21 +896,35 @@ class TimeProgressBar(QWidget):
         self.logger.info("统计报告窗口已关闭")
         self.statistics_window = None
 
-    def open_config_gui(self):
-        """打开配置界面"""
+    def open_config_gui(self, initial_tab=0):
+        """打开配置界面
+
+        Args:
+            initial_tab: 初始显示的标签页索引（0=基本设置, 1=任务管理, 2=个人中心, etc.）
+        """
         try:
             # 使用已导入的 ConfigManager（在文件顶部已导入）
             # 如果已经打开,则显示现有窗口
             if hasattr(self, 'config_window') and self.config_window.isVisible():
                 self.config_window.activateWindow()
                 self.config_window.raise_()
+                # 切换到指定标签页
+                if hasattr(self.config_window, 'tab_widget'):
+                    self.config_window.tab_widget.setCurrentIndex(initial_tab)
                 return
 
             # 创建新窗口
             self.config_window = ConfigManager()
             self.config_window.config_saved.connect(self.reload_all)
             self.config_window.show()
-            self.logger.info("配置界面已打开")
+
+            # 切换到指定标签页
+            if hasattr(self.config_window, 'tab_widget'):
+                from PySide6.QtCore import QTimer
+                # 延迟切换，确保窗口完全显示
+                QTimer.singleShot(100, lambda: self.config_window.tab_widget.setCurrentIndex(initial_tab))
+
+            self.logger.info(f"配置界面已打开 (标签页={initial_tab})")
 
         except Exception as e:
             self.logger.error(f"打开配置界面失败: {e}", exc_info=True)
@@ -912,17 +1002,6 @@ class TimeProgressBar(QWidget):
         # 触发重绘
         self.update()
         self.logger.info("配置和任务重载完成")
-
-    def toggle_position(self):
-        """切换进度条位置"""
-        self.config['position'] = (
-            'top' if self.config['position'] == 'bottom' else 'bottom'
-        )
-        # 保存到配置文件
-        config_file = self.app_dir / 'config.json'
-        with open(config_file, 'w', encoding='utf-8') as f:
-            json.dump(self.config, f, indent=4)
-        self.setup_geometry()
 
     def toggle_edit_mode(self):
         """切换编辑模式"""
