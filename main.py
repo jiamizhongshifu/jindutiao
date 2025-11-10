@@ -2132,6 +2132,48 @@ class TimeProgressBar(QWidget):
         except Exception as e:
             self.logger.error(f"应用主题失败: {e}", exc_info=True)
 
+    def closeEvent(self, event):
+        """窗口关闭事件，清理所有资源"""
+        # 停止主定时器
+        if hasattr(self, 'timer') and self.timer:
+            if self.timer.isActive():
+                self.timer.stop()
+            self.timer = None
+
+        # 停止可见性监控定时器
+        if hasattr(self, 'visibility_timer') and self.visibility_timer:
+            if self.visibility_timer.isActive():
+                self.visibility_timer.stop()
+            self.visibility_timer = None
+
+        # 停止标记帧切换定时器
+        if hasattr(self, 'marker_frame_timer') and self.marker_frame_timer:
+            if self.marker_frame_timer.isActive():
+                self.marker_frame_timer.stop()
+            self.marker_frame_timer = None
+
+        # 清理QMovie对象
+        if hasattr(self, 'marker_movie') and self.marker_movie:
+            self.marker_movie.stop()
+            self.marker_movie.deleteLater()
+            self.marker_movie = None
+
+        # 清理缓存帧列表（释放内存）
+        if hasattr(self, 'marker_cached_frames'):
+            self.marker_cached_frames.clear()
+            self.marker_cached_frames = None
+
+        # 断开文件监控信号
+        if hasattr(self, 'file_watcher') and self.file_watcher:
+            try:
+                self.file_watcher.fileChanged.disconnect()
+            except:
+                pass
+
+        # 接受关闭事件
+        event.accept()
+        self.logger.info("时间进度条已关闭，资源已清理")
+
 
 def main():
     """主程序入口"""

@@ -8,6 +8,7 @@ import json
 import os
 import sys
 from pathlib import Path
+from functools import partial
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QTabWidget, QLabel, QLineEdit, QSpinBox, QPushButton, QColorDialog,
@@ -419,7 +420,8 @@ class ConfigManager(QMainWindow):
                 toggle_btn.setToolTip("禁用" if enabled else "启用")
                 toggle_btn.setFixedSize(36, 36)
                 toggle_btn.setStyleSheet("QPushButton { padding: 4px; font-size: 14px; }")
-                toggle_btn.clicked.connect(lambda checked, r=row: self._toggle_schedule(r))
+                # 使用 partial 避免 Lambda 循环引用
+                toggle_btn.clicked.connect(partial(self._toggle_schedule, row))
                 actions_layout.addWidget(toggle_btn)
 
                 # 编辑按钮
@@ -427,7 +429,8 @@ class ConfigManager(QMainWindow):
                 edit_btn.setToolTip("编辑")
                 edit_btn.setFixedSize(36, 36)
                 edit_btn.setStyleSheet("QPushButton { padding: 4px; font-size: 14px; }")
-                edit_btn.clicked.connect(lambda checked, r=row: self._edit_schedule(r))
+                # 使用 partial 避免 Lambda 循环引用
+                edit_btn.clicked.connect(partial(self._edit_schedule, row))
                 actions_layout.addWidget(edit_btn)
 
                 # 删除按钮
@@ -435,7 +438,8 @@ class ConfigManager(QMainWindow):
                 delete_btn.setToolTip("删除")
                 delete_btn.setFixedSize(36, 36)
                 delete_btn.setStyleSheet("QPushButton { padding: 4px; font-size: 14px; }")
-                delete_btn.clicked.connect(lambda checked, r=row: self._delete_schedule(r))
+                # 使用 partial 避免 Lambda 循环引用
+                delete_btn.clicked.connect(partial(self._delete_schedule, row))
                 actions_layout.addWidget(delete_btn)
 
                 actions_layout.addStretch()
@@ -572,7 +576,8 @@ class ConfigManager(QMainWindow):
 
                     remove_btn = QPushButton("×")
                     remove_btn.setFixedSize(25, 25)
-                    remove_btn.clicked.connect(lambda: remove_date(date_row, selected_date))
+                    # 使用 partial 避免 Lambda 循环引用
+                    remove_btn.clicked.connect(partial(remove_date, date_row, selected_date))
                     date_row_layout.addWidget(remove_btn)
 
                     date_row_layout.addStretch()
@@ -835,7 +840,8 @@ class ConfigManager(QMainWindow):
 
                     remove_btn = QPushButton("×")
                     remove_btn.setFixedSize(25, 25)
-                    remove_btn.clicked.connect(lambda: remove_date(date_row, selected_date))
+                    # 使用 partial 避免 Lambda 循环引用
+                    remove_btn.clicked.connect(partial(remove_date, date_row, selected_date))
                     date_row_layout.addWidget(remove_btn)
 
                     date_row_layout.addStretch()
@@ -889,7 +895,8 @@ class ConfigManager(QMainWindow):
 
                     remove_btn = QPushButton("×")
                     remove_btn.setFixedSize(25, 25)
-                    remove_btn.clicked.connect(lambda checked, w=date_row, d=date_str: remove_date(w, d))
+                    # 使用 partial 避免 Lambda 循环引用
+                    remove_btn.clicked.connect(partial(remove_date, date_row, date_str))
                     date_row_layout.addWidget(remove_btn)
 
                     date_row_layout.addStretch()
@@ -1215,11 +1222,11 @@ class ConfigManager(QMainWindow):
         """异步检查后端服务器健康状态"""
         class HealthCheckWorker(QThread):
             finished = Signal(bool)
-            
+
             def __init__(self, backend_url):
                 super().__init__()
                 self.backend_url = backend_url
-            
+
             def run(self):
                 try:
                     # Vercel冷启动可能需要10-15秒，增加超时时间
@@ -1228,20 +1235,20 @@ class ConfigManager(QMainWindow):
                 except Exception as e:
                     logging.warning(f"健康检查失败: {str(e)}")
                     self.finished.emit(False)
-        
+
         # 创建并启动工作线程
         worker = HealthCheckWorker(self.ai_client.backend_url)
-        worker.finished.connect(self._on_health_check_finished)
+
+        # 使用lambda包装回调，确保worker在完成后被清理
+        def on_finished(is_healthy):
+            self._on_health_check_finished(is_healthy)
+            # 断开信号连接
+            worker.finished.disconnect()
+            # 延迟删除worker对象
+            worker.deleteLater()
+
+        worker.finished.connect(on_finished)
         worker.start()
-        
-        # 保存worker引用，避免被垃圾回收
-        if not hasattr(self, '_health_check_workers'):
-            self._health_check_workers = []
-        self._health_check_workers.append(worker)
-        
-        # 清理旧的worker引用（保留最近3个）
-        if len(self._health_check_workers) > 3:
-            self._health_check_workers.pop(0)
     
     def _on_health_check_finished(self, is_healthy):
         """后端健康检查完成回调"""
@@ -1493,7 +1500,8 @@ class ConfigManager(QMainWindow):
             btn = QPushButton(f"{name} ({height}px)")
             btn.setCheckable(True)
             btn.setMaximumWidth(100)
-            btn.clicked.connect(lambda checked, h=height: self.set_height_preset(h))
+            # 使用 partial 避免 Lambda 循环引用
+            btn.clicked.connect(partial(self.set_height_preset, height))
             height_preset_layout.addWidget(btn)
             self.height_preset_buttons.append((btn, height))
 
@@ -1579,7 +1587,8 @@ class ConfigManager(QMainWindow):
         self.bg_color_btn = QPushButton("选择颜色")
         self.bg_color_btn.setFixedSize(80, 36)
         self.bg_color_btn.setStyleSheet("QPushButton { padding: 8px 12px; font-size: 12px; }")
-        self.bg_color_btn.clicked.connect(lambda: self.choose_color(self.bg_color_input))
+        # 使用 partial 避免 Lambda 循环引用
+        self.bg_color_btn.clicked.connect(partial(self.choose_color, self.bg_color_input))
         self.bg_color_preview = QLabel()
         self.update_color_preview(self.bg_color_input, self.bg_color_preview)
         bg_color_layout.addWidget(self.bg_color_input)
@@ -1606,7 +1615,8 @@ class ConfigManager(QMainWindow):
         self.marker_color_btn = QPushButton("选择颜色")
         self.marker_color_btn.setFixedSize(80, 36)
         self.marker_color_btn.setStyleSheet("QPushButton { padding: 8px 12px; font-size: 12px; }")
-        self.marker_color_btn.clicked.connect(lambda: self.choose_color(self.marker_color_input))
+        # 使用 partial 避免 Lambda 循环引用
+        self.marker_color_btn.clicked.connect(partial(self.choose_color, self.marker_color_input))
         self.marker_color_preview = QLabel()
         self.update_color_preview(self.marker_color_input, self.marker_color_preview)
         marker_color_layout.addWidget(self.marker_color_input)
@@ -1680,7 +1690,8 @@ class ConfigManager(QMainWindow):
             btn = QPushButton(f"{name} ({size}px)")
             btn.setCheckable(True)
             btn.setMaximumWidth(80)
-            btn.clicked.connect(lambda checked, s=size: self.set_marker_size_preset(s))
+            # 使用 partial 避免 Lambda 循环引用
+            btn.clicked.connect(partial(self.set_marker_size_preset, size))
             marker_size_preset_layout.addWidget(btn)
             self.marker_size_preset_buttons.append((btn, size))
 
@@ -1943,7 +1954,8 @@ class ConfigManager(QMainWindow):
             templates = self.template_manager.get_all_templates(include_custom=False)
             for template in templates:
                 btn = QPushButton(template['name'])
-                btn.clicked.connect(lambda checked, t=template: self.load_template(t['filename']))
+                # 使用 partial 避免 Lambda 循环引用
+                btn.clicked.connect(partial(self.load_template, template['filename']))
                 btn.setStyleSheet(f"QPushButton {{ background-color: white; color: {template['button_color']}; border: 2px solid {template['button_color']}; border-radius: 6px; padding: 6px; }}")
                 btn.setToolTip(template.get('description', ''))
                 self.template_layout.addWidget(btn)
@@ -2956,6 +2968,18 @@ class ConfigManager(QMainWindow):
         # 切换到个人中心tab（index=3）
         self.tabs.setCurrentIndex(3)
 
+    def _bind_card_click(self, card, plan_id):
+        """绑定卡片点击事件，使用weakref避免循环引用"""
+        import weakref
+        weak_self = weakref.ref(self)
+
+        def handler(event):
+            self = weak_self()
+            if self is not None:
+                self._on_plan_card_clicked(plan_id)
+
+        card.mousePressEvent = handler
+
     def _create_simple_plan_card(self, plan: dict, is_selected: bool = False):
         """创建简单的套餐卡片"""
         from PySide6.QtWidgets import QFrame
@@ -3006,7 +3030,7 @@ class ConfigManager(QMainWindow):
 
         layout.addStretch()
         card.plan_id = plan['id']
-        card.mousePressEvent = lambda e: self._on_plan_card_clicked(plan['id'])
+        self._bind_card_click(card, plan['id'])
         return card
 
     def _create_featured_plan_card(self, plan: dict, is_selected: bool = False):
@@ -3129,8 +3153,8 @@ class ConfigManager(QMainWindow):
                 background-color: #E65100;
             }
         """)
-        # 绑定点击事件：直接触发支付流程
-        button.clicked.connect(lambda: self._on_plan_button_clicked(plan['id']))
+        # 绑定点击事件：直接触发支付流程（使用 partial 避免 Lambda 循环引用）
+        button.clicked.connect(partial(self._on_plan_button_clicked, plan['id']))
         layout.addWidget(button)
 
         layout.addSpacing(12)  # 从 8 增加到 12
@@ -3173,7 +3197,7 @@ class ConfigManager(QMainWindow):
         layout.addSpacing(10)
 
         card.plan_id = plan['id']
-        card.mousePressEvent = lambda e: self._on_plan_card_clicked(plan['id'])
+        self._bind_card_click(card, plan['id'])
         return card
 
     def _create_regular_plan_card(self, plan: dict):
@@ -3246,8 +3270,8 @@ class ConfigManager(QMainWindow):
                 background-color: rgba(255, 152, 0, 0.35);
             }
         """)
-        # 绑定点击事件：直接触发支付流程
-        button.clicked.connect(lambda: self._on_plan_button_clicked(plan['id']))
+        # 绑定点击事件：直接触发支付流程（使用 partial 避免 Lambda 循环引用）
+        button.clicked.connect(partial(self._on_plan_button_clicked, plan['id']))
         layout.addWidget(button)
 
         layout.addSpacing(15)  # 从 10 增加到 15
@@ -3290,7 +3314,7 @@ class ConfigManager(QMainWindow):
         layout.addSpacing(10)
 
         card.plan_id = plan['id']
-        card.mousePressEvent = lambda e: self._on_plan_card_clicked(plan['id'])
+        self._bind_card_click(card, plan['id'])
         return card
 
     def _create_lifetime_plan_card(self, plan: dict):
@@ -3412,8 +3436,8 @@ class ConfigManager(QMainWindow):
                     stop:1 #FF8500);
             }
         """)
-        # 绑定点击事件：直接触发支付流程
-        button.clicked.connect(lambda: self._on_plan_button_clicked(plan['id']))
+        # 绑定点击事件：直接触发支付流程（使用 partial 避免 Lambda 循环引用）
+        button.clicked.connect(partial(self._on_plan_button_clicked, plan['id']))
         layout.addWidget(button)
 
         layout.addSpacing(15)
@@ -3456,7 +3480,7 @@ class ConfigManager(QMainWindow):
         layout.addSpacing(10)
 
         card.plan_id = plan['id']
-        card.mousePressEvent = lambda e: self._on_plan_card_clicked(plan['id'])
+        self._bind_card_click(card, plan['id'])
         return card
 
     def _show_invitation_dialog(self):
@@ -3642,7 +3666,8 @@ class ConfigManager(QMainWindow):
                     stop:1 #A8760B);
             }
         """)
-        button.clicked.connect(lambda: self._on_invitation_accepted(dialog))
+        # 使用 partial 避免 Lambda 循环引用
+        button.clicked.connect(partial(self._on_invitation_accepted, dialog))
         layout.addWidget(button)
 
         dialog.exec()
@@ -4094,7 +4119,8 @@ class ConfigManager(QMainWindow):
             # 创建定时器轮询支付状态
             self.payment_timer = QTimer()
             self.payment_timer.setInterval(3000)  # 每3秒查询一次
-            self.payment_timer.timeout.connect(lambda: self._check_payment_status(out_trade_no, auth_client))
+            # 使用 partial 避免 Lambda 循环引用
+            self.payment_timer.timeout.connect(partial(self._check_payment_status, out_trade_no, auth_client))
             self.payment_timer.start()
 
             # 监听取消按钮
@@ -4312,7 +4338,8 @@ class ConfigManager(QMainWindow):
             color_btn = QPushButton("选色")
             color_btn.setFixedSize(50, 36)
             color_btn.setStyleSheet("QPushButton { padding: 8px; font-size: 12px; }")
-            color_btn.clicked.connect(lambda checked, inp=color_input: self.choose_color(inp))
+            # 使用 partial 避免 Lambda 循环引用
+            color_btn.clicked.connect(partial(self.choose_color, color_input))
 
             color_preview = QLabel()
             color_preview.setFixedSize(30, 20)
@@ -4353,7 +4380,8 @@ class ConfigManager(QMainWindow):
             text_color_btn = QPushButton("选色")
             text_color_btn.setFixedSize(50, 36)
             text_color_btn.setStyleSheet("QPushButton { padding: 8px; font-size: 12px; }")
-            text_color_btn.clicked.connect(lambda checked, inp=text_color_input: self.choose_color(inp))
+            # 使用 partial 避免 Lambda 循环引用
+            text_color_btn.clicked.connect(partial(self.choose_color, text_color_input))
 
             text_color_preview = QLabel()
             text_color_preview.setFixedSize(30, 20)
@@ -4383,7 +4411,8 @@ class ConfigManager(QMainWindow):
 
             # 删除按钮
             delete_btn = QPushButton("🗑️ 删除")
-            delete_btn.clicked.connect(lambda checked, r=row: self.delete_task(r))
+            # 使用 partial 避免 Lambda 循环引用
+            delete_btn.clicked.connect(partial(self.delete_task, row))
             delete_btn.setFixedHeight(36)
             delete_btn.setStyleSheet(StyleManager.button_danger())
             self.tasks_table.setCellWidget(row, 5, delete_btn)
@@ -4459,7 +4488,8 @@ class ConfigManager(QMainWindow):
         color_btn = QPushButton("选色")
         color_btn.setFixedSize(50, 36)
         color_btn.setStyleSheet("QPushButton { padding: 8px; font-size: 12px; }")
-        color_btn.clicked.connect(lambda checked, inp=color_input: self.choose_color(inp))
+        # 使用 partial 避免 Lambda 循环引用
+        color_btn.clicked.connect(partial(self.choose_color, color_input))
 
         color_preview = QLabel()
         color_preview.setFixedSize(30, 20)
@@ -4485,7 +4515,8 @@ class ConfigManager(QMainWindow):
         text_color_btn = QPushButton("选色")
         text_color_btn.setFixedSize(50, 36)
         text_color_btn.setStyleSheet("QPushButton { padding: 8px; font-size: 12px; }")
-        text_color_btn.clicked.connect(lambda checked, inp=text_color_input: self.choose_color(inp))
+        # 使用 partial 避免 Lambda 循环引用
+        text_color_btn.clicked.connect(partial(self.choose_color, text_color_input))
 
         text_color_preview = QLabel()
         text_color_preview.setFixedSize(30, 20)
@@ -4501,7 +4532,8 @@ class ConfigManager(QMainWindow):
 
         # 删除按钮
         delete_btn = QPushButton("🗑️ 删除")
-        delete_btn.clicked.connect(lambda checked, r=row: self.delete_task(r))
+        # 使用 partial 避免 Lambda 循环引用
+        delete_btn.clicked.connect(partial(self.delete_task, row))
         delete_btn.setFixedHeight(36)
         delete_btn.setStyleSheet(StyleManager.button_danger())
         self.tasks_table.setCellWidget(row, 5, delete_btn)
@@ -4524,7 +4556,8 @@ class ConfigManager(QMainWindow):
                 delete_btn = self.tasks_table.cellWidget(r, 5)
                 if delete_btn:
                     delete_btn.clicked.disconnect()
-                    delete_btn.clicked.connect(lambda checked, row=r: self.delete_task(row))
+                    # 使用 partial 避免 Lambda 循环引用
+                    delete_btn.clicked.connect(partial(self.delete_task, r))
 
             # 刷新时间轴
             self.refresh_timeline_from_table()
@@ -4763,7 +4796,8 @@ class ConfigManager(QMainWindow):
             templates = self.template_manager.get_all_templates(include_custom=False)
             for template in templates:
                 btn = QPushButton(template['name'])
-                btn.clicked.connect(lambda checked, t=template: self.load_template(t['filename']))
+                # 使用 partial 避免 Lambda 循环引用
+                btn.clicked.connect(partial(self.load_template, template['filename']))
                 btn.setStyleSheet(f"QPushButton {{ background-color: white; color: {template['button_color']}; border: 2px solid {template['button_color']}; border-radius: 6px; padding: 6px; }}")
                 btn.setToolTip(template.get('description', ''))
                 self.template_layout.addWidget(btn)
@@ -5607,13 +5641,13 @@ class ConfigManager(QMainWindow):
         # 异步获取配额状态
         class QuotaCheckWorker(QThread):
             finished = Signal(object)
-            
+
             def __init__(self, backend_url, user_id, user_tier):
                 super().__init__()
                 self.backend_url = backend_url
                 self.user_id = user_id
                 self.user_tier = user_tier
-            
+
             def run(self):
                 try:
                     # Vercel冷启动可能需要10-15秒，增加超时时间
@@ -5633,24 +5667,24 @@ class ConfigManager(QMainWindow):
                 except Exception as e:
                     logging.warning(f"配额查询失败: {str(e)}")
                     self.finished.emit(None)
-        
+
         # 创建并启动工作线程
         worker = QuotaCheckWorker(
             self.ai_client.backend_url,
             self.ai_client.user_id,
             self.ai_client.user_tier
         )
-        worker.finished.connect(self._on_quota_status_finished)
+
+        # 使用lambda包装回调，确保worker在完成后被清理
+        def on_finished(quota_info):
+            self._on_quota_status_finished(quota_info)
+            # 断开信号连接
+            worker.finished.disconnect()
+            # 延迟删除worker对象
+            worker.deleteLater()
+
+        worker.finished.connect(on_finished)
         worker.start()
-        
-        # 保存worker引用，避免被垃圾回收
-        if not hasattr(self, '_quota_check_workers'):
-            self._quota_check_workers = []
-        self._quota_check_workers.append(worker)
-        
-        # 清理旧的worker引用（保留最近3个）
-        if len(self._quota_check_workers) > 3:
-            self._quota_check_workers.pop(0)
     
     def _on_quota_status_finished(self, quota_info):
         """配额状态检查完成回调"""
@@ -5738,8 +5772,28 @@ class ConfigManager(QMainWindow):
 
         # 创建并启动工作线程
         self.ai_worker = AIWorker(self.ai_client, user_input)
-        self.ai_worker.finished.connect(self.on_ai_generation_finished)
-        self.ai_worker.error.connect(self.on_ai_generation_error)
+
+        # 使用lambda包装回调，确保worker在完成后被清理
+        def on_finished(result):
+            self.on_ai_generation_finished(result)
+            # 断开所有信号连接
+            self.ai_worker.finished.disconnect()
+            self.ai_worker.error.disconnect()
+            # 延迟删除worker对象
+            self.ai_worker.deleteLater()
+            self.ai_worker = None
+
+        def on_error(error_msg):
+            self.on_ai_generation_error(error_msg)
+            # 断开所有信号连接
+            self.ai_worker.finished.disconnect()
+            self.ai_worker.error.disconnect()
+            # 延迟删除worker对象
+            self.ai_worker.deleteLater()
+            self.ai_worker = None
+
+        self.ai_worker.finished.connect(on_finished)
+        self.ai_worker.error.connect(on_error)
         self.ai_worker.start()
 
     def on_ai_generation_finished(self, result):
@@ -6161,11 +6215,32 @@ class ConfigManager(QMainWindow):
         
         # 取消正在运行的AI工作线程
         if hasattr(self, 'ai_worker') and self.ai_worker:
+            try:
+                # 断开所有信号连接
+                self.ai_worker.finished.disconnect()
+                self.ai_worker.error.disconnect()
+            except:
+                pass
+
             if self.ai_worker.isRunning():
-                self.ai_worker.terminate()
-                self.ai_worker.wait(1000)  # 等待最多1秒
+                # 优先使用requestInterruption()，而不是terminate()
+                self.ai_worker.requestInterruption()
+                # 等待线程自然结束（最多1秒）
+                if not self.ai_worker.wait(1000):
+                    # 如果1秒后还未结束，强制终止
+                    self.ai_worker.terminate()
+                    self.ai_worker.wait()
+
+            # 延迟删除worker对象
+            self.ai_worker.deleteLater()
             self.ai_worker = None
-        
+
+        # 停止支付轮询定时器
+        if hasattr(self, 'payment_timer') and self.payment_timer:
+            if self.payment_timer.isActive():
+                self.payment_timer.stop()
+            self.payment_timer = None
+
         # 取消注册主题管理器组件（如果已注册）
         if hasattr(self, 'theme_manager') and self.theme_manager:
             try:
