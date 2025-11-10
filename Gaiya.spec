@@ -12,6 +12,8 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[
+        # UI主题系统（浅色主题）
+        ('gaiya/ui/', 'gaiya/ui/'),
         # 任务模板文件
         ('tasks_template_24h.json', '.'),
         ('tasks_template_workday.json', '.'),

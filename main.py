@@ -13,7 +13,7 @@ from pathlib import Path
 from datetime import datetime, date
 from version import __version__, VERSION_STRING, VERSION_STRING_ZH, get_version_info
 from PySide6.QtWidgets import (QApplication, QWidget, QSystemTrayIcon, QMenu, QToolTip, QLabel,
-                                QHBoxLayout, QVBoxLayout, QDialog, QFormLayout, QSpinBox, QPushButton)
+                                QHBoxLayout, QVBoxLayout, QDialog, QFormLayout, QSpinBox, QPushButton, QMessageBox)
 from PySide6.QtCore import Qt, QRectF, QTimer, QTime, QFileSystemWatcher, QPoint, Signal, QEventLoop, QSize
 from PySide6.QtGui import QPainter, QColor, QPen, QAction, QFont, QPixmap, QMovie, QCursor
 from enum import Enum
@@ -30,13 +30,14 @@ from gaiya.core.notification_manager import NotificationManager
 from gaiya.ui.pomodoro_panel import PomodoroPanel, PomodoroSettingsDialog
 from gaiya.utils import time_utils, path_utils, data_loader, task_calculator
 
-# Qt-Material主题支持
-try:
-    from qt_material import apply_stylesheet
-    QT_MATERIAL_AVAILABLE = True
-except ImportError:
-    QT_MATERIAL_AVAILABLE = False
-    logging.warning("qt-material未安装，将使用系统默认样式")
+# Qt-Material主题支持（已移除，改用自定义浅色主题）
+# try:
+#     from qt_material import apply_stylesheet
+#     QT_MATERIAL_AVAILABLE = True
+# except ImportError:
+#     QT_MATERIAL_AVAILABLE = False
+#     logging.warning("qt-material未安装，将使用系统默认样式")
+QT_MATERIAL_AVAILABLE = False  # 强制禁用qt-material
 
 # Windows 特定导入
 if platform.system() == 'Windows':
@@ -648,6 +649,28 @@ class TimeProgressBar(QWidget):
         # 创建右键菜单
         tray_menu = QMenu()
 
+        # 优化托盘菜单样式（增加间距和内边距）
+        tray_menu.setStyleSheet("""
+            QMenu {
+                background-color: #FFFFFF;
+                border: 1px solid #E0E0E0;
+                border-radius: 6px;
+                padding: 6px 0;
+            }
+            QMenu::item {
+                padding: 8px 30px 8px 20px;
+                color: #333333;
+            }
+            QMenu::item:selected {
+                background-color: #F5F5F5;
+            }
+            QMenu::separator {
+                height: 1px;
+                background-color: #E0E0E0;
+                margin: 8px 12px;
+            }
+        """)
+
         # 编辑任务时间动作（动态文字）
         self.edit_mode_action = QAction('✏️ 编辑任务时间', self)
         self.edit_mode_action.triggered.connect(self.toggle_edit_mode)
@@ -671,12 +694,15 @@ class TimeProgressBar(QWidget):
         config_action.triggered.connect(self.open_config_gui)
         tray_menu.addAction(config_action)
 
-        tray_menu.addSeparator()
-
         # 番茄钟动作
         pomodoro_action = QAction('🍅 启动番茄钟', self)
         pomodoro_action.triggered.connect(self.start_pomodoro)
         tray_menu.addAction(pomodoro_action)
+
+        # 统计报告
+        statistics_action = QAction('📊 统计报告', self)
+        statistics_action.triggered.connect(self.show_statistics)
+        tray_menu.addAction(statistics_action)
 
         tray_menu.addSeparator()
 
@@ -696,11 +722,6 @@ class TimeProgressBar(QWidget):
         tray_menu.addMenu(notification_menu)
 
         tray_menu.addSeparator()
-
-        # 统计报告
-        statistics_action = QAction('📊 统计报告', self)
-        statistics_action.triggered.connect(self.show_statistics)
-        tray_menu.addAction(statistics_action)
 
         # 重载配置动作
         reload_action = QAction('🔄 重载配置', self)
@@ -2145,18 +2166,18 @@ def main():
 
     logger.info(f"Final Qt style: {app.style().objectName()}")
 
-    # 应用Qt-Material主题
-    if QT_MATERIAL_AVAILABLE:
-        try:
-            extra = {
-                'density_scale': '0',
-                'font_family': 'Microsoft YaHei',
-                'font_size': '13px',
-            }
-            apply_stylesheet(app, theme='dark_teal.xml', extra=extra)
-            logger.info("✨ 已应用Qt-Material主题: dark_teal")
-        except Exception as e:
-            logger.warning(f"应用Material主题失败: {e}，使用默认样式")
+    # 应用Qt-Material主题（已禁用，改用自定义浅色主题）
+    # if QT_MATERIAL_AVAILABLE:
+    #     try:
+    #         extra = {
+    #             'density_scale': '0',
+    #             'font_family': 'Microsoft YaHei',
+    #             'font_size': '13px',
+    #         }
+    #         apply_stylesheet(app, theme='dark_teal.xml', extra=extra)
+    #         logger.info("✨ 已应用Qt-Material主题: dark_teal")
+    #     except Exception as e:
+    #         logger.warning(f"应用Material主题失败: {e}，使用默认样式")
 
     # 创建并显示主窗口（先创建窗口，再启动后台服务）
     window = TimeProgressBar()

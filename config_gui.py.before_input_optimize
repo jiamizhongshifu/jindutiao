@@ -113,7 +113,7 @@ class SaveTemplateDialog(QDialog):
                 "• 选择历史模板将直接覆盖该模板\n"
                 "• 输入新名称将创建新的模板"
             )
-            tip_label.setStyleSheet(StyleManager.label_hint())
+            tip_label.setStyleSheet("color: #888888; font-size: 11px; padding: 10px;")
             layout.addWidget(tip_label)
 
         # 按钮
@@ -480,7 +480,6 @@ class ConfigManager(QMainWindow):
             template_layout.addWidget(QLabel("选择模板:"))
 
             template_combo = QComboBox()
-            template_combo.setStyleSheet(StyleManager.dropdown())
             templates = self.template_manager.get_all_templates()
             for template in templates:
                 template_combo.addItem(template['name'], template['id'])
@@ -738,7 +737,6 @@ class ConfigManager(QMainWindow):
             template_layout.addWidget(QLabel("选择模板:"))
 
             template_combo = QComboBox()
-            template_combo.setStyleSheet(StyleManager.dropdown())
             templates = self.template_manager.get_all_templates()
             current_template_id = current_schedule.get('template_id', '')
 
@@ -1504,7 +1502,6 @@ class ConfigManager(QMainWindow):
         height_layout.addWidget(custom_label)
 
         self.height_spin = QSpinBox()
-        self.height_spin.setStyleSheet(StyleManager.input_number())
         self.height_spin.setRange(8, 100)
         # 延迟读取配置值，避免配置未加载时出错
         current_height = self.config.get('bar_height', 20) if self.config else 20
@@ -1523,14 +1520,12 @@ class ConfigManager(QMainWindow):
 
         # 显示器索引
         self.screen_spin = QSpinBox()
-        self.screen_spin.setStyleSheet(StyleManager.input_number())
         self.screen_spin.setRange(0, 10)
         self.screen_spin.setValue(self.config.get('screen_index', 0) if self.config else 0)
         basic_layout.addRow("显示器索引:", self.screen_spin)
 
         # 更新间隔
         self.interval_spin = QSpinBox()
-        self.interval_spin.setStyleSheet(StyleManager.input_number())
         self.interval_spin.setRange(100, 60000)
         self.interval_spin.setValue(self.config.get('update_interval', 1000) if self.config else 1000)
         self.interval_spin.setSuffix(" 毫秒")
@@ -1592,7 +1587,6 @@ class ConfigManager(QMainWindow):
 
         # 背景透明度
         self.opacity_spin = QSpinBox()
-        self.opacity_spin.setStyleSheet(StyleManager.input_number())
         self.opacity_spin.setRange(0, 255)
         self.opacity_spin.setValue(self.config.get('background_opacity', 180) if self.config else 180)
         color_layout.addRow("背景透明度:", self.opacity_spin)
@@ -1619,7 +1613,6 @@ class ConfigManager(QMainWindow):
 
         # 时间标记宽度
         self.marker_width_spin = QSpinBox()
-        self.marker_width_spin.setStyleSheet(StyleManager.input_number())
         self.marker_width_spin.setRange(1, 10)
         self.marker_width_spin.setValue(self.config.get('marker_width', 2) if self.config else 2)
         self.marker_width_spin.setSuffix(" 像素")
@@ -1628,7 +1621,6 @@ class ConfigManager(QMainWindow):
         # 时间标记类型
         marker_type_layout = QHBoxLayout()
         self.marker_type_combo = QComboBox()
-        self.marker_type_combo.setStyleSheet(StyleManager.dropdown())
         self.marker_type_combo.addItems(["line", "image", "gif"])
         marker_type = self.config.get('marker_type', 'line') if self.config else 'line'
         self.marker_type_combo.setCurrentText(marker_type)
@@ -1691,7 +1683,6 @@ class ConfigManager(QMainWindow):
         marker_size_layout.addWidget(custom_size_label)
 
         self.marker_size_spin = QSpinBox()
-        self.marker_size_spin.setStyleSheet(StyleManager.input_number())
         self.marker_size_spin.setRange(20, 200)
         marker_size = self.config.get('marker_size', 50) if self.config else 50
         self.marker_size_spin.setValue(marker_size)
@@ -1709,7 +1700,6 @@ class ConfigManager(QMainWindow):
 
         # 标记图片 X 轴偏移
         self.marker_x_offset_spin = QSpinBox()
-        self.marker_x_offset_spin.setStyleSheet(StyleManager.input_number())
         self.marker_x_offset_spin.setRange(-100, 100)
         self.marker_x_offset_spin.setValue(self.config.get('marker_x_offset', 0))
         self.marker_x_offset_spin.setSuffix(" px")
@@ -1724,7 +1714,6 @@ class ConfigManager(QMainWindow):
 
         # 标记图片 Y 轴偏移
         self.marker_y_offset_spin = QSpinBox()
-        self.marker_y_offset_spin.setStyleSheet(StyleManager.input_number())
         self.marker_y_offset_spin.setRange(-100, 100)
         self.marker_y_offset_spin.setValue(self.config.get('marker_y_offset', 0))
         self.marker_y_offset_spin.setSuffix(" px")
@@ -1739,7 +1728,6 @@ class ConfigManager(QMainWindow):
 
         # 标记动画播放速度
         self.marker_speed_spin = QSpinBox()
-        self.marker_speed_spin.setStyleSheet(StyleManager.input_number())
         self.marker_speed_spin.setRange(10, 500)
         self.marker_speed_spin.setValue(self.config.get('marker_speed', 100))
         self.marker_speed_spin.setSuffix(" %")
@@ -1773,7 +1761,6 @@ class ConfigManager(QMainWindow):
 
         # 圆角半径
         self.radius_spin = QSpinBox()
-        self.radius_spin.setStyleSheet(StyleManager.input_number())
         self.radius_spin.setRange(0, 20)
         self.radius_spin.setValue(self.config.get('corner_radius', 0))
         self.radius_spin.setSuffix(" 像素")
@@ -1815,11 +1802,10 @@ class ConfigManager(QMainWindow):
         # AI输入框
         input_container = QHBoxLayout()
         input_label = QLabel("描述您的计划:")
-        input_label.setStyleSheet(StyleManager.label_subtitle())
+        input_label.setStyleSheet("font-weight: bold;")
         input_container.addWidget(input_label)
 
         self.ai_input = QLineEdit()
-        self.ai_input.setStyleSheet(StyleManager.input_text())
         self.ai_input.setPlaceholderText("例如: 明天9点开会1小时,然后写代码到下午5点,中午12点休息1小时,晚上6点健身...")
         self.ai_input.setMinimumHeight(35)
         self.ai_input.returnPressed.connect(self.on_ai_generate_clicked)  # 支持回车键
@@ -1906,7 +1892,6 @@ class ConfigManager(QMainWindow):
 
         # 创建主题下拉框
         self.theme_combo = QComboBox()
-        self.theme_combo.setStyleSheet(StyleManager.dropdown())
         self.theme_combo.setMinimumWidth(150)
 
         # 延迟加载主题列表
@@ -1969,7 +1954,6 @@ class ConfigManager(QMainWindow):
 
         # 创建自定义模板下拉框
         self.custom_template_combo = QComboBox()
-        self.custom_template_combo.setStyleSheet(StyleManager.dropdown())
         self.custom_template_combo.setMinimumWidth(200)
         self.custom_template_layout.addWidget(self.custom_template_combo)
 
@@ -2023,7 +2007,6 @@ class ConfigManager(QMainWindow):
 
         # 任务表格
         self.tasks_table = QTableWidget()
-        self.tasks_table.setStyleSheet(StyleManager.table())
         self.tasks_table.setColumnCount(6)
         self.tasks_table.setHorizontalHeaderLabels(["开始时间", "结束时间", "任务名称", "背景颜色", "文字颜色", "操作"])
         self.tasks_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
@@ -2080,7 +2063,6 @@ class ConfigManager(QMainWindow):
 
         # 已配置规则表格
         self.schedule_table = QTableWidget()
-        self.schedule_table.setStyleSheet(StyleManager.table())
         self.schedule_table.setColumnCount(4)
         self.schedule_table.setHorizontalHeaderLabels([
             "模板名称", "应用时间", "状态", "操作"
@@ -2363,7 +2345,7 @@ class ConfigManager(QMainWindow):
                 margin-bottom: 10px;
             }
             QGroupBox::title {
-                color: #333333;
+                color: white;
                 font-weight: bold;
                 font-size: 14px;
             }
@@ -2415,7 +2397,7 @@ class ConfigManager(QMainWindow):
                 margin-bottom: 10px;
             }
             QGroupBox::title {
-                color: #333333;
+                color: white;
                 font-weight: bold;
                 font-size: 14px;
             }
@@ -2478,7 +2460,6 @@ class ConfigManager(QMainWindow):
         # 免打扰开始时间
         quiet_start_layout = QHBoxLayout()
         self.quiet_start_time = QTimeEdit()
-        self.quiet_start_time.setStyleSheet(StyleManager.input_time())
         self.quiet_start_time.setDisplayFormat("HH:mm")
         self.quiet_start_time.setFixedHeight(36)
         start_time_str = quiet_hours.get('start', '22:00')
@@ -2493,7 +2474,6 @@ class ConfigManager(QMainWindow):
         # 免打扰结束时间
         quiet_end_layout = QHBoxLayout()
         self.quiet_end_time = QTimeEdit()
-        self.quiet_end_time.setStyleSheet(StyleManager.input_time())
         self.quiet_end_time.setDisplayFormat("HH:mm")
         self.quiet_end_time.setFixedHeight(36)
         end_time_str = quiet_hours.get('end', '08:00')
@@ -2556,7 +2536,23 @@ class ConfigManager(QMainWindow):
             header_layout.addSpacing(15)
             logout_btn = QPushButton("退出登录")
             logout_btn.setFixedSize(100, 28)  # 增加宽度以防止文字被截断
-            logout_btn.setStyleSheet(StyleManager.button_minimal())
+            logout_btn.setStyleSheet("""
+                QPushButton {
+                    background-color: transparent;
+                    color: #888888;
+                    border: 1px solid #666666;
+                    border-radius: 4px;
+                    font-size: 13px;
+                }
+                QPushButton:hover {
+                    background-color: rgba(136, 136, 136, 0.15);
+                    color: #AAAAAA;
+                    border-color: #888888;
+                }
+                QPushButton:pressed {
+                    background-color: rgba(136, 136, 136, 0.25);
+                }
+            """)
             logout_btn.clicked.connect(self._on_logout_clicked)
             header_layout.addWidget(logout_btn)
 
@@ -3018,12 +3014,14 @@ class ConfigManager(QMainWindow):
         card.setCursor(Qt.CursorShape.PointingHandCursor)
 
         # 突出显示的样式
-        border_color = "#FF9800" if is_selected else "#E0E0E0"
+        border_color = "#FF9800" if is_selected else "#666"
         border_width = "3px" if is_selected else "2px"
 
         card.setStyleSheet(f"""
             QFrame#plan_card_{plan['id']} {{
-                background-color: #FFFFFF;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(60, 60, 60, 220),
+                    stop:1 rgba(40, 40, 40, 220));
                 border: {border_width} solid {border_color};
                 border-radius: 12px;
             }}
@@ -3038,7 +3036,7 @@ class ConfigManager(QMainWindow):
 
         # 标题
         name_label = QLabel(plan['name'])
-        name_label.setStyleSheet("font-size: 14px; font-weight: bold; color: #333333; background: transparent;")
+        name_label.setStyleSheet("font-size: 14px; font-weight: bold; color: white; background: transparent;")
         header_layout.addWidget(name_label)
 
         header_layout.addStretch()
@@ -3062,37 +3060,23 @@ class ConfigManager(QMainWindow):
 
         layout.addSpacing(12)  # 从 10 增加到 12
 
-        # 月均价格（大号突出）- 价格和"/月"在同一行
+        # 月均价格（大号突出）
         if 'monthly_price' in plan:
-            # 创建水平布局容器
-            price_row_layout = QHBoxLayout()
-            price_row_layout.setSpacing(4)
-            price_row_layout.setContentsMargins(0, 0, 0, 0)
-
-            # 添加弹性空间使内容居中
-            price_row_layout.addStretch()
-
-            # 价格
             monthly_price_label = QLabel(plan['monthly_price'])
             monthly_price_label.setStyleSheet("font-size: 36px; font-weight: bold; color: #FF9800; background: transparent;")
-            price_row_layout.addWidget(monthly_price_label)
+            monthly_price_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            layout.addWidget(monthly_price_label)
 
-            # "/月" - 与价格在同一行，对齐到价格底部
             monthly_period_label = QLabel("/月")
-            monthly_period_label.setStyleSheet("font-size: 14px; color: #888888; background: transparent;")
-            monthly_period_label.setAlignment(Qt.AlignmentFlag.AlignBottom)
-            price_row_layout.addWidget(monthly_period_label)
-
-            # 添加弹性空间使内容居中
-            price_row_layout.addStretch()
-
-            layout.addLayout(price_row_layout)
+            monthly_period_label.setStyleSheet("font-size: 14px; color: rgba(255,255,255,0.8); background: transparent;")
+            monthly_period_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            layout.addWidget(monthly_period_label)
 
         layout.addSpacing(8)  # 从 5 增加到 8
 
         # 年费价格
         price_label = QLabel(plan['price'] + plan['period'])
-        price_label.setStyleSheet("font-size: 16px; font-weight: 600; color: #333333; background: transparent;")
+        price_label.setStyleSheet("font-size: 16px; font-weight: 600; color: white; background: transparent;")
         price_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(price_label)
 
@@ -3101,7 +3085,7 @@ class ConfigManager(QMainWindow):
             original_price_label = QLabel(plan['original_price'] + plan['period'])
             original_price_label.setStyleSheet("""
                 font-size: 13px;
-                color: #999999;
+                color: rgba(255,255,255,0.5);
                 background: transparent;
                 text-decoration: line-through;
             """)
@@ -3140,10 +3124,10 @@ class ConfigManager(QMainWindow):
             if i == 0:
                 # 第一项是标题
                 feature_label = QLabel(f"✓ {feature}")
-                feature_label.setStyleSheet("font-size: 12px; color: #333333; background: transparent; font-weight: 600;")
+                feature_label.setStyleSheet("font-size: 12px; color: white; background: transparent; font-weight: 600;")
             else:
                 feature_label = QLabel(f"✓ {feature}")
-                feature_label.setStyleSheet("font-size: 11px; color: #666666; background: transparent;")
+                feature_label.setStyleSheet("font-size: 11px; color: rgba(255,255,255,0.9); background: transparent;")
             layout.addWidget(feature_label)
             if i < len(plan['features']) - 1:  # 除了最后一项，每项后添加间距
                 layout.addSpacing(4)
@@ -3152,21 +3136,21 @@ class ConfigManager(QMainWindow):
 
         # 底部信息：分隔线 + 有效期 + 续费说明
         separator = QLabel("─" * 32)
-        separator.setStyleSheet("color: #E0E0E0; background: transparent; font-size: 10px;")
+        separator.setStyleSheet("color: rgba(255,255,255,0.2); background: transparent; font-size: 10px;")
         separator.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(separator)
 
         layout.addSpacing(8)
 
         validity_label = QLabel(plan['validity'])
-        validity_label.setStyleSheet("font-size: 11px; color: #666666; background: transparent;")
+        validity_label.setStyleSheet("font-size: 11px; color: rgba(255,255,255,0.7); background: transparent;")
         validity_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(validity_label)
 
         layout.addSpacing(4)
 
         renewal_label = QLabel(plan['renewal'])
-        renewal_label.setStyleSheet("font-size: 10px; color: #888888; background: transparent;")
+        renewal_label.setStyleSheet("font-size: 10px; color: rgba(255,255,255,0.6); background: transparent;")
         renewal_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(renewal_label)
 
@@ -3186,8 +3170,8 @@ class ConfigManager(QMainWindow):
 
         card.setStyleSheet(f"""
             QFrame#plan_card_{plan['id']} {{
-                background-color: #FFFFFF;
-                border: 2px solid #E0E0E0;
+                background-color: rgba(40, 40, 40, 200);
+                border: 2px solid #555;
                 border-radius: 12px;
             }}
         """)
@@ -3303,8 +3287,8 @@ class ConfigManager(QMainWindow):
 
         card.setStyleSheet(f"""
             QFrame#plan_card_{plan['id']} {{
-                background-color: #FFFFFF;
-                border: 2px solid #E0E0E0;
+                background-color: rgba(50, 50, 50, 200);
+                border: 2px solid #888;
                 border-radius: 12px;
             }}
         """)
@@ -3323,7 +3307,7 @@ class ConfigManager(QMainWindow):
 
         # 标题文字
         name_label = QLabel(plan['name'])
-        name_label.setStyleSheet("font-size: 14px; font-weight: bold; color: #333333; background: transparent;")
+        name_label.setStyleSheet("font-size: 14px; font-weight: bold; color: white; background: transparent;")
         title_row.addWidget(name_label)
 
         # 标题与标签之间的间距
@@ -3364,7 +3348,7 @@ class ConfigManager(QMainWindow):
 
         # 一次付费说明
         onetime_label = QLabel("一次付费")
-        onetime_label.setStyleSheet("font-size: 12px; color: #888888; background: transparent;")
+        onetime_label.setStyleSheet("font-size: 12px; color: rgba(255,255,255,0.7); background: transparent;")
         onetime_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(onetime_label)
 
@@ -3377,7 +3361,7 @@ class ConfigManager(QMainWindow):
         layout.addSpacing(15)
 
         # 邀请函链接
-        invitation_link = QLabel('<a href="#" style="color: #666666; text-decoration: none;">📜 阅读合伙人邀请函</a>')
+        invitation_link = QLabel('<a href="#" style="color: #FFD700; text-decoration: none;">📜 阅读合伙人邀请函</a>')
         invitation_link.setStyleSheet("font-size: 12px; background: transparent;")
         invitation_link.setAlignment(Qt.AlignmentFlag.AlignCenter)
         invitation_link.setOpenExternalLinks(False)
@@ -3423,10 +3407,10 @@ class ConfigManager(QMainWindow):
             if i == 0:
                 # 第一项是标题
                 feature_label = QLabel(f"✓ {feature}")
-                feature_label.setStyleSheet("font-size: 12px; color: #333333; background: transparent; font-weight: 600;")
+                feature_label.setStyleSheet("font-size: 12px; color: white; background: transparent; font-weight: 600;")
             else:
                 feature_label = QLabel(f"✓ {feature}")
-                feature_label.setStyleSheet("font-size: 11px; color: #666666; background: transparent;")
+                feature_label.setStyleSheet("font-size: 11px; color: rgba(255,255,255,0.85); background: transparent;")
             layout.addWidget(feature_label)
             if i < len(plan['features']) - 1:
                 layout.addSpacing(3)
@@ -3435,7 +3419,7 @@ class ConfigManager(QMainWindow):
 
         # 底部信息：分隔线 + 有效期 + 续费说明
         separator = QLabel("─" * 30)
-        separator.setStyleSheet("color: #E0E0E0; background: transparent; font-size: 10px;")
+        separator.setStyleSheet("color: rgba(255,255,255,0.2); background: transparent; font-size: 10px;")
         separator.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(separator)
 
@@ -3449,7 +3433,7 @@ class ConfigManager(QMainWindow):
         layout.addSpacing(4)
 
         renewal_label = QLabel(plan['renewal'])
-        renewal_label.setStyleSheet("font-size: 10px; color: #888888; background: transparent;")
+        renewal_label.setStyleSheet("font-size: 10px; color: rgba(255,255,255,0.6); background: transparent;")
         renewal_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(renewal_label)
 
@@ -3540,19 +3524,17 @@ class ConfigManager(QMainWindow):
 
         <p style="margin-bottom: 15px;">如果你正在读这封信，我猜你和我一样，曾无数次感受到时间的无声流逝。</p>
 
-        <p style="margin-bottom: 15px;">从2023年初的深夜构想到今天，GaiYa 已陪伴了<b>几百位早期用户</b>度过他们的每一个工作日。有人用它管理番茄钟，有人用它切换工作与生活，还有人说："看到进度条走到'下班'那一刻，终于能心安理得地关电脑了。"</p>
-
         <p style="margin-bottom: 15px;">我是 GaiYa 的创造者，一名产品经理，也是时间管理的长期实践者。2023年初的某个深夜，我盯着屏幕上密密麻麻的任务清单，突然意识到：<b>我们需要的不是更多任务管理工具，而是一种让时间「看得见、摸得着」的方式</b>。</p>
 
         <p style="margin-bottom: 15px;">于是有了 GaiYa —— 一条桌面进度条，默默守护你的每一分钟。</p>
 
-        <p style="margin-bottom: 15px; margin-top: 20px;"><b style="color: #8B4513;">✨ 为什么做 GaiYa？</b></p>
+        <p style="margin-bottom: 15px; margin-top: 20px;"><b style="color: #8B4513;">为什么做 GaiYa？</b></p>
 
         <p style="margin-bottom: 15px;">我曾亲手打造过多个从0到1的产品，有成功也有失败。但每次复盘，最深的感悟都是：<b>时间管理的本质，不是效率，而是觉察</b>。</p>
 
         <p style="margin-bottom: 15px;">当你看见那条进度条一点点推进，看见今天已经过去了63%，看见"下班"色块还有2小时才到 —— 你会做出不同的选择。这就是 GaiYa 想做的事：<b>让时间可视化，让选择更自主</b>。</p>
 
-        <p style="margin-bottom: 15px; margin-top: 20px;"><b style="color: #8B4513;">🤝 会员合伙人意味着什么？</b></p>
+        <p style="margin-bottom: 15px; margin-top: 20px;"><b style="color: #8B4513;">会员合伙人意味着什么？</b></p>
 
         <p style="margin-bottom: 15px;">GaiYa 现在还很年轻。我希望找到一群真正认同这个理念的人，不只是用户，而是<b>产品的共创者</b>。</p>
 
@@ -3562,7 +3544,7 @@ class ConfigManager(QMainWindow):
         <p style="margin-bottom: 15px; margin-left: 20px;">一次付费，永久使用。无限次AI任务生成、去水印、数据云同步、所有未来新功能 —— 我会持续打磨，让它真正成为你效率工作流的一部分。</p>
 
         <p style="margin-bottom: 10px;"><b>2. 产品决策的话语权</b></p>
-        <p style="margin-bottom: 15px; margin-left: 20px;">你将获邀加入<b>会员合伙人专属微信群（首批限额1000人）</b>，与我和其他种子用户直接对话。作为首批成员，你将亲历社群从0到1的搭建过程。你的需求、你的吐槽、你的建议 —— 都会直接影响产品的走向。</p>
+        <p style="margin-bottom: 15px; margin-left: 20px;">你将获邀加入<b>即将开放的会员合伙人专属微信群</b>，与我和其他种子用户直接对话。作为首批成员，你将亲历社群从0到1的搭建过程。你的需求、你的吐槽、你的建议 —— 都会直接影响产品的走向。</p>
 
         <p style="margin-bottom: 10px;"><b>3. 优先体验与专属支持</b></p>
         <p style="margin-bottom: 15px; margin-left: 20px;">所有新功能，你将第一时间体验。遇到问题？<b>专属1v1咨询通道</b>，我会亲自回复，帮你定制最适合的工作流。</p>
@@ -3570,34 +3552,13 @@ class ConfigManager(QMainWindow):
         <p style="margin-bottom: 10px;"><b>4. 共享成长的价值（规划中）</b></p>
         <p style="margin-bottom: 15px; margin-left: 20px;">我正在搭建<b>33%推荐返现机制</b>。当 GaiYa 帮到你的朋友时，你也将获得实际收益。这不是分销，而是价值共享 —— 好产品，值得一起传播。</p>
 
-        <p style="margin-bottom: 15px; margin-top: 20px;"><b style="color: #8B4513;">💰 关于1200元会员费用</b></p>
-
-        <p style="margin-bottom: 15px;">这不是一个拍脑袋的数字。让我和你算笔账：</p>
-
-        <p style="margin-bottom: 10px; margin-left: 20px;">• AI任务生成的API成本，每次约0.5元，月度会员每月20次 = 10元/月</p>
-        <p style="margin-bottom: 10px; margin-left: 20px;">• 云同步服务器费用，每用户每年约50元</p>
-        <p style="margin-bottom: 10px; margin-left: 20px;">• 持续开发投入（新功能、bug修复、1v1客服支持）</p>
-
-        <p style="margin-bottom: 15px;">1200元换算下来，相当于<b>年费200元使用6年</b>——而我承诺的是<b style="color: #4CAF50;">终身使用</b>。这是我对产品长期主义的承诺。</p>
-
-        <p style="margin-bottom: 15px;">这笔费用将100%投入到：<b>产品研发（60%）</b>、<b>服务器成本（30%）</b>、<b>用户运营（10%）</b>。每一分钱，都会让 GaiYa 变得更好。</p>
-
-        <p style="margin-bottom: 15px; margin-top: 20px;"><b style="color: #8B4513;">⏰ 为什么是现在？</b></p>
+        <p style="margin-bottom: 15px; margin-top: 20px;"><b style="color: #8B4513;">为什么是现在？</b></p>
 
         <p style="margin-bottom: 15px;">GaiYa 刚刚完成品牌升级（v1.5），会员系统刚刚上线。此刻加入的你，是真正的<b>种子用户</b>，你的每一个反馈都能塑造产品的未来形态。</p>
 
-        <p style="margin-bottom: 15px;">此次会员合伙人招募，<b style="color: #FF9800;">首批仅开放1000个名额</b>，且<b>一旦售罄将永不再开放此优惠价格</b>。我希望每一位加入的人，都是真正认同「时间可视化」理念的同路人。</p>
+        <p style="margin-bottom: 15px;">这次会员合伙人招募，<b>名额有限</b>，也是为了确保社群质量 —— 我希望每一位加入的人，都是真正认同「时间可视化」理念的同路人。</p>
 
-        <p style="margin-bottom: 15px; margin-top: 20px;"><b style="color: #8B4513;">💬 来自早期用户的声音</b></p>
-
-        <p style="margin-bottom: 10px; font-style: italic; margin-left: 20px; color: #666;">
-        "进度条让我第一次感受到'时间握在手里'的踏实感。" —— @产品经理 Alex
-        </p>
-        <p style="margin-bottom: 15px; font-style: italic; margin-left: 20px; color: #666;">
-        "工作配色和休息配色的切换，让我学会了按时下班。" —— @UI设计师 小林
-        </p>
-
-        <p style="margin-bottom: 15px; margin-top: 20px;"><b style="color: #8B4513;">📋 最后的话</b></p>
+        <p style="margin-bottom: 15px; margin-top: 20px;"><b style="color: #8B4513;">最后的话</b></p>
 
         <p style="margin-bottom: 15px;">会员合伙人计划属于数字服务，一旦加入<b>无法退款</b>。但我相信，如果你真的认同这个理念，1200元换来的不只是一个工具，而是：</p>
 
@@ -3693,8 +3654,7 @@ class ConfigManager(QMainWindow):
         tips_frame = QFrame()
         tips_frame.setStyleSheet("""
             QFrame {
-                background-color: #FFFFFF;
-                border: none;
+                background-color: rgba(50, 50, 50, 180);
                 border-radius: 8px;
                 padding: 0px;
             }
@@ -3706,7 +3666,7 @@ class ConfigManager(QMainWindow):
 
         # 标题
         title_label = QLabel("💡 会员提示")
-        title_label.setStyleSheet("font-size: 14px; font-weight: bold; color: #333333; background: transparent;")
+        title_label.setStyleSheet("font-size: 14px; font-weight: bold; color: #333333;")
         layout.addWidget(title_label)
 
         # 说明文字
@@ -3719,8 +3679,6 @@ class ConfigManager(QMainWindow):
             font-size: 13px;
             color: rgba(51, 51, 51, 0.85);
             line-height: 1.6;
-            background: transparent;
-            border: none;
         """)
         tips_label.setWordWrap(True)
         tips_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
@@ -3766,32 +3724,31 @@ class ConfigManager(QMainWindow):
 
         # 创建表格
         table = QTableWidget()
-        table.setStyleSheet(StyleManager.table())
         table.setColumnCount(5)  # 功能名称 + 4个等级
         table.setHorizontalHeaderLabels(["功能特性", "免费版", "Pro 月度", "Pro 年度", "永久会员"])
 
         # 设置表格样式
         table.setStyleSheet("""
             QTableWidget {
-                background-color: #FFFFFF;
-                border: 1px solid #E0E0E0;
+                background-color: rgba(40, 40, 40, 180);
+                border: 1px solid rgba(255, 255, 255, 0.1);
                 border-radius: 8px;
-                gridline-color: #E0E0E0;
-                color: #333333;
+                gridline-color: rgba(51, 51, 51, 0.1);
+                color: white;
             }
             QTableWidget::item {
                 padding: 12px 8px;
-                border-bottom: 1px solid #F0F0F0;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             }
             QHeaderView::section {
-                background-color: #F5F5F5;
-                color: #333333;
+                background-color: rgba(60, 60, 60, 200);
+                color: white;
                 font-weight: bold;
                 font-size: 14px;
                 padding: 12px 8px;
                 border: none;
-                border-right: 1px solid #E0E0E0;
-                border-bottom: 1px solid #E0E0E0;
+                border-right: 1px solid rgba(255, 255, 255, 0.1);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.15);
             }
             QHeaderView::section:first {
                 border-top-left-radius: 8px;
@@ -3902,8 +3859,8 @@ class ConfigManager(QMainWindow):
                 # 分组标题行
                 item = QTableWidgetItem(data["name"])
                 item.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-                item.setBackground(QColor(245, 245, 245))  # #F5F5F5
-                item.setForeground(QColor(51, 51, 51))  # #333333
+                item.setBackground(QColor(60, 60, 60, 200))
+                item.setForeground(QColor(255, 255, 255))
                 font = item.font()
                 font.setBold(True)
                 item.setFont(font)
@@ -3989,11 +3946,13 @@ class ConfigManager(QMainWindow):
                 if card.plan_id == "pro_yearly":
                     # 年度卡片
                     is_selected = (card.plan_id == plan_id)
-                    border_color = "#FF9800" if is_selected else "#E0E0E0"
+                    border_color = "#FF9800" if is_selected else "#666"
                     border_width = "3px" if is_selected else "2px"
                     card.setStyleSheet(f"""
                         QFrame#plan_card_{card.plan_id} {{
-                            background-color: #FFFFFF;
+                            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 rgba(60, 60, 60, 220),
+                                stop:1 rgba(40, 40, 40, 220));
                             border: {border_width} solid {border_color};
                             border-radius: 12px;
                         }}
@@ -4001,11 +3960,11 @@ class ConfigManager(QMainWindow):
                 elif card.plan_id == "pro_monthly":
                     # 月度卡片
                     is_selected = (card.plan_id == plan_id)
-                    border_color = "#FF9800" if is_selected else "#E0E0E0"
+                    border_color = "#FF9800" if is_selected else "#555"
                     border_width = "3px" if is_selected else "2px"
                     card.setStyleSheet(f"""
                         QFrame#plan_card_{card.plan_id} {{
-                            background-color: #FFFFFF;
+                            background-color: rgba(40, 40, 40, 200);
                             border: {border_width} solid {border_color};
                             border-radius: 12px;
                         }}
@@ -4013,11 +3972,11 @@ class ConfigManager(QMainWindow):
                 elif card.plan_id == "lifetime":
                     # 会员合伙人卡片
                     is_selected = (card.plan_id == plan_id)
-                    border_color = "#FFD700" if is_selected else "#E0E0E0"
+                    border_color = "#FFD700" if is_selected else "#888"
                     border_width = "3px" if is_selected else "2px"
                     card.setStyleSheet(f"""
                         QFrame#plan_card_{card.plan_id} {{
-                            background-color: #FFFFFF;
+                            background-color: rgba(50, 50, 50, 200);
                             border: {border_width} solid {border_color};
                             border-radius: 12px;
                         }}
@@ -4274,7 +4233,6 @@ class ConfigManager(QMainWindow):
 
             # 开始时间
             start_time = QTimeEdit()
-            start_time.setStyleSheet(StyleManager.input_time())
             start_time.setDisplayFormat("HH:mm")
             # 特殊处理 24:00
             if task['start'] == "24:00":
@@ -4285,7 +4243,6 @@ class ConfigManager(QMainWindow):
 
             # 结束时间
             end_time = QTimeEdit()
-            end_time.setStyleSheet(StyleManager.input_time())
             end_time.setDisplayFormat("HH:mm")
             # 特殊处理 24:00
             if task['end'] == "24:00":
@@ -4429,14 +4386,12 @@ class ConfigManager(QMainWindow):
 
         # 设置开始时间
         start_time = QTimeEdit()
-        start_time.setStyleSheet(StyleManager.input_time())
         start_time.setDisplayFormat("HH:mm")
         start_time.setTime(new_start_time)
         self.tasks_table.setCellWidget(row, 0, start_time)
 
         # 设置结束时间
         end_time = QTimeEdit()
-        end_time.setStyleSheet(StyleManager.input_time())
         end_time.setDisplayFormat("HH:mm")
         end_time.setTime(new_end_time)
         self.tasks_table.setCellWidget(row, 1, end_time)
