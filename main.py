@@ -399,8 +399,11 @@ class TimeProgressBar(QWidget):
             try:
                 self.marker_movie.frameChanged.disconnect(self._on_gif_frame_changed)
                 self.marker_movie.finished.disconnect(self._on_marker_animation_finished)
-            except:
-                pass  # 如果没有连接，忽略错误
+            except RuntimeError:
+                # 信号已经断开，忽略
+                pass
+            except Exception as e:
+                self.logger.debug(f"断开标记动画信号时出错: {e}")
             self.marker_movie.stop()
             self.marker_movie.deleteLater()  # 确保对象被正确清理
             self.marker_movie = None
@@ -1247,15 +1250,21 @@ class TimeProgressBar(QWidget):
                 try:
                     self.marker_movie.frameChanged.disconnect(self._on_gif_frame_changed)
                     self.logger.info(f"[GIF修复] 已断开frameChanged信号连接")
-                except:
+                except RuntimeError:
+                    # 信号已经断开，忽略
                     pass
+                except Exception as e:
+                    self.logger.debug(f"断开frameChanged信号时出错: {e}")
 
                 # 断开finished信号，避免jumpToFrame(0)时触发finished回调
                 try:
                     self.marker_movie.finished.disconnect(self._on_marker_animation_finished)
                     self.logger.info(f"[GIF修复] 已断开finished信号连接")
-                except:
+                except RuntimeError:
+                    # 信号已经断开，忽略
                     pass
+                except Exception as e:
+                    self.logger.debug(f"断开finished信号时出错: {e}")
 
                 # 创建高精度定时器手动控制帧切换
                 from PySide6.QtCore import QTimer, Qt
@@ -1658,7 +1667,9 @@ class TimeProgressBar(QWidget):
             if hours == 24 and minutes == 0:
                 return 1440
             return hours * 60 + minutes
-        except:
+        except (ValueError, AttributeError) as e:
+            # 时间格式错误或time_str不是字符串
+            self.logger.debug(f"时间转换失败 '{time_str}': {e}")
             return 0
 
     def minutes_to_time(self, minutes):
@@ -2167,8 +2178,11 @@ class TimeProgressBar(QWidget):
         if hasattr(self, 'file_watcher') and self.file_watcher:
             try:
                 self.file_watcher.fileChanged.disconnect()
-            except:
+            except RuntimeError:
+                # 信号已经断开，忽略
                 pass
+            except Exception as e:
+                self.logger.debug(f"断开file_watcher信号时出错: {e}")
 
         # 接受关闭事件
         event.accept()

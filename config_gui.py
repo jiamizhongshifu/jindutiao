@@ -5410,8 +5410,10 @@ class ConfigManager(QMainWindow):
             try:
                 with open(self.config_file, 'r', encoding='utf-8') as f:
                     return json.load(f)
-            except:
-                pass
+            except json.JSONDecodeError as e:
+                logging.error(f"配置文件JSON解析错误: {e}")
+            except Exception as e:
+                logging.error(f"加载配置文件失败: {e}")
         return {}
 
     def load_tasks(self):
@@ -5420,8 +5422,10 @@ class ConfigManager(QMainWindow):
             try:
                 with open(self.tasks_file, 'r', encoding='utf-8') as f:
                     return json.load(f)
-            except:
-                pass
+            except json.JSONDecodeError as e:
+                logging.error(f"任务文件JSON解析错误: {e}")
+            except Exception as e:
+                logging.error(f"加载任务文件失败: {e}")
         return []
 
     def check_task_overlap(self, tasks):
@@ -6219,8 +6223,11 @@ class ConfigManager(QMainWindow):
                 # 断开所有信号连接
                 self.ai_worker.finished.disconnect()
                 self.ai_worker.error.disconnect()
-            except:
+            except RuntimeError:
+                # 信号已经断开，忽略
                 pass
+            except Exception as e:
+                logging.debug(f"断开AI worker信号时出错: {e}")
 
             if self.ai_worker.isRunning():
                 # 优先使用requestInterruption()，而不是terminate()
