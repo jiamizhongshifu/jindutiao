@@ -482,28 +482,28 @@ class AuthDialog(QDialog):
         layout.addSpacing(10)
 
         # 分隔线
-        separator = QFrame()
-        separator.setFrameShape(QFrame.Shape.HLine)
-        separator.setFrameShadow(QFrame.Shadow.Sunken)
-        separator.setStyleSheet("background-color: #e0e0e0;")
-        layout.addWidget(separator)
+        # separator = QFrame()
+        # separator.setFrameShape(QFrame.Shape.HLine)
+        # separator.setFrameShadow(QFrame.Shadow.Sunken)
+        # separator.setStyleSheet("background-color: #e0e0e0;")
+        # layout.addWidget(separator)
 
-        # 返回微信登录按钮
-        back_button = QPushButton("< 返回微信登录")
-        back_button.setFlat(True)
-        back_button.setStyleSheet("""
-            QPushButton {
-                color: #2196F3;
-                font-size: 14px;
-                padding: 10px;
-                text-decoration: underline;
-            }
-            QPushButton:hover {
-                color: #0b7dda;
-            }
-        """)
-        back_button.clicked.connect(self._switch_to_wechat_login)
-        layout.addWidget(back_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        # # 返回微信登录按钮（已禁用微信登录，隐藏此按钮）
+        # back_button = QPushButton("< 返回微信登录")
+        # back_button.setFlat(True)
+        # back_button.setStyleSheet("""
+        #     QPushButton {
+        #         color: #2196F3;
+        #         font-size: 14px;
+        #         padding: 10px;
+        #         text-decoration: underline;
+        #     }
+        #     QPushButton:hover {
+        #         color: #0b7dda;
+        #     }
+        # """)
+        # back_button.clicked.connect(self._switch_to_wechat_login)
+        # layout.addWidget(back_button, alignment=Qt.AlignmentFlag.AlignCenter)
 
         widget.setLayout(layout)
         return widget
