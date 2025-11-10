@@ -72,8 +72,8 @@ class AuthDialog(QDialog):
         email_widget = self._create_email_login_widget()
         self.stacked_widget.addWidget(email_widget)
 
-        # 默认显示微信登录
-        self.stacked_widget.setCurrentIndex(0)
+        # 默认显示邮箱登录（微信登录功能暂时屏蔽，待后端API完成后启用）
+        self.stacked_widget.setCurrentIndex(1)  # 0=微信登录, 1=邮箱登录
 
         main_layout.addWidget(self.stacked_widget)
 
