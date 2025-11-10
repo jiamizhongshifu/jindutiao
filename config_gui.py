@@ -3879,7 +3879,7 @@ class ConfigManager(QMainWindow):
             {
                 "type": "feature",
                 "name": "番茄时钟",
-                "free": "✗",
+                "free": "✓",
                 "monthly": "✓",
                 "yearly": "✓",
                 "lifetime": "✓",
