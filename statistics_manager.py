@@ -34,6 +34,9 @@ class StatisticsManager:
         # 确保今天的记录存在
         self._ensure_today_record()
 
+        # 自动清理90天前的旧记录（防止statistics.json无限增长）
+        self.cleanup_old_records(days_to_keep=90)
+
     def load_statistics(self) -> dict:
         """加载统计数据文件
 
