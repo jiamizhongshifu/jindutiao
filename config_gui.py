@@ -5924,7 +5924,7 @@ class ConfigManager(QMainWindow):
             QLabel {
                 font-size: 36px;
                 font-weight: bold;
-                color: #FFFFFF;
+                color: #2C3E50;
                 padding: 10px;
             }
         """)
