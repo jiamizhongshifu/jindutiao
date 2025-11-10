@@ -495,3 +495,71 @@ class AuthClient:
             return {"status": "error", "error": "无法连接到服务器"}
         except Exception as e:
             return {"status": "error", "error": str(e)}
+
+    # ==================== OTP验证API ====================
+
+    def send_otp(self, email: str, purpose: str = "signup") -> Dict:
+        """
+        发送OTP验证码到邮箱
+
+        Args:
+            email: 邮箱地址
+            purpose: 用途（signup, password_reset）
+
+        Returns:
+            {"success": True/False, "error": "...", "message": "..."}
+        """
+        try:
+            response = requests.post(
+                f"{self.backend_url}/api/auth-send-otp",
+                json={
+                    "email": email,
+                    "purpose": purpose
+                },
+                timeout=10
+            )
+
+            if response.status_code == 200:
+                return response.json()
+            else:
+                return {"success": False, "error": f"HTTP {response.status_code}"}
+
+        except requests.exceptions.Timeout:
+            return {"success": False, "error": "请求超时"}
+        except requests.exceptions.ConnectionError:
+            return {"success": False, "error": "无法连接到服务器"}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    def verify_otp(self, email: str, otp_code: str) -> Dict:
+        """
+        验证OTP验证码
+
+        Args:
+            email: 邮箱地址
+            otp_code: 6位数字验证码
+
+        Returns:
+            {"success": True/False, "error": "...", "message": "..."}
+        """
+        try:
+            response = requests.post(
+                f"{self.backend_url}/api/auth-verify-otp",
+                json={
+                    "email": email,
+                    "otp_code": otp_code
+                },
+                timeout=10
+            )
+
+            if response.status_code == 200:
+                return response.json()
+            else:
+                return {"success": False, "error": f"HTTP {response.status_code}"}
+
+        except requests.exceptions.Timeout:
+            return {"success": False, "error": "请求超时"}
+        except requests.exceptions.ConnectionError:
+            return {"success": False, "error": "无法连接到服务器"}
+        except Exception as e:
+            return {"success": False, "error": str(e)}

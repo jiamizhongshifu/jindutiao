@@ -391,7 +391,7 @@ class AuthManager:
 
     def send_otp_email(self, email: str, otp_code: str, purpose: str) -> Dict:
         """
-        发送OTP验证码邮件（使用Supabase邮件功能或第三方邮件服务）
+        发送OTP验证码邮件（使用Resend邮件服务）
 
         Args:
             email: 邮箱地址
@@ -401,26 +401,101 @@ class AuthManager:
         Returns:
             发送结果
         """
-        if not self.client:
-            return {"success": False, "error": "Supabase not configured"}
-
         try:
-            # 使用Supabase的自定义邮件模板
-            # 注意: 这需要在Supabase控制台配置自定义邮件模板
+            # 尝试使用Resend邮件服务
+            resend_api_key = os.getenv("RESEND_API_KEY")
 
-            # 简化版本：使用Supabase Auth的OTP功能
-            # Supabase会自动发送OTP邮件
-            from supabase.lib.client_options import ClientOptions
+            if resend_api_key:
+                # 生产环境：使用Resend发送邮件
+                try:
+                    import resend
+                    resend.api_key = resend_api_key
 
-            # 发送OTP邮件
-            # 注意: 这里简化处理,实际应使用SMTP或邮件服务API
-            print(f"[DEV] OTP Code for {email}: {otp_code}", file=sys.stderr)
+                    # 根据用途定制邮件内容
+                    if purpose == "signup":
+                        subject = "欢迎注册GaiYa - 验证您的邮箱"
+                        html_content = f"""
+                        <html>
+                        <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                            <h2 style="color: #333;">欢迎使用 GaiYa 每日进度条！</h2>
+                            <p style="font-size: 16px; color: #666;">感谢您注册GaiYa。请使用以下验证码完成邮箱验证：</p>
 
-            # TODO: 集成真实的邮件发送服务（SendGrid, Resend, AWS SES等）
-            # 这里返回成功，让OTP在控制台输出（开发模式）
+                            <div style="background: #f5f5f5; border-radius: 8px; padding: 20px; text-align: center; margin: 30px 0;">
+                                <p style="font-size: 14px; color: #999; margin: 0 0 10px 0;">您的验证码</p>
+                                <p style="font-size: 32px; font-weight: bold; color: #4CAF50; letter-spacing: 8px; margin: 0;">
+                                    {otp_code}
+                                </p>
+                            </div>
+
+                            <p style="font-size: 14px; color: #999;">
+                                • 此验证码将在 <strong>10分钟</strong> 后失效<br>
+                                • 如果这不是您的操作，请忽略此邮件<br>
+                                • 请勿将验证码分享给他人
+                            </p>
+
+                            <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+                            <p style="font-size: 12px; color: #999; text-align: center;">
+                                GaiYa 每日进度条 - 让每一天都看得见进度
+                            </p>
+                        </body>
+                        </html>
+                        """
+                    else:  # password_reset
+                        subject = "GaiYa - 重置您的密码"
+                        html_content = f"""
+                        <html>
+                        <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                            <h2 style="color: #333;">重置密码请求</h2>
+                            <p style="font-size: 16px; color: #666;">您正在重置GaiYa账号密码。请使用以下验证码：</p>
+
+                            <div style="background: #f5f5f5; border-radius: 8px; padding: 20px; text-align: center; margin: 30px 0;">
+                                <p style="font-size: 14px; color: #999; margin: 0 0 10px 0;">验证码</p>
+                                <p style="font-size: 32px; font-weight: bold; color: #FF9800; letter-spacing: 8px; margin: 0;">
+                                    {otp_code}
+                                </p>
+                            </div>
+
+                            <p style="font-size: 14px; color: #999;">
+                                • 此验证码将在 <strong>10分钟</strong> 后失效<br>
+                                • 如果这不是您的操作，请立即修改密码<br>
+                                • 请勿将验证码分享给他人
+                            </p>
+                        </body>
+                        </html>
+                        """
+
+                    # 发送邮件
+                    params = {
+                        "from": "GaiYa <noreply@jindutiao.vercel.app>",
+                        "to": [email],
+                        "subject": subject,
+                        "html": html_content
+                    }
+
+                    response = resend.Emails.send(params)
+                    print(f"[RESEND] OTP email sent to {email}, ID: {response.get('id')}", file=sys.stderr)
+
+                    return {
+                        "success": True,
+                        "message": "验证码已发送到您的邮箱"
+                    }
+
+                except ImportError:
+                    print("[WARNING] Resend module not installed. Run: pip install resend", file=sys.stderr)
+                    # 降级到开发模式
+                    pass
+                except Exception as e:
+                    print(f"[ERROR] Resend send failed: {e}", file=sys.stderr)
+                    # 降级到开发模式
+                    pass
+
+            # 开发模式：输出到控制台
+            print(f"[DEV MODE] OTP Code for {email}: {otp_code} (purpose: {purpose})", file=sys.stderr)
+            print(f"[DEV MODE] Set RESEND_API_KEY to enable email sending", file=sys.stderr)
+
             return {
                 "success": True,
-                "message": "OTP sent (dev mode: check server logs)"
+                "message": "验证码已发送（开发模式：请查看控制台）"
             }
 
         except Exception as e:

@@ -16,6 +16,7 @@ import os
 # 添加父目录到路径以导入core模块
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from core.auth_client import AuthClient
+from gaiya.ui.otp_dialog import OTPDialog
 
 
 class AuthDialog(QDialog):
@@ -310,20 +311,37 @@ class AuthDialog(QDialog):
         signup_button.setText("注册")
 
         if result.get("success"):
-            # 注册成功（方案A: 禁用邮箱确认，直接登录）
-            user_info = {
-                "user_id": result.get("user_id"),
-                "email": result.get("email"),
-                "user_tier": "free"
-            }
+            # 方案C: OTP验证码（桌面应用最佳实践）
+            # 1. 注册成功，发送OTP验证码
+            otp_result = self.auth_client.send_otp(email, "signup")
 
-            # 发出登录成功信号
-            self.login_success.emit(user_info)
+            if not otp_result.get("success"):
+                QMessageBox.critical(self, "发送失败", f"验证码发送失败：{otp_result.get('error', '未知错误')}")
+                return
 
-            # 关闭对话框
-            self.accept()
+            # 2. 弹出OTP验证对话框
+            otp_dialog = OTPDialog(email, self.auth_client, parent=self)
 
-            # 方案C（OTP验证）已禁用，如需启用请参考 docs/desktop-email-verification-guide.md
+            if otp_dialog.exec() == QDialog.DialogCode.Accepted:
+                # 3. OTP验证成功，自动登录
+                user_info = {
+                    "user_id": result.get("user_id"),
+                    "email": email,
+                    "user_tier": "free"
+                }
+
+                # 发出登录成功信号
+                self.login_success.emit(user_info)
+
+                # 关闭对话框
+                self.accept()
+            else:
+                # 用户取消验证，提示可以稍后登录
+                QMessageBox.information(
+                    self,
+                    "注册成功",
+                    "您的账号已创建，但邮箱尚未验证。\n请验证邮箱后登录。"
+                )
         else:
             # 注册失败
             error_msg = result.get("error", "注册失败")
