@@ -1287,7 +1287,7 @@ class ConfigManager(QMainWindow):
         self.setWindowTitle(f'{VERSION_STRING_ZH} - 配置管理器')
 
         # 设置窗口图标
-        icon_path = self.get_resource_path('Gaiya-logo-wbk.png')
+        icon_path = self.get_resource_path('gaiya-logo2-wbk.png')
         if os.path.exists(icon_path):
             from PySide6.QtGui import QIcon
             self.setWindowIcon(QIcon(str(icon_path)))
@@ -1572,7 +1572,7 @@ class ConfigManager(QMainWindow):
         color_group = QGroupBox("🎨 颜色设置")
         color_group.setStyleSheet("QGroupBox::title { color: white; font-weight: bold; font-size: 15px; }")
         color_layout = QFormLayout()
-        color_layout.setVerticalSpacing(12)
+        color_layout.setVerticalSpacing(15)  # 增加纵向间距
         color_layout.setHorizontalSpacing(10)
 
         # 背景颜色
@@ -1588,7 +1588,9 @@ class ConfigManager(QMainWindow):
         self.bg_color_preview = QLabel()
         self.update_color_preview(self.bg_color_input, self.bg_color_preview)
         bg_color_layout.addWidget(self.bg_color_input)
+        bg_color_layout.addSpacing(10)  # 横向间距
         bg_color_layout.addWidget(self.bg_color_btn)
+        bg_color_layout.addSpacing(10)  # 横向间距
         bg_color_layout.addWidget(self.bg_color_preview)
         bg_color_layout.addStretch()
         color_layout.addRow("背景颜色:", bg_color_layout)
@@ -1612,7 +1614,9 @@ class ConfigManager(QMainWindow):
         self.marker_color_preview = QLabel()
         self.update_color_preview(self.marker_color_input, self.marker_color_preview)
         marker_color_layout.addWidget(self.marker_color_input)
+        marker_color_layout.addSpacing(10)  # 横向间距
         marker_color_layout.addWidget(self.marker_color_btn)
+        marker_color_layout.addSpacing(10)  # 横向间距
         marker_color_layout.addWidget(self.marker_color_preview)
         marker_color_layout.addStretch()
         color_layout.addRow("时间标记颜色:", marker_color_layout)
@@ -1693,7 +1697,7 @@ class ConfigManager(QMainWindow):
         marker_size = self.config.get('marker_size', 50) if self.config else 50
         self.marker_size_spin.setValue(marker_size)
         self.marker_size_spin.setSuffix(" px")
-        self.marker_size_spin.setMaximumWidth(80)
+        self.marker_size_spin.setMaximumWidth(110)  # 增加宽度以显示完整内容
         self.marker_size_spin.valueChanged.connect(self.on_marker_size_value_changed)
         marker_size_layout.addWidget(self.marker_size_spin)
 
@@ -2532,7 +2536,7 @@ class ConfigManager(QMainWindow):
             header_layout.addStretch()
 
             # 合并邮箱和会员等级到一行，右对齐显示
-            tier_names = {"free": "免费用户", "pro": "高级版", "lifetime": "终身会员"}
+            tier_names = {"free": "免费用户", "pro": "高级版", "lifetime": "会员合伙人"}
             tier_name = tier_names.get(user_tier, user_tier)
             info_label = QLabel(f"邮箱：{email}  |  会员等级：{tier_name}")
             info_label.setStyleSheet("color: white; font-size: 14px;")
@@ -2541,7 +2545,7 @@ class ConfigManager(QMainWindow):
             # 添加退出登录按钮
             header_layout.addSpacing(15)
             logout_btn = QPushButton("退出登录")
-            logout_btn.setFixedSize(80, 28)
+            logout_btn.setFixedSize(100, 28)  # 增加宽度以防止文字被截断
             logout_btn.setStyleSheet("""
                 QPushButton {
                     background-color: transparent;
@@ -2574,10 +2578,10 @@ class ConfigManager(QMainWindow):
                 layout.addWidget(tip_label)
 
                 cards_layout = QHBoxLayout()
-                cards_layout.setSpacing(15)
+                cards_layout.setSpacing(30)  # 增加卡片间距，避免拥挤
                 cards_layout.addStretch()
 
-                # 三个套餐：月度、年度（中间突出）、终身
+                # 三个套餐：月度、年度（中间突出）、会员合伙人
                 plans = [
                     {
                         "id": "pro_monthly",
@@ -2587,7 +2591,7 @@ class ConfigManager(QMainWindow):
                         "validity": "有效期30天",
                         "renewal": "到期后不会自动扣费",
                         "type": "monthly",
-                        "features": ["所有免费功能 +", "20次/天 AI智能规划", "去除进度条水印", "数据云同步", "抢先体验新功能", "加入VIP会员群"]
+                        "features": ["所有免费功能 +", "20次/天 AI智能规划", "统计报告分析", "去除进度条水印", "数据云同步", "抢先体验新功能", "加入VIP会员群"]
                     },
                     {
                         "id": "pro_yearly",
@@ -2600,17 +2604,17 @@ class ConfigManager(QMainWindow):
                         "validity": "有效期365天",
                         "renewal": "到期后不会自动扣费",
                         "type": "yearly",
-                        "features": ["所有免费功能 +", "20次/天 AI智能规划", "去除进度条水印", "数据云同步", "抢先体验新功能", "加入VIP会员群"]
+                        "features": ["所有免费功能 +", "20次/天 AI智能规划", "统计报告分析", "去除进度条水印", "数据云同步", "抢先体验新功能", "加入VIP会员群"]
                     },
                     {
                         "id": "lifetime",
-                        "name": "Pro 终身",
-                        "price": "¥399",
+                        "name": "会员合伙人",
+                        "price": "¥1200",
                         "period": "",
                         "validity": "永久有效",
                         "renewal": "一次购买,终身可用",
                         "type": "lifetime",
-                        "features": ["所有免费功能 +", "无限次 AI智能规划", "去除进度条水印", "数据云同步", "抢先体验新功能", "加入VIP会员群"]
+                        "features": ["所有免费功能 +", "无限次 AI智能规划", "统计报告分析", "去除进度条水印", "数据云同步", "33%引荐返现比例", "专属合伙人社群", "优先体验所有新功能", "专属1v1咨询服务", "共同成长,分享价值"]
                     },
                 ]
 
@@ -2635,6 +2639,11 @@ class ConfigManager(QMainWindow):
                 layout.addSpacing(30)
                 tips_frame = self._create_membership_tips()
                 layout.addWidget(tips_frame)
+
+                # 新增会员方案详细对比表
+                layout.addSpacing(40)
+                comparison_table = self._create_comparison_table()
+                layout.addWidget(comparison_table)
 
                 # 添加支付方式选择 - 已屏蔽，默认使用微信支付
                 # payment_container = QWidget()
@@ -2977,7 +2986,7 @@ class ConfigManager(QMainWindow):
         from PySide6.QtWidgets import QFrame
         card = QFrame()
         card.setObjectName(f"plan_card_{plan['id']}")
-        card.setFixedSize(240, 510)  # 高度从 460 增加到 510，容纳底部信息
+        card.setFixedSize(240, 650)  # 统一三个卡片高度为650px
         card.setCursor(Qt.CursorShape.PointingHandCursor)
 
         # 突出显示的样式
@@ -3062,7 +3071,7 @@ class ConfigManager(QMainWindow):
         layout.addSpacing(15)  # 从 10 增加到 15
 
         # 按钮（突出显示）
-        button = QPushButton("立即订阅")
+        button = QPushButton("升级会员")
         button.setFixedHeight(40)
         button.setStyleSheet("""
             QPushButton {
@@ -3132,7 +3141,7 @@ class ConfigManager(QMainWindow):
         from PySide6.QtWidgets import QFrame
         card = QFrame()
         card.setObjectName(f"plan_card_{plan['id']}")
-        card.setFixedSize(220, 480)  # 高度从 420 增加到 480，容纳底部信息
+        card.setFixedSize(220, 650)  # 统一三个卡片高度为650px
         card.setCursor(Qt.CursorShape.PointingHandCursor)
 
         card.setStyleSheet(f"""
@@ -3179,7 +3188,7 @@ class ConfigManager(QMainWindow):
         layout.addSpacing(15)  # 从 10 增加到 15
 
         # 按钮
-        button = QPushButton("开始试用")
+        button = QPushButton("升级会员")
         button.setFixedHeight(36)
         button.setStyleSheet("""
             QPushButton {
@@ -3245,11 +3254,11 @@ class ConfigManager(QMainWindow):
         return card
 
     def _create_lifetime_plan_card(self, plan: dict):
-        """创建终身卡片（右侧，特殊样式）"""
+        """创建会员合伙人卡片（右侧，特殊样式）"""
         from PySide6.QtWidgets import QFrame
         card = QFrame()
         card.setObjectName(f"plan_card_{plan['id']}")
-        card.setFixedSize(220, 480)  # 与月度卡片高度一致
+        card.setFixedSize(220, 650)  # 统一三个卡片高度为650px
         card.setCursor(Qt.CursorShape.PointingHandCursor)
 
         card.setStyleSheet(f"""
@@ -3264,11 +3273,42 @@ class ConfigManager(QMainWindow):
         layout.setSpacing(8)
         layout.setContentsMargins(15, 20, 15, 20)
 
-        # 标题
+        # 标题区域（标题 + 限量标签）
+        title_row = QHBoxLayout()
+        title_row.setSpacing(0)
+        title_row.setContentsMargins(0, 0, 0, 0)
+
+        # 左侧弹性空间（用于居中对齐）
+        title_row.addStretch()
+
+        # 标题文字
         name_label = QLabel(plan['name'])
         name_label.setStyleSheet("font-size: 14px; font-weight: bold; color: white; background: transparent;")
-        name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(name_label)
+        title_row.addWidget(name_label)
+
+        # 标题与标签之间的间距
+        title_row.addSpacing(10)
+
+        # 限量标签（深金色背景）
+        limited_badge = QLabel("限量1000名")
+        limited_badge.setStyleSheet("""
+            QLabel {
+                background-color: #B8860B;
+                color: #FFFFFF;
+                border-radius: 6px;
+                padding: 4px 12px;
+                font-size: 12px;
+                font-weight: normal;
+            }
+        """)
+        limited_badge.setMinimumWidth(90)
+        limited_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title_row.addWidget(limited_badge)
+
+        # 右侧弹性空间（用于居中对齐）
+        title_row.addStretch()
+
+        layout.addLayout(title_row)
 
         layout.addSpacing(15)
 
@@ -3296,8 +3336,19 @@ class ConfigManager(QMainWindow):
 
         layout.addSpacing(15)
 
+        # 邀请函链接
+        invitation_link = QLabel('<a href="#" style="color: #FFD700; text-decoration: none;">📜 阅读合伙人邀请函</a>')
+        invitation_link.setStyleSheet("font-size: 12px; background: transparent;")
+        invitation_link.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        invitation_link.setOpenExternalLinks(False)
+        invitation_link.linkActivated.connect(lambda: self._show_invitation_dialog())
+        invitation_link.setCursor(Qt.CursorShape.PointingHandCursor)
+        layout.addWidget(invitation_link)
+
+        layout.addSpacing(8)
+
         # 按钮（渐变样式）
-        button = QPushButton("永久解锁")
+        button = QPushButton("成为合伙人")
         button.setFixedHeight(36)
         button.setStyleSheet("""
             QPushButton {
@@ -3368,6 +3419,210 @@ class ConfigManager(QMainWindow):
         card.mousePressEvent = lambda e: self._on_plan_card_clicked(plan['id'])
         return card
 
+    def _show_invitation_dialog(self):
+        """显示会员合伙人邀请函弹窗"""
+        from PySide6.QtWidgets import QDialog, QTextEdit, QScrollArea
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle("GaiYa每日进度条")
+        dialog.setFixedSize(700, 600)
+        dialog.setStyleSheet("""
+            QDialog {
+                background-color: #F5E6D3;
+            }
+        """)
+
+        layout = QVBoxLayout(dialog)
+        layout.setContentsMargins(30, 30, 30, 30)
+        layout.setSpacing(20)
+
+        # 标题
+        title_label = QLabel("致 GaiYa 会员合伙人的一封信")
+        title_label.setStyleSheet("""
+            font-size: 22px;
+            font-weight: bold;
+            color: #654321;
+            background: transparent;
+        """)
+        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(title_label)
+
+        # 副标题
+        subtitle_label = QLabel("邀请您共同成长，共享价值")
+        subtitle_label.setStyleSheet("""
+            font-size: 14px;
+            color: #8B7355;
+            background: transparent;
+            margin-bottom: 10px;
+        """)
+        subtitle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(subtitle_label)
+
+        # 分隔线
+        separator = QLabel("══════════════════════")
+        separator.setStyleSheet("color: #D4A574; background: transparent; font-size: 12px;")
+        separator.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(separator)
+
+        # 信件内容（可滚动）
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background: transparent;
+            }
+            QScrollBar:vertical {
+                background: rgba(212, 165, 116, 0.2);
+                width: 10px;
+                border-radius: 5px;
+            }
+            QScrollBar::handle:vertical {
+                background: rgba(139, 115, 85, 0.5);
+                border-radius: 5px;
+            }
+        """)
+
+        content_widget = QLabel()
+        content_widget.setWordWrap(True)
+        content_widget.setTextFormat(Qt.TextFormat.RichText)
+        content_widget.setStyleSheet("""
+            font-size: 13px;
+            color: #3E2723;
+            background: transparent;
+            padding: 10px;
+            line-height: 1.8;
+        """)
+
+        # 邀请信完整内容
+        content_text = """
+        <p style="margin-bottom: 15px;"><b>亲爱的朋友：</b></p>
+
+        <p style="margin-bottom: 15px;">如果你正在读这封信，我猜你和我一样，曾无数次感受到时间的无声流逝。</p>
+
+        <p style="margin-bottom: 15px;">我是 GaiYa 的创造者，一名产品经理，也是时间管理的长期实践者。2023年初的某个深夜，我盯着屏幕上密密麻麻的任务清单，突然意识到：<b>我们需要的不是更多任务管理工具，而是一种让时间「看得见、摸得着」的方式</b>。</p>
+
+        <p style="margin-bottom: 15px;">于是有了 GaiYa —— 一条桌面进度条，默默守护你的每一分钟。</p>
+
+        <p style="margin-bottom: 15px; margin-top: 20px;"><b style="color: #8B4513;">为什么做 GaiYa？</b></p>
+
+        <p style="margin-bottom: 15px;">我曾亲手打造过多个从0到1的产品，有成功也有失败。但每次复盘，最深的感悟都是：<b>时间管理的本质，不是效率，而是觉察</b>。</p>
+
+        <p style="margin-bottom: 15px;">当你看见那条进度条一点点推进，看见今天已经过去了63%，看见"下班"色块还有2小时才到 —— 你会做出不同的选择。这就是 GaiYa 想做的事：<b>让时间可视化，让选择更自主</b>。</p>
+
+        <p style="margin-bottom: 15px; margin-top: 20px;"><b style="color: #8B4513;">会员合伙人意味着什么？</b></p>
+
+        <p style="margin-bottom: 15px;">GaiYa 现在还很年轻。我希望找到一群真正认同这个理念的人，不只是用户，而是<b>产品的共创者</b>。</p>
+
+        <p style="margin-bottom: 15px;">成为会员合伙人，你将获得：</p>
+
+        <p style="margin-bottom: 10px;"><b>1. 终身的工具陪伴</b></p>
+        <p style="margin-bottom: 15px; margin-left: 20px;">一次付费，永久使用。无限次AI任务生成、去水印、数据云同步、所有未来新功能 —— 我会持续打磨，让它真正成为你效率工作流的一部分。</p>
+
+        <p style="margin-bottom: 10px;"><b>2. 产品决策的话语权</b></p>
+        <p style="margin-bottom: 15px; margin-left: 20px;">你将获邀加入<b>即将开放的会员合伙人专属微信群</b>，与我和其他种子用户直接对话。作为首批成员，你将亲历社群从0到1的搭建过程。你的需求、你的吐槽、你的建议 —— 都会直接影响产品的走向。</p>
+
+        <p style="margin-bottom: 10px;"><b>3. 优先体验与专属支持</b></p>
+        <p style="margin-bottom: 15px; margin-left: 20px;">所有新功能，你将第一时间体验。遇到问题？<b>专属1v1咨询通道</b>，我会亲自回复，帮你定制最适合的工作流。</p>
+
+        <p style="margin-bottom: 10px;"><b>4. 共享成长的价值（规划中）</b></p>
+        <p style="margin-bottom: 15px; margin-left: 20px;">我正在搭建<b>33%推荐返现机制</b>。当 GaiYa 帮到你的朋友时，你也将获得实际收益。这不是分销，而是价值共享 —— 好产品，值得一起传播。</p>
+
+        <p style="margin-bottom: 15px; margin-top: 20px;"><b style="color: #8B4513;">为什么是现在？</b></p>
+
+        <p style="margin-bottom: 15px;">GaiYa 刚刚完成品牌升级（v1.5），会员系统刚刚上线。此刻加入的你，是真正的<b>种子用户</b>，你的每一个反馈都能塑造产品的未来形态。</p>
+
+        <p style="margin-bottom: 15px;">这次会员合伙人招募，<b>名额有限</b>，也是为了确保社群质量 —— 我希望每一位加入的人，都是真正认同「时间可视化」理念的同路人。</p>
+
+        <p style="margin-bottom: 15px; margin-top: 20px;"><b style="color: #8B4513;">最后的话</b></p>
+
+        <p style="margin-bottom: 15px;">会员合伙人计划属于数字服务，一旦加入<b>无法退款</b>。但我相信，如果你真的认同这个理念，1200元换来的不只是一个工具，而是：</p>
+
+        <p style="margin-bottom: 10px; margin-left: 20px;">• 终身的时间管理解决方案</p>
+        <p style="margin-bottom: 10px; margin-left: 20px;">• 一个与你志同道合的效率社群</p>
+        <p style="margin-bottom: 10px; margin-left: 20px;">• 参与打磨一个真正有用产品的机会</p>
+
+        <p style="margin-bottom: 15px; margin-top: 20px;">请在充分理解后再做决定。这份信任，我会倍加珍惜。</p>
+
+        <p style="margin-bottom: 15px;">现在，我期待与你一起，让每一分钟都清晰可见。</p>
+
+        <p style="margin-top: 30px; text-align: right;"><b>GaiYa 创造者</b></p>
+        <p style="text-align: right; color: #8B7355;">2025 年 11 月</p>
+        """
+
+        content_widget.setText(content_text)
+        scroll_area.setWidget(content_widget)
+        layout.addWidget(scroll_area)
+
+        # 底部按钮
+        button = QPushButton("我愿意成为会员合伙人")
+        button.setFixedHeight(44)
+        button.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #8B6914,
+                    stop:1 #B8860B);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 15px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #9A7714,
+                    stop:1 #C8960B);
+            }
+            QPushButton:pressed {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #7B5914,
+                    stop:1 #A8760B);
+            }
+        """)
+        button.clicked.connect(lambda: self._on_invitation_accepted(dialog))
+        layout.addWidget(button)
+
+        dialog.exec()
+
+    def _on_invitation_accepted(self, dialog):
+        """点击邀请函底部按钮后的处理"""
+        # 关闭弹窗
+        dialog.close()
+
+        # 选中会员合伙人套餐
+        self.selected_plan_id = "lifetime"
+
+        # 更新卡片选中状态
+        for card in self.plan_cards:
+            if hasattr(card, 'plan_id'):
+                if card.plan_id == "lifetime":
+                    card.setStyleSheet("""
+                        QFrame#plan_card_lifetime {
+                            background-color: rgba(50, 50, 50, 200);
+                            border: 2px solid #FFD700;
+                            border-radius: 12px;
+                        }
+                    """)
+                elif card.plan_id == "pro_yearly":
+                    card.setStyleSheet("""
+                        QFrame#plan_card_pro_yearly {
+                            background-color: rgba(50, 50, 50, 200);
+                            border: 3px solid #FF9800;
+                            border-radius: 12px;
+                        }
+                    """)
+                else:  # monthly
+                    card.setStyleSheet("""
+                        QFrame#plan_card_pro_monthly {
+                            background-color: rgba(50, 50, 50, 200);
+                            border: 2px solid #666;
+                            border-radius: 12px;
+                        }
+                    """)
+
+        # 触发支付流程
+        self._on_plan_button_clicked("lifetime")
+
     def _create_membership_tips(self):
         """创建会员提示区域"""
         from PySide6.QtWidgets import QFrame, QTextEdit
@@ -3407,9 +3662,255 @@ class ConfigManager(QMainWindow):
 
         return tips_frame
 
+    def _create_comparison_table(self):
+        """创建会员方案详细对比表"""
+        from PySide6.QtWidgets import QFrame, QTableWidget, QTableWidgetItem, QHeaderView
+        from PySide6.QtCore import Qt
+
+        # 创建容器
+        container = QFrame()
+        container.setStyleSheet("""
+            QFrame {
+                background-color: transparent;
+                border: none;
+            }
+        """)
+
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(20)
+
+        # 添加分隔线
+        separator = QFrame()
+        separator.setFrameShape(QFrame.Shape.HLine)
+        separator.setStyleSheet("""
+            QFrame {
+                background-color: rgba(255, 255, 255, 0.1);
+                max-height: 2px;
+                border: none;
+            }
+        """)
+        layout.addWidget(separator)
+
+        # 添加标题
+        title_label = QLabel("💎 会员方案详细对比")
+        title_label.setStyleSheet("color: white; font-size: 18px; font-weight: bold; margin: 10px 0px;")
+        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(title_label)
+
+        # 创建表格
+        table = QTableWidget()
+        table.setColumnCount(5)  # 功能名称 + 4个等级
+        table.setHorizontalHeaderLabels(["功能特性", "免费版", "Pro 月度", "Pro 年度", "永久会员"])
+
+        # 设置表格样式
+        table.setStyleSheet("""
+            QTableWidget {
+                background-color: rgba(40, 40, 40, 180);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 8px;
+                gridline-color: rgba(255, 255, 255, 0.1);
+                color: white;
+            }
+            QTableWidget::item {
+                padding: 12px 8px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            }
+            QHeaderView::section {
+                background-color: rgba(60, 60, 60, 200);
+                color: white;
+                font-weight: bold;
+                font-size: 14px;
+                padding: 12px 8px;
+                border: none;
+                border-right: 1px solid rgba(255, 255, 255, 0.1);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            }
+            QHeaderView::section:first {
+                border-top-left-radius: 8px;
+            }
+            QHeaderView::section:last {
+                border-top-right-radius: 8px;
+                border-right: none;
+            }
+        """)
+
+        # 定义表格数据
+        table_data = [
+            # 【核心功能】分组标题
+            {
+                "type": "group",
+                "name": "【核心功能】",
+            },
+            # 每日进度条
+            {
+                "type": "feature",
+                "name": "每日进度条显示",
+                "free": "✓ 带水印",
+                "monthly": "✓ 无水印",
+                "yearly": "✓ 无水印",
+                "lifetime": "✓ 无水印",
+            },
+            # AI任务规划
+            {
+                "type": "feature",
+                "name": "AI 智能任务规划",
+                "free": "3次/天",
+                "monthly": "20次/天",
+                "yearly": "20次/天",
+                "lifetime": "无限制",
+            },
+            # 统计报告分析
+            {
+                "type": "feature",
+                "name": "统计报告分析",
+                "free": "✗",
+                "monthly": "✓",
+                "yearly": "✓",
+                "lifetime": "✓",
+            },
+            # 【高级功能】分组标题
+            {
+                "type": "group",
+                "name": "【高级功能】",
+            },
+            # 主题自定义
+            {
+                "type": "feature",
+                "name": "主题自定义",
+                "free": "✗",
+                "monthly": "✓",
+                "yearly": "✓",
+                "lifetime": "✓",
+            },
+            # 数据云同步
+            {
+                "type": "feature",
+                "name": "数据云同步",
+                "free": "✗",
+                "monthly": "✓",
+                "yearly": "✓",
+                "lifetime": "✓",
+            },
+            # 抢先体验新功能
+            {
+                "type": "feature",
+                "name": "抢先体验新功能",
+                "free": "✗",
+                "monthly": "✓",
+                "yearly": "✓",
+                "lifetime": "✓",
+            },
+            # 加入VIP会员群
+            {
+                "type": "feature",
+                "name": "加入VIP会员群",
+                "free": "✗",
+                "monthly": "✓",
+                "yearly": "✓",
+                "lifetime": "✓",
+            },
+            # 【会员权益】分组标题
+            {
+                "type": "group",
+                "name": "【会员权益】",
+            },
+            # 有效期
+            {
+                "type": "feature",
+                "name": "有效期",
+                "free": "-",
+                "monthly": "30天",
+                "yearly": "365天",
+                "lifetime": "永久",
+            },
+        ]
+
+        # 设置行数
+        table.setRowCount(len(table_data))
+
+        # 填充表格数据
+        for row, data in enumerate(table_data):
+            if data["type"] == "group":
+                # 分组标题行
+                item = QTableWidgetItem(data["name"])
+                item.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+                item.setBackground(QColor(60, 60, 60, 200))
+                item.setForeground(QColor(255, 255, 255))
+                font = item.font()
+                font.setBold(True)
+                item.setFont(font)
+                table.setItem(row, 0, item)
+
+                # 合并分组标题行的所有列
+                table.setSpan(row, 0, 1, 5)
+
+            else:
+                # 功能行
+                # 功能名称
+                name_item = QTableWidgetItem(data["name"])
+                name_item.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+                table.setItem(row, 0, name_item)
+
+                # 免费版
+                free_item = QTableWidgetItem(data["free"])
+                free_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                table.setItem(row, 1, free_item)
+
+                # Pro 月度
+                monthly_item = QTableWidgetItem(data["monthly"])
+                monthly_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                table.setItem(row, 2, monthly_item)
+
+                # Pro 年度
+                yearly_item = QTableWidgetItem(data["yearly"])
+                yearly_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                table.setItem(row, 3, yearly_item)
+
+                # 永久会员
+                lifetime_item = QTableWidgetItem(data["lifetime"])
+                lifetime_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                table.setItem(row, 4, lifetime_item)
+
+        # 设置表格属性
+        table.verticalHeader().setVisible(False)  # 隐藏行号
+        table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)  # 禁止编辑
+        table.setSelectionMode(QTableWidget.SelectionMode.NoSelection)  # 禁止选择
+        table.setWordWrap(True)  # 启用自动换行
+
+        # 禁用滚动条，让表格完全展开
+        table.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        table.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+        # 设置列宽
+        header = table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)  # 功能名称列自适应
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Fixed)
+        table.setColumnWidth(1, 120)  # 免费版
+        table.setColumnWidth(2, 120)  # Pro 月度
+        table.setColumnWidth(3, 120)  # Pro 年度
+        table.setColumnWidth(4, 120)  # 永久会员
+
+        # 设置行高
+        for row in range(table.rowCount()):
+            table.setRowHeight(row, 60)
+
+        # 计算并设置表格总高度，使其完全展开
+        # 表头高度 + 所有行高度
+        header_height = table.horizontalHeader().height()
+        total_height = header_height + (table.rowCount() * 60)
+        table.setFixedHeight(total_height)
+
+        layout.addWidget(table)
+
+        return container
+
     def _on_plan_card_clicked(self, plan_id: str):
         """处理套餐卡片点击"""
-        # 只处理付费套餐（月度、年度、终身）
+        # 只处理付费套餐（月度、年度、会员合伙人）
         if plan_id not in ["pro_monthly", "pro_yearly", "lifetime"]:
             return
 
@@ -3445,7 +3946,7 @@ class ConfigManager(QMainWindow):
                         }}
                     """)
                 elif card.plan_id == "lifetime":
-                    # 终身卡片
+                    # 会员合伙人卡片
                     is_selected = (card.plan_id == plan_id)
                     border_color = "#FFD700" if is_selected else "#888"
                     border_width = "3px" if is_selected else "2px"
@@ -5262,7 +5763,7 @@ class ConfigManager(QMainWindow):
 
         # Logo区域（使用图片）
         logo_label = QLabel()
-        logo_path = get_resource_path("Gaiya-logo.png")
+        logo_path = get_resource_path("gaiya-logo2.png")
         logo_pixmap = QPixmap(str(logo_path))
         if not logo_pixmap.isNull():
             # 设置logo大小为150x150

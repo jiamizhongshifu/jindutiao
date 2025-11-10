@@ -1,0 +1,23 @@
+# 支持 GaiYa 项目开发
+# GitHub Sponsors 配置文件
+
+# 支持方式（根据实际情况取消注释并配置）
+
+# GitHub Sponsors
+# github: [username]
+
+# 其他平台
+# patreon: username
+# ko_fi: username
+
+# 自定义链接
+custom:
+  - "https://gaiya.app"  # 官网（规划中）
+  # - "微信赞赏码"  # 如果有的话
+
+# 说明
+# 如果这个项目对你有帮助，欢迎通过以下方式支持我们：
+# 1. ⭐ Star 本项目
+# 2. 🔀 Fork 并贡献代码
+# 3. 📢 分享给更多需要的人
+# 4. 💰 成为会员合伙人（¥1200，限量1000名）

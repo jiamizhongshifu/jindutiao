@@ -400,7 +400,7 @@ class ZPayManager:
             },
             "lifetime": {
                 "name": "GaiYa 会员合伙人",
-                "price": 399.0,
+                "price": 1200.0,
                 "description": "一次性购买，成为会员合伙人，共享价值"
             }
         }

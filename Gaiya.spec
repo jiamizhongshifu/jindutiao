@@ -36,6 +36,8 @@ a = Analysis(
         # 应用Logo图片
         ('Gaiya-logo.png', '.'),
         ('Gaiya-logo-wbk.png', '.'),
+        ('gaiya-logo2.png', '.'),
+        ('gaiya-logo2-wbk.png', '.'),
         # AI客户端（调用Vercel云服务）
         ('ai_client.py', '.'),
         # 开机自启动管理器
@@ -86,5 +88,5 @@ exe = EXE(
     entitlements_file=None,
     # Windows版本信息（暂时禁用，后续测试）
     # version='version_info.txt',
-    icon=None,  # 可以添加图标文件路径
+    icon='gaiya-logo2.ico',  # 应用图标
 )

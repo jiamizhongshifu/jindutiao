@@ -15,9 +15,8 @@ build/
 *.egg
 
 # PyInstaller
-*.spec
+!Gaiya.spec
 *.manifest
-*.spec
 
 # 日志文件
 *.log

@@ -9,6 +9,59 @@
 
 ---
 
+## [v1.5.2] - 2025-11-10
+
+### 🎯 限量发售策略 / Limited Release Strategy
+
+- **会员合伙人计划升级**
+  - 价格调整：¥399 → ¥1200
+  - 限量发售：1000名会员合伙人
+  - 深金色限量标签（#B8860B DarkGoldenrod）
+  - 强调稀缺性与高级定位
+
+### 💰 定价策略调整 / Pricing Updates
+
+- **当前定价体系**
+  - 月度会员：¥29/月（20次/天AI配额）
+  - 年度会员：¥199/年（相当于16.6元/月，年省149元）
+  - 会员合伙人：¥1200（限量1000名，终身权益）
+
+### 🎨 UI 增强 / UI Enhancements
+
+- **限量标签实现**
+  - 会员合伙人卡片添加"限量1000名"标签
+  - 深金色背景突出稀缺性
+  - 标题与标签居中对齐布局优化
+
+### 🌐 开源准备 / Open Source Preparation
+
+- **完善开源文档**
+  - 创建 CODE_OF_CONDUCT.md（贡献者公约行为准则）
+  - 添加 GitHub Issue 模板（Bug报告、功能请求）
+  - 添加 Pull Request 模板
+  - 创建 FUNDING.yml 赞助配置
+  - 增强 README.md（更多徽章、开源优势说明）
+  - 优化 .gitignore（确保 Gaiya.spec 被包含）
+
+### 📚 文档更新 / Documentation
+
+- **README.md 优化**
+  - 版本号更新：v1.5.1 → v1.5.2
+  - 添加"为什么选择 GaiYa"部分（开源透明、技术优势、用户友好）
+  - 添加"支持我们"部分（免费支持 + 成为会员合伙人）
+  - 增强徽章显示（Stars、Forks、Issues、PRs Welcome）
+  - 更新会员系统价格说明
+
+### 🔧 技术改进 / Technical Improvements
+
+- **代码同步**
+  - 前端：config_gui.py 价格更新
+  - 后端：api/zpay_manager.py 价格同步
+  - 后端：api/subscription_manager.py 价格同步
+  - 后端：api/validators.py 价格验证同步
+
+---
+
 ## [v1.5.0] - 2025-11-04
 
 ### 🌍 品牌升级 / Branding

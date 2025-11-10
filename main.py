@@ -554,7 +554,7 @@ class TimeProgressBar(QWidget):
         from PySide6.QtGui import QIcon
         from gaiya.utils.path_utils import get_resource_path
 
-        icon_path = get_resource_path("Gaiya-logo-wbk.png")
+        icon_path = get_resource_path("gaiya-logo2-wbk.png")
         icon = QIcon(str(icon_path))
         if icon.isNull():
             # 如果自定义图标加载失败，使用Qt内置图标作为后备
@@ -753,6 +753,35 @@ class TimeProgressBar(QWidget):
     def show_statistics(self):
         """显示统计报告窗口"""
         try:
+            # 检查会员权限（免费用户需要引导购买）
+            user_tier = self.auth_client.get_user_tier()
+
+            if user_tier == "free":
+                # 免费用户，弹出引导对话框
+                reply = QMessageBox.question(
+                    None,  # 托盘菜单没有父窗口
+                    "💡 统计报告功能需要会员权限",
+                    "登录并升级会员后，您将享有：\n\n"
+                    "• 📊 完整的任务统计报告\n"
+                    "• 📈 数据可视化分析\n"
+                    "• 🗂️ 历史统计数据云同步\n"
+                    "• 🎯 更多高级功能和服务\n\n"
+                    "是否前往个人中心升级会员？",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.Yes
+                )
+
+                if reply == QMessageBox.StandardButton.Yes:
+                    # 用户选择"是"，打开个人中心（会自动切换到购买会员标签页）
+                    self.open_config_gui()
+                    # 切换到个人中心标签页
+                    if hasattr(self, 'config_manager') and self.config_manager:
+                        self.config_manager.tabs.setCurrentIndex(4)  # 个人中心是第5个标签页（索引4）
+
+                # 无论用户选择什么，都不打开统计窗口
+                return
+
+            # 付费会员，继续原有逻辑
             # 如果窗口已经打开,则激活它
             if self.statistics_window is not None and self.statistics_window.isVisible():
                 self.statistics_window.activateWindow()
