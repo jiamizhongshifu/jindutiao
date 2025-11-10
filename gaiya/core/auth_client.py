@@ -19,6 +19,10 @@ class AuthClient:
         self.auth_file = Path.home() / ".gaiya" / "auth.json"
         self.auth_file.parent.mkdir(parents=True, exist_ok=True)
 
+        # 创建 Session 对象，自动使用系统代理（支持科学上网）
+        self.session = requests.Session()
+        # Session 默认会读取环境变量 HTTP_PROXY 和 HTTPS_PROXY
+
         # 加载已保存的Token
         self.access_token = None
         self.refresh_token = None
@@ -107,7 +111,7 @@ class AuthClient:
             {"success": True/False, "error": "...", "access_token": "...", ...}
         """
         try:
-            response = requests.post(
+            response = self.session.post(
                 f"{self.backend_url}/api/auth-signup",
                 json={
                     "email": email,
@@ -154,7 +158,7 @@ class AuthClient:
             {"success": True/False, "error": "...", "access_token": "...", ...}
         """
         try:
-            response = requests.post(
+            response = self.session.post(
                 f"{self.backend_url}/api/auth-signin",
                 json={
                     "email": email,
@@ -200,7 +204,7 @@ class AuthClient:
             if not self.access_token:
                 return {"success": False, "error": "未登录"}
 
-            response = requests.post(
+            response = self.session.post(
                 f"{self.backend_url}/api/auth-signout",
                 headers={"Authorization": f"Bearer {self.access_token}"},
                 timeout=10
@@ -230,7 +234,7 @@ class AuthClient:
             if not self.refresh_token:
                 return {"success": False, "error": "无刷新令牌"}
 
-            response = requests.post(
+            response = self.session.post(
                 f"{self.backend_url}/api/auth-refresh",
                 json={"refresh_token": self.refresh_token},
                 timeout=10
@@ -265,7 +269,7 @@ class AuthClient:
             {"success": True/False, "error": "...", "message": "..."}
         """
         try:
-            response = requests.post(
+            response = self.session.post(
                 f"{self.backend_url}/api/auth-reset-password",
                 json={"email": email},
                 timeout=10
@@ -292,7 +296,7 @@ class AuthClient:
             if not self.get_user_id():
                 return {"success": False, "error": "未登录"}
 
-            response = requests.get(
+            response = self.session.get(
                 f"{self.backend_url}/api/subscription-status",
                 params={"user_id": self.get_user_id()},
                 timeout=10
@@ -330,7 +334,7 @@ class AuthClient:
             if not self.get_user_id():
                 return {"success": False, "error": "未登录"}
 
-            response = requests.post(
+            response = self.session.post(
                 f"{self.backend_url}/api/payment-create-order",
                 json={
                     "user_id": self.get_user_id(),
@@ -359,7 +363,7 @@ class AuthClient:
             {"success": True/False, "order": {...}}
         """
         try:
-            response = requests.get(
+            response = self.session.get(
                 f"{self.backend_url}/api/payment-query",
                 params={"out_trade_no": out_trade_no},
                 timeout=10
@@ -385,7 +389,7 @@ class AuthClient:
         try:
             user_tier = self.get_user_tier()
 
-            response = requests.get(
+            response = self.session.get(
                 f"{self.backend_url}/api/quota-status",
                 params={"user_tier": user_tier},
                 timeout=10
@@ -426,7 +430,7 @@ class AuthClient:
             {"success": True/False, "qr_url": "...", "state": "...", "error": "..."}
         """
         try:
-            response = requests.get(
+            response = self.session.get(
                 f"{self.backend_url}/api/auth-wechat-qrcode",
                 timeout=10
             )
@@ -458,7 +462,7 @@ class AuthClient:
             }
         """
         try:
-            response = requests.get(
+            response = self.session.get(
                 f"{self.backend_url}/api/auth-wechat-status",
                 params={"state": state},
                 timeout=10
@@ -510,7 +514,7 @@ class AuthClient:
             {"success": True/False, "error": "...", "message": "..."}
         """
         try:
-            response = requests.post(
+            response = self.session.post(
                 f"{self.backend_url}/api/auth-send-otp",
                 json={
                     "email": email,
@@ -543,7 +547,7 @@ class AuthClient:
             {"success": True/False, "error": "...", "message": "..."}
         """
         try:
-            response = requests.post(
+            response = self.session.post(
                 f"{self.backend_url}/api/auth-verify-otp",
                 json={
                     "email": email,
