@@ -576,7 +576,7 @@ class AuthManager:
             return {"success": False, "error": "Supabase not configured"}
 
         try:
-            from datetime import datetime
+            from datetime import datetime, timezone
 
             # 从数据库获取OTP
             response = self.client.table("otp_codes").select("*").eq("email", email).execute()
@@ -586,9 +586,14 @@ class AuthManager:
 
             stored_otp = response.data[0]
 
-            # 检查过期时间
-            expires_at = datetime.fromisoformat(stored_otp["expires_at"].replace('Z', '+00:00'))
-            if datetime.now(expires_at.tzinfo) > expires_at:
+            # 检查过期时间（统一使用UTC时区）
+            expires_at_str = stored_otp["expires_at"].replace('Z', '+00:00')
+            expires_at = datetime.fromisoformat(expires_at_str)
+            now_utc = datetime.now(timezone.utc)
+
+            print(f"[OTP-VERIFY] Checking expiry: now={now_utc.isoformat()}, expires={expires_at.isoformat()}", file=sys.stderr)
+
+            if now_utc > expires_at:
                 self.client.table("otp_codes").delete().eq("email", email).execute()
                 return {"success": False, "error": "验证码已过期"}
 
