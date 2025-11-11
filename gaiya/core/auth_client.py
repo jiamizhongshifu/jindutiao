@@ -111,6 +111,8 @@ class AuthClient:
             {"success": True/False, "error": "...", "access_token": "...", ...}
         """
         try:
+            print(f"[AUTH-SIGNUP] Attempting to connect to {self.backend_url}/api/auth-signup")
+
             response = self.session.post(
                 f"{self.backend_url}/api/auth-signup",
                 json={
@@ -118,8 +120,11 @@ class AuthClient:
                     "password": password,
                     "username": username
                 },
-                timeout=10
+                timeout=30,  # 增加超时时间到30秒（Vercel冷启动可能需要更长时间）
+                verify=True  # 明确启用SSL验证
             )
+
+            print(f"[AUTH-SIGNUP] Response status: {response.status_code}")
 
             if response.status_code == 200:
                 data = response.json()
@@ -140,14 +145,21 @@ class AuthClient:
 
                 return data
             else:
+                print(f"[AUTH-SIGNUP] Error response: {response.text}")
                 return {"success": False, "error": f"HTTP {response.status_code}"}
 
-        except requests.exceptions.Timeout:
-            return {"success": False, "error": "请求超时"}
-        except requests.exceptions.ConnectionError:
-            return {"success": False, "error": "无法连接到服务器"}
+        except requests.exceptions.Timeout as e:
+            print(f"[AUTH-SIGNUP] Timeout error: {e}")
+            return {"success": False, "error": "请求超时（30秒）- 请检查网络连接"}
+        except requests.exceptions.SSLError as e:
+            print(f"[AUTH-SIGNUP] SSL error: {e}")
+            return {"success": False, "error": f"SSL证书验证失败: {str(e)}"}
+        except requests.exceptions.ConnectionError as e:
+            print(f"[AUTH-SIGNUP] Connection error: {e}")
+            return {"success": False, "error": f"无法连接到服务器: {str(e)}"}
         except Exception as e:
-            return {"success": False, "error": str(e)}
+            print(f"[AUTH-SIGNUP] Unexpected error: {e}")
+            return {"success": False, "error": f"注册失败: {str(e)}"}
 
     def signin(self, email: str, password: str) -> Dict:
         """
