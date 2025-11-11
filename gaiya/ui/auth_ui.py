@@ -270,7 +270,25 @@ class AuthDialog(QDialog):
         else:
             # 登录失败
             error_msg = result.get("error", "登录失败")
-            QMessageBox.critical(self, "登录失败", f"登录失败：{error_msg}")
+
+            # 检查是否是SSL错误
+            if "SSL" in error_msg or "ssl" in error_msg or "连接失败" in error_msg:
+                # SSL连接失败，提供详细的排查建议
+                QMessageBox.critical(
+                    self,
+                    "连接失败",
+                    f"客户端无法连接到服务器（SSL问题）\n\n"
+                    f"技术详情：{error_msg}\n\n"
+                    f"可能的解决方案：\n"
+                    f"1. 检查网络连接是否正常\n"
+                    f"2. 确认没有使用代理或VPN\n"
+                    f"3. 暂时关闭防火墙/安全软件重试\n"
+                    f"4. 更新Windows系统到最新版本\n\n"
+                    f"如果问题持续，请联系技术支持。"
+                )
+            else:
+                # 其他错误，直接显示
+                QMessageBox.critical(self, "登录失败", f"登录失败：{error_msg}")
 
     def _on_signup_clicked(self):
         """处理注册按钮点击"""
@@ -342,7 +360,37 @@ class AuthDialog(QDialog):
         else:
             # 注册失败
             error_msg = result.get("error", "注册失败")
-            QMessageBox.critical(self, "注册失败", f"注册失败：{error_msg}")
+
+            # 检查是否是SSL错误
+            if "SSL" in error_msg or "ssl" in error_msg or "连接失败" in error_msg:
+                # 提供浏览器注册的选项
+                reply = QMessageBox.question(
+                    self,
+                    "连接失败",
+                    f"客户端无法连接到服务器（SSL问题）\n\n"
+                    f"技术详情：{error_msg}\n\n"
+                    f"是否使用浏览器完成注册？\n"
+                    f"（注册成功后，您可以返回客户端登录）",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.Yes
+                )
+
+                if reply == QMessageBox.StandardButton.Yes:
+                    # 打开浏览器到注册页面
+                    import webbrowser
+                    signup_url = f"{self.auth_client.backend_url}/#/signup?email={email}"
+                    webbrowser.open(signup_url)
+
+                    # 提示用户
+                    QMessageBox.information(
+                        self,
+                        "浏览器注册",
+                        "已在浏览器中打开注册页面。\n\n"
+                        "请完成注册后，返回客户端使用\"登录\"标签页登录。"
+                    )
+            else:
+                # 其他错误，直接显示
+                QMessageBox.critical(self, "注册失败", f"注册失败：{error_msg}")
 
     def _on_email_verified(self, user_info: dict):
         """邮箱验证成功的回调"""
