@@ -416,6 +416,7 @@ class AuthManager:
                 try:
                     import resend
                     resend.api_key = resend_api_key
+                    print(f"[RESEND] Attempting to send OTP email to: {email}", file=sys.stderr)
 
                     # 根据用途定制邮件内容
                     if purpose == "signup":
@@ -479,34 +480,46 @@ class AuthManager:
                     }
 
                     response = resend.Emails.send(params)
-                    print(f"[RESEND] OTP email sent successfully", file=sys.stderr)
+                    print(f"[RESEND] ✅ OTP email sent successfully!", file=sys.stderr)
                     print(f"[RESEND] Email ID: {response.get('id')}", file=sys.stderr)
                     print(f"[RESEND] To: {email}", file=sys.stderr)
                     print(f"[RESEND] From: {params['from']}", file=sys.stderr)
                     print(f"[RESEND] Full response: {response}", file=sys.stderr)
 
+                    # ✅ 只有真正发送成功才返回成功
                     return {
                         "success": True,
                         "message": "验证码已发送到您的邮箱"
                     }
 
-                except ImportError:
-                    print("[WARNING] Resend module not installed. Run: pip install resend", file=sys.stderr)
-                    # 降级到开发模式
-                    pass
+                except ImportError as e:
+                    error_msg = f"Resend module not installed: {e}"
+                    print(f"[ERROR] {error_msg}", file=sys.stderr)
+                    print(f"[ERROR] Run: pip install resend", file=sys.stderr)
+                    # ❌ 返回失败而不是继续执行
+                    return {
+                        "success": False,
+                        "error": "邮件服务未配置，请联系管理员"
+                    }
                 except Exception as e:
-                    print(f"[ERROR] Resend send failed: {e}", file=sys.stderr)
-                    # 降级到开发模式
-                    pass
+                    error_msg = f"Resend send failed: {e}"
+                    print(f"[ERROR] {error_msg}", file=sys.stderr)
+                    print(f"[ERROR] Type: {type(e).__name__}", file=sys.stderr)
+                    # ❌ 返回失败而不是继续执行
+                    return {
+                        "success": False,
+                        "error": f"发送验证码失败: {str(e)}"
+                    }
+            else:
+                # 开发模式：RESEND_API_KEY未配置
+                print(f"[DEV MODE] ⚠️ RESEND_API_KEY not configured", file=sys.stderr)
+                print(f"[DEV MODE] OTP Code for {email}: {otp_code} (purpose: {purpose})", file=sys.stderr)
+                print(f"[DEV MODE] Email will NOT be sent. Configure RESEND_API_KEY to enable email sending", file=sys.stderr)
 
-            # 开发模式：输出到控制台
-            print(f"[DEV MODE] OTP Code for {email}: {otp_code} (purpose: {purpose})", file=sys.stderr)
-            print(f"[DEV MODE] Set RESEND_API_KEY to enable email sending", file=sys.stderr)
-
-            return {
-                "success": True,
-                "message": "验证码已发送（开发模式：请查看控制台）"
-            }
+                return {
+                    "success": False,
+                    "error": "邮件服务未配置，验证码未发送"
+                }
 
         except Exception as e:
             print(f"Error sending OTP email: {e}", file=sys.stderr)
