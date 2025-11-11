@@ -67,8 +67,7 @@ class AuthManager:
             print(f"[AUTH-SIGNUP] User registered: {email}, verification email sent by Supabase", file=sys.stderr)
             print(f"[AUTH-SIGNUP] User ID: {auth_response.user.id}, Email confirmed: {auth_response.user.email_confirmed_at}", file=sys.stderr)
 
-            # 2. 创建用户记录（暂时不创建，等验证后通过webhook创建）
-            # 或者立即创建但标记为未验证
+            # 2. 创建或更新用户记录（使用 upsert 避免ID冲突）
             user_data = {
                 "id": auth_response.user.id,
                 "email": email,
@@ -80,11 +79,15 @@ class AuthManager:
             }
 
             try:
-                db_response = self.client.table("users").insert(user_data).execute()
-                print(f"[AUTH-SIGNUP] User record created in database", file=sys.stderr)
+                # 使用 upsert 代替 insert，如果ID冲突则更新
+                db_response = self.client.table("users").upsert(
+                    user_data,
+                    on_conflict="id"
+                ).execute()
+                print(f"[AUTH-SIGNUP] User record created/updated in database (ID: {auth_response.user.id})", file=sys.stderr)
             except Exception as db_error:
-                print(f"[AUTH-SIGNUP] Warning: Failed to create user record (will retry after verification): {db_error}", file=sys.stderr)
-                # 继续，因为Auth用户已创建成功
+                print(f"[AUTH-SIGNUP] Error: Failed to upsert user record: {db_error}", file=sys.stderr)
+                # 继续，因为Auth用户已创建成功，trigger可以处理
 
             # 3. 返回成功（但没有session，需要邮箱验证）
             return {
@@ -209,17 +212,15 @@ class AuthManager:
                 user_data = user_response.data[0]
                 email = user_data.get("email")
 
-            # 2. 从auth.users表查询验证状态
+            # 2. 从public.users表查询验证状态
             # 注意：Supabase Auth的email_confirmed_at字段存储在auth.users表中
-            # 我们需要通过RPC或直接查询来获取
-            # 临时方案：通过尝试登录来检测是否已验证（Supabase会拒绝未验证的登录）
-
-            # 方案：查询users表的email_verified字段（需要通过webhook或触发器更新）
+            # 通过数据库trigger自动同步到public.users的email_verified字段
             if email:
-                user_response = self.client.table("users").select("email_verified, id").eq("email", email).execute()
+                user_response = self.client.table("users").select("email_verified, id, status").eq("email", email).execute()
 
                 if not user_response.data:
-                    print(f"[CHECK-VERIFICATION] User not found in users table: {email}", file=sys.stderr)
+                    print(f"[CHECK-VERIFICATION] ❌ User not found in public.users table: {email}", file=sys.stderr)
+                    print(f"[CHECK-VERIFICATION] 💡 This may indicate trigger hasn't run or user record not created", file=sys.stderr)
                     return {
                         "success": True,
                         "verified": False,
@@ -228,8 +229,14 @@ class AuthManager:
 
                 user_data = user_response.data[0]
                 is_verified = user_data.get("email_verified", False)
+                user_id = user_data.get("id")
+                status = user_data.get("status")
 
-                print(f"[CHECK-VERIFICATION] Email: {email}, Verified: {is_verified}", file=sys.stderr)
+                print(f"[CHECK-VERIFICATION] ✓ Found user in public.users:", file=sys.stderr)
+                print(f"  - Email: {email}", file=sys.stderr)
+                print(f"  - ID: {user_id}", file=sys.stderr)
+                print(f"  - Verified: {is_verified}", file=sys.stderr)
+                print(f"  - Status: {status}", file=sys.stderr)
 
                 if is_verified:
                     # 验证成功
