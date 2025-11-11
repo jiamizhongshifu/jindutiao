@@ -329,7 +329,7 @@ class AuthDialog(QDialog):
                 return
 
             # 2. 弹出OTP验证对话框
-            otp_dialog = OTPDialog(email, self.auth_client, parent=self)
+            otp_dialog = OTPDialog(parent=self, email=email, purpose="signup")
 
             if otp_dialog.exec() == QDialog.DialogCode.Accepted:
                 # 3. OTP验证成功，自动登录
