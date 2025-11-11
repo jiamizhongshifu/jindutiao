@@ -149,7 +149,14 @@ class AuthClient:
         # 注意：这会降低安全性，但可以解决Windows SSL库兼容性问题
         self.session.verify = False
 
-        # Session 默认会读取环境变量 HTTP_PROXY 和 HTTPS_PROXY
+        # 强制使用SOCKS5代理而非HTTP代理（解决Clash HTTP代理干扰SSL的问题）
+        # SOCKS5在TCP层工作，对SSL流量完全透明，不会干扰SSL握手
+        socks5_proxy = {
+            'http': 'socks5h://127.0.0.1:7898',
+            'https': 'socks5h://127.0.0.1:7898'
+        }
+        self.session.proxies = socks5_proxy
+        print("[AUTH] 使用SOCKS5代理: socks5h://127.0.0.1:7898")
 
         # 加载已保存的Token
         self.access_token = None
