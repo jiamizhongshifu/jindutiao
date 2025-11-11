@@ -60,24 +60,30 @@ CREATE TRIGGER on_email_confirmed
   EXECUTE FUNCTION public.handle_email_verification();
 
 -- ============================================================================
--- 验证测试 SQL
+-- 验证测试 SQL（可选，用于检查状态）
 -- ============================================================================
 
--- 查看当前 drmrzhong@gmail.com 在两个表中的状态
-SELECT 'auth.users' AS table_name, id, email, email_confirmed_at
+-- 注释掉了测试查询，避免执行时报错
+-- 如果需要测试，请手动执行以下查询：
+
+/*
+-- 查看 auth.users 中的状态
+SELECT id::text as user_id, email, email_confirmed_at
 FROM auth.users
-WHERE email = 'drmrzhong@gmail.com'
+WHERE email = 'drmrzhong@gmail.com';
 
-UNION ALL
-
-SELECT 'public.users' AS table_name, id::text, email, NULL
+-- 查看 public.users 中的状态
+SELECT id::text as user_id, email, email_verified, status
 FROM public.users
 WHERE email = 'drmrzhong@gmail.com';
 
 -- 如果需要手动触发验证（测试用）
--- UPDATE auth.users
--- SET email_confirmed_at = NOW()
--- WHERE email = 'drmrzhong@gmail.com';
+UPDATE auth.users
+SET email_confirmed_at = NOW()
+WHERE email = 'drmrzhong@gmail.com';
 
 -- 再次检查 public.users 是否更新
--- SELECT id, email, email_verified, status FROM public.users WHERE email = 'drmrzhong@gmail.com';
+SELECT id::text as user_id, email, email_verified, status
+FROM public.users
+WHERE email = 'drmrzhong@gmail.com';
+*/
