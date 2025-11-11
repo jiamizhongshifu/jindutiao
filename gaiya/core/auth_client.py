@@ -142,8 +142,8 @@ class AuthClient:
                     "password": password,
                     "username": username
                 },
-                timeout=30  # 增加超时时间到30秒（Vercel冷启动可能需要更长时间）
-                # verify参数已在session全局配置（禁用以解决SSL兼容性问题）
+                timeout=30,  # 增加超时时间到30秒（Vercel冷启动可能需要更长时间）
+                verify=False  # 双重保险：显式禁用SSL验证（session已配置，这里再次确保）
             )
 
             print(f"[AUTH-SIGNUP] Response status: {response.status_code}")
@@ -201,7 +201,8 @@ class AuthClient:
                     "email": email,
                     "password": password
                 },
-                timeout=10
+                timeout=10,
+                verify=False  # 显式禁用SSL验证
             )
 
             if response.status_code == 200:
@@ -244,7 +245,8 @@ class AuthClient:
             response = self.session.post(
                 f"{self.backend_url}/api/auth-signout",
                 headers={"Authorization": f"Bearer {self.access_token}"},
-                timeout=10
+                timeout=10,
+                verify=False  # 显式禁用SSL验证
             )
 
             # 无论成功与否，都清除本地Token
@@ -274,7 +276,8 @@ class AuthClient:
             response = self.session.post(
                 f"{self.backend_url}/api/auth-refresh",
                 json={"refresh_token": self.refresh_token},
-                timeout=10
+                timeout=10,
+                verify=False  # 显式禁用SSL验证
             )
 
             if response.status_code == 200:
@@ -309,7 +312,8 @@ class AuthClient:
             response = self.session.post(
                 f"{self.backend_url}/api/auth-reset-password",
                 json={"email": email},
-                timeout=10
+                timeout=10,
+                verify=False  # 显式禁用SSL验证
             )
 
             if response.status_code == 200:
@@ -336,7 +340,8 @@ class AuthClient:
             response = self.session.get(
                 f"{self.backend_url}/api/subscription-status",
                 params={"user_id": self.get_user_id()},
-                timeout=10
+                timeout=10,
+                verify=False  # 显式禁用SSL验证
             )
 
             if response.status_code == 200:
@@ -378,7 +383,8 @@ class AuthClient:
                     "plan_type": plan_type,
                     "pay_type": pay_type
                 },
-                timeout=10
+                timeout=10,
+                verify=False  # 显式禁用SSL验证
             )
 
             if response.status_code == 200:
@@ -403,7 +409,8 @@ class AuthClient:
             response = self.session.get(
                 f"{self.backend_url}/api/payment-query",
                 params={"out_trade_no": out_trade_no},
-                timeout=10
+                timeout=10,
+                verify=False  # 显式禁用SSL验证
             )
 
             if response.status_code == 200:
@@ -429,7 +436,8 @@ class AuthClient:
             response = self.session.get(
                 f"{self.backend_url}/api/quota-status",
                 params={"user_tier": user_tier},
-                timeout=10
+                timeout=10,
+                verify=False  # 显式禁用SSL验证
             )
 
             if response.status_code == 200:
@@ -469,7 +477,8 @@ class AuthClient:
         try:
             response = self.session.get(
                 f"{self.backend_url}/api/auth-wechat-qrcode",
-                timeout=10
+                timeout=10,
+                verify=False  # 显式禁用SSL验证
             )
 
             if response.status_code == 200:
@@ -502,7 +511,8 @@ class AuthClient:
             response = self.session.get(
                 f"{self.backend_url}/api/auth-wechat-status",
                 params={"state": state},
-                timeout=10
+                timeout=10,
+                verify=False  # 显式禁用SSL验证
             )
 
             if response.status_code == 200:
@@ -561,7 +571,8 @@ class AuthClient:
                     "email": email,
                     "purpose": purpose
                 },
-                timeout=10
+                timeout=10,
+                verify=False  # 显式禁用SSL验证
             )
 
             print(f"[OTP] 响应状态码: {response.status_code}")
@@ -608,7 +619,8 @@ class AuthClient:
                     "email": email,
                     "otp_code": otp_code
                 },
-                timeout=10
+                timeout=10,
+                verify=False  # 显式禁用SSL验证
             )
 
             if response.status_code == 200:
