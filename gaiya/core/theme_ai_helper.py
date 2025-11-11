@@ -5,9 +5,13 @@ PyDayBar AI 主题助手
 """
 
 import requests
+import urllib3
 from typing import Dict, List, Optional
 from PySide6.QtWidgets import QMessageBox
 import json
+
+# 禁用SSL警告（临时解决SSL兼容性问题）
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 class ThemeAIHelper:
@@ -96,7 +100,8 @@ class ThemeAIHelper:
                     "statistics": statistics or {},
                     "user_tier": self.ai_client.user_tier
                 },
-                timeout=self.ai_client.timeout
+                timeout=self.ai_client.timeout,
+                verify=False  # 禁用SSL验证（解决Windows SSL兼容性问题）
             )
             
             if response.status_code == 403:
@@ -155,7 +160,8 @@ class ThemeAIHelper:
                     "description": description,
                     "user_tier": self.ai_client.user_tier
                 },
-                timeout=self.ai_client.timeout
+                timeout=self.ai_client.timeout,
+                verify=False  # 禁用SSL验证（解决Windows SSL兼容性问题）
             )
             
             if response.status_code == 403:

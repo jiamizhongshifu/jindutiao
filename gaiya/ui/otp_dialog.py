@@ -11,6 +11,10 @@ from PySide6.QtGui import QFont, QIntValidator
 import sys
 import os
 import requests
+import urllib3
+
+# 禁用SSL警告（临时解决SSL兼容性问题）
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # 添加父目录到路径以导入core模块
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -200,7 +204,8 @@ class OTPDialog(QDialog):
                     "email": self.email,
                     "purpose": self.purpose
                 },
-                timeout=10
+                timeout=10,
+                verify=False  # 禁用SSL验证（解决Windows SSL兼容性问题）
             )
 
             if response.status_code == 200:
@@ -267,7 +272,8 @@ class OTPDialog(QDialog):
                     "email": self.email,
                     "otp_code": otp_code
                 },
-                timeout=10
+                timeout=10,
+                verify=False  # 禁用SSL验证（解决Windows SSL兼容性问题）
             )
 
             if response.status_code == 200:
