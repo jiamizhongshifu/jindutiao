@@ -125,15 +125,18 @@ class AuthClient:
                 data = response.json()
 
                 if data.get("success"):
-                    # 保存Token
-                    self._save_tokens(
-                        data["access_token"],
-                        data["refresh_token"],
-                        {
-                            "user_id": data["user_id"],
-                            "email": data["email"]
-                        }
-                    )
+                    # 检查是否包含access_token（新的Supabase邮箱验证流程不会立即返回token）
+                    if "access_token" in data and "refresh_token" in data:
+                        # 保存Token（仅当包含时）
+                        self._save_tokens(
+                            data["access_token"],
+                            data["refresh_token"],
+                            {
+                                "user_id": data["user_id"],
+                                "email": data["email"]
+                            }
+                        )
+                    # 否则：等待邮箱验证后再登录
 
                 return data
             else:
