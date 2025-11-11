@@ -26,10 +26,31 @@ class SSLAdapter(HTTPAdapter):
     解决Windows SSL库与Vercel服务器的兼容性问题
     """
     def init_poolmanager(self, *args, **kwargs):
-        """初始化连接池管理器，强制禁用SSL验证"""
-        # 使用最宽松的SSL配置
-        kwargs['ssl_version'] = ssl.PROTOCOL_TLS  # 允许所有TLS版本
-        kwargs['cert_reqs'] = ssl.CERT_NONE  # 不要求证书验证
+        """初始化连接池管理器，使用强化的SSL配置（兼容Clash代理）"""
+        try:
+            # 创建自定义SSL上下文
+            from urllib3.util.ssl_ import create_urllib3_context
+            ctx = create_urllib3_context()
+
+            # 强制使用TLS 1.2或更高版本（兼容现代服务器）
+            ctx.minimum_version = ssl.TLSVersion.TLSv1_2
+
+            # 禁用证书验证（解决证书问题）
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+
+            # 设置更宽松的cipher suites（兼容代理软件）
+            # SECLEVEL=1 允许使用1024位密钥和SHA-1签名
+            ctx.set_ciphers('DEFAULT@SECLEVEL=1')
+
+            # 应用自定义SSL上下文
+            kwargs['ssl_context'] = ctx
+        except Exception as e:
+            # 如果高级配置失败，回退到基础配置
+            print(f"[AUTH] 高级SSL配置失败，使用基础配置: {e}")
+            kwargs['ssl_version'] = ssl.PROTOCOL_TLS
+            kwargs['cert_reqs'] = ssl.CERT_NONE
+
         return super().init_poolmanager(*args, **kwargs)
 
 
@@ -49,10 +70,18 @@ class AuthClient:
             {"success": True/False, "data": {...}, "error": "..."}
         """
         try:
-            # 创建不验证SSL证书的context
+            # 创建强化的SSL上下文（与SSLAdapter保持一致）
             ctx = ssl.create_default_context()
+
+            # 强制使用TLS 1.2或更高版本
+            ctx.minimum_version = ssl.TLSVersion.TLSv1_2
+
+            # 禁用证书验证
             ctx.check_hostname = False
             ctx.verify_mode = ssl.CERT_NONE
+
+            # 设置更宽松的cipher suites（兼容Clash代理）
+            ctx.set_ciphers('DEFAULT@SECLEVEL=1')
 
             # 准备请求数据
             json_data = json.dumps(data).encode('utf-8')
