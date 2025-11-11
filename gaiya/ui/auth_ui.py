@@ -65,9 +65,11 @@ class AuthDialog(QDialog):
         # 创建StackedWidget（微信登录 vs 邮箱登录）
         self.stacked_widget = QStackedWidget()
 
-        # 页面0: 微信登录（默认显示）
-        wechat_widget = self._create_wechat_login_widget()
-        self.stacked_widget.addWidget(wechat_widget)
+        # 页面0: 微信登录（延迟加载，避免QWebEngineView初始化导致卡顿）
+        # 先添加一个占位widget，真正切换到微信登录时才创建
+        self.wechat_widget = None
+        self.wechat_placeholder = QWidget()  # 占位
+        self.stacked_widget.addWidget(self.wechat_placeholder)
 
         # 页面1: 邮箱登录/注册
         email_widget = self._create_email_login_widget()
@@ -521,7 +523,17 @@ class AuthDialog(QDialog):
             self.polling_timer.stop()
 
     def _switch_to_wechat_login(self):
-        """切换到微信登录模式"""
+        """切换到微信登录模式（延迟加载）"""
+        # 如果微信登录widget还未创建，现在创建它
+        if self.wechat_widget is None:
+            print("[AUTH-UI] 延迟创建微信登录widget（QWebEngineView）...")
+            self.wechat_widget = self._create_wechat_login_widget()
+            # 替换占位符
+            self.stacked_widget.removeWidget(self.wechat_placeholder)
+            self.stacked_widget.insertWidget(0, self.wechat_widget)
+            self.wechat_placeholder.deleteLater()
+            print("[AUTH-UI] 微信登录widget创建完成")
+
         self.stacked_widget.setCurrentIndex(0)
         # 重新启动微信登录流程
         self._start_wechat_login()
