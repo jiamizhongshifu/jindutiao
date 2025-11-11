@@ -405,6 +405,12 @@ class AuthManager:
             # 尝试使用Resend邮件服务
             resend_api_key = os.getenv("RESEND_API_KEY")
 
+            # 诊断日志：检查环境变量
+            if resend_api_key:
+                print(f"[AUTH-OTP-DEBUG] RESEND_API_KEY found, length: {len(resend_api_key)}", file=sys.stderr)
+            else:
+                print(f"[AUTH-OTP-DEBUG] RESEND_API_KEY not found, using dev mode", file=sys.stderr)
+
             if resend_api_key:
                 # 生产环境：使用Resend发送邮件
                 try:
@@ -473,7 +479,11 @@ class AuthManager:
                     }
 
                     response = resend.Emails.send(params)
-                    print(f"[RESEND] OTP email sent to {email}, ID: {response.get('id')}", file=sys.stderr)
+                    print(f"[RESEND] OTP email sent successfully", file=sys.stderr)
+                    print(f"[RESEND] Email ID: {response.get('id')}", file=sys.stderr)
+                    print(f"[RESEND] To: {email}", file=sys.stderr)
+                    print(f"[RESEND] From: {params['from']}", file=sys.stderr)
+                    print(f"[RESEND] Full response: {response}", file=sys.stderr)
 
                     return {
                         "success": True,
