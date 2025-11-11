@@ -16,7 +16,7 @@ import os
 # 添加父目录到路径以导入core模块
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from gaiya.core.auth_client import AuthClient
-from gaiya.ui.otp_dialog import OTPDialog
+from gaiya.ui.email_verification_dialog import EmailVerificationDialog
 
 
 class AuthDialog(QDialog):
@@ -311,34 +311,46 @@ class AuthDialog(QDialog):
         signup_button.setText("注册")
 
         if result.get("success"):
-            # 方案C: OTP验证码（桌面应用最佳实践）
-            # 1. 注册成功，弹出OTP验证对话框（OTPDialog会自动发送验证码）
-            otp_dialog = OTPDialog(parent=self, email=email, purpose="signup")
+            # 使用Supabase内置邮箱验证
+            # 1. 注册成功，Supabase已自动发送验证邮件
+            verification_dialog = EmailVerificationDialog(
+                parent=self,
+                email=email,
+                password=password,  # 传递密码用于验证成功后自动登录
+                user_id=result.get("user_id")
+            )
 
-            if otp_dialog.exec() == QDialog.DialogCode.Accepted:
-                # 3. OTP验证成功，自动登录
-                user_info = {
-                    "user_id": result.get("user_id"),
-                    "email": email,
-                    "user_tier": "free"
-                }
+            # 连接验证成功信号
+            verification_dialog.verification_success.connect(
+                lambda user_info: self._on_email_verified(user_info)
+            )
 
-                # 发出登录成功信号
-                self.login_success.emit(user_info)
-
-                # 关闭对话框
-                self.accept()
+            if verification_dialog.exec() == QDialog.DialogCode.Accepted:
+                # 用户已验证成功并自动登录（由EmailVerificationDialog处理）
+                # 这里不需要额外操作，信号已触发
+                pass
             else:
                 # 用户取消验证，提示可以稍后登录
                 QMessageBox.information(
                     self,
                     "注册成功",
-                    "您的账号已创建，但邮箱尚未验证。\n请验证邮箱后登录。"
+                    "您的账号已创建，验证邮件已发送。\n\n"
+                    "请验证邮箱后登录。如果没有收到邮件，请检查垃圾邮件文件夹。"
                 )
         else:
             # 注册失败
             error_msg = result.get("error", "注册失败")
             QMessageBox.critical(self, "注册失败", f"注册失败：{error_msg}")
+
+    def _on_email_verified(self, user_info: dict):
+        """邮箱验证成功的回调"""
+        print(f"[AUTH-UI] 邮箱验证成功，用户信息: {user_info}")
+
+        # 发出登录成功信号
+        self.login_success.emit(user_info)
+
+        # 关闭认证对话框
+        self.accept()
 
     def _on_forgot_password(self):
         """处理忘记密码"""
