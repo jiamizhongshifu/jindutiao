@@ -9,6 +9,10 @@
   "routes": [
     { "handle": "filesystem" },
     {
+      "src": "/email-verified",
+      "dest": "/public/email-verified.html"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/$1.py"
     }
