@@ -12,6 +12,9 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 import urllib3
 import ssl
+import urllib.request
+import urllib.parse
+import urllib.error
 
 # 禁用SSL警告（临时解决SSL兼容性问题）
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -32,6 +35,65 @@ class SSLAdapter(HTTPAdapter):
 
 class AuthClient:
     """认证客户端"""
+
+    def _urllib_post(self, url: str, data: dict, timeout: int = 30) -> Dict:
+        """
+        使用urllib进行POST请求（降级方案，解决requests的SSL问题）
+
+        Args:
+            url: 请求URL
+            data: JSON数据
+            timeout: 超时时间（秒）
+
+        Returns:
+            {"success": True/False, "data": {...}, "error": "..."}
+        """
+        try:
+            # 创建不验证SSL证书的context
+            ctx = ssl.create_default_context()
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+
+            # 准备请求数据
+            json_data = json.dumps(data).encode('utf-8')
+
+            # 创建请求
+            req = urllib.request.Request(
+                url,
+                data=json_data,
+                headers={
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'GaiYa/1.5'
+                },
+                method='POST'
+            )
+
+            # 发送请求
+            print(f"[URLLIB-FALLBACK] Sending POST request to {url}")
+            with urllib.request.urlopen(req, timeout=timeout, context=ctx) as response:
+                response_data = response.read().decode('utf-8')
+                print(f"[URLLIB-FALLBACK] Response status: {response.status}")
+
+                result = json.loads(response_data)
+                result['_status_code'] = response.status
+                return result
+
+        except urllib.error.HTTPError as e:
+            error_body = e.read().decode('utf-8')
+            print(f"[URLLIB-FALLBACK] HTTP Error {e.code}: {error_body}")
+            try:
+                error_data = json.loads(error_body)
+                return error_data
+            except:
+                return {"success": False, "error": f"HTTP {e.code}: {error_body}"}
+
+        except urllib.error.URLError as e:
+            print(f"[URLLIB-FALLBACK] URL Error: {e.reason}")
+            return {"success": False, "error": f"连接失败: {e.reason}"}
+
+        except Exception as e:
+            print(f"[URLLIB-FALLBACK] Unknown error: {type(e).__name__}: {e}")
+            return {"success": False, "error": str(e)}
 
     def __init__(self):
         """初始化客户端"""
@@ -147,8 +209,9 @@ class AuthClient:
         Returns:
             {"success": True/False, "error": "...", "access_token": "...", ...}
         """
+        # 尝试使用requests（主要方案）
         try:
-            print(f"[AUTH-SIGNUP] Attempting to connect to {self.backend_url}/api/auth-signup")
+            print(f"[AUTH-SIGNUP] 方案1: 使用requests库连接到 {self.backend_url}/api/auth-signup")
 
             response = self.session.post(
                 f"{self.backend_url}/api/auth-signup",
@@ -157,11 +220,11 @@ class AuthClient:
                     "password": password,
                     "username": username
                 },
-                timeout=30,  # 增加超时时间到30秒（Vercel冷启动可能需要更长时间）
-                verify=False  # 双重保险：显式禁用SSL验证（session已配置，这里再次确保）
+                timeout=30,
+                verify=False
             )
 
-            print(f"[AUTH-SIGNUP] Response status: {response.status_code}")
+            print(f"[AUTH-SIGNUP] requests成功! 响应状态: {response.status_code}")
 
             if response.status_code == 200:
                 data = response.json()
@@ -189,8 +252,40 @@ class AuthClient:
             print(f"[AUTH-SIGNUP] Timeout error: {e}")
             return {"success": False, "error": "请求超时（30秒）- 请检查网络连接"}
         except requests.exceptions.SSLError as e:
-            print(f"[AUTH-SIGNUP] SSL error: {e}")
-            return {"success": False, "error": f"SSL证书验证失败: {str(e)}"}
+            print(f"[AUTH-SIGNUP] requests库SSL错误: {e}")
+            print(f"[AUTH-SIGNUP] 🔄 切换到方案2: 使用urllib标准库（降级方案）")
+
+            # 自动降级到urllib方案
+            try:
+                result = self._urllib_post(
+                    f"{self.backend_url}/api/auth-signup",
+                    {
+                        "email": email,
+                        "password": password,
+                        "username": username
+                    },
+                    timeout=30
+                )
+
+                # 如果urllib成功，保存token
+                if result.get("success") and "access_token" in result and "refresh_token" in result:
+                    self._save_tokens(
+                        result["access_token"],
+                        result["refresh_token"],
+                        {
+                            "user_id": result["user_id"],
+                            "email": result["email"]
+                        }
+                    )
+
+                return result
+
+            except Exception as urllib_error:
+                print(f"[AUTH-SIGNUP] urllib降级方案也失败: {urllib_error}")
+                return {
+                    "success": False,
+                    "error": f"SSL证书验证失败（requests和urllib均失败）\n\n原始错误: {str(e)}\n降级错误: {str(urllib_error)}"
+                }
         except requests.exceptions.ConnectionError as e:
             print(f"[AUTH-SIGNUP] Connection error: {e}")
             return {"success": False, "error": f"无法连接到服务器: {str(e)}"}
