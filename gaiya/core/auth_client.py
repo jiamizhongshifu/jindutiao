@@ -514,8 +514,12 @@ class AuthClient:
             {"success": True/False, "error": "...", "message": "..."}
         """
         try:
+            url = f"{self.backend_url}/api/auth-send-otp"
+            print(f"[OTP] 正在发送验证码到: {email}")
+            print(f"[OTP] 请求URL: {url}")
+
             response = self.session.post(
-                f"{self.backend_url}/api/auth-send-otp",
+                url,
                 json={
                     "email": email,
                     "purpose": purpose
@@ -523,16 +527,30 @@ class AuthClient:
                 timeout=10
             )
 
+            print(f"[OTP] 响应状态码: {response.status_code}")
+
             if response.status_code == 200:
-                return response.json()
+                result = response.json()
+                print(f"[OTP] 发送成功: {result.get('message', '验证码已发送')}")
+                return result
             else:
-                return {"success": False, "error": f"HTTP {response.status_code}"}
+                error_msg = f"HTTP {response.status_code}"
+                print(f"[OTP] 发送失败: {error_msg}")
+                try:
+                    error_detail = response.json()
+                    print(f"[OTP] 错误详情: {error_detail}")
+                except:
+                    pass
+                return {"success": False, "error": error_msg}
 
         except requests.exceptions.Timeout:
+            print(f"[OTP] 错误: 请求超时（10秒）")
             return {"success": False, "error": "请求超时"}
-        except requests.exceptions.ConnectionError:
+        except requests.exceptions.ConnectionError as e:
+            print(f"[OTP] 错误: 无法连接到服务器 - {e}")
             return {"success": False, "error": "无法连接到服务器"}
         except Exception as e:
+            print(f"[OTP] 未知错误: {type(e).__name__}: {e}")
             return {"success": False, "error": str(e)}
 
     def verify_otp(self, email: str, otp_code: str) -> Dict:
