@@ -31,7 +31,7 @@ class AuthManager:
 
     def sign_up_with_email(self, email: str, password: str, username: Optional[str] = None) -> Dict:
         """
-        邮箱注册
+        邮箱注册（使用Supabase内置邮箱验证）
 
         Args:
             email: 邮箱地址
@@ -39,17 +39,23 @@ class AuthManager:
             username: 用户名（可选）
 
         Returns:
-            注册结果
+            注册结果，包含user_id但不包含session（需要邮箱验证后才能登录）
         """
         if not self.client:
             return {"success": False, "error": "Supabase not configured"}
 
         try:
-            # 1. 创建Supabase Auth用户
-            # 方案A: 禁用邮箱确认，用户注册后立即可登录
+            # 1. 创建Supabase Auth用户（会自动发送验证邮件）
+            # Supabase会发送包含验证链接的邮件到用户邮箱
             auth_response = self.client.auth.sign_up({
                 "email": email,
-                "password": password
+                "password": password,
+                "options": {
+                    "email_redirect_to": None,  # 验证后不跳转
+                    "data": {
+                        "username": username or email.split("@")[0]
+                    }
+                }
             })
 
             if not auth_response.user:
@@ -58,32 +64,48 @@ class AuthManager:
                     "error": "Failed to create auth user"
                 }
 
-            # 2. 创建用户记录
+            print(f"[AUTH-SIGNUP] User registered: {email}, verification email sent by Supabase", file=sys.stderr)
+            print(f"[AUTH-SIGNUP] User ID: {auth_response.user.id}, Email confirmed: {auth_response.user.email_confirmed_at}", file=sys.stderr)
+
+            # 2. 创建用户记录（暂时不创建，等验证后通过webhook创建）
+            # 或者立即创建但标记为未验证
             user_data = {
                 "id": auth_response.user.id,
                 "email": email,
                 "username": username or email.split("@")[0],
                 "user_tier": "free",
                 "auth_provider": "email",
-                "email_verified": False,
-                "status": "active"
+                "email_verified": False,  # 待邮箱验证
+                "status": "pending_verification"  # 待验证状态
             }
 
-            db_response = self.client.table("users").insert(user_data).execute()
+            try:
+                db_response = self.client.table("users").insert(user_data).execute()
+                print(f"[AUTH-SIGNUP] User record created in database", file=sys.stderr)
+            except Exception as db_error:
+                print(f"[AUTH-SIGNUP] Warning: Failed to create user record (will retry after verification): {db_error}", file=sys.stderr)
+                # 继续，因为Auth用户已创建成功
 
-            print(f"User registered: {email}", file=sys.stderr)
-
+            # 3. 返回成功（但没有session，需要邮箱验证）
             return {
                 "success": True,
                 "user_id": auth_response.user.id,
                 "email": email,
-                "access_token": auth_response.session.access_token if auth_response.session else None,
-                "refresh_token": auth_response.session.refresh_token if auth_response.session else None
+                "email_verified": False,
+                "message": "注册成功！我们已向您的邮箱发送了验证邮件，请查收并点击验证链接。"
             }
 
         except Exception as e:
-            print(f"Error during sign up: {e}", file=sys.stderr)
-            return {"success": False, "error": str(e)}
+            error_msg = str(e)
+            print(f"[AUTH-SIGNUP] Error during sign up: {error_msg}", file=sys.stderr)
+
+            # 友好的错误提示
+            if "already registered" in error_msg.lower() or "already exists" in error_msg.lower():
+                return {"success": False, "error": "该邮箱已被注册"}
+            elif "invalid email" in error_msg.lower():
+                return {"success": False, "error": "邮箱格式不正确"}
+            else:
+                return {"success": False, "error": f"注册失败: {error_msg}"}
 
     def sign_in_with_email(self, email: str, password: str) -> Dict:
         """
@@ -158,6 +180,86 @@ class AuthManager:
         except Exception as e:
             print(f"Error during sign out: {e}", file=sys.stderr)
             return {"success": False, "error": str(e)}
+
+    def check_email_verification(self, user_id: Optional[str] = None, email: Optional[str] = None) -> Dict:
+        """
+        检查邮箱验证状态（用于前端轮询）
+
+        Args:
+            user_id: 用户ID（可选）
+            email: 邮箱地址（可选）
+
+        Returns:
+            验证状态结果
+        """
+        if not self.client:
+            return {"success": False, "error": "Supabase not configured"}
+
+        try:
+            # 1. 从Supabase Auth查询用户
+            if user_id:
+                # 通过user_id查询（需要admin权限，这里用直接查询users表代替）
+                user_response = self.client.table("users").select("*").eq("id", user_id).execute()
+                if not user_response.data:
+                    return {
+                        "success": False,
+                        "error": "User not found",
+                        "verified": False
+                    }
+                user_data = user_response.data[0]
+                email = user_data.get("email")
+
+            # 2. 从auth.users表查询验证状态
+            # 注意：Supabase Auth的email_confirmed_at字段存储在auth.users表中
+            # 我们需要通过RPC或直接查询来获取
+            # 临时方案：通过尝试登录来检测是否已验证（Supabase会拒绝未验证的登录）
+
+            # 方案：查询users表的email_verified字段（需要通过webhook或触发器更新）
+            if email:
+                user_response = self.client.table("users").select("email_verified, id").eq("email", email).execute()
+
+                if not user_response.data:
+                    print(f"[CHECK-VERIFICATION] User not found in users table: {email}", file=sys.stderr)
+                    return {
+                        "success": True,
+                        "verified": False,
+                        "message": "等待邮箱验证..."
+                    }
+
+                user_data = user_response.data[0]
+                is_verified = user_data.get("email_verified", False)
+
+                print(f"[CHECK-VERIFICATION] Email: {email}, Verified: {is_verified}", file=sys.stderr)
+
+                if is_verified:
+                    # 验证成功
+                    return {
+                        "success": True,
+                        "verified": True,
+                        "user_id": user_data.get("id"),
+                        "email": email,
+                        "message": "邮箱验证成功！"
+                    }
+                else:
+                    # 尚未验证
+                    return {
+                        "success": True,
+                        "verified": False,
+                        "message": "等待邮箱验证..."
+                    }
+            else:
+                return {
+                    "success": False,
+                    "error": "Email is required"
+                }
+
+        except Exception as e:
+            print(f"[CHECK-VERIFICATION] Error: {e}", file=sys.stderr)
+            return {
+                "success": False,
+                "error": str(e),
+                "verified": False
+            }
 
     def get_user_by_token(self, access_token: str) -> Optional[Dict]:
         """
