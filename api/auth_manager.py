@@ -466,7 +466,7 @@ class AuthManager:
 
                     # 发送邮件
                     params = {
-                        "from": "GaiYa <noreply@jindutiao.vercel.app>",
+                        "from": "onboarding@resend.dev",
                         "to": [email],
                         "subject": subject,
                         "html": html_content

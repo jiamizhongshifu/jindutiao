@@ -2844,12 +2844,23 @@ class ConfigManager(QMainWindow):
         """处理登录成功"""
         from PySide6.QtWidgets import QMessageBox
 
+        # 根据用户等级显示不同的提示
+        user_tier = user_info.get('user_tier', 'free')
+        if user_tier == 'free':
+            tier_message = "您当前是免费用户。升级高级版可解锁更多功能。"
+        elif user_tier == 'premium':
+            tier_message = "您是高级版用户，可以使用所有功能。"
+        elif user_tier == 'lifetime':
+            tier_message = "您是终身会员，尊享所有高级功能。"
+        else:
+            tier_message = "您的账户信息已更新。"
+
         # 显示成功提示
         QMessageBox.information(
             self,
             "登录成功",
             f"欢迎回来，{user_info.get('email', '用户')}！\n\n"
-            f"您的账户信息已更新，现在可以使用所有高级功能。"
+            f"{tier_message}"
         )
 
         # 重新加载个人中心tab以显示登录后的内容
