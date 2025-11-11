@@ -65,16 +65,16 @@ class handler(BaseHTTPRequestHandler):
                 "attempts": 0
             }
 
-            # 5. 发送邮件(使用Supabase的邮件功能)
+            # 5. 发送邮件(使用Resend邮件服务)
             auth_manager = AuthManager()
             result = auth_manager.send_otp_email(email, otp_code, purpose)
 
             if result.get("success"):
                 self._send_success({
-                    "message": "验证码已发送到您的邮箱",
+                    "message": result.get("message", "验证码已发送到您的邮箱"),
                     "expires_in": 600  # 秒
                 })
-                print(f"[AUTH-OTP] OTP sent successfully: {otp_code} (DEV MODE)", file=sys.stderr)
+                print(f"[AUTH-OTP] OTP sent successfully to {email}", file=sys.stderr)
             else:
                 self._send_error(500, result.get("error", "Failed to send OTP"))
 

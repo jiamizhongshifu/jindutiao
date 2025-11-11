@@ -1,2 +1,3 @@
 requests==2.31.0
 supabase>=2.23.0
+resend>=0.8.0
