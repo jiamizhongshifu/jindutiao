@@ -33,7 +33,7 @@ class EmailVerificationDialog(QDialog):
         self.check_timer = QTimer()
         self.check_timer.timeout.connect(self._check_verification_status)
         self.check_count = 0  # 轮询次数计数
-        self.max_check_count = 200  # 最多检查200次（10分钟）
+        self.max_check_count = 120  # 最多检查120次（10分钟，每5秒一次）
 
         self.init_ui()
         self._start_polling()  # 开始轮询
@@ -92,9 +92,10 @@ class EmailVerificationDialog(QDialog):
         """)
         main_layout.addWidget(self.status_label)
 
-        # 进度条（模拟检测过程）
+        # 进度条（使用静态样式，避免无限动画导致卡顿）
         self.progress_bar = QProgressBar()
-        self.progress_bar.setRange(0, 0)  # 不确定进度的动画
+        self.progress_bar.setRange(0, 100)  # 使用固定范围而非无限动画
+        self.progress_bar.setValue(50)  # 设置为50%
         self.progress_bar.setTextVisible(False)
         self.progress_bar.setMaximumHeight(4)
         self.progress_bar.setStyleSheet("""
@@ -186,7 +187,7 @@ class EmailVerificationDialog(QDialog):
     def _start_polling(self):
         """开始轮询验证状态"""
         print(f"[EMAIL-VERIFICATION] 开始轮询验证状态，邮箱: {self.email}")
-        self.check_timer.start(3000)  # 每3秒检查一次
+        self.check_timer.start(5000)  # 每5秒检查一次（减少频率，降低卡顿）
 
     def _check_verification_status(self):
         """检查验证状态"""
@@ -234,7 +235,7 @@ class EmailVerificationDialog(QDialog):
                 print(f"[EMAIL-VERIFICATION] 检查失败: HTTP {response.status_code}")
 
         except requests.exceptions.Timeout:
-            print(f"[EMAIL-VERIFICATION] 检查超时，将在3秒后重试")
+            print(f"[EMAIL-VERIFICATION] 检查超时，将在5秒后重试")
         except Exception as e:
             print(f"[EMAIL-VERIFICATION] 检查错误: {e}")
 

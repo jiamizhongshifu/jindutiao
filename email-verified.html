@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>邮箱验证成功 - GaiYa</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+        }
+
+        .container {
+            text-align: center;
+            padding: 60px 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: bounce 1s ease-in-out;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-20px);
+            }
+            60% {
+                transform: translateY(-10px);
+            }
+        }
+
+        h1 {
+            font-size: 32px;
+            margin: 20px 0;
+            font-weight: 600;
+        }
+
+        p {
+            font-size: 18px;
+            line-height: 1.6;
+            opacity: 0.9;
+            margin: 20px 0;
+        }
+
+        .highlight {
+            font-weight: 600;
+            color: #FFD700;
+        }
+
+        .steps {
+            margin: 30px 0;
+            text-align: left;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .steps ol {
+            padding-left: 20px;
+        }
+
+        .steps li {
+            margin: 10px 0;
+            font-size: 16px;
+        }
+
+        .tip {
+            margin-top: 40px;
+            font-size: 14px;
+            opacity: 0.7;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+
+        .close-btn {
+            margin-top: 30px;
+            padding: 12px 30px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 40px 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            p {
+                font-size: 16px;
+            }
+
+            .icon {
+                font-size: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">✅</div>
+        <h1>邮箱验证成功！</h1>
+        <p>您的邮箱已成功验证。</p>
+
+        <div class="steps">
+            <p><strong>接下来：</strong></p>
+            <ol>
+                <li>返回 <span class="highlight">GaiYa 每日进度条</span> 应用</li>
+                <li>应用将自动检测到验证成功</li>
+                <li>自动完成登录，开始使用！</li>
+            </ol>
+        </div>
+
+        <button class="close-btn" onclick="window.close()">关闭此页面</button>
+
+        <div class="tip">
+            💡 如果应用没有自动登录，请手动关闭此页面并返回应用
+        </div>
+    </div>
+
+    <script>
+        // 5秒后自动关闭（如果浏览器允许）
+        setTimeout(() => {
+            window.close();
+        }, 5000);
+    </script>
+</body>
+</html>
