@@ -209,12 +209,7 @@ class OTPDialog(QDialog):
                     # 启动倒计时
                     self.countdown = 60
                     self.countdown_timer.start(1000)
-
-                    QMessageBox.information(
-                        self,
-                        "验证码已发送",
-                        "请查收您的邮箱"
-                    )
+                    # 不弹窗提示，用户已经在对话框中看到说明文字了
                 else:
                     QMessageBox.warning(
                         self,

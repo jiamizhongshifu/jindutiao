@@ -57,16 +57,15 @@ class handler(BaseHTTPRequestHandler):
             otp_code = str(random.randint(100000, 999999))
             expires_at = datetime.now() + timedelta(minutes=10)  # 10分钟有效期
 
-            # 4. 存储OTP(生产环境应使用Redis)
-            OTP_STORE[email] = {
-                "code": otp_code,
-                "purpose": purpose,
-                "expires_at": expires_at.isoformat(),
-                "attempts": 0
-            }
+            # 4. 存储OTP到数据库
+            auth_manager = AuthManager()
+            store_result = auth_manager.store_otp(email, otp_code, purpose, expires_at.isoformat())
+
+            if not store_result.get("success"):
+                self._send_error(500, f"存储验证码失败: {store_result.get('error')}")
+                return
 
             # 5. 发送邮件(使用Resend邮件服务)
-            auth_manager = AuthManager()
             result = auth_manager.send_otp_email(email, otp_code, purpose)
 
             if result.get("success"):

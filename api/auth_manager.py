@@ -512,6 +512,98 @@ class AuthManager:
             print(f"Error sending OTP email: {e}", file=sys.stderr)
             return {"success": False, "error": str(e)}
 
+    def store_otp(self, email: str, otp_code: str, purpose: str, expires_at: str) -> Dict:
+        """
+        存储OTP到数据库
+
+        Args:
+            email: 邮箱地址
+            otp_code: 验证码
+            purpose: 用途（signup, password_reset）
+            expires_at: 过期时间（ISO格式字符串）
+
+        Returns:
+            存储结果
+        """
+        if not self.client:
+            return {"success": False, "error": "Supabase not configured"}
+
+        try:
+            # 先删除该邮箱的旧验证码
+            self.client.table("otp_codes").delete().eq("email", email).execute()
+
+            # 插入新验证码
+            self.client.table("otp_codes").insert({
+                "email": email,
+                "code": otp_code,
+                "purpose": purpose,
+                "expires_at": expires_at,
+                "attempts": 0
+            }).execute()
+
+            print(f"[OTP-STORE] OTP stored for: {email}", file=sys.stderr)
+            return {"success": True}
+
+        except Exception as e:
+            print(f"[OTP-STORE] Error: {e}", file=sys.stderr)
+            return {"success": False, "error": str(e)}
+
+    def verify_otp(self, email: str, otp_code: str) -> Dict:
+        """
+        验证OTP
+
+        Args:
+            email: 邮箱地址
+            otp_code: 用户输入的验证码
+
+        Returns:
+            验证结果
+        """
+        if not self.client:
+            return {"success": False, "error": "Supabase not configured"}
+
+        try:
+            from datetime import datetime
+
+            # 从数据库获取OTP
+            response = self.client.table("otp_codes").select("*").eq("email", email).execute()
+
+            if not response.data:
+                return {"success": False, "error": "验证码不存在或已过期"}
+
+            stored_otp = response.data[0]
+
+            # 检查过期时间
+            expires_at = datetime.fromisoformat(stored_otp["expires_at"].replace('Z', '+00:00'))
+            if datetime.now(expires_at.tzinfo) > expires_at:
+                self.client.table("otp_codes").delete().eq("email", email).execute()
+                return {"success": False, "error": "验证码已过期"}
+
+            # 检查尝试次数
+            if stored_otp["attempts"] >= 5:
+                self.client.table("otp_codes").delete().eq("email", email).execute()
+                return {"success": False, "error": "验证尝试次数过多，请重新获取验证码"}
+
+            # 验证OTP
+            if stored_otp["code"] != otp_code:
+                # 增加尝试次数
+                self.client.table("otp_codes").update({
+                    "attempts": stored_otp["attempts"] + 1
+                }).eq("email", email).execute()
+
+                remaining = 5 - stored_otp["attempts"] - 1
+                return {"success": False, "error": f"验证码错误，还剩{remaining}次机会"}
+
+            # 验证成功，删除OTP
+            self.client.table("otp_codes").delete().eq("email", email).execute()
+
+            print(f"[OTP-VERIFY] OTP verified for: {email}", file=sys.stderr)
+            return {"success": True, "purpose": stored_otp["purpose"]}
+
+        except Exception as e:
+            print(f"[OTP-VERIFY] Error: {e}", file=sys.stderr)
+            return {"success": False, "error": str(e)}
+
     def mark_email_verified(self, email: str) -> Dict:
         """
         标记邮箱为已验证

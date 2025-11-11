@@ -50,57 +50,30 @@ class handler(BaseHTTPRequestHandler):
 
             print(f"[AUTH-VERIFY-OTP] Verifying OTP for: {email}", file=sys.stderr)
 
-            # 3. 从存储中获取OTP
-            stored_otp = OTP_STORE.get(email)
-
-            if not stored_otp:
-                self._send_error(400, "验证码不存在或已过期")
-                return
-
-            # 4. 检查过期时间
-            expires_at = datetime.fromisoformat(stored_otp["expires_at"])
-            if datetime.now() > expires_at:
-                del OTP_STORE[email]
-                self._send_error(400, "验证码已过期")
-                return
-
-            # 5. 检查尝试次数(防止暴力破解)
-            if stored_otp["attempts"] >= 5:
-                del OTP_STORE[email]
-                self._send_error(429, "验证尝试次数过多，请重新获取验证码")
-                return
-
-            # 6. 验证OTP
-            if stored_otp["code"] != otp_code:
-                stored_otp["attempts"] += 1
-                remaining = 5 - stored_otp["attempts"]
-                self._send_error(400, f"验证码错误，还剩{remaining}次机会")
-                return
-
-            # 7. 验证成功，更新数据库
+            # 3. 使用 auth_manager 验证 OTP（从数据库）
             auth_manager = AuthManager()
+            verify_result = auth_manager.verify_otp(email, otp_code)
 
-            # 根据purpose执行不同操作
-            if stored_otp["purpose"] == "signup":
+            if not verify_result.get("success"):
+                self._send_error(400, verify_result.get("error", "验证失败"))
+                return
+
+            # 4. 验证成功，根据purpose执行不同操作
+            purpose = verify_result.get("purpose", "signup")
+
+            if purpose == "signup":
                 # 标记邮箱为已验证
-                result = auth_manager.mark_email_verified(email)
-            elif stored_otp["purpose"] == "password_reset":
-                # 允许重置密码(返回临时token)
-                result = {"success": True, "allow_reset": True}
-            else:
-                result = {"success": True}
+                mark_result = auth_manager.mark_email_verified(email)
+                if not mark_result.get("success"):
+                    print(f"[AUTH-VERIFY-OTP] Warning: Failed to mark email verified: {mark_result.get('error')}", file=sys.stderr)
+                    # 不影响验证成功的结果，只记录警告
 
-            # 8. 清除已使用的OTP
-            del OTP_STORE[email]
-
-            if result.get("success"):
-                self._send_success({
-                    "message": "验证成功",
-                    "purpose": stored_otp["purpose"]
-                })
-                print(f"[AUTH-VERIFY-OTP] OTP verified successfully for: {email}", file=sys.stderr)
-            else:
-                self._send_error(500, result.get("error", "验证失败"))
+            # 5. 返回成功
+            self._send_success({
+                "message": "验证成功",
+                "purpose": purpose
+            })
+            print(f"[AUTH-VERIFY-OTP] OTP verified successfully for: {email}", file=sys.stderr)
 
         except json.JSONDecodeError:
             self._send_error(400, "Invalid JSON")
