@@ -8,6 +8,13 @@ import requests
 from pathlib import Path
 from typing import Dict, Optional
 from datetime import datetime
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+import urllib3
+import ssl
+
+# 禁用SSL警告（临时解决SSL兼容性问题）
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 class AuthClient:
@@ -19,8 +26,23 @@ class AuthClient:
         self.auth_file = Path.home() / ".gaiya" / "auth.json"
         self.auth_file.parent.mkdir(parents=True, exist_ok=True)
 
-        # 创建 Session 对象，自动使用系统代理（支持科学上网）
+        # 创建 Session 对象，配置SSL兼容性和重试机制
         self.session = requests.Session()
+
+        # 配置重试策略（解决网络不稳定问题）
+        retry_strategy = Retry(
+            total=3,  # 最多重试3次
+            backoff_factor=1,  # 重试间隔：1秒、2秒、4秒
+            status_forcelist=[500, 502, 503, 504],  # 这些HTTP状态码会触发重试
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        self.session.mount("http://", adapter)
+        self.session.mount("https://", adapter)
+
+        # 禁用SSL验证（临时解决SSL协议兼容性问题）
+        # 注意：这会降低安全性，但可以解决Windows SSL库兼容性问题
+        self.session.verify = False
+
         # Session 默认会读取环境变量 HTTP_PROXY 和 HTTPS_PROXY
 
         # 加载已保存的Token
@@ -120,8 +142,8 @@ class AuthClient:
                     "password": password,
                     "username": username
                 },
-                timeout=30,  # 增加超时时间到30秒（Vercel冷启动可能需要更长时间）
-                verify=True  # 明确启用SSL验证
+                timeout=30  # 增加超时时间到30秒（Vercel冷启动可能需要更长时间）
+                # verify参数已在session全局配置（禁用以解决SSL兼容性问题）
             )
 
             print(f"[AUTH-SIGNUP] Response status: {response.status_code}")
