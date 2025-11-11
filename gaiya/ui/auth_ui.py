@@ -312,23 +312,7 @@ class AuthDialog(QDialog):
 
         if result.get("success"):
             # 方案C: OTP验证码（桌面应用最佳实践）
-            # 1. 注册成功，发送OTP验证码
-            otp_result = self.auth_client.send_otp(email, "signup")
-
-            if not otp_result.get("success"):
-                # ⚠️ 注意：用户已经注册成功，只是OTP发送失败
-                QMessageBox.warning(
-                    self,
-                    "注册成功",
-                    f"您的账号已创建成功！\n\n"
-                    f"但验证码发送失败：{otp_result.get('error', '未知错误')}\n\n"
-                    f"请稍后使用'{email}'登录，并在个人中心验证邮箱。"
-                )
-                # 虽然OTP发送失败，但注册成功，关闭对话框
-                self.accept()
-                return
-
-            # 2. 弹出OTP验证对话框
+            # 1. 注册成功，弹出OTP验证对话框（OTPDialog会自动发送验证码）
             otp_dialog = OTPDialog(parent=self, email=email, purpose="signup")
 
             if otp_dialog.exec() == QDialog.DialogCode.Accepted:
