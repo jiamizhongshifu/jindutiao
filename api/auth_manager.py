@@ -58,7 +58,7 @@ class AuthManager:
                     "error": "Failed to create auth user"
                 }
 
-            # 2. 创建用户记录（使用upsert避免重复插入错误）
+            # 2. 创建用户记录
             user_data = {
                 "id": auth_response.user.id,
                 "email": email,
@@ -69,14 +69,9 @@ class AuthManager:
                 "status": "active"
             }
 
-            try:
-                # 使用upsert：如果用户已存在则更新，不存在则插入
-                db_response = self.client.table("users").upsert(user_data).execute()
-                print(f"User registered: {email}", file=sys.stderr)
-            except Exception as db_error:
-                # 如果数据库操作失败，记录警告但不影响注册成功
-                # 因为Auth用户已经创建成功了
-                print(f"Warning: Failed to insert user record: {db_error}", file=sys.stderr)
+            db_response = self.client.table("users").insert(user_data).execute()
+
+            print(f"User registered: {email}", file=sys.stderr)
 
             return {
                 "success": True,
