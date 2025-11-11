@@ -17,6 +17,19 @@ import ssl
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
+class SSLAdapter(HTTPAdapter):
+    """
+    自定义SSL适配器，完全禁用SSL证书验证
+    解决Windows SSL库与Vercel服务器的兼容性问题
+    """
+    def init_poolmanager(self, *args, **kwargs):
+        """初始化连接池管理器，强制禁用SSL验证"""
+        # 使用最宽松的SSL配置
+        kwargs['ssl_version'] = ssl.PROTOCOL_TLS  # 允许所有TLS版本
+        kwargs['cert_reqs'] = ssl.CERT_NONE  # 不要求证书验证
+        return super().init_poolmanager(*args, **kwargs)
+
+
 class AuthClient:
     """认证客户端"""
 
@@ -35,11 +48,13 @@ class AuthClient:
             backoff_factor=1,  # 重试间隔：1秒、2秒、4秒
             status_forcelist=[500, 502, 503, 504],  # 这些HTTP状态码会触发重试
         )
-        adapter = HTTPAdapter(max_retries=retry_strategy)
-        self.session.mount("http://", adapter)
-        self.session.mount("https://", adapter)
 
-        # 禁用SSL验证（临时解决SSL协议兼容性问题）
+        # 使用自定义的SSLAdapter，完全禁用SSL验证（解决Windows SSL库兼容性问题）
+        ssl_adapter = SSLAdapter(max_retries=retry_strategy)
+        self.session.mount("http://", ssl_adapter)
+        self.session.mount("https://", ssl_adapter)
+
+        # 禁用SSL验证（多重保险）
         # 注意：这会降低安全性，但可以解决Windows SSL库兼容性问题
         self.session.verify = False
 
