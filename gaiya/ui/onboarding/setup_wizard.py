@@ -228,7 +228,7 @@ class CompletionPage(QWizardPage):
         template_font = QFont()
         template_font.setPointSize(13)
         self.template_label.setFont(template_font)
-        self.template_label.setStyleSheet("color: #00BCD4; padding: 5px 0;")
+        self.template_label.setStyleSheet("color: #333333; padding: 5px 0;")  # 使用主色 #333333
         layout.addWidget(self.template_label)
 
         # 进度条位置信息
@@ -236,7 +236,7 @@ class CompletionPage(QWizardPage):
         position_font = QFont()
         position_font.setPointSize(13)
         position_label.setFont(position_font)
-        position_label.setStyleSheet("color: #00BCD4; padding: 5px 0;")
+        position_label.setStyleSheet("color: #333333; padding: 5px 0;")  # 使用主色 #333333
         layout.addWidget(position_label)
 
         layout.addSpacing(15)
@@ -247,7 +247,7 @@ class CompletionPage(QWizardPage):
         suggestions_font.setPointSize(13)
         suggestions_font.setBold(True)
         suggestions_title.setFont(suggestions_font)
-        suggestions_title.setStyleSheet("color: #00BCD4; padding: 5px 0;")
+        suggestions_title.setStyleSheet("color: #333333; padding: 5px 0;")  # 使用主色 #333333
         layout.addWidget(suggestions_title)
 
         # 建议列表
@@ -262,7 +262,7 @@ class CompletionPage(QWizardPage):
             suggestion_font = QFont()
             suggestion_font.setPointSize(12)
             suggestion_label.setFont(suggestion_font)
-            suggestion_label.setStyleSheet("color: #DDDDDD; padding: 3px 0; margin-left: 15px;")
+            suggestion_label.setStyleSheet("color: #999999; padding: 3px 0; margin-left: 15px;")  # 使用浅灰色 #999999
             layout.addWidget(suggestion_label)
 
         # 快速上手提示
@@ -282,7 +282,7 @@ class CompletionPage(QWizardPage):
             tip_font = QFont()
             tip_font.setPointSize(12)  # 设置提示条目字号为12pt
             tip_label.setFont(tip_font)
-            tip_label.setStyleSheet("color: #555555; padding: 3px 0;")
+            tip_label.setStyleSheet("color: #666666; padding: 3px 0;")  # 使用辅助色 #666666
             layout.addWidget(tip_label)
 
         layout.addStretch()

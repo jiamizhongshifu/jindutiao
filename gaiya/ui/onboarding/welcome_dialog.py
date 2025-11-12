@@ -23,7 +23,7 @@ class WelcomeDialog(QDialog):
         """设置UI界面"""
         # 窗口基本设置
         self.setWindowTitle("欢迎使用 GaiYa")
-        self.setFixedSize(450, 420)  # 增加高度 350→420，避免内容被压缩截断
+        self.setFixedSize(450, 580)  # 增加高度 420→580，确保所有功能列表完整显示
         self.setModal(True)
 
         # 主布局

@@ -279,7 +279,7 @@ class ThemeManager(QObject):
             
             theme_config = config.get('theme', {})
             theme_mode = theme_config.get('mode', 'preset')
-            current_theme_id = theme_config.get('current_theme_id', 'business')
+            current_theme_id = theme_config.get('current_theme_id', 'fresh')
             
             # 根据模式加载主题（静默加载，不触发信号）
             if theme_mode == 'system':
@@ -305,7 +305,7 @@ class ThemeManager(QObject):
     
     def _set_default_theme_silent(self):
         """设置默认主题（静默，不触发信号）"""
-        self._load_theme_by_id_silent('business', 'preset')
+        self._load_theme_by_id_silent('fresh', 'preset')
     
     def _load_theme_by_id_silent(self, theme_id: str, theme_type: str = 'preset'):
         """根据ID加载主题（静默版本，不触发信号）"""

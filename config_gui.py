@@ -6193,6 +6193,12 @@ class ConfigManager(QMainWindow):
             progress.setValue(value)
 
         def on_finished(file_path):
+            # 先断开 canceled 信号连接，防止 close() 触发取消消息
+            try:
+                progress.canceled.disconnect(on_cancel)
+            except:
+                pass  # 如果已经断开则忽略
+
             progress.close()
 
             # 下载完成，准备安装
@@ -6251,18 +6257,24 @@ class ConfigManager(QMainWindow):
 
         bat_content = f'''@echo off
 echo 正在更新 GaiYa...
-timeout /t 2 /nobreak >nul
+echo 等待应用关闭...
+timeout /t 3 /nobreak >nul
+
+REM 确保旧进程完全终止
+taskkill /F /IM GaiYa*.exe 2>nul
+timeout /t 1 /nobreak >nul
 
 :retry
 del /f /q "{current_exe}"
 if exist "{current_exe}" (
+    echo 等待文件解锁...
     timeout /t 1 /nobreak >nul
     goto retry
 )
 
 move /y "{new_exe_path}" "{current_exe}"
 if errorlevel 1 (
-    echo 更新失败！
+    echo 更新失败！无法移动文件。
     pause
     exit /b 1
 )
