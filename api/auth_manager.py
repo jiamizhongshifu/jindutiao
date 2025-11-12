@@ -199,20 +199,25 @@ class AuthManager:
             return {"success": False, "error": "Supabase not configured"}
 
         try:
-            # 1. 从Supabase Auth查询用户
-            if user_id:
-                # 通过user_id查询（需要admin权限，这里用直接查询users表代替）
+            # 优先使用email查询（email更可靠，因为注册时一定存在）
+            # 只在email不存在时才尝试用user_id查询
+            if email:
+                # 直接使用email查询
+                pass
+            elif user_id:
+                # 通过user_id查询获取email（需要admin权限，这里用直接查询users表代替）
                 user_response = self.client.table("users").select("*").eq("id", user_id).execute()
                 if not user_response.data:
+                    # user_id查不到，可能记录还未创建，返回等待状态而非错误
                     return {
-                        "success": False,
-                        "error": "User not found",
-                        "verified": False
+                        "success": True,
+                        "verified": False,
+                        "message": "等待用户记录创建..."
                     }
                 user_data = user_response.data[0]
                 email = user_data.get("email")
 
-            # 2. 从public.users表查询验证状态
+            # 从public.users表查询验证状态
             # 注意：Supabase Auth的email_confirmed_at字段存储在auth.users表中
             # 通过数据库trigger自动同步到public.users的email_verified字段
             if email:
