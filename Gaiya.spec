@@ -50,7 +50,6 @@ a = Analysis(
     hiddenimports=[
         'config_gui',
         'theme_manager',
-        'theme_ai_helper',
         'timeline_editor',
         'statistics_manager',
         'statistics_gui',
