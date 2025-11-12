@@ -161,12 +161,6 @@ class AuthDialog(QDialog):
         layout = QVBoxLayout()
         layout.setSpacing(15)
 
-        # 用户名输入
-        username_label = QLabel("用户名（可选）")
-        self.signup_username_input = QLineEdit()
-        self.signup_username_input.setPlaceholderText("请输入用户名")
-        self.signup_username_input.setMinimumHeight(35)
-
         # 邮箱输入
         email_label = QLabel("邮箱地址")
         self.signup_email_input = QLineEdit()
@@ -211,9 +205,7 @@ class AuthDialog(QDialog):
         """)
         signup_button.clicked.connect(self._on_signup_clicked)
 
-        # 添加组件
-        layout.addWidget(username_label)
-        layout.addWidget(self.signup_username_input)
+        # 添加组件（移除了用户名字段）
         layout.addWidget(email_label)
         layout.addWidget(self.signup_email_input)
         layout.addWidget(password_label)
@@ -292,7 +284,6 @@ class AuthDialog(QDialog):
 
     def _on_signup_clicked(self):
         """处理注册按钮点击"""
-        username = self.signup_username_input.text().strip()
         email = self.signup_email_input.text().strip()
         password = self.signup_password_input.text()
         confirm_password = self.signup_confirm_password_input.text()
@@ -319,11 +310,10 @@ class AuthDialog(QDialog):
         signup_button.setEnabled(False)
         signup_button.setText("注册中...")
 
-        # 调用注册API
+        # 调用注册API（移除username参数）
         result = self.auth_client.signup(
             email=email,
-            password=password,
-            username=username if username else None
+            password=password
         )
 
         # 恢复按钮状态
@@ -523,6 +513,34 @@ class AuthDialog(QDialog):
 
         # 原有的Tab切换（登录/注册）
         self.tab_widget = QTabWidget()
+
+        # 自定义Tab样式：更高、更明显
+        self.tab_widget.setStyleSheet("""
+            QTabWidget::pane {
+                border: 1px solid #e0e0e0;
+                border-radius: 5px;
+            }
+            QTabBar::tab {
+                background-color: #f5f5f5;
+                color: #666;
+                padding: 12px 30px;
+                font-size: 16px;
+                font-weight: bold;
+                border: 1px solid #e0e0e0;
+                border-bottom: none;
+                border-top-left-radius: 5px;
+                border-top-right-radius: 5px;
+                min-height: 45px;
+            }
+            QTabBar::tab:selected {
+                background-color: white;
+                color: #333;
+                border-bottom: 2px solid white;
+            }
+            QTabBar::tab:hover {
+                background-color: #eeeeee;
+            }
+        """)
 
         # 登录Tab
         self.signin_widget = self._create_signin_tab()
