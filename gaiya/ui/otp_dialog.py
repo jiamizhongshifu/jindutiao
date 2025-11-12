@@ -30,7 +30,7 @@ class OTPDialog(QDialog):
         super().__init__(parent)
         self.email = email
         self.purpose = purpose  # signup, password_reset
-        self.backend_url = os.getenv("GAIYA_API_URL", "https://jindutiao.vercel.app")
+        self.backend_url = os.getenv("GAIYA_API_URL", "https://api.gaiyatime.com")
 
         # 倒计时相关
         self.countdown = 60

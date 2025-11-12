@@ -55,6 +55,14 @@ a = Analysis(
         'ai_client',  # AI客户端（调用Vercel云服务）
         'autostart_manager',  # 开机自启动管理器
         'requests',  # HTTP请求库
+        'httpx',  # HTTP请求库（OpenSSL后端，解决schannel SSL兼容性问题）
+        'httpcore',  # httpx依赖
+        'h2',  # HTTP/2支持
+        'h11',  # HTTP/1.1支持
+        'anyio',  # 异步I/O支持
+        'certifi',  # SSL证书
+        'socks',  # PySocks（SOCKS5代理支持）
+        'socksio',  # httpx的SOCKS5支持
         'winreg',  # Windows注册表操作
         'PySide6.QtWidgets',
         'PySide6.QtCore',

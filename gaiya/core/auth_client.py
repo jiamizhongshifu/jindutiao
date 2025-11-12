@@ -126,9 +126,17 @@ class AuthClient:
 
     def __init__(self):
         """初始化客户端"""
-        self.backend_url = os.getenv("GAIYA_API_URL", "https://jindutiao.vercel.app")
+        self.backend_url = os.getenv("GAIYA_API_URL", "https://api.gaiyatime.com")
         self.auth_file = Path.home() / ".gaiya" / "auth.json"
         self.auth_file.parent.mkdir(parents=True, exist_ok=True)
+
+        # ⚠️ 关键修复：清除环境变量中的HTTP代理，避免干扰SOCKS5设置
+        # Clash的HTTP代理（环境变量HTTPS_PROXY=http://127.0.0.1:7897）会覆盖Session.proxies
+        # 必须先清除环境变量，才能让Session使用我们指定的SOCKS5代理
+        for env_var in ['HTTP_PROXY', 'HTTPS_PROXY', 'http_proxy', 'https_proxy']:
+            if env_var in os.environ:
+                print(f"[AUTH] 清除环境变量: {env_var}={os.environ[env_var]}")
+                del os.environ[env_var]
 
         # 创建 Session 对象，配置SSL兼容性和重试机制
         self.session = requests.Session()
@@ -288,40 +296,86 @@ class AuthClient:
             print(f"[AUTH-SIGNUP] Timeout error: {e}")
             return {"success": False, "error": "请求超时（30秒）- 请检查网络连接"}
         except requests.exceptions.SSLError as e:
-            print(f"[AUTH-SIGNUP] requests库SSL错误: {e}")
-            print(f"[AUTH-SIGNUP] 🔄 切换到方案2: 使用urllib标准库（降级方案）")
+            print(f"[AUTH-SIGNUP] requests库SSL错误(schannel): {e}")
+            print(f"[AUTH-SIGNUP] 🔄 切换到方案2: 使用httpx库（OpenSSL后端，解决schannel兼容性问题）")
 
-            # 自动降级到urllib方案
+            # 方案2: 使用httpx（OpenSSL后端）
             try:
-                result = self._urllib_post(
-                    f"{self.backend_url}/api/auth-signup",
-                    {
-                        "email": email,
-                        "password": password,
-                        "username": username
-                    },
-                    timeout=30
-                )
+                import httpx
 
-                # 如果urllib成功，保存token
-                if result.get("success") and "access_token" in result and "refresh_token" in result:
-                    self._save_tokens(
-                        result["access_token"],
-                        result["refresh_token"],
-                        {
-                            "user_id": result["user_id"],
-                            "email": result["email"]
+                # httpx的SOCKS5代理配置（注意httpx使用proxy而不是proxies）
+                proxy_url = "socks5://127.0.0.1:7898"
+
+                print(f"[AUTH-SIGNUP-HTTPX] 使用httpx+OpenSSL连接到 {self.backend_url}/api/auth-signup")
+
+                with httpx.Client(proxy=proxy_url, verify=False, timeout=30.0) as client:
+                    response = client.post(
+                        f"{self.backend_url}/api/auth-signup",
+                        json={
+                            "email": email,
+                            "password": password,
+                            "username": username
                         }
                     )
 
-                return result
+                print(f"[AUTH-SIGNUP-HTTPX] httpx成功! 响应状态: {response.status_code}")
 
-            except Exception as urllib_error:
-                print(f"[AUTH-SIGNUP] urllib降级方案也失败: {urllib_error}")
-                return {
-                    "success": False,
-                    "error": f"SSL证书验证失败（requests和urllib均失败）\n\n原始错误: {str(e)}\n降级错误: {str(urllib_error)}"
-                }
+                if response.status_code == 200:
+                    data = response.json()
+
+                    if data.get("success"):
+                        # 保存Token（如果包含）
+                        if "access_token" in data and "refresh_token" in data:
+                            self._save_tokens(
+                                data["access_token"],
+                                data["refresh_token"],
+                                {
+                                    "user_id": data["user_id"],
+                                    "email": data["email"]
+                                }
+                            )
+
+                    return data
+                else:
+                    print(f"[AUTH-SIGNUP-HTTPX] Error response: {response.text}")
+                    # httpx失败，继续尝试urllib
+                    raise Exception(f"HTTP {response.status_code}")
+
+            except Exception as httpx_error:
+                print(f"[AUTH-SIGNUP] httpx方案失败: {httpx_error}")
+                print(f"[AUTH-SIGNUP] 🔄 切换到方案3: 使用urllib标准库（最终降级方案）")
+
+                # 方案3: urllib降级
+                try:
+                    result = self._urllib_post(
+                        f"{self.backend_url}/api/auth-signup",
+                        {
+                            "email": email,
+                            "password": password,
+                            "username": username
+                        },
+                        timeout=30
+                    )
+
+                    # 如果urllib成功，保存token
+                    if result.get("success") and "access_token" in result and "refresh_token" in result:
+                        self._save_tokens(
+                            result["access_token"],
+                            result["refresh_token"],
+                            {
+                                "user_id": result["user_id"],
+                                "email": result["email"]
+                            }
+                        )
+
+                    return result
+
+                except Exception as urllib_error:
+                    print(f"[AUTH-SIGNUP] urllib降级方案也失败: {urllib_error}")
+                    return {
+                        "success": False,
+                        "error": f"SSL证书验证失败（所有方案均失败）\n\nrequests错误: {str(e)}\nhttpx错误: {str(httpx_error)}\nurllib错误: {str(urllib_error)}"
+                    }
         except requests.exceptions.ConnectionError as e:
             print(f"[AUTH-SIGNUP] Connection error: {e}")
             return {"success": False, "error": f"无法连接到服务器: {str(e)}"}
@@ -340,7 +394,10 @@ class AuthClient:
         Returns:
             {"success": True/False, "error": "...", "access_token": "...", ...}
         """
+        # 方案1: requests库（SOCKS5+schannel）
         try:
+            print(f"[AUTH-SIGNIN] 方案1: 使用requests库连接到 {self.backend_url}/api/auth-signin")
+
             response = self.session.post(
                 f"{self.backend_url}/api/auth-signin",
                 json={
@@ -350,6 +407,8 @@ class AuthClient:
                 timeout=10,
                 verify=False  # 显式禁用SSL验证
             )
+
+            print(f"[AUTH-SIGNIN] requests成功! 响应状态: {response.status_code}")
 
             if response.status_code == 200:
                 data = response.json()
@@ -372,6 +431,53 @@ class AuthClient:
 
         except requests.exceptions.Timeout:
             return {"success": False, "error": "请求超时"}
+        except requests.exceptions.SSLError as e:
+            print(f"[AUTH-SIGNIN] requests库SSL错误(schannel): {e}")
+            print(f"[AUTH-SIGNIN] 🔄 切换到方案2: 使用httpx库（OpenSSL后端）")
+
+            # 方案2: httpx（OpenSSL后端）
+            try:
+                import httpx
+
+                # httpx的SOCKS5代理配置（注意httpx使用proxy而不是proxies）
+                proxy_url = "socks5://127.0.0.1:7898"
+
+                print(f"[AUTH-SIGNIN-HTTPX] 使用httpx+OpenSSL连接到 {self.backend_url}/api/auth-signin")
+
+                with httpx.Client(proxy=proxy_url, verify=False, timeout=10.0) as client:
+                    response = client.post(
+                        f"{self.backend_url}/api/auth-signin",
+                        json={
+                            "email": email,
+                            "password": password
+                        }
+                    )
+
+                print(f"[AUTH-SIGNIN-HTTPX] httpx成功! 响应状态: {response.status_code}")
+
+                if response.status_code == 200:
+                    data = response.json()
+
+                    if data.get("success"):
+                        # 保存Token
+                        self._save_tokens(
+                            data["access_token"],
+                            data["refresh_token"],
+                            {
+                                "user_id": data["user_id"],
+                                "email": data["email"],
+                                "user_tier": data.get("user_tier", "free")
+                            }
+                        )
+
+                    return data
+                else:
+                    return {"success": False, "error": f"HTTP {response.status_code}"}
+
+            except Exception as httpx_error:
+                print(f"[AUTH-SIGNIN] httpx方案也失败: {httpx_error}")
+                return {"success": False, "error": f"SSL连接失败（所有方案均失败）\n\nrequests错误: {str(e)}\nhttpx错误: {str(httpx_error)}"}
+
         except requests.exceptions.ConnectionError:
             return {"success": False, "error": "无法连接到服务器"}
         except Exception as e:

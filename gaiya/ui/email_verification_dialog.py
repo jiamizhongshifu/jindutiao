@@ -31,7 +31,7 @@ class EmailVerificationDialog(QDialog):
         self.email = email
         self.password = password  # 用于验证成功后自动登录
         self.user_id = user_id
-        self.backend_url = os.getenv("GAIYA_API_URL", "https://jindutiao.vercel.app")
+        self.backend_url = os.getenv("GAIYA_API_URL", "https://api.gaiyatime.com")
 
         # 轮询定时器
         self.check_timer = QTimer()

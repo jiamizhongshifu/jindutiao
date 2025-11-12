@@ -25,7 +25,7 @@ class GaiyaAIClient:
         if backend_url is None:
             backend_url = os.getenv(
                 "GAIYA_API_URL",
-                "https://jindutiao.vercel.app"  # 默认Vercel服务器URL
+                "https://api.gaiyatime.com"  # 默认Vercel服务器URL
             )
 
         self.backend_url = backend_url

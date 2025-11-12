@@ -6,4 +6,6 @@ PySide6>=6.5.0          # Qt6 GUI框架
 qt-material>=2.14       # Material Design主题库
 requests>=2.31.0         # HTTP客户端(用于调用Vercel API)
 PySocks>=1.7.1          # SOCKS代理支持(解决Clash HTTP代理SSL问题)
+httpx[socks]>=0.28.0    # 使用OpenSSL后端的HTTP客户端(解决Windows schannel SSL兼容性问题)
+socksio>=1.0.0          # httpx的SOCKS支持
 python-dotenv>=1.0.0     # 环境变量管理(可选)
