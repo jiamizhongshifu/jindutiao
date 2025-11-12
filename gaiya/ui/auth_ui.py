@@ -88,8 +88,8 @@ class AuthDialog(QDialog):
 
         self.setLayout(main_layout)
 
-    def _create_signin_tab(self) -> QWidget:
-        """创建登录Tab"""
+    def _create_signin_page(self) -> QWidget:
+        """创建登录页面（带ghost button注册入口）"""
         widget = QWidget()
         layout = QVBoxLayout()
         layout.setSpacing(15)
@@ -141,6 +141,27 @@ class AuthDialog(QDialog):
         forgot_button.setStyleSheet("color: #4CAF50; text-decoration: underline;")
         forgot_button.clicked.connect(self._on_forgot_password)
 
+        # Ghost button - 注册账号
+        signup_ghost_button = QPushButton("注册账号 >")
+        signup_ghost_button.setMinimumHeight(40)
+        signup_ghost_button.setStyleSheet("""
+            QPushButton {
+                background-color: transparent;
+                color: #2196F3;
+                border: 2px solid #2196F3;
+                border-radius: 5px;
+                padding: 10px;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background-color: rgba(33, 150, 243, 0.1);
+            }
+            QPushButton:pressed {
+                background-color: rgba(33, 150, 243, 0.2);
+            }
+        """)
+        signup_ghost_button.clicked.connect(self._switch_to_signup)
+
         # 添加组件
         layout.addWidget(email_label)
         layout.addWidget(self.signin_email_input)
@@ -150,13 +171,15 @@ class AuthDialog(QDialog):
         layout.addSpacing(10)
         layout.addWidget(signin_button)
         layout.addWidget(forgot_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addSpacing(10)
+        layout.addWidget(signup_ghost_button)
         layout.addStretch()
 
         widget.setLayout(layout)
         return widget
 
-    def _create_signup_tab(self) -> QWidget:
-        """创建注册Tab"""
+    def _create_signup_page(self) -> QWidget:
+        """创建注册页面（带ghost button返回登录）"""
         widget = QWidget()
         layout = QVBoxLayout()
         layout.setSpacing(15)
@@ -205,6 +228,27 @@ class AuthDialog(QDialog):
         """)
         signup_button.clicked.connect(self._on_signup_clicked)
 
+        # Ghost button - 返回登录
+        signin_ghost_button = QPushButton("< 返回登录")
+        signin_ghost_button.setMinimumHeight(40)
+        signin_ghost_button.setStyleSheet("""
+            QPushButton {
+                background-color: transparent;
+                color: #2196F3;
+                border: 2px solid #2196F3;
+                border-radius: 5px;
+                padding: 10px;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background-color: rgba(33, 150, 243, 0.1);
+            }
+            QPushButton:pressed {
+                background-color: rgba(33, 150, 243, 0.2);
+            }
+        """)
+        signin_ghost_button.clicked.connect(self._switch_to_signin)
+
         # 添加组件（移除了用户名字段）
         layout.addWidget(email_label)
         layout.addWidget(self.signup_email_input)
@@ -214,6 +258,8 @@ class AuthDialog(QDialog):
         layout.addWidget(self.signup_confirm_password_input)
         layout.addSpacing(10)
         layout.addWidget(signup_button)
+        layout.addSpacing(10)
+        layout.addWidget(signin_ghost_button)
         layout.addStretch()
 
         widget.setLayout(layout)
@@ -505,78 +551,27 @@ class AuthDialog(QDialog):
         return widget
 
     def _create_email_login_widget(self) -> QWidget:
-        """创建邮箱登录/注册页面（包含原有Tab）"""
+        """创建邮箱登录/注册页面（使用StackedWidget + Ghost按钮导航）"""
         widget = QWidget()
         layout = QVBoxLayout()
         layout.setSpacing(15)
         layout.setContentsMargins(10, 10, 10, 10)
 
-        # 原有的Tab切换（登录/注册）
-        self.tab_widget = QTabWidget()
+        # 使用StackedWidget替代TabWidget（页面0=登录, 页面1=注册）
+        self.auth_pages = QStackedWidget()
 
-        # 自定义Tab样式：更高、更明显
-        self.tab_widget.setStyleSheet("""
-            QTabWidget::pane {
-                border: 1px solid #e0e0e0;
-                border-radius: 5px;
-            }
-            QTabBar::tab {
-                background-color: #f5f5f5;
-                color: #666;
-                padding: 12px 30px;
-                font-size: 16px;
-                font-weight: bold;
-                border: 1px solid #e0e0e0;
-                border-bottom: none;
-                border-top-left-radius: 5px;
-                border-top-right-radius: 5px;
-                min-height: 45px;
-            }
-            QTabBar::tab:selected {
-                background-color: white;
-                color: #333;
-                border-bottom: 2px solid white;
-            }
-            QTabBar::tab:hover {
-                background-color: #eeeeee;
-            }
-        """)
+        # 页面0: 登录页面（带ghost button"注册账号 >"）
+        self.signin_widget = self._create_signin_page()
+        self.auth_pages.addWidget(self.signin_widget)
 
-        # 登录Tab
-        self.signin_widget = self._create_signin_tab()
-        self.tab_widget.addTab(self.signin_widget, "登录")
+        # 页面1: 注册页面（带ghost button"< 返回登录"）
+        self.signup_widget = self._create_signup_page()
+        self.auth_pages.addWidget(self.signup_widget)
 
-        # 注册Tab
-        self.signup_widget = self._create_signup_tab()
-        self.tab_widget.addTab(self.signup_widget, "注册")
+        # 默认显示登录页面
+        self.auth_pages.setCurrentIndex(0)
 
-        layout.addWidget(self.tab_widget)
-
-        layout.addSpacing(10)
-
-        # 分隔线
-        # separator = QFrame()
-        # separator.setFrameShape(QFrame.Shape.HLine)
-        # separator.setFrameShadow(QFrame.Shadow.Sunken)
-        # separator.setStyleSheet("background-color: #e0e0e0;")
-        # layout.addWidget(separator)
-
-        # # 返回微信登录按钮（已禁用微信登录，隐藏此按钮）
-        # back_button = QPushButton("< 返回微信登录")
-        # back_button.setFlat(True)
-        # back_button.setStyleSheet("""
-        #     QPushButton {
-        #         color: #2196F3;
-        #         font-size: 14px;
-        #         padding: 10px;
-        #         text-decoration: underline;
-        #     }
-        #     QPushButton:hover {
-        #         color: #0b7dda;
-        #     }
-        # """)
-        # back_button.clicked.connect(self._switch_to_wechat_login)
-        # layout.addWidget(back_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.auth_pages)
 
         widget.setLayout(layout)
         return widget
@@ -587,6 +582,14 @@ class AuthDialog(QDialog):
         # 停止微信登录轮询（如果正在进行）
         if self.polling_timer and self.polling_timer.isActive():
             self.polling_timer.stop()
+
+    def _switch_to_signup(self):
+        """切换到注册页面（通过ghost button）"""
+        self.auth_pages.setCurrentIndex(1)
+
+    def _switch_to_signin(self):
+        """切换到登录页面（通过ghost button）"""
+        self.auth_pages.setCurrentIndex(0)
 
     def _switch_to_wechat_login(self):
         """切换到微信登录模式（延迟加载）"""
