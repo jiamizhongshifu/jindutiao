@@ -1309,6 +1309,34 @@ class ConfigManager(QMainWindow):
         # 创建标签页(使用懒加载,只在切换到标签页时才创建内容)
         tabs = QTabWidget()
 
+        # 自定义Tab样式：增加高度20px + 宽度20px
+        tabs.setStyleSheet("""
+            QTabBar::tab {
+                padding: 15px 25px;           /* 上下15px, 左右25px (增加高度和宽度) */
+                font-size: 14px;               /* 字体稍大，提升可读性 */
+                min-height: 50px;              /* 确保高度至少50px */
+                border: 1px solid #e0e0e0;
+                border-bottom: none;
+                border-top-left-radius: 5px;
+                border-top-right-radius: 5px;
+                background-color: #f5f5f5;
+                color: #666;
+            }
+            QTabBar::tab:selected {
+                background-color: white;
+                color: #333;
+                border-bottom: 2px solid white;
+                font-weight: bold;
+            }
+            QTabBar::tab:hover {
+                background-color: #eeeeee;
+            }
+            QTabWidget::pane {
+                border: 1px solid #e0e0e0;
+                border-radius: 5px;
+            }
+        """)
+
         # 立即创建外观配置和任务管理标签页(基础功能)
         tabs.addTab(self.create_config_tab(), "🎨 外观配置")
         tabs.addTab(self.create_tasks_tab(), "📋 任务管理")
