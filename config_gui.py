@@ -1309,12 +1309,12 @@ class ConfigManager(QMainWindow):
         # 创建标签页(使用懒加载,只在切换到标签页时才创建内容)
         tabs = QTabWidget()
 
-        # 自定义Tab样式：增加高度20px + 宽度20px
+        # 自定义Tab样式：总高度50px
         tabs.setStyleSheet("""
             QTabBar::tab {
-                padding: 15px 25px;           /* 上下15px, 左右25px (增加高度和宽度) */
+                padding: 10px 20px;           /* 上下10px, 左右20px */
                 font-size: 14px;               /* 字体稍大，提升可读性 */
-                min-height: 50px;              /* 确保高度至少50px */
+                min-height: 28px;              /* 内容高度28px，总高度≈50px (28+10+10+2边框) */
                 border: 1px solid #e0e0e0;
                 border-bottom: none;
                 border-top-left-radius: 5px;
