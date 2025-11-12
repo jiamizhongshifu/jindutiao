@@ -9,9 +9,16 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal, QTimer, QUrl
 from PySide6.QtGui import QFont, QIcon
-from PySide6.QtWebEngineWidgets import QWebEngineView
 import sys
 import os
+
+# WebEngine 可选导入（用于微信登录，如果不可用则禁用微信登录功能）
+try:
+    from PySide6.QtWebEngineWidgets import QWebEngineView
+    HAS_WEBENGINE = True
+except ImportError:
+    HAS_WEBENGINE = False
+    QWebEngineView = None  # 占位，避免后续代码引用时报错
 
 # 添加父目录到路径以导入core模块
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -493,6 +500,44 @@ class AuthDialog(QDialog):
         layout.setSpacing(20)
         layout.setContentsMargins(20, 20, 20, 20)
 
+        # 检查 WebEngine 是否可用
+        if not HAS_WEBENGINE:
+            # WebEngine 不可用，显示提示信息
+            tip_label = QLabel("微信登录功能不可用")
+            tip_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            tip_label.setStyleSheet("font-size: 16px; font-weight: bold; color: #f44336;")
+            layout.addWidget(tip_label)
+
+            info_label = QLabel("当前版本未包含 WebEngine 模块\n请使用邮箱登录")
+            info_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            info_label.setStyleSheet("color: #666; font-size: 14px;")
+            layout.addWidget(info_label)
+
+            layout.addSpacing(20)
+
+            # 切换到邮箱登录按钮
+            switch_button = QPushButton("使用邮箱登录 >")
+            switch_button.setStyleSheet("""
+                QPushButton {
+                    background-color: #4CAF50;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    font-size: 14px;
+                    padding: 10px 20px;
+                }
+                QPushButton:hover {
+                    background-color: #45a049;
+                }
+            """)
+            switch_button.clicked.connect(self._switch_to_email_login)
+            layout.addWidget(switch_button, alignment=Qt.AlignmentFlag.AlignCenter)
+
+            layout.addStretch()
+            widget.setLayout(layout)
+            return widget
+
+        # WebEngine 可用，正常创建微信登录界面
         # 提示文字
         tip_label = QLabel("请使用微信扫码登录")
         tip_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -608,6 +653,19 @@ class AuthDialog(QDialog):
 
     def _switch_to_wechat_login(self):
         """切换到微信登录模式（延迟加载）"""
+        # 检查 WebEngine 是否可用
+        if not HAS_WEBENGINE:
+            print("[AUTH-UI] WebEngine 不可用，自动切换到邮箱登录")
+            QMessageBox.warning(
+                self,
+                "功能不可用",
+                "微信登录功能需要 WebEngine 模块支持。\n\n"
+                "当前版本为了减小体积已移除该模块。\n"
+                "请使用邮箱登录方式。"
+            )
+            self._switch_to_email_login()
+            return
+
         # 如果微信登录widget还未创建，现在创建它
         if self.wechat_widget is None:
             print("[AUTH-UI] 延迟创建微信登录widget（QWebEngineView）...")
