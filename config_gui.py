@@ -6048,6 +6048,258 @@ class ConfigManager(QMainWindow):
 
         return widget
 
+    def _extract_changelog_highlights(self, full_changelog):
+        """提取更新日志的核心亮点
+
+        只显示主要功能更新，移除markdown格式符号
+        """
+        import re
+
+        if not full_changelog:
+            return "无更新说明"
+
+        lines = full_changelog.split('\n')
+        highlights = []
+
+        # 跟踪当前章节
+        current_section = None
+        section_items = []
+
+        for line in lines:
+            line = line.strip()
+
+            # 跳过空行
+            if not line:
+                continue
+
+            # 识别二级标题（## 开头）
+            if line.startswith('##'):
+                # 保存上一个章节的内容
+                if current_section and section_items:
+                    highlights.append(f"{current_section}")
+                    highlights.extend(section_items[:3])  # 每个章节最多显示3条
+                    section_items = []
+
+                # 提取新章节标题，移除markdown符号
+                current_section = re.sub(r'^##\s*', '', line)
+                current_section = re.sub(r'[#*_`]', '', current_section).strip()
+
+            # 识别列表项（- 或 数字. 开头，包含 emoji 的重点内容）
+            elif re.match(r'^[-\d.]\s*[✨💎👤📊🔒✅⚡💰🎁💡🌐🏗🔧]', line):
+                # 移除列表符号和markdown格式
+                item = re.sub(r'^[-\d.]\s*', '', line)
+                item = re.sub(r'\*\*([^*]+)\*\*', r'\1', item)  # 加粗
+                item = re.sub(r'[`_]', '', item)  # 内联代码和斜体
+                section_items.append(f"  • {item}")
+
+        # 添加最后一个章节
+        if current_section and section_items:
+            highlights.append(f"{current_section}")
+            highlights.extend(section_items[:3])
+
+        # 限制总条数，避免弹窗过高
+        if len(highlights) > 15:
+            highlights = highlights[:15]
+            highlights.append("\n详细内容请访问 GitHub Release 页面查看...")
+
+        return '\n'.join(highlights) if highlights else "无更新说明"
+
+    def _auto_update(self, latest_release, latest_version):
+        """自动下载并安装更新"""
+        import os
+        import sys
+        import tempfile
+        import subprocess
+        from PySide6.QtWidgets import QProgressDialog
+        from PySide6.QtCore import Qt, QThread, Signal
+
+        # 查找 .exe 文件的下载链接
+        assets = latest_release.get('assets', [])
+        exe_asset = None
+        for asset in assets:
+            if asset['name'].endswith('.exe'):
+                exe_asset = asset
+                break
+
+        if not exe_asset:
+            QMessageBox.warning(
+                self,
+                "更新失败",
+                "未找到可执行文件，请手动前往 GitHub 下载"
+            )
+            return
+
+        download_url = exe_asset['browser_download_url']
+        file_size = exe_asset['size']
+
+        # 创建进度对话框
+        progress = QProgressDialog("正在下载更新...", "取消", 0, 100, self)
+        progress.setWindowTitle("自动更新")
+        progress.setWindowModality(Qt.WindowModality.WindowModal)
+        progress.setMinimumDuration(0)
+        progress.setValue(0)
+
+        # 使用异步工作线程下载
+        from gaiya.core.async_worker import AsyncNetworkWorker
+
+        class DownloadWorker(QThread):
+            """下载文件的工作线程"""
+            progress_update = Signal(int)
+            finished_signal = Signal(str)
+            error_signal = Signal(str)
+
+            def __init__(self, url, dest_path, file_size):
+                super().__init__()
+                self.url = url
+                self.dest_path = dest_path
+                self.file_size = file_size
+                self._cancelled = False
+
+            def run(self):
+                try:
+                    import requests
+                    response = requests.get(self.url, stream=True, timeout=60)
+                    response.raise_for_status()
+
+                    downloaded = 0
+                    with open(self.dest_path, 'wb') as f:
+                        for chunk in response.iter_content(chunk_size=8192):
+                            if self._cancelled:
+                                return
+
+                            f.write(chunk)
+                            downloaded += len(chunk)
+
+                            # 更新进度
+                            if self.file_size > 0:
+                                percent = int((downloaded / self.file_size) * 100)
+                                self.progress_update.emit(percent)
+
+                    self.finished_signal.emit(self.dest_path)
+
+                except Exception as e:
+                    self.error_signal.emit(str(e))
+
+            def cancel(self):
+                self._cancelled = True
+
+        # 下载到临时目录
+        temp_dir = tempfile.gettempdir()
+        temp_exe_path = os.path.join(temp_dir, f"GaiYa-v{latest_version}.exe")
+
+        worker = DownloadWorker(download_url, temp_exe_path, file_size)
+
+        def on_progress(value):
+            progress.setValue(value)
+
+        def on_finished(file_path):
+            progress.close()
+
+            # 下载完成，准备安装
+            reply = QMessageBox.question(
+                self,
+                "下载完成",
+                f"新版本已下载完成，是否立即安装并重启应用？\n\n下载位置：{file_path}",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
+            if reply == QMessageBox.StandardButton.Yes:
+                self._install_update(file_path)
+
+        def on_error(error_msg):
+            progress.close()
+            QMessageBox.warning(
+                self,
+                "下载失败",
+                f"自动更新失败：{error_msg}\n\n请手动前往 GitHub 下载"
+            )
+
+        def on_cancel():
+            worker.cancel()
+            QMessageBox.information(self, "已取消", "更新已取消")
+
+        worker.progress_update.connect(on_progress)
+        worker.finished_signal.connect(on_finished)
+        worker.error_signal.connect(on_error)
+        progress.canceled.connect(on_cancel)
+
+        worker.start()
+
+    def _install_update(self, new_exe_path):
+        """安装更新并重启程序"""
+        import os
+        import sys
+        import subprocess
+
+        # 获取当前程序路径
+        if getattr(sys, 'frozen', False):
+            # 打包后的exe
+            current_exe = sys.executable
+        else:
+            # 源码运行，无法自动更新
+            QMessageBox.information(
+                self,
+                "无法自动更新",
+                "当前以源码方式运行，无法自动替换程序。\n请手动替换可执行文件。"
+            )
+            return
+
+        # 创建批处理脚本来替换文件并重启
+        # Windows 上运行中的 exe 无法直接替换，需要在程序退出后执行
+        import tempfile
+        bat_path = os.path.join(tempfile.gettempdir(), "gaiya_update.bat")
+
+        bat_content = f'''@echo off
+echo 正在更新 GaiYa...
+timeout /t 2 /nobreak >nul
+
+:retry
+del /f /q "{current_exe}"
+if exist "{current_exe}" (
+    timeout /t 1 /nobreak >nul
+    goto retry
+)
+
+move /y "{new_exe_path}" "{current_exe}"
+if errorlevel 1 (
+    echo 更新失败！
+    pause
+    exit /b 1
+)
+
+echo 更新完成，正在启动...
+start "" "{current_exe}"
+del /f /q "%~f0"
+'''
+
+        try:
+            with open(bat_path, 'w', encoding='gb2312') as f:
+                f.write(bat_content)
+
+            # 启动批处理脚本
+            subprocess.Popen(
+                ['cmd', '/c', bat_path],
+                creationflags=subprocess.CREATE_NO_WINDOW
+            )
+
+            # 关闭当前程序
+            QMessageBox.information(
+                self,
+                "准备更新",
+                "程序将关闭并自动完成更新，请稍候..."
+            )
+
+            # 触发程序退出
+            from PySide6.QtWidgets import QApplication
+            QApplication.quit()
+
+        except Exception as e:
+            QMessageBox.warning(
+                self,
+                "安装失败",
+                f"无法安装更新：{str(e)}\n\n请手动替换程序文件"
+            )
+
     def _check_for_updates(self):
         """检查更新"""
         from version import __version__, APP_METADATA
@@ -6092,16 +6344,25 @@ class ConfigManager(QMainWindow):
                 """)
 
                 # 弹出更新提示
+                # 提取核心更新内容
+                changelog_highlights = self._extract_changelog_highlights(latest_release.get('body', ''))
+
                 msg = QMessageBox(self)
                 msg.setIcon(QMessageBox.Icon.Information)
                 msg.setWindowTitle("发现新版本")
                 msg.setText(f"发现新版本 v{latest_version}")
-                msg.setInformativeText(f"当前版本: v{current_version}\n\n{latest_release.get('body', '无更新说明')}")
-                msg.setStandardButtons(QMessageBox.StandardButton.Ok)
-                download_btn = msg.addButton("前往下载", QMessageBox.ButtonRole.AcceptRole)
+                msg.setInformativeText(f"当前版本: v{current_version}\n\n核心更新:\n{changelog_highlights}")
+                msg.setStandardButtons(QMessageBox.StandardButton.Cancel)
+
+                # 添加两个按钮：立即更新 和 前往下载
+                auto_update_btn = msg.addButton("立即更新", QMessageBox.ButtonRole.AcceptRole)
+                manual_download_btn = msg.addButton("前往下载", QMessageBox.ButtonRole.ActionRole)
                 msg.exec()
 
-                if msg.clickedButton() == download_btn:
+                if msg.clickedButton() == auto_update_btn:
+                    # 自动更新
+                    self._auto_update(latest_release, latest_version)
+                elif msg.clickedButton() == manual_download_btn:
                     # 打开下载页面
                     from PySide6.QtGui import QDesktopServices
                     from PySide6.QtCore import QUrl
