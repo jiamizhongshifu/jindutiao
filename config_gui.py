@@ -32,24 +32,8 @@ from version import __version__, VERSION_STRING, VERSION_STRING_ZH
 from gaiya.ui.style_manager import StyleManager, apply_light_theme
 
 
-class AIWorker(QThread):
-    """AI请求工作线程,防止阻塞UI"""
-    # 定义信号
-    finished = Signal(object)  # 完成信号,传递结果
-    error = Signal(str)  # 错误信号,传递错误消息
-
-    def __init__(self, ai_client, user_input):
-        super().__init__()
-        self.ai_client = ai_client
-        self.user_input = user_input
-
-    def run(self):
-        """在后台线程中执行AI请求"""
-        try:
-            result = self.ai_client.plan_tasks(self.user_input, parent_widget=None)
-            self.finished.emit(result)
-        except Exception as e:
-            self.error.emit(str(e))
+# 使用gaiya.core.async_worker中的异步类(统一管理)
+from gaiya.core.async_worker import AsyncAIWorker as AIWorker
 
 
 class SaveTemplateDialog(QDialog):
