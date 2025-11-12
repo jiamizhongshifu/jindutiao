@@ -11,6 +11,7 @@ import sys
 # Supabase配置
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY", "")
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
 
 
 class AuthManager:
@@ -21,13 +22,24 @@ class AuthManager:
         if not SUPABASE_URL or not SUPABASE_KEY:
             print("WARNING: Supabase credentials not configured", file=sys.stderr)
             self.client = None
+            self.admin_client = None
         else:
             try:
+                # 普通客户端（使用Anon Key，用于常规操作）
                 self.client: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-                print("AuthManager initialized successfully", file=sys.stderr)
+
+                # Admin客户端（使用Service Role Key，用于查询auth.users表）
+                if SUPABASE_SERVICE_KEY:
+                    self.admin_client: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+                    print("AuthManager initialized with admin privileges", file=sys.stderr)
+                else:
+                    self.admin_client = None
+                    print("AuthManager initialized (admin client not available)", file=sys.stderr)
+
             except Exception as e:
                 print(f"Failed to initialize Supabase client: {e}", file=sys.stderr)
                 self.client = None
+                self.admin_client = None
 
     def sign_up_with_email(self, email: str, password: str, username: Optional[str] = None) -> Dict:
         """
@@ -186,7 +198,7 @@ class AuthManager:
 
     def check_email_verification(self, user_id: Optional[str] = None, email: Optional[str] = None) -> Dict:
         """
-        检查邮箱验证状态（用于前端轮询）
+        检查邮箱验证状态（直接查询auth.users表，不依赖触发器）
 
         Args:
             user_id: 用户ID（可选）
@@ -198,34 +210,116 @@ class AuthManager:
         if not self.client:
             return {"success": False, "error": "Supabase not configured"}
 
+        if not self.admin_client:
+            print("[CHECK-VERIFICATION] ⚠️ Admin client not available, fallback to public.users query", file=sys.stderr)
+            # 降级方案：查询 public.users 表
+            return self._check_verification_fallback(user_id, email)
+
         try:
-            # 优先使用email查询（email更可靠，因为注册时一定存在）
-            # 只在email不存在时才尝试用user_id查询
+            # 使用admin权限直接查询auth.users表
+            auth_user = None
+
             if email:
-                # 直接使用email查询
+                # 通过email查询（推荐方式）
+                print(f"[CHECK-VERIFICATION] 🔍 Querying auth.users by email: {email}", file=sys.stderr)
+                try:
+                    # 使用 Supabase Auth Admin API
+                    users_response = self.admin_client.auth.admin.list_users()
+                    # 遍历用户列表找到匹配的email
+                    for u in users_response:
+                        if hasattr(u, 'email') and u.email == email:
+                            auth_user = u
+                            break
+                except Exception as list_error:
+                    print(f"[CHECK-VERIFICATION] Error listing users: {list_error}", file=sys.stderr)
+                    return self._check_verification_fallback(user_id, email)
+
+            elif user_id:
+                # 通过user_id查询
+                print(f"[CHECK-VERIFICATION] 🔍 Querying auth.users by user_id: {user_id}", file=sys.stderr)
+                try:
+                    auth_user = self.admin_client.auth.admin.get_user_by_id(user_id)
+                except Exception as get_error:
+                    print(f"[CHECK-VERIFICATION] Error getting user by ID: {get_error}", file=sys.stderr)
+                    return self._check_verification_fallback(user_id, email)
+            else:
+                return {"success": False, "error": "Missing email or user_id"}
+
+            # 检查是否找到用户
+            if not auth_user:
+                print(f"[CHECK-VERIFICATION] ❌ User not found in auth.users", file=sys.stderr)
+                return {
+                    "success": True,
+                    "verified": False,
+                    "message": "等待邮箱验证..."
+                }
+
+            # 检查email_confirmed_at字段（这是Supabase Auth的官方验证字段）
+            is_verified = auth_user.email_confirmed_at is not None
+
+            print(f"[CHECK-VERIFICATION] ✓ Found user in auth.users:", file=sys.stderr)
+            print(f"  - Email: {auth_user.email}", file=sys.stderr)
+            print(f"  - ID: {auth_user.id}", file=sys.stderr)
+            print(f"  - Email Confirmed At: {auth_user.email_confirmed_at}", file=sys.stderr)
+            print(f"  - Verified: {is_verified}", file=sys.stderr)
+
+            if is_verified:
+                # 验证成功！同步更新public.users表
+                print(f"[CHECK-VERIFICATION] ✅ Email verified! Syncing to public.users...", file=sys.stderr)
+                try:
+                    self.client.table("users").update({
+                        "email_verified": True,
+                        "status": "active"
+                    }).eq("id", auth_user.id).execute()
+                    print(f"[CHECK-VERIFICATION] ✅ Synced to public.users successfully", file=sys.stderr)
+                except Exception as sync_error:
+                    print(f"[CHECK-VERIFICATION] ⚠️ Failed to sync to public.users: {sync_error}", file=sys.stderr)
+                    # 继续返回成功，因为auth.users已验证
+
+                return {
+                    "success": True,
+                    "verified": True,
+                    "user_id": auth_user.id,
+                    "email": auth_user.email,
+                    "message": "邮箱验证成功！"
+                }
+            else:
+                # 尚未验证
+                return {
+                    "success": True,
+                    "verified": False,
+                    "message": "等待邮箱验证..."
+                }
+
+        except Exception as e:
+            print(f"[CHECK-VERIFICATION] ❌ Error: {e}", file=sys.stderr)
+            print(f"[CHECK-VERIFICATION] Error type: {type(e).__name__}", file=sys.stderr)
+            import traceback
+            traceback.print_exc(file=sys.stderr)
+            # 降级到fallback方案
+            return self._check_verification_fallback(user_id, email)
+
+    def _check_verification_fallback(self, user_id: Optional[str] = None, email: Optional[str] = None) -> Dict:
+        """
+        降级方案：查询public.users表（当admin client不可用时）
+        """
+        try:
+            if email:
                 pass
             elif user_id:
-                # 通过user_id查询获取email（需要admin权限，这里用直接查询users表代替）
                 user_response = self.client.table("users").select("*").eq("id", user_id).execute()
                 if not user_response.data:
-                    # user_id查不到，可能记录还未创建，返回等待状态而非错误
                     return {
                         "success": True,
                         "verified": False,
                         "message": "等待用户记录创建..."
                     }
-                user_data = user_response.data[0]
-                email = user_data.get("email")
+                email = user_response.data[0].get("email")
 
-            # 从public.users表查询验证状态
-            # 注意：Supabase Auth的email_confirmed_at字段存储在auth.users表中
-            # 通过数据库trigger自动同步到public.users的email_verified字段
             if email:
                 user_response = self.client.table("users").select("email_verified, id, status").eq("email", email).execute()
 
                 if not user_response.data:
-                    print(f"[CHECK-VERIFICATION] ❌ User not found in public.users table: {email}", file=sys.stderr)
-                    print(f"[CHECK-VERIFICATION] 💡 This may indicate trigger hasn't run or user record not created", file=sys.stderr)
                     return {
                         "success": True,
                         "verified": False,
@@ -234,17 +328,8 @@ class AuthManager:
 
                 user_data = user_response.data[0]
                 is_verified = user_data.get("email_verified", False)
-                user_id = user_data.get("id")
-                status = user_data.get("status")
-
-                print(f"[CHECK-VERIFICATION] ✓ Found user in public.users:", file=sys.stderr)
-                print(f"  - Email: {email}", file=sys.stderr)
-                print(f"  - ID: {user_id}", file=sys.stderr)
-                print(f"  - Verified: {is_verified}", file=sys.stderr)
-                print(f"  - Status: {status}", file=sys.stderr)
 
                 if is_verified:
-                    # 验证成功
                     return {
                         "success": True,
                         "verified": True,
@@ -253,25 +338,17 @@ class AuthManager:
                         "message": "邮箱验证成功！"
                     }
                 else:
-                    # 尚未验证
                     return {
                         "success": True,
                         "verified": False,
                         "message": "等待邮箱验证..."
                     }
             else:
-                return {
-                    "success": False,
-                    "error": "Email is required"
-                }
+                return {"success": False, "error": "Email is required"}
 
         except Exception as e:
-            print(f"[CHECK-VERIFICATION] Error: {e}", file=sys.stderr)
-            return {
-                "success": False,
-                "error": str(e),
-                "verified": False
-            }
+            print(f"[CHECK-VERIFICATION-FALLBACK] Error: {e}", file=sys.stderr)
+            return {"success": False, "error": str(e), "verified": False}
 
     def get_user_by_token(self, access_token: str) -> Optional[Dict]:
         """
