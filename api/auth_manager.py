@@ -51,7 +51,7 @@ class AuthManager:
                 "email": email,
                 "password": password,
                 "options": {
-                    "email_redirect_to": "https://jindutiao.vercel.app/email-verified",  # 验证后跳转到成功页面
+                    "email_redirect_to": "https://api.gaiyatime.com/email-verified",  # 验证后跳转到成功页面（使用自定义域名）
                     "data": {
                         "username": username or email.split("@")[0]
                     }
