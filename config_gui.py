@@ -2820,7 +2820,7 @@ class ConfigManager(QMainWindow):
 
             for feature_text in features:
                 feature_label = QLabel(feature_text)
-                feature_label.setStyleSheet("color: #CCCCCC; font-size: 14px; margin: 5px 0px;")
+                feature_label.setStyleSheet("color: #555555; font-size: 14px; margin: 5px 0px;")
                 layout.addWidget(feature_label)
 
         layout.addStretch()
