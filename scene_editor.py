@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
     QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsItem,
     QGroupBox, QFormLayout, QLineEdit, QSpinBox, QDoubleSpinBox,
     QFileDialog, QMessageBox, QComboBox, QCheckBox, QToolBar, QDialog,
-    QTextEdit, QDialogButtonBox
+    QTextEdit, QDialogButtonBox, QSlider
 )
 from PySide6.QtCore import Qt, QPointF, QRectF, QSize, Signal
 from PySide6.QtGui import (
@@ -297,6 +297,10 @@ class SceneItemGraphics(QGraphicsPixmapItem):
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
 
+        # 设置初始层级（默认为51，确保在道路层上方）
+        # 道路层的z-index是50
+        self.setZValue(51)
+
     def itemChange(self, change, value):
         """元素变化时的回调"""
         if change == QGraphicsItem.ItemPositionChange and self.canvas:
@@ -358,6 +362,10 @@ class SceneCanvas(QGraphicsView):
         # 道路层设置
         self.road_image_path: Optional[str] = None  # 道路图片路径
         self.road_pixmap: Optional[QPixmap] = None  # 道路图片
+        self.road_offset_x = 0  # 道路层X轴偏移（像素）
+        self.road_offset_y = 0  # 道路层Y轴偏移（像素）
+        self.road_scale = 1.0  # 道路层缩放比例（默认100%）
+        self.road_item: Optional[QGraphicsPixmapItem] = None  # 道路层图形对象
 
         # 网格设置
         self.grid_size = 10  # 网格大小（像素）
@@ -379,29 +387,108 @@ class SceneCanvas(QGraphicsView):
         # 启用拖拽接受
         self.setAcceptDrops(True)
 
+        # 视图设置 - 显示完整场景
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        # 禁用交互式缩放
+        self.setTransformationAnchor(QGraphicsView.AnchorViewCenter)
+        self.setResizeAnchor(QGraphicsView.AnchorViewCenter)
+
+        # 连接场景选中信号
+        self.scene.selectionChanged.connect(self._on_selection_changed)
+
+    def _on_selection_changed(self):
+        """场景选中项改变时触发"""
+        selected_items = self.scene.selectedItems()
+        if selected_items:
+            # 只处理SceneItemGraphics类型的元素
+            for item in selected_items:
+                if isinstance(item, SceneItemGraphics):
+                    self.item_selected.emit(item)
+                    break
+
     def set_road_image(self, image_path: str):
         """设置道路层图片"""
         self.road_image_path = image_path
         pixmap = QPixmap(image_path)
-        if not pixmap.isNull():
-            self.road_pixmap = pixmap
-            self.viewport().update()  # 刷新显示
+        if pixmap.isNull():
+            return
+
+        self.road_pixmap = pixmap
+
+        # 移除旧的道路层图形对象
+        if self.road_item:
+            self.scene.removeItem(self.road_item)
+            self.road_item = None
+
+        # 创建平铺的道路图片
+        tiled_pixmap = self._create_tiled_road_pixmap()
+
+        # 创建道路层图形对象
+        self.road_item = QGraphicsPixmapItem(tiled_pixmap)
+        self.road_item.setPos(self.road_offset_x, self.road_offset_y)
+
+        # 设置道路层的 z-index 为 50（中间值）
+        # 场景元素 z-index < 50 会显示在道路下方
+        # 场景元素 z-index > 50 会显示在道路上方
+        self.road_item.setZValue(50)
+
+        # 设置道路层不可选中、不可移动
+        self.road_item.setFlag(QGraphicsItem.ItemIsSelectable, False)
+        self.road_item.setFlag(QGraphicsItem.ItemIsMovable, False)
+
+        # 添加到场景
+        self.scene.addItem(self.road_item)
+
+    def _create_tiled_road_pixmap(self) -> QPixmap:
+        """创建平铺的道路图片"""
+        if not self.road_pixmap:
+            return QPixmap()
+
+        # 应用缩放
+        scaled_pixmap = self.road_pixmap
+        if self.road_scale != 1.0:
+            scaled_width = int(self.road_pixmap.width() * self.road_scale)
+            scaled_height = int(self.road_pixmap.height() * self.road_scale)
+            scaled_pixmap = self.road_pixmap.scaled(
+                scaled_width, scaled_height,
+                Qt.KeepAspectRatio,
+                Qt.SmoothTransformation
+            )
+
+        road_width = scaled_pixmap.width()
+        road_height = scaled_pixmap.height()
+
+        # 创建一个足够宽的画布来平铺道路
+        tiled_width = self.canvas_width
+        tiled_pixmap = QPixmap(tiled_width, road_height)
+        tiled_pixmap.fill(Qt.transparent)
+
+        # 在画布上平铺绘制道路
+        painter = QPainter(tiled_pixmap)
+        x = 0
+        while x < tiled_width:
+            painter.drawPixmap(x, 0, scaled_pixmap)
+            x += road_width
+        painter.end()
+
+        return tiled_pixmap
+
+    def update_road_layer(self):
+        """更新道路层（偏移或缩放改变时调用）"""
+        if not self.road_item or not self.road_pixmap:
+            return
+
+        # 重新创建平铺图片
+        tiled_pixmap = self._create_tiled_road_pixmap()
+        self.road_item.setPixmap(tiled_pixmap)
+        self.road_item.setPos(self.road_offset_x, self.road_offset_y)
 
     def drawBackground(self, painter: QPainter, rect: QRectF):
         """绘制背景网格"""
         super().drawBackground(painter, rect)
 
-        # 1. 绘制道路层（平铺）
-        if self.road_pixmap and not self.road_pixmap.isNull():
-            road_width = self.road_pixmap.width()
-            road_height = self.road_pixmap.height()
-
-            # 平铺绘制道路
-            for x in range(0, int(self.canvas_width), road_width):
-                # 道路只在画布高度范围内绘制
-                painter.drawPixmap(x, 0, self.road_pixmap)
-
-        # 2. 绘制网格
+        # 绘制网格
         if self.show_grid:
             # 设置网格线样式
             painter.setPen(QPen(QColor(230, 230, 230), 1, Qt.DotLine))
@@ -436,6 +523,12 @@ class SceneCanvas(QGraphicsView):
 
         item.setPos(x, y)
 
+        # 设置层级（后添加的元素层级更高）
+        # 道路层的z-index是50（固定）
+        # 场景元素默认在道路上方，z-index从51开始递增
+        # 用户可以手动调整到0-100的任意值，< 50会显示在道路下方
+        item.setZValue(51 + len(self.scene_items))
+
         # 使用撤销命令添加元素
         if use_undo and self.undo_stack:
             command = AddItemCommand(self, item)
@@ -459,28 +552,48 @@ class SceneCanvas(QGraphicsView):
 
     def dropEvent(self, event):
         """处理拖拽放下"""
+        print(f"[DEBUG] dropEvent triggered")  # 调试
         file_path = None
+        is_road_layer = False  # 是否来自道路层列表
 
-        # 处理从文件管理器拖拽的文件
-        if event.mimeData().hasUrls():
+        # 优先检查是否从QListWidget拖拽
+        source_widget = event.source()
+        print(f"[DEBUG] source_widget: {source_widget}, type: {type(source_widget)}")  # 调试
+
+        if isinstance(source_widget, QListWidget):
+            # 从素材库拖拽
+            current_item = source_widget.currentItem()
+            print(f"[DEBUG] current_item: {current_item}")  # 调试
+            if current_item:
+                file_path = current_item.data(Qt.UserRole)
+                print(f"[DEBUG] file_path from UserRole: {file_path}")  # 调试
+                # 检查是否来自道路层列表
+                parent = source_widget.parent()
+                if parent and isinstance(parent, QGroupBox):
+                    is_road_layer = parent.title() == "道路层"
+                    print(f"[DEBUG] is_road_layer: {is_road_layer}, parent title: {parent.title()}")  # 调试
+
+        # 如果不是从QListWidget，检查是否从文件管理器拖拽
+        elif event.mimeData().hasUrls():
             file_path = event.mimeData().urls()[0].toLocalFile()
-
-        # 处理从素材库拖拽的项目
-        elif event.mimeData().hasText():
-            # QListWidget拖拽时会传递文本数据
-            # 我们需要从源widget获取数据
-            source_widget = event.source()
-            if isinstance(source_widget, QListWidget):
-                current_item = source_widget.currentItem()
-                if current_item:
-                    file_path = current_item.data(Qt.UserRole)
+            print(f"[DEBUG] file_path from URLs: {file_path}")  # 调试
 
         # 如果获取到了有效的文件路径
+        print(f"[DEBUG] final file_path: {file_path}, is_road_layer: {is_road_layer}")  # 调试
         if file_path and file_path.lower().endswith('.png'):
-            # 在放下位置添加元素
-            pos = self.mapToScene(event.position().toPoint())
-            self.add_scene_item(file_path, pos.x(), pos.y())
+            if is_road_layer:
+                # 设置为道路背景
+                print(f"[DEBUG] Setting road image: {file_path}")  # 调试
+                self.set_road_image(file_path)
+            else:
+                # 在放下位置添加场景元素
+                pos = self.mapToScene(event.position().toPoint())
+                print(f"[DEBUG] Adding scene item at pos: {pos.x()}, {pos.y()}")  # 调试
+                self.add_scene_item(file_path, pos.x(), pos.y())
             event.acceptProposedAction()
+        else:
+            print(f"[DEBUG] Ignoring drop - invalid file_path or not PNG")  # 调试
+            event.ignore()
 
     def mousePressEvent(self, event):
         """鼠标点击事件"""
@@ -490,6 +603,24 @@ class SceneCanvas(QGraphicsView):
         item = self.itemAt(event.position().toPoint())
         if isinstance(item, SceneItemGraphics):
             self.item_selected.emit(item)
+
+    def resizeEvent(self, event):
+        """窗口大小改变时，适配视图以显示完整场景"""
+        super().resizeEvent(event)
+        self.fit_scene_in_view()
+
+    def showEvent(self, event):
+        """首次显示时，适配视图"""
+        super().showEvent(event)
+        self.fit_scene_in_view()
+
+    def fit_scene_in_view(self):
+        """适配场景到视图中，确保完整显示"""
+        if self.scene:
+            # 获取场景矩形
+            scene_rect = self.scene.sceneRect()
+            # 适配整个场景到视图，保持宽高比
+            self.fitInView(scene_rect, Qt.KeepAspectRatio)
 
 
 class AssetLibraryPanel(QWidget):
@@ -512,6 +643,14 @@ class AssetLibraryPanel(QWidget):
         self.road_list = QListWidget()
         self.road_list.setIconSize(QSize(64, 64))
         road_layout.addWidget(self.road_list)
+        # 道路层上传按钮
+        road_upload_btn = QPushButton("+ 上传道路图片")
+        road_upload_btn.clicked.connect(self.import_road_asset)
+        road_layout.addWidget(road_upload_btn)
+        # 道路层加载按钮
+        road_load_btn = QPushButton("设为道路")
+        road_load_btn.clicked.connect(self.load_selected_road)
+        road_layout.addWidget(road_load_btn)
         layout.addWidget(road_group)
 
         # 场景层分组
@@ -520,35 +659,53 @@ class AssetLibraryPanel(QWidget):
         self.scene_list = QListWidget()
         self.scene_list.setIconSize(QSize(64, 64))
         scene_layout.addWidget(self.scene_list)
+        # 场景层上传按钮
+        scene_upload_btn = QPushButton("+ 上传场景图片")
+        scene_upload_btn.clicked.connect(self.import_scene_asset)
+        scene_layout.addWidget(scene_upload_btn)
+        # 场景层加载按钮
+        scene_load_btn = QPushButton("加载到画布")
+        scene_load_btn.clicked.connect(self.load_selected_scene)
+        scene_layout.addWidget(scene_load_btn)
         layout.addWidget(scene_group)
-
-        # 导入按钮
-        import_btn = QPushButton("+ 导入素材")
-        import_btn.clicked.connect(self.import_asset)
-        layout.addWidget(import_btn)
 
         # 启用拖拽
         self.road_list.setDragEnabled(True)
         self.scene_list.setDragEnabled(True)
 
+        # 连接点击事件 - 点击道路层图片时显示道路层调整面板
+        self.road_list.itemClicked.connect(self.on_road_item_clicked)
+
         # 设置拖拽模式
         self.road_list.setDragDropMode(QListWidget.DragOnly)
         self.scene_list.setDragDropMode(QListWidget.DragOnly)
 
-    def import_asset(self):
-        """导入素材文件"""
+    def import_road_asset(self):
+        """导入道路层素材"""
         file_paths, _ = QFileDialog.getOpenFileNames(
             self,
-            "选择素材文件",
+            "选择道路图片",
             "",
             "PNG图片 (*.png)"
         )
 
         for file_path in file_paths:
-            self.add_asset(file_path)
+            self.add_road_asset(file_path)
 
-    def add_asset(self, file_path: str):
-        """添加素材到列表"""
+    def import_scene_asset(self):
+        """导入场景层素材"""
+        file_paths, _ = QFileDialog.getOpenFileNames(
+            self,
+            "选择场景图片",
+            "",
+            "PNG图片 (*.png)"
+        )
+
+        for file_path in file_paths:
+            self.add_scene_asset(file_path)
+
+    def add_road_asset(self, file_path: str):
+        """添加道路层素材"""
         pixmap = QPixmap(file_path)
         if pixmap.isNull():
             return
@@ -556,13 +713,54 @@ class AssetLibraryPanel(QWidget):
         # 创建列表项
         item = QListWidgetItem(QIcon(pixmap), os.path.basename(file_path))
         item.setData(Qt.UserRole, file_path)
+        self.road_list.addItem(item)
 
-        # 根据文件名判断添加到哪个列表
-        filename = os.path.basename(file_path).lower()
-        if 'road' in filename or 'path' in filename:
-            self.road_list.addItem(item)
-        else:
-            self.scene_list.addItem(item)
+    def add_scene_asset(self, file_path: str):
+        """添加场景层素材"""
+        pixmap = QPixmap(file_path)
+        if pixmap.isNull():
+            return
+
+        # 创建列表项
+        item = QListWidgetItem(QIcon(pixmap), os.path.basename(file_path))
+        item.setData(Qt.UserRole, file_path)
+        self.scene_list.addItem(item)
+
+    def load_selected_road(self):
+        """将选中的道路图片设为道路层背景"""
+        current_item = self.road_list.currentItem()
+        if not current_item:
+            QMessageBox.warning(self, "提示", "请先选择一个道路图片")
+            return
+
+        file_path = current_item.data(Qt.UserRole)
+        # 调用父窗口的方法设置道路
+        parent_window = self.window()
+        if hasattr(parent_window, 'canvas'):
+            parent_window.canvas.set_road_image(file_path)
+
+    def load_selected_scene(self):
+        """将选中的场景图片加载到画布中央"""
+        current_item = self.scene_list.currentItem()
+        if not current_item:
+            QMessageBox.warning(self, "提示", "请先选择一个场景图片")
+            return
+
+        file_path = current_item.data(Qt.UserRole)
+        # 调用父窗口的方法添加场景元素到画布中央
+        parent_window = self.window()
+        if hasattr(parent_window, 'canvas'):
+            # 在画布中央添加元素
+            canvas = parent_window.canvas
+            center_x = canvas.canvas_width / 2
+            center_y = canvas.canvas_height / 2
+            canvas.add_scene_item(file_path, center_x, center_y)
+
+    def on_road_item_clicked(self, item):
+        """道路层图片被点击时，显示道路层调整面板"""
+        parent_window = self.window()
+        if hasattr(parent_window, 'property_panel'):
+            parent_window.property_panel.show_road_panel()
 
 
 class PropertyPanel(QWidget):
@@ -597,8 +795,9 @@ class PropertyPanel(QWidget):
         layout.addWidget(basic_group)
 
         # 道路层分组
-        road_group = QGroupBox("道路层")
-        road_layout = QVBoxLayout(road_group)
+        self.road_group = QGroupBox("道路层")
+        self.road_group.setVisible(False)  # 默认隐藏
+        road_layout = QVBoxLayout(self.road_group)
 
         # 道路图片预览
         self.road_preview = QLabel("未选择道路图片")
@@ -612,6 +811,55 @@ class PropertyPanel(QWidget):
         self.road_filename_label.setStyleSheet("font-size: 11px; color: #666;")
         road_layout.addWidget(self.road_filename_label)
 
+        # 道路位置调整
+        road_position_layout = QFormLayout()
+
+        self.road_x_input = QSpinBox()
+        self.road_x_input.setRange(-1000, 1000)
+        self.road_x_input.setValue(0)
+        self.road_x_input.setSuffix(" px")
+        self.road_x_input.valueChanged.connect(self._on_road_x_changed)
+        self.road_x_input.setEnabled(False)
+        road_position_layout.addRow("X偏移:", self.road_x_input)
+
+        self.road_y_input = QSpinBox()
+        self.road_y_input.setRange(-300, 300)
+        self.road_y_input.setValue(0)
+        self.road_y_input.setSuffix(" px")
+        self.road_y_input.valueChanged.connect(self._on_road_y_changed)
+        self.road_y_input.setEnabled(False)
+        road_position_layout.addRow("Y偏移:", self.road_y_input)
+
+        # 道路缩放控制（滑块形式）
+        road_scale_container = QWidget()
+        road_scale_layout = QHBoxLayout(road_scale_container)
+        road_scale_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.road_scale_slider = QSlider(Qt.Horizontal)
+        self.road_scale_slider.setRange(10, 300)  # 0.1x 到 3.0x（乘以100）
+        self.road_scale_slider.setValue(100)  # 默认1.0x
+        self.road_scale_slider.setEnabled(False)
+        self.road_scale_slider.valueChanged.connect(self._on_road_scale_slider_changed)
+
+        self.road_scale_label = QLabel("1.0x")
+        self.road_scale_label.setMinimumWidth(50)
+        self.road_scale_label.setAlignment(Qt.AlignCenter)
+
+        road_scale_layout.addWidget(self.road_scale_slider)
+        road_scale_layout.addWidget(self.road_scale_label)
+
+        road_position_layout.addRow("缩放:", road_scale_container)
+
+        # 道路层级控制
+        self.road_z_input = QSpinBox()
+        self.road_z_input.setRange(0, 100)
+        self.road_z_input.setValue(50)
+        self.road_z_input.setEnabled(False)
+        self.road_z_input.valueChanged.connect(self._on_road_z_changed)
+        road_position_layout.addRow("层级:", self.road_z_input)
+
+        road_layout.addLayout(road_position_layout)
+
         # 道路操作按钮
         road_button_layout = QHBoxLayout()
         self.select_road_button = QPushButton("选择道路图片")
@@ -624,11 +872,11 @@ class PropertyPanel(QWidget):
         road_button_layout.addWidget(self.clear_road_button)
 
         road_layout.addLayout(road_button_layout)
-        layout.addWidget(road_group)
+        layout.addWidget(self.road_group)
 
         # 选中元素分组
         self.element_group = QGroupBox("选中元素")
-        self.element_group.setEnabled(False)  # 默认禁用，直到选中元素
+        self.element_group.setVisible(False)  # 默认隐藏
         element_layout = QFormLayout(self.element_group)
 
         self.element_id_label = QLabel("未选中")
@@ -647,12 +895,24 @@ class PropertyPanel(QWidget):
         self.element_y_input.valueChanged.connect(self._on_y_changed)
         element_layout.addRow("Y位置:", self.element_y_input)
 
-        self.element_scale_input = QSpinBox()
-        self.element_scale_input.setRange(10, 300)
-        self.element_scale_input.setValue(100)
-        self.element_scale_input.setSuffix(" %")
-        self.element_scale_input.valueChanged.connect(self._on_scale_changed)
-        element_layout.addRow("缩放:", self.element_scale_input)
+        # 场景元素缩放控制（滑块形式）
+        element_scale_container = QWidget()
+        element_scale_layout = QHBoxLayout(element_scale_container)
+        element_scale_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.element_scale_slider = QSlider(Qt.Horizontal)
+        self.element_scale_slider.setRange(10, 300)  # 10% 到 300%
+        self.element_scale_slider.setValue(100)  # 默认100%
+        self.element_scale_slider.valueChanged.connect(self._on_scale_slider_changed)
+
+        self.element_scale_label = QLabel("100%")
+        self.element_scale_label.setMinimumWidth(50)
+        self.element_scale_label.setAlignment(Qt.AlignCenter)
+
+        element_scale_layout.addWidget(self.element_scale_slider)
+        element_scale_layout.addWidget(self.element_scale_label)
+
+        element_layout.addRow("缩放:", element_scale_container)
 
         self.element_z_input = QSpinBox()
         self.element_z_input.setRange(0, 100)
@@ -703,7 +963,10 @@ class PropertyPanel(QWidget):
     def set_selected_item(self, item: SceneItemGraphics):
         """设置当前选中的元素"""
         self.current_item = item
-        self.element_group.setEnabled(True)
+
+        # 显示场景元素面板，隐藏道路层面板
+        self.element_group.setVisible(True)
+        self.road_group.setVisible(False)
 
         # 阻止信号触发，避免循环更新
         self._updating = True
@@ -712,11 +975,53 @@ class PropertyPanel(QWidget):
         self.element_id_label.setText(item.item_id)
         self.element_x_input.setValue(item.x_percent * 100)
         self.element_y_input.setValue(item.y_pixel)
-        self.element_scale_input.setValue(item.scale_factor * 100)
+
+        # 更新缩放滑块和标签
+        scale_value = int(item.scale_factor * 100)
+        self.element_scale_slider.setValue(scale_value)
+        self.element_scale_label.setText(f"{scale_value}%")
+
         self.element_z_input.setValue(int(item.zValue()))
 
         # 加载事件列表
         self._load_events_list()
+
+        self._updating = False
+
+    def show_road_panel(self):
+        """显示道路层调整面板"""
+        # 显示道路层面板，隐藏场景元素面板
+        self.road_group.setVisible(True)
+        self.element_group.setVisible(False)
+
+        # 阻止信号触发
+        self._updating = True
+
+        # 更新道路层属性显示
+        if self.canvas.road_image_path:
+            self.road_x_input.setValue(self.canvas.road_offset_x)
+            self.road_y_input.setValue(self.canvas.road_offset_y)
+
+            # 更新缩放滑块和标签
+            scale_value = int(self.canvas.road_scale * 100)
+            self.road_scale_slider.setValue(scale_value)
+            self.road_scale_label.setText(f"{self.canvas.road_scale:.1f}x")
+
+            # 更新层级（从道路层item读取）
+            if self.canvas.road_item:
+                self.road_z_input.setValue(int(self.canvas.road_item.zValue()))
+
+            self.road_x_input.setEnabled(True)
+            self.road_y_input.setEnabled(True)
+            self.road_scale_slider.setEnabled(True)
+            self.road_z_input.setEnabled(True)
+            self.clear_road_button.setEnabled(True)
+        else:
+            self.road_x_input.setEnabled(False)
+            self.road_y_input.setEnabled(False)
+            self.road_scale_slider.setEnabled(False)
+            self.road_z_input.setEnabled(False)
+            self.clear_road_button.setEnabled(False)
 
         self._updating = False
 
@@ -736,11 +1041,15 @@ class PropertyPanel(QWidget):
         self.current_item.y_pixel = value
         self.current_item.setY(value)
 
-    def _on_scale_changed(self, value):
-        """缩放改变"""
+    def _on_scale_slider_changed(self, value):
+        """缩放滑块改变"""
         if self._updating or not self.current_item:
             return
 
+        # 更新标签显示
+        self.element_scale_label.setText(f"{value}%")
+
+        # 应用缩放
         scale = value / 100.0
         self.current_item.scale_factor = scale
         self.current_item.setScale(scale)
@@ -751,6 +1060,10 @@ class PropertyPanel(QWidget):
             return
 
         self.current_item.setZValue(value)
+        # 强制刷新视图以显示层级变化
+        self.current_item.update()
+        if self.canvas:
+            self.canvas.viewport().update()
 
     # ========== 道路层管理方法 ==========
 
@@ -781,21 +1094,76 @@ class PropertyPanel(QWidget):
                 filename = os.path.basename(file_path)
                 self.road_filename_label.setText(f"文件: {filename}")
 
-                # 启用清除按钮
+                # 启用清除按钮和位置调整控件
                 self.clear_road_button.setEnabled(True)
+                self.road_x_input.setEnabled(True)
+                self.road_y_input.setEnabled(True)
+                self.road_scale_input.setEnabled(True)
 
     def _on_clear_road(self):
         """清除道路"""
         if self.canvas:
             self.canvas.road_image_path = None
             self.canvas.road_pixmap = None
+            self.canvas.road_offset_x = 0
+            self.canvas.road_offset_y = 0
+            self.canvas.road_scale = 1.0
             self.canvas.viewport().update()
 
             # 重置预览
             self.road_preview.clear()
             self.road_preview.setText("未选择道路图片")
             self.road_filename_label.setText("文件: 无")
+
+            # 禁用控件并重置数值
             self.clear_road_button.setEnabled(False)
+            self.road_x_input.setValue(0)
+            self.road_x_input.setEnabled(False)
+            self.road_y_input.setValue(0)
+            self.road_y_input.setEnabled(False)
+            self.road_scale_input.setValue(1.0)
+            self.road_scale_input.setEnabled(False)
+
+    def _on_road_x_changed(self, value):
+        """X偏移改变"""
+        if self._updating:
+            return
+        if self.canvas:
+            self.canvas.road_offset_x = value
+            self.canvas.update_road_layer()
+
+    def _on_road_y_changed(self, value):
+        """Y偏移改变"""
+        if self._updating:
+            return
+        if self.canvas:
+            self.canvas.road_offset_y = value
+            self.canvas.update_road_layer()
+
+    def _on_road_scale_slider_changed(self, value):
+        """道路缩放滑块改变"""
+        if self._updating:
+            return
+
+        # 计算实际缩放值（滑块值/100）
+        scale = value / 100.0
+
+        # 更新标签显示
+        self.road_scale_label.setText(f"{scale:.1f}x")
+
+        # 应用缩放
+        if self.canvas:
+            self.canvas.road_scale = scale
+            self.canvas.update_road_layer()
+
+    def _on_road_z_changed(self, value):
+        """道路层级改变"""
+        if self._updating:
+            return
+
+        # 更新道路层的z-index
+        if self.canvas and self.canvas.road_item:
+            self.canvas.road_item.setZValue(value)
 
     # ========== 事件管理方法 ==========
 

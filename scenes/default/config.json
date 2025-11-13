@@ -1,0 +1,76 @@
+{
+  "scene_id": "default_scene",
+  "name": "默认场景",
+  "version": "1.0.0",
+  "canvas": {
+    "width": 1000,
+    "height": 150
+  },
+  "layers": {
+    "road": {
+      "type": "tiled",
+      "image": "road.png",
+      "z_index": 50,
+      "offset_x": 0,
+      "offset_y": 0,
+      "scale": 1.0
+    },
+    "scene": {
+      "items": [
+        {
+          "id": "tree_1",
+          "image": "tree.png",
+          "position": {
+            "x_percent": 20.0,
+            "y_pixel": 50
+          },
+          "scale": 1.0,
+          "z_index": 51,
+          "events": [
+            {
+              "trigger": "on_hover",
+              "action": {
+                "type": "show_tooltip",
+                "params": {
+                  "text": "这是一棵树"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "house_1",
+          "image": "house.png",
+          "position": {
+            "x_percent": 50.0,
+            "y_pixel": 40
+          },
+          "scale": 1.2,
+          "z_index": 52,
+          "events": [
+            {
+              "trigger": "on_click",
+              "action": {
+                "type": "show_dialog",
+                "params": {
+                  "text": "欢迎来到房子！"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "tree_2",
+          "image": "tree.png",
+          "position": {
+            "x_percent": 80.0,
+            "y_pixel": 50
+          },
+          "scale": 0.8,
+          "z_index": 45,
+          "events": []
+        }
+      ]
+    }
+  }
+}
