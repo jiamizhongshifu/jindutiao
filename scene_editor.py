@@ -1017,14 +1017,23 @@ class SceneEditorWindow(QMainWindow):
                 "width": self.canvas.canvas_width,
                 "height": self.canvas.canvas_height
             },
-            "layers": {
-                "scene": {
-                    "items": [
-                        item.to_config_dict()
-                        for item in self.canvas.scene_items
-                    ]
-                }
+            "layers": {}
+        }
+
+        # 添加道路层（如果有）
+        if self.canvas.road_image_path:
+            import os
+            config["layers"]["road"] = {
+                "type": "tiled",
+                "image": os.path.basename(self.canvas.road_image_path)
             }
+
+        # 添加场景层
+        config["layers"]["scene"] = {
+            "items": [
+                item.to_config_dict()
+                for item in self.canvas.scene_items
+            ]
         }
 
         # 保存到文件
