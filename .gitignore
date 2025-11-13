@@ -87,3 +87,5 @@ lpt9
 # 文档工作目录
 .claude/
 
+first_run.json
+ssl_test.txt

@@ -2857,6 +2857,398 @@ ls -lh dist/  # 检查时间戳
                     </files_modified>
                 </references>
             </methodology>
+
+            <methodology name="QPainter Visual Artifacts Troubleshooting (QPainter 视觉缺陷诊断法)">
+                <description>
+                    系统性解决Qt/PySide6应用中"看起来像描边但实际不是描边"类型的视觉问题。
+                    特别适用于自定义绘制(paintEvent)中出现的意外边框、线条、间隙等视觉缺陷。
+                </description>
+
+                <applicable_scenarios>
+                    <scenario>绘制的图形周围出现意外的白色/黑色边框或线条</scenario>
+                    <scenario>多次尝试设置 Qt.NoPen、透明pen 等方法都无效</scenario>
+                    <scenario>相邻图形之间出现细微的间隙或缝隙</scenario>
+                    <scenario>某些主题下有边框，某些主题下没有</scenario>
+                </applicable_scenarios>
+
+                <core_principle>
+                    <principle name="视觉问题的本质多样性">
+                        看起来像"描边"的视觉问题，实际上可能有多种根本原因：
+                        - **真正的 QPen 描边**：painter.setPen() 设置了可见的pen
+                        - **预留的边距/内边距**：rect 坐标故意留了空白，显示为背景色
+                        - **浮点舍入间隙**：坐标计算的浮点数舍入导致相邻图形之间有像素间隙
+                        - **背景色泄露**：透明度设置不当，背景色透过来
+                        必须从表象深入到本质，找到真正的根本原因。
+                    </principle>
+                    <principle name="排除法优先于假设">
+                        不要过早假设问题的原因，应系统性排除所有可能性。
+                        用科学的方法逐一验证，而不是基于直觉猜测。
+                    </principle>
+                    <principle name="多主题对比分析">
+                        如果某些主题下有问题，某些主题下没问题，
+                        对比它们的差异（背景色、透明度等）往往能快速定位问题。
+                    </principle>
+                </core_principle>
+
+                <diagnosis_workflow>
+                    <phase n="1" name="问题复现与分类">
+                        <checklist>
+                            <item>□ 在哪些主题下出现问题？在哪些主题下正常？</item>
+                            <item>□ "边框"是什么颜色？（白色、黑色、背景色）</item>
+                            <item>□ "边框"出现在哪里？（四周、上下、左右、相邻图形之间）</item>
+                            <item>□ "边框"的宽度是多少像素？（1px、2px、可变）</item>
+                            <item>□ 是否在所有缩放比例下都出现？</item>
+                        </checklist>
+                        <critical_insight>
+                            **关键观察**：如果"边框"的颜色等于窗口背景色，
+                            那很可能不是描边，而是边距或间隙！
+                        </critical_insight>
+                    </phase>
+
+                    <phase n="2" name="排除 QPen 描边">
+                        <instruction>
+                            首先排除最直观的原因：QPainter 的 pen 设置。
+                        </instruction>
+                        <verification_steps>
+                            <step n="1">在 paintEvent 开始处设置 painter.setPen(Qt.NoPen)</step>
+                            <step n="2">在每个绘制操作前都显式设置 painter.setPen(Qt.NoPen)</step>
+                            <step n="3">检查是否有其他代码在中途修改了 pen 状态</step>
+                            <step n="4">尝试使用透明 pen：pen.setColor(QColor(0,0,0,0))</step>
+                            <step n="5">尝试使用 QPainterPath.fillPath 替代 drawRect/drawRoundedRect</step>
+                        </verification_steps>
+                        <decision_point>
+                            如果以上所有方法都无效，问题**不是** QPen 描边！
+                            立即转向下一阶段，不要在 pen 设置上继续浪费时间。
+                        </decision_point>
+                    </phase>
+
+                    <phase n="3" name="检查 Rect 边距设置">
+                        <instruction>
+                            检查绘制图形的 QRectF/QRect 坐标是否故意留了边距。
+                        </instruction>
+                        <common_patterns>
+                            <pattern name="垂直边距" severity="最常见">
+                                <![CDATA[
+# ❌ 问题代码：上下各留 1px 边距
+rect = QRectF(x, y + 1, width, height - 2)
+
+# ✅ 修复：占满全部空间
+rect = QRectF(x, y, width, height)
+                                ]]>
+                            </pattern>
+
+                            <pattern name="水平边距">
+                                <![CDATA[
+# ❌ 问题代码：左右各留 2px 边距
+rect = QRectF(x + 2, y, width - 4, height)
+
+# ✅ 修复：占满全部空间
+rect = QRectF(x, y, width, height)
+                                ]]>
+                            </pattern>
+
+                            <pattern name="固定偏移量">
+                                <![CDATA[
+# ❌ 问题代码：固定偏移 5px
+rect = QRectF(x + 5, y + 5, width - 10, height - 10)
+
+# ✅ 修复：根据实际需求决定是否需要偏移
+rect = QRectF(x, y, width, height)
+                                ]]>
+                            </pattern>
+                        </common_patterns>
+                        <why_it_happens>
+                            开发者可能为了"美观"故意留了边距，
+                            但在浅色主题下，这些边距显示为背景色（白色），
+                            看起来就像"白色边框"。
+                        </why_it_happens>
+                    </phase>
+
+                    <phase n="4" name="检查浮点舍入间隙">
+                        <instruction>
+                            当相邻图形的坐标由百分比计算时，浮点舍入可能导致像素间隙。
+                        </instruction>
+                        <problem_example>
+                            <![CDATA[
+# 问题场景：3个任务块按比例分布
+task1_width = 0.333 * total_width  # 333.33
+task2_x = 0.333 * total_width       # 333.33
+task2_width = 0.333 * total_width   # 333.33
+task3_x = 0.666 * total_width       # 666.66
+
+# QPainter 渲染时舍入：
+# task1: 0-333
+# task2: 333-666  ← 可能实际渲染为 334-666，留下 1px 间隙！
+# task3: 667-1000
+                            ]]>
+                        </problem_example>
+                        <solution_pattern>
+                            <![CDATA[
+# ✅ 解决方案：让每个图形直接延伸到下一个图形的起始位置
+for i, item in enumerate(items):
+    x = item['start_pct'] * total_width
+
+    if i < len(items) - 1:
+        # 使用下一个图形的起始位置作为当前图形的结束位置
+        next_x = items[i + 1]['start_pct'] * total_width
+        width = next_x - x
+    else:
+        # 最后一个图形延伸到末端
+        width = total_width - x
+
+    rect = QRectF(x, y, width, height)
+    painter.fillRect(rect, color)
+                            ]]>
+                        </solution_pattern>
+                    </phase>
+
+                    <phase n="5" name="主题对比分析">
+                        <instruction>
+                            如果问题在某些主题下出现，某些主题下不出现，
+                            对比这些主题的配置差异。
+                        </instruction>
+                        <comparison_checklist>
+                            <item>□ 背景色（background_color）是否不同？</item>
+                            <item>□ 背景透明度（background_opacity）是否不同？</item>
+                            <item>□ 圆角半径（corner_radius）是否不同？</item>
+                            <item>□ 任务颜色的明度/饱和度是否与背景色对比度不同？</item>
+                        </comparison_checklist>
+                        <typical_finding>
+                            **典型发现**：
+                            - "商务专业"主题：深色背景，边距不明显 ✓
+                            - "浅色模式"主题：白色背景，边距非常明显 ✗
+
+                            → 结论：问题不是主题特定的配置，而是边距在浅色背景下显现出来
+                        </typical_finding>
+                    </phase>
+
+                    <phase n="6" name="渐进式验证">
+                        <principle>每次只修改一个因素，立即验证效果</principle>
+                        <workflow>
+                            <![CDATA[
+修改1：移除垂直边距
+  → 打包测试 → 问题仍存在
+
+修改2：移除水平边距
+  → 打包测试 → 问题部分改善
+
+修改3：修复浮点舍入
+  → 打包测试 → 问题完全解决 ✅
+                            ]]>
+                        </workflow>
+                        <anti_pattern>
+                            ❌ 错误：同时修改多个地方，无法确定哪个修改起作用
+                            ✅ 正确：每次只修改一处，清理打包测试，确认效果
+                        </anti_pattern>
+                    </phase>
+                </diagnosis_workflow>
+
+                <case_study name="进度条白色描边问题 (2025-11-13)">
+                    <problem_description>
+                        用户报告：切换主题时进度条任务块周围出现白色描边。
+                        - "商务专业"主题：无描边 ✓
+                        - 其他8个主题：白色描边明显 ✗
+                    </problem_description>
+
+                    <iteration_history>
+                        <iteration n="1-3" status="失败">
+                            <hypothesis>QPainter 的 pen 设置问题</hypothesis>
+                            <attempts>
+                                - 尝试1：在多处设置 painter.setPen(Qt.NoPen)
+                                - 尝试2：使用透明 pen
+                                - 尝试3：使用 QPainterPath.fillPath 替代 drawRoundedRect
+                            </attempts>
+                            <result>❌ 所有方法都无效，白色描边仍然存在</result>
+                            <user_feedback>"切换主题,进度条还是会出现黑色或者白色的描边"</user_feedback>
+                        </iteration>
+
+                        <iteration n="4" status="失败">
+                            <hypothesis>浮点舍入导致的水平间隙</hypothesis>
+                            <fix>
+                                让每个任务块延伸到下一个任务的起始位置：
+                                ```python
+                                if i < len(self.task_positions) - 1:
+                                    next_start_pct = self.task_positions[i + 1]['compact_start_pct']
+                                    task_width = next_start_pct * width - x
+                                ```
+                            </fix>
+                            <result>❌ 变量名错误导致运行时崩溃</result>
+                            <user_feedback>paintEvent 错误："name 'task_positions' is not defined"</user_feedback>
+                        </iteration>
+
+                        <iteration n="5" status="失败">
+                            <hypothesis>修正变量名</hypothesis>
+                            <fix>task_positions → self.task_positions</fix>
+                            <result>❌ 程序能运行，但白色描边仍然存在</result>
+                            <user_feedback>"打开后进度条还是有白色描边"</user_feedback>
+                        </iteration>
+
+                        <iteration n="6" status="成功 ✅">
+                            <breakthrough>主题对比分析 + 代码审查</breakthrough>
+                            <discovery>
+                                发现 rect 坐标设置：
+                                ```python
+                                # ❌ 问题根源
+                                rect = QRectF(x, bar_y_offset + 1, task_width, bar_height - 2)
+                                ```
+
+                                **关键洞察**：
+                                - `bar_y_offset + 1`：上方留 1px
+                                - `bar_height - 2`：下方留 1px
+                                - 这 2px 的垂直边距显示为窗口背景色
+                                - 浅色主题背景是白色 → 看起来像"白色描边"
+                                - 深色主题背景与任务色接近 → 边距不明显
+                            </discovery>
+                            <fix>
+                                ```python
+                                # ✅ 最终修复
+                                rect = QRectF(x, bar_y_offset, task_width, bar_height)
+                                ```
+                            </fix>
+                            <result>✅ 问题彻底解决，所有主题都无描边</result>
+                        </iteration>
+                    </iteration_history>
+
+                    <files_modified>
+                        <file path="main.py" lines="1734-1740">
+                            修复浮点舍入间隙（次要问题）
+                        </file>
+                        <file path="main.py" lines="1752-1753">
+                            移除垂直边距（主要问题的根源）
+                        </file>
+                    </files_modified>
+
+                    <key_lessons>
+                        <lesson name="表象与本质">
+                            看起来像"描边"的视觉问题，实际上可能是边距、间隙、背景色等多种原因。
+                            不要被表象迷惑，要深入代码找本质。
+                        </lesson>
+
+                        <lesson name="主题对比的威力">
+                            "为什么商务专业主题没问题？"这个问题引导我们发现了根本原因。
+                            对比"成功案例"和"失败案例"是快速定位问题的有效方法。
+                        </lesson>
+
+                        <lesson name="排除法的重要性">
+                            虽然前5次尝试都失败了，但每次都排除了一种可能性：
+                            - 不是 QPen 问题
+                            - 不是 fillPath vs drawRect 的问题
+                            - 不仅仅是水平间隙问题
+                            最终定位到垂直边距这个被忽视的根本原因。
+                        </lesson>
+
+                        <lesson name="PyInstaller 必须重打包">
+                            每次代码修改后都必须清理并重新打包，否则运行的是旧版本。
+                            这在调试过程中是强制要求，不可遗漏。
+                        </lesson>
+
+                        <lesson name="持续迭代不放弃">
+                            6次迭代才找到根本原因，前5次都失败了。
+                            但每次失败都缩小了问题范围，最终必然找到答案。
+                            坚持科学方法论比灵光一现更可靠。
+                        </lesson>
+                    </key_lessons>
+                </case_study>
+
+                <best_practices>
+                    <practice name="系统性排除，不要猜测">
+                        按照 Phase 1-6 的顺序系统性排查，不要跳步骤。
+                        即使某个假设看起来很合理，也要用证据验证。
+                    </practice>
+
+                    <practice name="主题对比分析">
+                        如果某些配置下有问题，某些配置下没问题，
+                        立即对比它们的差异，往往能快速定位根本原因。
+                    </practice>
+
+                    <practice name="检查所有 Rect 坐标">
+                        用 grep 搜索所有 QRectF/QRect 的创建位置，
+                        检查是否有 `+1`、`-2` 等偏移量，这些很可能就是"边距"的来源。
+                    </practice>
+
+                    <practice name="可视化调试">
+                        暂时将可疑的 rect 用明显的颜色绘制（如纯红色、纯绿色），
+                        确认它的实际覆盖范围是否符合预期。
+                    </practice>
+
+                    <practice name="渐进式修复">
+                        每次只修复一个问题，立即打包测试验证效果。
+                        不要累积多个修改后再测试。
+                    </practice>
+
+                    <practice name="记录失败的尝试">
+                        记录每次尝试的假设、修改和结果，避免重复无效方案。
+                        失败的尝试也是宝贵的信息，能帮助排除错误方向。
+                    </practice>
+                </best_practices>
+
+                <anti_patterns>
+                    <anti_pattern name="过早归因">
+                        ❌ 错误："看起来像描边，肯定是 QPen 的问题"
+                        ✅ 正确：系统性排除所有可能性，不预设结论
+                    </anti_pattern>
+
+                    <anti_pattern name="忽视主题差异">
+                        ❌ 错误："既然商务专业主题正常，我就一直用这个主题测试"
+                        ✅ 正确：对比正常和异常主题，分析差异
+                    </anti_pattern>
+
+                    <anti_pattern name="批量修改">
+                        ❌ 错误：同时修改 pen 设置、rect 坐标、绘制方法
+                        ✅ 正确：每次只修改一处，验证效果
+                    </anti_pattern>
+
+                    <anti_pattern name="放弃太早">
+                        ❌ 错误："尝试3次都失败了，可能是Qt的bug，算了"
+                        ✅ 正确：坚持系统性排查，问题一定有根本原因
+                    </anti_pattern>
+                </anti_patterns>
+
+                <quick_reference>
+                    <title>QPainter 视觉缺陷快速诊断卡</title>
+
+                    <step_by_step>
+                        1️⃣ 主题对比：哪些主题有问题？哪些正常？
+                        2️⃣ 排除 QPen：尝试 Qt.NoPen、透明pen、fillPath
+                        3️⃣ 检查 Rect：grep 搜索 "+1"、"-2" 等偏移量
+                        4️⃣ 浮点舍入：检查坐标是否由百分比计算
+                        5️⃣ 可视化：用明显颜色绘制 rect 确认范围
+                        6️⃣ 渐进测试：每次只改一处，立即验证
+                    </step_by_step>
+
+                    <common_root_causes>
+                        🥇 **Rect 边距**（最常见 70%）
+                           → 搜索 `QRectF(..., y + 1, ..., height - 2)`
+
+                        🥈 **浮点舍入间隙**（20%）
+                           → 检查坐标计算逻辑，让图形完美拼接
+
+                        🥉 **QPen 描边**（10%）
+                           → 设置 Qt.NoPen 或透明pen
+                    </common_root_causes>
+
+                    <diagnostic_commands>
+                        # 搜索可疑的偏移量
+                        grep -n "QRectF.*[+-] [0-9]" main.py
+
+                        # 搜索 QPen 设置
+                        grep -n "setPen\|QPen" main.py
+
+                        # 对比不同主题的配置
+                        grep -n "商务专业\|浅色模式" theme_manager.py
+                    </diagnostic_commands>
+                </quick_reference>
+
+                <references>
+                    <related_methodology>PyInstaller Development Methodology</related_methodology>
+                    <related_methodology>UI State Synchronization Troubleshooting</related_methodology>
+                    <related_case>进度条白色描边修复 (2025-11-13)</related_case>
+                    <files_modified>
+                        - main.py:1734-1740 (浮点舍入间隙修复)
+                        - main.py:1752-1753 (垂直边距移除 - 根本原因)
+                    </files_modified>
+                </references>
+            </methodology>
         </debugging_methodology>
     </protocols>
 

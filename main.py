@@ -15,7 +15,7 @@ from version import __version__, VERSION_STRING, VERSION_STRING_ZH, get_version_
 from PySide6.QtWidgets import (QApplication, QWidget, QSystemTrayIcon, QMenu, QToolTip, QLabel,
                                 QHBoxLayout, QVBoxLayout, QDialog, QFormLayout, QSpinBox, QPushButton, QMessageBox)
 from PySide6.QtCore import Qt, QRectF, QTimer, QTime, QFileSystemWatcher, QPoint, Signal, QEventLoop, QSize
-from PySide6.QtGui import QPainter, QColor, QPen, QAction, QFont, QPixmap, QMovie, QCursor
+from PySide6.QtGui import QPainter, QColor, QPen, QAction, QFont, QPixmap, QMovie, QCursor, QPainterPath
 from enum import Enum
 from statistics_manager import StatisticsManager
 # 已切换到Vercel云服务，无需本地后端管理器
@@ -1691,6 +1691,7 @@ class TimeProgressBar(QWidget):
 
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)  # 抗锯齿
+        painter.setPen(Qt.NoPen)  # 设置默认无描边，避免主题切换时出现边框
 
         width = self.width()
         height = self.height()
@@ -1710,6 +1711,10 @@ class TimeProgressBar(QWidget):
 
         hover_info = None  # 保存悬停信息,最后绘制
 
+        # 在任务循环前强制重置pen状态（防止fillRect等操作修改了pen）
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(Qt.NoBrush)
+
         for i, pos in enumerate(self.task_positions):
             task = pos['task']
 
@@ -1724,7 +1729,15 @@ class TimeProgressBar(QWidget):
 
             # 计算任务块的位置和宽度
             x = start_pct * width
-            task_width = (end_pct - start_pct) * width
+
+            # 为避免浮点数舍入导致的像素间隙，让每个任务块延伸到下一个任务的起始位置
+            if i < len(self.task_positions) - 1:
+                # 不是最后一个任务,使用下一个任务的起始位置作为结束位置
+                next_start_pct = self.task_positions[i + 1]['compact_start_pct']
+                task_width = next_start_pct * width - x
+            else:
+                # 最后一个任务,延伸到进度条末端
+                task_width = width - x
 
             # 解析颜色
             color = QColor(task['color'])
@@ -1736,16 +1749,22 @@ class TimeProgressBar(QWidget):
                 color = QColor(gray_value, gray_value, gray_value, 120)  # 半透明灰色
 
             # 绘制任务块(在进度条位置)
-            rect = QRectF(x, bar_y_offset + 1, task_width, bar_height - 2)
+            # 不留边距，让任务块占满整个进度条高度，避免显示背景色形成"白色描边"
+            rect = QRectF(x, bar_y_offset, task_width, bar_height)
+
+            # 使用QPainterPath绘制，彻底避免描边问题
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(color)
 
             if self.config.get('corner_radius', 0) > 0:
-                painter.setBrush(color)
-                painter.setPen(Qt.NoPen)
-                painter.drawRoundedRect(
+                # 使用QPainterPath创建圆角矩形，然后fillPath（不会产生描边）
+                path = QPainterPath()
+                path.addRoundedRect(
                     rect,
                     self.config['corner_radius'],
                     self.config['corner_radius']
                 )
+                painter.fillPath(path, color)
             else:
                 painter.fillRect(rect, color)
 
@@ -1807,6 +1826,9 @@ class TimeProgressBar(QWidget):
                 }
 
         # 3. 绘制时间标记(最上层,在进度条区域)
+        # 重置pen状态，防止任务循环中的pen设置影响后续绘制
+        painter.setPen(Qt.NoPen)
+
         marker_x = self.current_time_percentage * width
         marker_type = self.config.get('marker_type', 'line')
 

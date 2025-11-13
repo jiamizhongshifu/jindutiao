@@ -299,6 +299,20 @@ class ConfigManager(QMainWindow):
     def _init_timeline_editor(self, layout, placeholder):
         """延迟初始化时间轴编辑器"""
         try:
+            # 设置全局 QToolTip 样式（与进度条悬停提示统一）
+            QApplication.instance().setStyleSheet(
+                QApplication.instance().styleSheet() + """
+                QToolTip {
+                    background-color: rgba(0, 0, 0, 180);
+                    color: white;
+                    border: 1px solid rgba(255, 255, 255, 0.3);
+                    border-radius: 4px;
+                    padding: 8px;
+                    font-size: 12px;
+                }
+                """
+            )
+
             # 创建时间轴编辑器
             self.timeline_editor = TimelineEditor()
             self.timeline_editor.task_time_changed.connect(self.on_timeline_task_changed)
@@ -2028,7 +2042,7 @@ class ConfigManager(QMainWindow):
         timeline_layout = QVBoxLayout()
 
         timeline_hint = QLabel("💡 提示：拖动色块边缘可调整任务时长")
-        timeline_hint.setStyleSheet("color: #FFD700; font-style: italic; padding: 5px;")
+        timeline_hint.setStyleSheet("color: #666666; font-style: italic; padding: 5px;")
         timeline_layout.addWidget(timeline_hint)
 
         # 创建占位符，延迟初始化时间轴编辑器
