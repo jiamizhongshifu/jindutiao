@@ -76,7 +76,7 @@ APP_METADATA = {
     "description": "用进度条让时间流逝清晰可见的桌面工具",
     "author": "GaiYa 团队",
     "license": "MIT",
-    "homepage": "https://gaiya.app",
+    "wechat": "drmrzhong",
     "repository": "https://github.com/jiamizhongshifu/jindutiao",
 }
 
@@ -141,7 +141,7 @@ def get_about_text() -> str:
 发布日期: {__release_date__}
 许可协议: {APP_METADATA['license']}
 
-官网: {APP_METADATA['homepage']}
+创始人微信: {APP_METADATA['wechat']}
 仓库: {APP_METADATA['repository']}
 
 Made with Love by {APP_METADATA['author']}
