@@ -10,11 +10,11 @@ GaiYa每日进度条 - 版本信息
 # 版本信息
 # ========================================
 
-__version__ = "1.5.0"
+__version__ = "1.6.0"
 __app_name__ = "GaiYa"
 __app_name_zh__ = "盖亚"
 __slogan__ = "守护你的每一分钟"
-__release_date__ = "2025-11-04"
+__release_date__ = "2025-11-13"
 __build_type__ = "release"  # release / debug / beta
 
 # ========================================
@@ -23,7 +23,7 @@ __build_type__ = "release"  # release / debug / beta
 
 # 版本号组成部分
 VERSION_MAJOR = 1
-VERSION_MINOR = 5
+VERSION_MINOR = 6
 VERSION_PATCH = 0
 
 # 完整版本字符串
@@ -43,7 +43,7 @@ def get_exe_name() -> str:
 
     Example:
         >>> get_exe_name()
-        'Gaiya-v1.5'
+        'Gaiya-v1.6'
     """
     return f"{__app_name__}-v{VERSION_MAJOR}.{VERSION_MINOR}"
 
@@ -57,7 +57,7 @@ def get_full_exe_name() -> str:
 
     Example:
         >>> get_full_exe_name()
-        'Gaiya-v1.5.exe'
+        'Gaiya-v1.6.exe'
     """
     return f"{get_exe_name()}.exe"
 
@@ -94,7 +94,7 @@ def get_version_tuple() -> tuple:
 
     Example:
         >>> get_version_tuple()
-        (1, 5, 0)
+        (1, 6, 0)
     """
     return (VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
 
