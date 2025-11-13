@@ -16,19 +16,48 @@ import os
 import json
 from pathlib import Path
 from typing import List, Dict, Optional
+from dataclasses import dataclass, asdict
 
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QSplitter, QListWidget, QListWidgetItem, QPushButton, QLabel,
     QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsItem,
     QGroupBox, QFormLayout, QLineEdit, QSpinBox, QDoubleSpinBox,
-    QFileDialog, QMessageBox, QComboBox, QCheckBox, QToolBar
+    QFileDialog, QMessageBox, QComboBox, QCheckBox, QToolBar, QDialog,
+    QTextEdit, QDialogButtonBox
 )
 from PySide6.QtCore import Qt, QPointF, QRectF, QSize, Signal
 from PySide6.QtGui import (
     QPixmap, QIcon, QPainter, QColor, QPen, QBrush, QAction, QKeySequence,
     QUndoStack, QUndoCommand
 )
+
+
+# ============================================================================
+# 事件配置数据类
+# ============================================================================
+
+@dataclass
+class EventAction:
+    """事件动作"""
+    type: str  # show_tooltip, show_dialog, open_url
+    params: Dict[str, str]  # 动作参数
+
+@dataclass
+class EventConfig:
+    """事件配置"""
+    trigger: str  # on_hover, on_click, on_time_reach
+    action: EventAction
+
+    def to_dict(self) -> dict:
+        """转换为字典"""
+        return {
+            "trigger": self.trigger,
+            "action": {
+                "type": self.action.type,
+                "params": self.action.params
+            }
+        }
 
 
 # ============================================================================
@@ -95,6 +124,152 @@ class ScaleItemCommand(QUndoCommand):
 
 
 # ============================================================================
+# 事件配置对话框
+# ============================================================================
+
+class EventConfigDialog(QDialog):
+    """事件配置对话框"""
+
+    def __init__(self, parent=None, event_config: Optional[EventConfig] = None):
+        super().__init__(parent)
+
+        self.setWindowTitle("配置事件")
+        self.setModal(True)
+        self.setMinimumWidth(500)
+
+        layout = QVBoxLayout(self)
+
+        # 触发器选择
+        trigger_group = QGroupBox("触发器")
+        trigger_layout = QFormLayout(trigger_group)
+
+        self.trigger_combo = QComboBox()
+        self.trigger_combo.addItems([
+            "on_hover - 鼠标悬停",
+            "on_click - 鼠标点击",
+            "on_time_reach - 时间到达"
+        ])
+        trigger_layout.addRow("触发类型:", self.trigger_combo)
+
+        layout.addWidget(trigger_group)
+
+        # 动作配置
+        action_group = QGroupBox("动作")
+        action_layout = QFormLayout(action_group)
+
+        self.action_type_combo = QComboBox()
+        self.action_type_combo.addItems([
+            "show_tooltip - 显示提示",
+            "show_dialog - 显示对话框",
+            "open_url - 打开链接"
+        ])
+        self.action_type_combo.currentIndexChanged.connect(self._on_action_type_changed)
+        action_layout.addRow("动作类型:", self.action_type_combo)
+
+        # 参数编辑（根据动作类型动态变化）
+        self.params_group = QGroupBox("参数")
+        self.params_layout = QFormLayout(self.params_group)
+
+        # 提示文本（用于show_tooltip和show_dialog）
+        self.text_input = QTextEdit()
+        self.text_input.setMaximumHeight(100)
+        self.params_layout.addRow("文本内容:", self.text_input)
+
+        # URL（用于open_url）
+        self.url_input = QLineEdit()
+        self.url_input.setPlaceholderText("https://example.com")
+        self.params_layout.addRow("URL地址:", self.url_input)
+        self.url_input.setVisible(False)
+
+        # 时间参数（用于on_time_reach）
+        self.time_input = QLineEdit()
+        self.time_input.setPlaceholderText("例如: 09:00 或 50%")
+        self.params_layout.addRow("时间:", self.time_input)
+        self.time_input.setVisible(False)
+
+        action_layout.addRow(self.params_group)
+        layout.addWidget(action_group)
+
+        # 按钮
+        button_box = QDialogButtonBox(
+            QDialogButtonBox.Ok | QDialogButtonBox.Cancel
+        )
+        button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
+        layout.addWidget(button_box)
+
+        # 如果提供了已有配置，加载它
+        if event_config:
+            self._load_config(event_config)
+
+        # 初始化UI状态
+        self._on_action_type_changed()
+        self._on_trigger_changed()
+
+        self.trigger_combo.currentIndexChanged.connect(self._on_trigger_changed)
+
+    def _on_action_type_changed(self):
+        """动作类型改变"""
+        action_type = self.action_type_combo.currentText().split(" - ")[0]
+
+        # 根据动作类型显示/隐藏参数
+        if action_type == "open_url":
+            self.text_input.setVisible(False)
+            self.url_input.setVisible(True)
+        else:
+            self.text_input.setVisible(True)
+            self.url_input.setVisible(False)
+
+    def _on_trigger_changed(self):
+        """触发器类型改变"""
+        trigger = self.trigger_combo.currentText().split(" - ")[0]
+
+        # 时间参数只对on_time_reach可见
+        self.time_input.setVisible(trigger == "on_time_reach")
+
+    def _load_config(self, config: EventConfig):
+        """加载已有配置"""
+        # 设置触发器
+        for i in range(self.trigger_combo.count()):
+            if self.trigger_combo.itemText(i).startswith(config.trigger):
+                self.trigger_combo.setCurrentIndex(i)
+                break
+
+        # 设置动作类型
+        for i in range(self.action_type_combo.count()):
+            if self.action_type_combo.itemText(i).startswith(config.action.type):
+                self.action_type_combo.setCurrentIndex(i)
+                break
+
+        # 设置参数
+        if "text" in config.action.params:
+            self.text_input.setPlainText(config.action.params["text"])
+        if "url" in config.action.params:
+            self.url_input.setText(config.action.params["url"])
+        if "time" in config.action.params:
+            self.time_input.setText(config.action.params["time"])
+
+    def get_event_config(self) -> EventConfig:
+        """获取配置的事件"""
+        trigger = self.trigger_combo.currentText().split(" - ")[0]
+        action_type = self.action_type_combo.currentText().split(" - ")[0]
+
+        # 构建参数字典
+        params = {}
+
+        if action_type == "open_url":
+            params["url"] = self.url_input.text()
+        else:
+            params["text"] = self.text_input.toPlainText()
+
+        if trigger == "on_time_reach":
+            params["time"] = self.time_input.text()
+
+        action = EventAction(type=action_type, params=params)
+        return EventConfig(trigger=trigger, action=action)
+
+
+# ============================================================================
 # 场景元素图形类
 # ============================================================================
 
@@ -110,6 +285,7 @@ class SceneItemGraphics(QGraphicsPixmapItem):
         self.y_pixel = 0  # 绝对Y位置（像素）
         self.scale_factor = 1.0  # 缩放比例
         self.canvas = canvas  # 引用画布对象（用于网格吸附）
+        self.events: List[EventConfig] = []  # 事件列表
 
         # 加载图片
         pixmap = QPixmap(image_path)
@@ -158,7 +334,7 @@ class SceneItemGraphics(QGraphicsPixmapItem):
             },
             "scale": self.scale_factor,
             "z_index": int(self.zValue()),
-            "events": []  # 暂时为空
+            "events": [event.to_dict() for event in self.events]
         }
 
 
@@ -178,6 +354,10 @@ class SceneCanvas(QGraphicsView):
         self.canvas_width = 1200
         self.canvas_height = 150
         self.scene.setSceneRect(0, 0, self.canvas_width, self.canvas_height)
+
+        # 道路层设置
+        self.road_image_path: Optional[str] = None  # 道路图片路径
+        self.road_pixmap: Optional[QPixmap] = None  # 道路图片
 
         # 网格设置
         self.grid_size = 10  # 网格大小（像素）
@@ -199,28 +379,45 @@ class SceneCanvas(QGraphicsView):
         # 启用拖拽接受
         self.setAcceptDrops(True)
 
+    def set_road_image(self, image_path: str):
+        """设置道路层图片"""
+        self.road_image_path = image_path
+        pixmap = QPixmap(image_path)
+        if not pixmap.isNull():
+            self.road_pixmap = pixmap
+            self.viewport().update()  # 刷新显示
+
     def drawBackground(self, painter: QPainter, rect: QRectF):
         """绘制背景网格"""
         super().drawBackground(painter, rect)
 
-        if not self.show_grid:
-            return
+        # 1. 绘制道路层（平铺）
+        if self.road_pixmap and not self.road_pixmap.isNull():
+            road_width = self.road_pixmap.width()
+            road_height = self.road_pixmap.height()
 
-        # 设置网格线样式
-        painter.setPen(QPen(QColor(230, 230, 230), 1, Qt.DotLine))
+            # 平铺绘制道路
+            for x in range(0, int(self.canvas_width), road_width):
+                # 道路只在画布高度范围内绘制
+                painter.drawPixmap(x, 0, self.road_pixmap)
 
-        # 绘制垂直网格线
-        left = int(rect.left()) - (int(rect.left()) % self.grid_size)
-        top = int(rect.top()) - (int(rect.top()) % self.grid_size)
+        # 2. 绘制网格
+        if self.show_grid:
+            # 设置网格线样式
+            painter.setPen(QPen(QColor(230, 230, 230), 1, Qt.DotLine))
 
-        for x in range(left, int(rect.right()), self.grid_size):
-            painter.drawLine(x, int(rect.top()), x, int(rect.bottom()))
+            # 绘制垂直网格线
+            left = int(rect.left()) - (int(rect.left()) % self.grid_size)
+            top = int(rect.top()) - (int(rect.top()) % self.grid_size)
 
-        # 绘制水平网格线
-        for y in range(top, int(rect.bottom()), self.grid_size):
-            painter.drawLine(int(rect.left()), y, int(rect.right()), y)
+            for x in range(left, int(rect.right()), self.grid_size):
+                painter.drawLine(x, int(rect.top()), x, int(rect.bottom()))
 
-        # 绘制画布边界
+            # 绘制水平网格线
+            for y in range(top, int(rect.bottom()), self.grid_size):
+                painter.drawLine(int(rect.left()), y, int(rect.right()), y)
+
+        # 3. 绘制画布边界
         painter.setPen(QPen(QColor(100, 100, 100), 2))
         painter.drawRect(0, 0, self.canvas_width, self.canvas_height)
 
@@ -371,8 +568,10 @@ class AssetLibraryPanel(QWidget):
 class PropertyPanel(QWidget):
     """属性面板"""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, canvas=None):
         super().__init__(parent)
+
+        self.canvas = canvas  # 保存canvas引用
 
         layout = QVBoxLayout(self)
 
@@ -396,6 +595,36 @@ class PropertyPanel(QWidget):
         basic_layout.addRow("画布高度:", self.canvas_height_input)
 
         layout.addWidget(basic_group)
+
+        # 道路层分组
+        road_group = QGroupBox("道路层")
+        road_layout = QVBoxLayout(road_group)
+
+        # 道路图片预览
+        self.road_preview = QLabel("未选择道路图片")
+        self.road_preview.setAlignment(Qt.AlignCenter)
+        self.road_preview.setStyleSheet("border: 1px solid #ccc; padding: 10px; background: white;")
+        self.road_preview.setMinimumHeight(80)
+        road_layout.addWidget(self.road_preview)
+
+        # 道路文件名显示
+        self.road_filename_label = QLabel("文件: 无")
+        self.road_filename_label.setStyleSheet("font-size: 11px; color: #666;")
+        road_layout.addWidget(self.road_filename_label)
+
+        # 道路操作按钮
+        road_button_layout = QHBoxLayout()
+        self.select_road_button = QPushButton("选择道路图片")
+        self.select_road_button.clicked.connect(self._on_select_road)
+        road_button_layout.addWidget(self.select_road_button)
+
+        self.clear_road_button = QPushButton("清除道路")
+        self.clear_road_button.clicked.connect(self._on_clear_road)
+        self.clear_road_button.setEnabled(False)
+        road_button_layout.addWidget(self.clear_road_button)
+
+        road_layout.addLayout(road_button_layout)
+        layout.addWidget(road_group)
 
         # 选中元素分组
         self.element_group = QGroupBox("选中元素")
@@ -430,6 +659,38 @@ class PropertyPanel(QWidget):
         self.element_z_input.valueChanged.connect(self._on_z_changed)
         element_layout.addRow("层级:", self.element_z_input)
 
+        # 事件配置部分
+        events_label = QLabel("事件配置")
+        events_label.setStyleSheet("font-weight: bold; margin-top: 10px;")
+        element_layout.addRow(events_label)
+
+        # 事件列表
+        self.events_list = QListWidget()
+        self.events_list.setMaximumHeight(120)
+        element_layout.addRow(self.events_list)
+
+        # 事件操作按钮
+        events_button_layout = QHBoxLayout()
+
+        self.add_event_button = QPushButton("添加事件")
+        self.add_event_button.clicked.connect(self._on_add_event)
+        events_button_layout.addWidget(self.add_event_button)
+
+        self.edit_event_button = QPushButton("编辑")
+        self.edit_event_button.clicked.connect(self._on_edit_event)
+        self.edit_event_button.setEnabled(False)
+        events_button_layout.addWidget(self.edit_event_button)
+
+        self.delete_event_button = QPushButton("删除")
+        self.delete_event_button.clicked.connect(self._on_delete_event)
+        self.delete_event_button.setEnabled(False)
+        events_button_layout.addWidget(self.delete_event_button)
+
+        element_layout.addRow(events_button_layout)
+
+        # 事件列表选中变化时启用/禁用编辑和删除按钮
+        self.events_list.itemSelectionChanged.connect(self._on_event_selection_changed)
+
         layout.addWidget(self.element_group)
 
         # 添加弹性空间
@@ -453,6 +714,9 @@ class PropertyPanel(QWidget):
         self.element_y_input.setValue(item.y_pixel)
         self.element_scale_input.setValue(item.scale_factor * 100)
         self.element_z_input.setValue(int(item.zValue()))
+
+        # 加载事件列表
+        self._load_events_list()
 
         self._updating = False
 
@@ -487,6 +751,150 @@ class PropertyPanel(QWidget):
             return
 
         self.current_item.setZValue(value)
+
+    # ========== 道路层管理方法 ==========
+
+    def _on_select_road(self):
+        """选择道路图片"""
+        from PySide6.QtWidgets import QFileDialog
+
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "选择道路图片",
+            "",
+            "图片文件 (*.png *.jpg *.jpeg)"
+        )
+
+        if file_path and self.canvas:
+            # 设置道路图片到画布
+            self.canvas.set_road_image(file_path)
+
+            # 更新预览
+            pixmap = QPixmap(file_path)
+            if not pixmap.isNull():
+                # 缩放预览图片
+                scaled_pixmap = pixmap.scaledToHeight(60, Qt.SmoothTransformation)
+                self.road_preview.setPixmap(scaled_pixmap)
+
+                # 更新文件名显示
+                import os
+                filename = os.path.basename(file_path)
+                self.road_filename_label.setText(f"文件: {filename}")
+
+                # 启用清除按钮
+                self.clear_road_button.setEnabled(True)
+
+    def _on_clear_road(self):
+        """清除道路"""
+        if self.canvas:
+            self.canvas.road_image_path = None
+            self.canvas.road_pixmap = None
+            self.canvas.viewport().update()
+
+            # 重置预览
+            self.road_preview.clear()
+            self.road_preview.setText("未选择道路图片")
+            self.road_filename_label.setText("文件: 无")
+            self.clear_road_button.setEnabled(False)
+
+    # ========== 事件管理方法 ==========
+
+    def _load_events_list(self):
+        """加载事件列表"""
+        self.events_list.clear()
+
+        if not self.current_item:
+            return
+
+        for event in self.current_item.events:
+            # 格式化显示事件
+            trigger_text = {
+                "on_hover": "悬停",
+                "on_click": "点击",
+                "on_time_reach": "时间到达"
+            }.get(event.trigger, event.trigger)
+
+            action_text = {
+                "show_tooltip": "显示提示",
+                "show_dialog": "显示对话框",
+                "open_url": "打开链接"
+            }.get(event.action.type, event.action.type)
+
+            item_text = f"{trigger_text} → {action_text}"
+            self.events_list.addItem(item_text)
+
+    def _on_event_selection_changed(self):
+        """事件列表选中变化"""
+        has_selection = bool(self.events_list.selectedItems())
+        self.edit_event_button.setEnabled(has_selection)
+        self.delete_event_button.setEnabled(has_selection)
+
+    def _on_add_event(self):
+        """添加事件"""
+        if not self.current_item:
+            return
+
+        # 打开事件配置对话框
+        dialog = EventConfigDialog(self)
+
+        if dialog.exec() == QDialog.Accepted:
+            # 获取配置的事件
+            event_config = dialog.get_event_config()
+
+            # 添加到当前元素
+            self.current_item.events.append(event_config)
+
+            # 刷新事件列表
+            self._load_events_list()
+
+    def _on_edit_event(self):
+        """编辑事件"""
+        if not self.current_item:
+            return
+
+        # 获取选中的事件索引
+        selected_items = self.events_list.selectedItems()
+        if not selected_items:
+            return
+
+        selected_index = self.events_list.row(selected_items[0])
+
+        if 0 <= selected_index < len(self.current_item.events):
+            # 获取要编辑的事件
+            event_config = self.current_item.events[selected_index]
+
+            # 打开事件配置对话框（传入已有配置）
+            dialog = EventConfigDialog(self, event_config)
+
+            if dialog.exec() == QDialog.Accepted:
+                # 更新事件配置
+                new_config = dialog.get_event_config()
+                self.current_item.events[selected_index] = new_config
+
+                # 刷新事件列表
+                self._load_events_list()
+
+                # 保持选中状态
+                self.events_list.setCurrentRow(selected_index)
+
+    def _on_delete_event(self):
+        """删除事件"""
+        if not self.current_item:
+            return
+
+        # 获取选中的事件索引
+        selected_items = self.events_list.selectedItems()
+        if not selected_items:
+            return
+
+        selected_index = self.events_list.row(selected_items[0])
+
+        if 0 <= selected_index < len(self.current_item.events):
+            # 删除事件
+            del self.current_item.events[selected_index]
+
+            # 刷新事件列表
+            self._load_events_list()
 
 
 class SceneEditorWindow(QMainWindow):
@@ -523,8 +931,8 @@ class SceneEditorWindow(QMainWindow):
         self.canvas.item_selected.connect(self.on_item_selected)
         splitter.addWidget(self.canvas)
 
-        # 右侧：属性面板
-        self.property_panel = PropertyPanel()
+        # 右侧：属性面板（传递canvas引用）
+        self.property_panel = PropertyPanel(canvas=self.canvas)
         splitter.addWidget(self.property_panel)
 
         # 设置分割比例（1:3:1）
