@@ -22,16 +22,86 @@ from PySide6.QtWidgets import (
     QSplitter, QListWidget, QListWidgetItem, QPushButton, QLabel,
     QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsItem,
     QGroupBox, QFormLayout, QLineEdit, QSpinBox, QDoubleSpinBox,
-    QFileDialog, QMessageBox, QComboBox
+    QFileDialog, QMessageBox, QComboBox, QCheckBox, QToolBar
 )
 from PySide6.QtCore import Qt, QPointF, QRectF, QSize, Signal
-from PySide6.QtGui import QPixmap, QIcon, QPainter, QColor, QPen, QBrush
+from PySide6.QtGui import (
+    QPixmap, QIcon, QPainter, QColor, QPen, QBrush, QAction, QKeySequence,
+    QUndoStack, QUndoCommand
+)
 
+
+# ============================================================================
+# 撤销/重做命令类
+# ============================================================================
+
+class AddItemCommand(QUndoCommand):
+    """添加元素命令"""
+
+    def __init__(self, canvas, item: 'SceneItemGraphics'):
+        super().__init__("添加元素")
+        self.canvas = canvas
+        self.item = item
+
+    def redo(self):
+        """重做：添加元素"""
+        if self.item not in self.canvas.scene_items:
+            self.canvas.scene.addItem(self.item)
+            self.canvas.scene_items.append(self.item)
+
+    def undo(self):
+        """撤销：移除元素"""
+        self.canvas.scene.removeItem(self.item)
+        if self.item in self.canvas.scene_items:
+            self.canvas.scene_items.remove(self.item)
+
+
+class MoveItemCommand(QUndoCommand):
+    """移动元素命令"""
+
+    def __init__(self, item: 'SceneItemGraphics', old_pos: QPointF, new_pos: QPointF):
+        super().__init__("移动元素")
+        self.item = item
+        self.old_pos = old_pos
+        self.new_pos = new_pos
+
+    def redo(self):
+        """重做：移动到新位置"""
+        self.item.setPos(self.new_pos)
+
+    def undo(self):
+        """撤销：恢复到旧位置"""
+        self.item.setPos(self.old_pos)
+
+
+class ScaleItemCommand(QUndoCommand):
+    """缩放元素命令"""
+
+    def __init__(self, item: 'SceneItemGraphics', old_scale: float, new_scale: float):
+        super().__init__("缩放元素")
+        self.item = item
+        self.old_scale = old_scale
+        self.new_scale = new_scale
+
+    def redo(self):
+        """重做：缩放到新比例"""
+        self.item.setScale(self.new_scale)
+        self.item.scale_factor = self.new_scale
+
+    def undo(self):
+        """撤销：恢复到旧比例"""
+        self.item.setScale(self.old_scale)
+        self.item.scale_factor = self.old_scale
+
+
+# ============================================================================
+# 场景元素图形类
+# ============================================================================
 
 class SceneItemGraphics(QGraphicsPixmapItem):
     """场景元素图形对象"""
 
-    def __init__(self, image_path: str, item_id: str):
+    def __init__(self, image_path: str, item_id: str, canvas=None):
         super().__init__()
 
         self.item_id = item_id
@@ -39,6 +109,7 @@ class SceneItemGraphics(QGraphicsPixmapItem):
         self.x_percent = 0.0  # 相对X位置（百分比）
         self.y_pixel = 0  # 绝对Y位置（像素）
         self.scale_factor = 1.0  # 缩放比例
+        self.canvas = canvas  # 引用画布对象（用于网格吸附）
 
         # 加载图片
         pixmap = QPixmap(image_path)
@@ -49,6 +120,32 @@ class SceneItemGraphics(QGraphicsPixmapItem):
         self.setFlag(QGraphicsItem.ItemIsMovable, True)
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
+
+    def itemChange(self, change, value):
+        """元素变化时的回调"""
+        if change == QGraphicsItem.ItemPositionChange and self.canvas:
+            # 网格吸附
+            if self.canvas.snap_to_grid:
+                new_pos = value
+                grid = self.canvas.grid_size
+
+                # 吸附到网格
+                snapped_x = round(new_pos.x() / grid) * grid
+                snapped_y = round(new_pos.y() / grid) * grid
+
+                return QPointF(snapped_x, snapped_y)
+
+        return super().itemChange(change, value)
+
+    def paint(self, painter, option, widget):
+        """自定义绘制（添加选中边框）"""
+        super().paint(painter, option, widget)
+
+        # 如果被选中，绘制边框
+        if self.isSelected():
+            painter.setPen(QPen(QColor(0, 120, 215), 2, Qt.DashLine))
+            painter.setBrush(Qt.NoBrush)
+            painter.drawRect(self.boundingRect())
 
     def to_config_dict(self) -> dict:
         """导出为配置字典"""
@@ -70,7 +167,7 @@ class SceneCanvas(QGraphicsView):
 
     item_selected = Signal(SceneItemGraphics)  # 元素选中信号
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, undo_stack=None):
         super().__init__(parent)
 
         # 创建场景
@@ -82,27 +179,74 @@ class SceneCanvas(QGraphicsView):
         self.canvas_height = 150
         self.scene.setSceneRect(0, 0, self.canvas_width, self.canvas_height)
 
+        # 网格设置
+        self.grid_size = 10  # 网格大小（像素）
+        self.show_grid = True  # 是否显示网格
+        self.snap_to_grid = True  # 是否吸附到网格
+
         # 绘制背景网格
-        self.setBackgroundBrush(QBrush(QColor(240, 240, 240)))
+        self.setBackgroundBrush(QBrush(QColor(250, 250, 250)))
 
         # 场景元素列表
         self.scene_items: List[SceneItemGraphics] = []
 
+        # 对齐辅助线
+        self.alignment_lines = []  # 存储辅助线
+
+        # 撤销栈
+        self.undo_stack = undo_stack
+
         # 启用拖拽接受
         self.setAcceptDrops(True)
 
-    def add_scene_item(self, image_path: str, x: float, y: float) -> SceneItemGraphics:
+    def drawBackground(self, painter: QPainter, rect: QRectF):
+        """绘制背景网格"""
+        super().drawBackground(painter, rect)
+
+        if not self.show_grid:
+            return
+
+        # 设置网格线样式
+        painter.setPen(QPen(QColor(230, 230, 230), 1, Qt.DotLine))
+
+        # 绘制垂直网格线
+        left = int(rect.left()) - (int(rect.left()) % self.grid_size)
+        top = int(rect.top()) - (int(rect.top()) % self.grid_size)
+
+        for x in range(left, int(rect.right()), self.grid_size):
+            painter.drawLine(x, int(rect.top()), x, int(rect.bottom()))
+
+        # 绘制水平网格线
+        for y in range(top, int(rect.bottom()), self.grid_size):
+            painter.drawLine(int(rect.left()), y, int(rect.right()), y)
+
+        # 绘制画布边界
+        painter.setPen(QPen(QColor(100, 100, 100), 2))
+        painter.drawRect(0, 0, self.canvas_width, self.canvas_height)
+
+    def add_scene_item(self, image_path: str, x: float, y: float, use_undo=True) -> SceneItemGraphics:
         """添加场景元素到画布"""
         # 生成唯一ID
         item_id = f"item_{len(self.scene_items) + 1}"
 
-        # 创建图形对象
-        item = SceneItemGraphics(image_path, item_id)
+        # 创建图形对象，传递canvas引用
+        item = SceneItemGraphics(image_path, item_id, canvas=self)
+
+        # 如果启用了网格吸附，调整位置
+        if self.snap_to_grid:
+            x = round(x / self.grid_size) * self.grid_size
+            y = round(y / self.grid_size) * self.grid_size
+
         item.setPos(x, y)
 
-        # 添加到场景
-        self.scene.addItem(item)
-        self.scene_items.append(item)
+        # 使用撤销命令添加元素
+        if use_undo and self.undo_stack:
+            command = AddItemCommand(self, item)
+            self.undo_stack.push(command)
+        else:
+            # 直接添加（不记录到撤销栈）
+            self.scene.addItem(item)
+            self.scene_items.append(item)
 
         return item
 
@@ -354,6 +498,12 @@ class SceneEditorWindow(QMainWindow):
         self.setWindowTitle("GaiYa 场景编辑器 v1.0.0")
         self.setGeometry(100, 100, 1400, 800)
 
+        # 创建撤销栈
+        self.undo_stack = QUndoStack(self)
+
+        # 创建工具栏
+        self.create_toolbar()
+
         # 创建中心部件
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -368,8 +518,8 @@ class SceneEditorWindow(QMainWindow):
         self.asset_panel = AssetLibraryPanel()
         splitter.addWidget(self.asset_panel)
 
-        # 中间：画布
-        self.canvas = SceneCanvas()
+        # 中间：画布（传递撤销栈）
+        self.canvas = SceneCanvas(undo_stack=self.undo_stack)
         self.canvas.item_selected.connect(self.on_item_selected)
         splitter.addWidget(self.canvas)
 
@@ -382,16 +532,67 @@ class SceneEditorWindow(QMainWindow):
 
         main_layout.addWidget(splitter)
 
-        # 底部工具栏
-        toolbar_layout = QHBoxLayout()
+        # 底部状态栏
+        status_layout = QHBoxLayout()
+
+        # 网格控制
+        self.grid_checkbox = QCheckBox("显示网格")
+        self.grid_checkbox.setChecked(True)
+        self.grid_checkbox.toggled.connect(self.toggle_grid)
+        status_layout.addWidget(self.grid_checkbox)
+
+        self.snap_checkbox = QCheckBox("吸附网格")
+        self.snap_checkbox.setChecked(True)
+        self.snap_checkbox.toggled.connect(self.toggle_snap)
+        status_layout.addWidget(self.snap_checkbox)
+
+        status_layout.addStretch()
 
         export_btn = QPushButton("导出场景配置")
         export_btn.clicked.connect(self.export_config)
-        toolbar_layout.addWidget(export_btn)
+        status_layout.addWidget(export_btn)
 
-        toolbar_layout.addStretch()
+        main_layout.addLayout(status_layout)
 
-        main_layout.addLayout(toolbar_layout)
+    def create_toolbar(self):
+        """创建工具栏"""
+        toolbar = QToolBar("主工具栏")
+        toolbar.setMovable(False)
+        self.addToolBar(toolbar)
+
+        # 撤销动作
+        undo_action = self.undo_stack.createUndoAction(self, "撤销")
+        undo_action.setShortcut(QKeySequence.Undo)
+        undo_action.setIcon(QIcon())  # 可以添加图标
+        toolbar.addAction(undo_action)
+
+        # 重做动作
+        redo_action = self.undo_stack.createRedoAction(self, "重做")
+        redo_action.setShortcut(QKeySequence.Redo)
+        redo_action.setIcon(QIcon())  # 可以添加图标
+        toolbar.addAction(redo_action)
+
+        toolbar.addSeparator()
+
+        # 删除元素动作
+        delete_action = QAction("删除", self)
+        delete_action.setShortcut(QKeySequence.Delete)
+        delete_action.triggered.connect(self.delete_selected)
+        toolbar.addAction(delete_action)
+
+    def toggle_grid(self, checked):
+        """切换网格显示"""
+        self.canvas.show_grid = checked
+        self.canvas.viewport().update()
+
+    def toggle_snap(self, checked):
+        """切换网格吸附"""
+        self.canvas.snap_to_grid = checked
+
+    def delete_selected(self):
+        """删除选中的元素"""
+        # TODO: 实现删除功能
+        pass
 
     def on_item_selected(self, item: SceneItemGraphics):
         """处理元素选中事件"""
