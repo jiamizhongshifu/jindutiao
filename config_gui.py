@@ -2677,18 +2677,10 @@ class ConfigManager(QMainWindow):
                     if index >= 0:
                         self.scene_combo.setCurrentIndex(index)
 
-                logging.info(f"场景列表已刷新,共 {len(scene_list)} 个场景")
-
-                # 显示成功提示
-                from PySide6.QtWidgets import QMessageBox
-                QMessageBox.information(
-                    self,
-                    "刷新成功",
-                    f"场景列表已刷新！\n\n共找到 {len(scene_list)} 个场景。"
-                )
-
-                # 更新场景描述
+                # 更新场景描述（必须在日志之前，确保combo box状态稳定）
                 self.update_scene_description()
+
+                logging.info(f"场景列表已刷新,共 {len(scene_list)} 个场景")
         except Exception as e:
             logging.error(f"刷新场景列表失败: {e}", exc_info=True)
             from PySide6.QtWidgets import QMessageBox

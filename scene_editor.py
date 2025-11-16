@@ -2134,24 +2134,26 @@ class SceneEditorWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
+        # 初始化日志记录器
+        self.logger = logging.getLogger(__name__)
+
         self.setWindowTitle("GaiYa 场景编辑器 v2.0.0")
         self.setGeometry(100, 100, 1400, 800)
 
-        # 确定场景保存目录（始终使用项目根目录）
+        # 确定场景保存目录（与 gaiya/scene/loader.py 保持一致）
         if getattr(sys, 'frozen', False):
-            # PyInstaller 打包环境：exe 通常在 dist/ 目录，需要向上回退到项目根目录
-            exe_dir = Path(sys.executable).parent
-            # 如果 exe 在 dist/ 子目录中，则向上回退一级到项目根目录
-            if exe_dir.name == "dist":
-                base_dir = exe_dir.parent
-            else:
-                base_dir = exe_dir
+            # PyInstaller 打包环境：exe 所在目录下的 scenes/（与exe同级）
+            # 这样可以确保场景编辑器导出的场景，主窗口能够扫描到
+            base_dir = Path(sys.executable).parent
+            self.logger.info(f"[场景编辑器] 打包环境, exe目录: {base_dir}")
         else:
-            # 开发环境：项目根目录
+            # 开发环境：项目根目录（__file__ 是 scene_editor.py）
             base_dir = Path(__file__).parent
+            self.logger.info(f"[场景编辑器] 开发环境, 项目根目录: {base_dir}")
 
         self.scenes_dir = base_dir / "scenes"
         self.scenes_dir.mkdir(parents=True, exist_ok=True)
+        self.logger.info(f"[场景编辑器] 场景目录: {self.scenes_dir}")
 
         # 创建撤销栈
         self.undo_stack = QUndoStack(self)
@@ -2549,6 +2551,9 @@ class SceneEditorWindow(QMainWindow):
         logger.debug(f"self.scenes_dir = {self.scenes_dir}")
         logger.debug(f"scene_dir.exists() = {scene_dir.exists()}")
 
+        # 初始化道路层备份路径（确保在所有代码路径中都能访问）
+        road_backup_path = None
+
         if scene_dir.exists():
             logger.info(f"场景目录已存在，询问用户是否覆盖")
             reply = QMessageBox.question(
@@ -2562,6 +2567,17 @@ class SceneEditorWindow(QMainWindow):
                 logger.info("用户选择不覆盖，取消导出")
                 return
 
+            # 在删除旧场景前，先备份道路层文件（如果存在）
+            if self.canvas.road_image_path:
+                old_road_path = Path(self.canvas.road_image_path)
+                if old_road_path.exists():
+                    import tempfile
+                    # 创建临时文件备份道路层
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=old_road_path.suffix) as tmp:
+                        shutil.copy2(old_road_path, tmp.name)
+                        road_backup_path = tmp.name
+                        logger.info(f"道路层已备份到: {road_backup_path}")
+
             # 删除旧场景
             logger.info("删除旧场景目录...")
             try:
@@ -2569,6 +2585,12 @@ class SceneEditorWindow(QMainWindow):
                 logger.info("旧场景删除成功")
             except Exception as e:
                 logger.error(f"删除旧场景失败: {e}", exc_info=True)
+                # 清理临时备份文件
+                if road_backup_path and Path(road_backup_path).exists():
+                    try:
+                        os.unlink(road_backup_path)
+                    except:
+                        pass
                 QMessageBox.critical(self, "删除失败", f"无法删除旧场景:\n{e}")
                 return
 
@@ -2616,16 +2638,47 @@ class SceneEditorWindow(QMainWindow):
                 logger.debug(f"道路层位置: x={self.canvas.road_offset_x}, y={self.canvas.road_offset_y}")
 
             # 复制道路层图片到 assets/ 目录
+            road_dest_name = "road.png"  # 默认文件名
             try:
-                road_src = Path(self.canvas.road_image_path)
-                logger.debug(f"道路层源文件: {road_src}")
+                # 优先使用备份文件，如果没有备份则使用当前路径
+                if road_backup_path and Path(road_backup_path).exists():
+                    road_src = Path(road_backup_path)
+                    logger.info(f"使用备份的道路层文件: {road_src}")
+                else:
+                    road_src = Path(self.canvas.road_image_path)
+                    logger.debug(f"道路层源文件: {road_src}")
 
-                road_dest_name = self._copy_file_with_rename(road_src, assets_dir, "road.png")
-                logger.info(f"道路层复制成功: {road_dest_name}")
-                copied_files.append(f"道路层: {road_dest_name}")
+                # 检查源文件是否存在
+                if road_src.exists():
+                    # 源文件存在，正常复制
+                    road_dest_name = self._copy_file_with_rename(road_src, assets_dir, "road.png")
+                    logger.info(f"道路层复制成功: {road_dest_name}")
+                    copied_files.append(f"道路层: {road_dest_name}")
+
+                    # 清理临时备份文件
+                    if road_backup_path and Path(road_backup_path).exists():
+                        try:
+                            os.unlink(road_backup_path)
+                            logger.debug(f"临时备份文件已清理: {road_backup_path}")
+                        except:
+                            pass
+                else:
+                    # 源文件不存在
+                    logger.warning(f"道路层源文件不存在: {road_src}")
+                    QMessageBox.warning(
+                        self,
+                        "警告",
+                        f"道路层源文件不存在:\n{road_src}\n\n将跳过道路层导出。"
+                    )
             except Exception as e:
                 logger.error(f"复制道路层失败: {e}", exc_info=True)
                 QMessageBox.warning(self, "警告", f"道路层复制失败，将继续导出其他内容:\n{e}")
+                # 清理临时备份文件
+                if road_backup_path and Path(road_backup_path).exists():
+                    try:
+                        os.unlink(road_backup_path)
+                    except:
+                        pass
 
             config["layers"]["road"] = {
                 "type": "tiled",
