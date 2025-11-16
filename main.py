@@ -1875,8 +1875,8 @@ class TimeProgressBar(QWidget):
                 # 场景编辑器中1200px可视范围对应屏幕中间的1200px区域
                 # 左右两侧超出部分由道路层平铺填充
 
-                # 画布底部对齐到窗口底部
-                canvas_y = height - canvas_height  # 0 (窗口高度150px = 画布高度150px)
+                # 画布底部对齐到窗口底部，并向下偏移19px
+                canvas_y = height - canvas_height + 19
 
                 # 画布水平居中显示
                 canvas_x = (width - canvas_width) / 2  # 居中: (2560 - 1200) / 2 = 680

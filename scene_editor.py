@@ -2551,8 +2551,9 @@ class SceneEditorWindow(QMainWindow):
         logger.debug(f"self.scenes_dir = {self.scenes_dir}")
         logger.debug(f"scene_dir.exists() = {scene_dir.exists()}")
 
-        # 初始化道路层备份路径（确保在所有代码路径中都能访问）
+        # 初始化备份路径（确保在所有代码路径中都能访问）
         road_backup_path = None
+        scene_items_backup = {}  # 场景元素备份: {原始路径: 临时备份路径}
 
         if scene_dir.exists():
             logger.info(f"场景目录已存在，询问用户是否覆盖")
@@ -2578,6 +2579,21 @@ class SceneEditorWindow(QMainWindow):
                         road_backup_path = tmp.name
                         logger.info(f"道路层已备份到: {road_backup_path}")
 
+            # 在删除旧场景前，先备份所有场景元素的图片文件
+            import tempfile
+            for item in self.canvas.scene_items:
+                if item.image_path:
+                    old_item_path = Path(item.image_path)
+                    if old_item_path.exists():
+                        # 为每个元素创建临时备份
+                        with tempfile.NamedTemporaryFile(delete=False, suffix=old_item_path.suffix) as tmp:
+                            shutil.copy2(old_item_path, tmp.name)
+                            scene_items_backup[item.image_path] = tmp.name
+                            logger.debug(f"场景元素已备份: {old_item_path.name} -> {tmp.name}")
+
+            if scene_items_backup:
+                logger.info(f"已备份 {len(scene_items_backup)} 个场景元素")
+
             # 删除旧场景
             logger.info("删除旧场景目录...")
             try:
@@ -2586,11 +2602,25 @@ class SceneEditorWindow(QMainWindow):
             except Exception as e:
                 logger.error(f"删除旧场景失败: {e}", exc_info=True)
                 # 清理临时备份文件
+                cleanup_count = 0
                 if road_backup_path and Path(road_backup_path).exists():
                     try:
                         os.unlink(road_backup_path)
-                    except:
-                        pass
+                        cleanup_count += 1
+                    except Exception as cleanup_error:
+                        logger.warning(f"清理道路层临时文件失败: {cleanup_error}")
+
+                for original_path, backup_path in scene_items_backup.items():
+                    if Path(backup_path).exists():
+                        try:
+                            os.unlink(backup_path)
+                            cleanup_count += 1
+                        except Exception as cleanup_error:
+                            logger.warning(f"清理场景元素临时文件失败: {cleanup_error}")
+
+                if cleanup_count > 0:
+                    logger.info(f"已清理 {cleanup_count} 个临时备份文件")
+
                 QMessageBox.critical(self, "删除失败", f"无法删除旧场景:\n{e}")
                 return
 
@@ -2607,6 +2637,27 @@ class SceneEditorWindow(QMainWindow):
             logger.info(f"目录创建成功: {scene_dir}")
         except Exception as e:
             logger.error(f"创建目录失败: {e}", exc_info=True)
+
+            # 清理临时备份文件
+            cleanup_count = 0
+            if road_backup_path and Path(road_backup_path).exists():
+                try:
+                    os.unlink(road_backup_path)
+                    cleanup_count += 1
+                except Exception as cleanup_error:
+                    logger.warning(f"清理道路层临时文件失败: {cleanup_error}")
+
+            for original_path, backup_path in scene_items_backup.items():
+                if Path(backup_path).exists():
+                    try:
+                        os.unlink(backup_path)
+                        cleanup_count += 1
+                    except Exception as cleanup_error:
+                        logger.warning(f"清理场景元素临时文件失败: {cleanup_error}")
+
+            if cleanup_count > 0:
+                logger.info(f"已清理 {cleanup_count} 个临时备份文件")
+
             QMessageBox.critical(self, "创建目录失败", f"无法创建场景目录:\n{e}")
             return
 
@@ -2707,9 +2758,15 @@ class SceneEditorWindow(QMainWindow):
             logger.info(f"处理第 {i+1}/{len(self.canvas.scene_items)} 个元素: {item.image_path}")
             try:
                 # 复制场景元素图片到 assets/
-                item_src = Path(item.image_path)
+                # 优先使用备份文件，如果没有备份则使用当前路径
+                if item.image_path in scene_items_backup:
+                    item_src = Path(scene_items_backup[item.image_path])
+                    logger.info(f"  使用备份的场景元素文件: {item_src}")
+                else:
+                    item_src = Path(item.image_path)
+                    logger.debug(f"  场景元素源文件: {item_src}")
+
                 original_name = os.path.basename(item.image_path)
-                logger.debug(f"  源文件: {item_src}")
                 logger.debug(f"  原始文件名: {original_name}")
 
                 item_dest_name = self._copy_file_with_rename(item_src, assets_dir, original_name)
@@ -2742,6 +2799,27 @@ class SceneEditorWindow(QMainWindow):
             logger.debug(f"配置文件大小: {config_path.stat().st_size} 字节")
         except Exception as e:
             logger.error(f"配置文件写入失败: {e}", exc_info=True)
+
+            # 清理临时备份文件
+            cleanup_count = 0
+            if road_backup_path and Path(road_backup_path).exists():
+                try:
+                    os.unlink(road_backup_path)
+                    cleanup_count += 1
+                except Exception as cleanup_error:
+                    logger.warning(f"清理道路层临时文件失败: {cleanup_error}")
+
+            for original_path, backup_path in scene_items_backup.items():
+                if Path(backup_path).exists():
+                    try:
+                        os.unlink(backup_path)
+                        cleanup_count += 1
+                    except Exception as cleanup_error:
+                        logger.warning(f"清理场景元素临时文件失败: {cleanup_error}")
+
+            if cleanup_count > 0:
+                logger.info(f"已清理 {cleanup_count} 个临时备份文件")
+
             QMessageBox.critical(self, "保存失败", f"无法保存配置文件:\n{e}")
             return
 
@@ -2779,6 +2857,28 @@ class SceneEditorWindow(QMainWindow):
                     subprocess.run(["xdg-open", str(scene_dir)])
             except Exception as e:
                 QMessageBox.warning(self, "打开失败", f"无法打开文件夹:\n{e}")
+
+        # 清理临时备份文件
+        cleanup_count = 0
+        if road_backup_path and Path(road_backup_path).exists():
+            try:
+                os.unlink(road_backup_path)
+                cleanup_count += 1
+                logger.debug(f"已删除道路层临时备份: {road_backup_path}")
+            except Exception as e:
+                logger.warning(f"清理道路层临时文件失败: {e}")
+
+        for original_path, backup_path in scene_items_backup.items():
+            if Path(backup_path).exists():
+                try:
+                    os.unlink(backup_path)
+                    cleanup_count += 1
+                    logger.debug(f"已删除场景元素临时备份: {backup_path}")
+                except Exception as e:
+                    logger.warning(f"清理场景元素临时文件失败: {e}")
+
+        if cleanup_count > 0:
+            logger.info(f"已清理 {cleanup_count} 个临时备份文件")
 
     def _copy_file_with_rename(self, src_path: Path, dest_dir: Path, preferred_name: str) -> str:
         """
