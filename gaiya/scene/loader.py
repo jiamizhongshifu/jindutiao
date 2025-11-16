@@ -91,14 +91,14 @@ class SceneLoader:
 
         处理两种环境：
         1. 开发环境：项目根目录下的 scenes/
-        2. 打包环境：exe 同级的 scenes/
+        2. 打包环境：exe所在目录下的 scenes/ (与exe同级)
         """
         if getattr(sys, 'frozen', False):
             # PyInstaller 打包环境
-            # sys._MEIPASS 是临时解压目录
-            # sys.executable 是 exe 文件路径
+            # sys.executable 是 exe 文件的完整路径
+            # 场景目录应该在 exe 所在目录下（而不是临时解压目录）
             base_dir = Path(sys.executable).parent
-            self.logger.info(f"Running in packaged mode, base_dir: {base_dir}")
+            self.logger.info(f"Running in packaged mode, exe_dir: {base_dir}")
         else:
             # 开发环境
             # __file__ 是当前文件路径（gaiya/scene/loader.py）
@@ -111,6 +111,7 @@ class SceneLoader:
         # 确保目录存在
         if not scenes_dir.exists():
             self.logger.warning(f"Scenes directory not found: {scenes_dir}")
+            # 在开发环境中创建目录，在打包环境中也创建（用户可能删除了）
             scenes_dir.mkdir(parents=True, exist_ok=True)
             self.logger.info(f"Created scenes directory: {scenes_dir}")
 
@@ -230,8 +231,10 @@ class SceneLoader:
         # 解析场景元素图片路径
         for item in scene_config.scene_layer.items:
             if not os.path.isabs(item.image):
-                # 假设场景元素图片在 scene_dir/assets/ 目录下
-                abs_path = scene_dir / "assets" / item.image
+                # 图片路径可能已经包含 assets/ 前缀（新版场景编辑器导出格式）
+                # 也可能不包含（旧版格式）
+                # 直接使用相对于 scene_dir 的路径
+                abs_path = scene_dir / item.image
                 item.image = str(abs_path.resolve())
                 self.logger.debug(f"Resolved item image path: {item.image}")
 

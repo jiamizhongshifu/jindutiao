@@ -1,6 +1,8 @@
 {
   "scene_id": "default_scene",
-  "name": "默认场景",
+  "name": "默认场景 - 奇幻森林",
+  "description": "一个充满奇幻元素的森林场景，包含树木、宝箱和各种植物",
+  "author": "GaiYa Team",
   "version": "1.0.0",
   "canvas": {
     "width": 1000,
@@ -9,7 +11,7 @@
   "layers": {
     "road": {
       "type": "tiled",
-      "image": "road.png",
+      "image": "assets/daolu2.png",
       "z_index": 50,
       "offset_x": 0,
       "offset_y": 0,
@@ -19,12 +21,12 @@
       "items": [
         {
           "id": "tree_1",
-          "image": "tree.png",
+          "image": "assets/tree1.png",
           "position": {
-            "x_percent": 20.0,
-            "y_pixel": 50
+            "x_percent": 15.0,
+            "y_pixel": 30
           },
-          "scale": 1.0,
+          "scale": 0.8,
           "z_index": 51,
           "events": [
             {
@@ -32,20 +34,20 @@
               "action": {
                 "type": "show_tooltip",
                 "params": {
-                  "text": "这是一棵树"
+                  "text": "🌲 一棵茂盛的树木"
                 }
               }
             }
           ]
         },
         {
-          "id": "house_1",
-          "image": "house.png",
+          "id": "treasure_chest",
+          "image": "assets/baoxiang.png",
           "position": {
             "x_percent": 50.0,
-            "y_pixel": 40
+            "y_pixel": 35
           },
-          "scale": 1.2,
+          "scale": 1.0,
           "z_index": 52,
           "events": [
             {
@@ -53,7 +55,7 @@
               "action": {
                 "type": "show_dialog",
                 "params": {
-                  "text": "欢迎来到房子！"
+                  "text": "🎁 恭喜！你发现了一个宝箱！\n\n任务完成奖励已到账 ✨"
                 }
               }
             }
@@ -61,13 +63,55 @@
         },
         {
           "id": "tree_2",
-          "image": "tree.png",
+          "image": "assets/tree2.png",
           "position": {
-            "x_percent": 80.0,
-            "y_pixel": 50
+            "x_percent": 75.0,
+            "y_pixel": 25
           },
-          "scale": 0.8,
+          "scale": 0.9,
           "z_index": 45,
+          "events": [
+            {
+              "trigger": "on_hover",
+              "action": {
+                "type": "show_tooltip",
+                "params": {
+                  "text": "🌳 另一棵树，稍微小一些"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "flower_1",
+          "image": "assets/hua1.png",
+          "position": {
+            "x_percent": 30.0,
+            "y_pixel": 60
+          },
+          "scale": 0.6,
+          "z_index": 48,
+          "events": [
+            {
+              "trigger": "on_hover",
+              "action": {
+                "type": "show_tooltip",
+                "params": {
+                  "text": "🌸 美丽的花朵"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "grass_1",
+          "image": "assets/cao.png",
+          "position": {
+            "x_percent": 60.0,
+            "y_pixel": 65
+          },
+          "scale": 0.7,
+          "z_index": 46,
           "events": []
         }
       ]

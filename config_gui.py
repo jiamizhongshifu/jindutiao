@@ -31,6 +31,9 @@ from version import __version__, VERSION_STRING, VERSION_STRING_ZH
 # 浅色主题支持（MacOS极简风格）
 from gaiya.ui.style_manager import StyleManager, apply_light_theme
 
+# 场景编辑器
+from scene_editor import SceneEditorWindow
+
 
 # 使用gaiya.core.async_worker中的异步类(统一管理)
 from gaiya.core.async_worker import AsyncAIWorker as AIWorker
@@ -170,8 +173,11 @@ class ConfigManager(QMainWindow):
         "#795548",  # 棕色 - Material Brown
     ]
 
-    def __init__(self):
+    def __init__(self, main_window=None):
         super().__init__()
+        # 保存主窗口引用（用于访问 scene_manager 等）
+        self.main_window = main_window
+
         # 获取应用程序目录(使用统一的path_utils)
         self.app_dir = path_utils.get_app_dir()
 
@@ -193,6 +199,9 @@ class ConfigManager(QMainWindow):
         # 延迟初始化模板管理器
         self.template_manager = None
         self.schedule_manager = None
+
+        # 场景编辑器窗口引用（延迟创建）
+        self.scene_editor_window = None
 
         # 先初始化UI,让窗口快速显示
         self.init_ui()
@@ -1339,6 +1348,10 @@ class ConfigManager(QMainWindow):
         tabs.addTab(self.create_config_tab(), "🎨 外观配置")
         tabs.addTab(self.create_tasks_tab(), "📋 任务管理")
 
+        # 延迟创建场景设置标签页
+        self.scene_tab_widget = None
+        tabs.addTab(QWidget(), "🎬 场景设置")  # 占位widget
+
         # 延迟创建通知设置标签页(避免初始化时阻塞)
         self.notification_tab_widget = None
         tabs.addTab(QWidget(), "🔔 通知设置")  # 占位widget
@@ -1385,8 +1398,8 @@ class ConfigManager(QMainWindow):
     def on_tab_changed(self, index):
         """标签页切换时的处理(实现懒加载)"""
         # 控制底部按钮的显示/隐藏
-        # 在"个人中心"(3)和"关于"(4)页面隐藏按钮
-        if index in [3, 4]:  # 个人中心或关于页面
+        # 在"个人中心"(4)和"关于"(5)页面隐藏按钮
+        if index in [4, 5]:  # 个人中心或关于页面
             self.save_btn.hide()
             self.cancel_btn.hide()
         else:  # 其他页面显示按钮
@@ -1394,17 +1407,44 @@ class ConfigManager(QMainWindow):
             self.cancel_btn.show()
 
         # 懒加载各标签页
-        if index == 2:  # 通知设置标签页（主题设置已移除）
+        if index == 2:  # 场景设置标签页
+            if self.scene_tab_widget is None:
+                self._load_scene_tab()
+        elif index == 3:  # 通知设置标签页
             if self.notification_tab_widget is None:
                 self._load_notification_tab()
-        elif index == 3:  # 个人中心标签页
+        elif index == 4:  # 个人中心标签页
             if self.account_tab_widget is None:
                 self._load_account_tab()
-        elif index == 4:  # 关于标签页
+        elif index == 5:  # 关于标签页
             if self.about_tab_widget is None:
                 self._load_about_tab()
 
-    
+    def _load_scene_tab(self):
+        """加载场景设置标签页"""
+        if self.scene_tab_widget is not None:
+            return  # 已经加载过了
+
+        try:
+            self.scene_tab_widget = self.create_scene_tab()
+            self.tabs.setTabEnabled(2, True)  # 确保标签页可用
+            # 替换占位widget
+            self.tabs.removeTab(2)
+            self.tabs.insertTab(2, self.scene_tab_widget, "🎬 场景设置")
+            self.tabs.setCurrentIndex(2)  # 切换到场景设置标签页
+        except Exception as e:
+            logging.error(f"加载场景设置标签页失败: {e}")
+            # 显示错误提示
+            from PySide6.QtWidgets import QLabel
+            error_widget = QWidget()
+            error_layout = QVBoxLayout(error_widget)
+            error_label = QLabel(f"加载场景设置失败: {e}")
+            error_label.setStyleSheet("color: red; padding: 20px;")
+            error_layout.addWidget(error_label)
+            self.scene_tab_widget = error_widget
+            self.tabs.removeTab(2)
+            self.tabs.insertTab(2, self.scene_tab_widget, "🎬 场景设置")
+
     def _load_notification_tab(self):
         """加载通知设置标签页"""
         if self.notification_tab_widget is not None:
@@ -1412,11 +1452,11 @@ class ConfigManager(QMainWindow):
 
         try:
             self.notification_tab_widget = self.create_notification_tab()
-            self.tabs.setTabEnabled(2, True)  # 确保标签页可用
+            self.tabs.setTabEnabled(3, True)  # 确保标签页可用
             # 替换占位widget
-            self.tabs.removeTab(2)
-            self.tabs.insertTab(2, self.notification_tab_widget, "🔔 通知设置")
-            self.tabs.setCurrentIndex(2)  # 切换到通知设置标签页
+            self.tabs.removeTab(3)
+            self.tabs.insertTab(3, self.notification_tab_widget, "🔔 通知设置")
+            self.tabs.setCurrentIndex(3)  # 切换到通知设置标签页
         except Exception as e:
             logging.error(f"加载通知设置标签页失败: {e}")
             # 显示错误提示
@@ -1427,34 +1467,34 @@ class ConfigManager(QMainWindow):
             error_label.setStyleSheet("color: red; padding: 20px;")
             error_layout.addWidget(error_label)
             self.notification_tab_widget = error_widget
-            self.tabs.removeTab(2)
-            self.tabs.insertTab(2, self.notification_tab_widget, "🔔 通知设置")
+            self.tabs.removeTab(3)
+            self.tabs.insertTab(3, self.notification_tab_widget, "🔔 通知设置")
 
 
     def _load_account_tab(self):
-        """加载个人中心标签页"""  
-        if self.account_tab_widget is not None:  
-            return  # 已经加载过了  
-  
-        try:  
-            self.account_tab_widget = self._create_account_tab()  
-            self.tabs.setTabEnabled(3, True)  # 确保标签页可用
+        """加载个人中心标签页"""
+        if self.account_tab_widget is not None:
+            return  # 已经加载过了
+
+        try:
+            self.account_tab_widget = self._create_account_tab()
+            self.tabs.setTabEnabled(4, True)  # 确保标签页可用
             # 替换占位widget
-            self.tabs.removeTab(3)
-            self.tabs.insertTab(3, self.account_tab_widget, "👤 个人中心")
-            self.tabs.setCurrentIndex(3)  # 切换到个人中心标签页  
+            self.tabs.removeTab(4)
+            self.tabs.insertTab(4, self.account_tab_widget, "👤 个人中心")
+            self.tabs.setCurrentIndex(4)  # 切换到个人中心标签页
         except Exception as e:
             import logging
             logging.error(f"加载个人中心标签页失败: {e}")
             from PySide6.QtWidgets import QLabel
             error_widget = QWidget()
             error_layout = QVBoxLayout(error_widget)
-            error_label = QLabel(f"加载个人中心标签页失败: {e}")  
-            error_label.setStyleSheet("color: red; padding: 20px;")  
+            error_label = QLabel(f"加载个人中心标签页失败: {e}")
+            error_label.setStyleSheet("color: red; padding: 20px;")
             error_layout.addWidget(error_label)
             self.account_tab_widget = error_widget
-            self.tabs.removeTab(3)
-            self.tabs.insertTab(3, self.account_tab_widget, "👤 个人中心")
+            self.tabs.removeTab(4)
+            self.tabs.insertTab(4, self.account_tab_widget, "👤 个人中心")
 
     def _load_about_tab(self):
         """加载关于标签页"""
@@ -1463,11 +1503,11 @@ class ConfigManager(QMainWindow):
 
         try:
             self.about_tab_widget = self.create_about_tab()
-            self.tabs.setTabEnabled(4, True)  # 确保标签页可用
+            self.tabs.setTabEnabled(5, True)  # 确保标签页可用
             # 替换占位widget
-            self.tabs.removeTab(4)
-            self.tabs.insertTab(4, self.about_tab_widget, "📖 关于")
-            self.tabs.setCurrentIndex(4)  # 切换到关于标签页
+            self.tabs.removeTab(5)
+            self.tabs.insertTab(5, self.about_tab_widget, "📖 关于")
+            self.tabs.setCurrentIndex(5)  # 切换到关于标签页
         except Exception as e:
             import logging
             import traceback
@@ -1480,9 +1520,9 @@ class ConfigManager(QMainWindow):
             error_label.setStyleSheet("color: red; padding: 20px;")
             error_layout.addWidget(error_label)
             self.about_tab_widget = error_widget
-            self.tabs.removeTab(4)
-            self.tabs.insertTab(4, self.about_tab_widget, "📖 关于")
-            self.tabs.setCurrentIndex(4)  # 确保切换到关于标签页显示错误信息
+            self.tabs.removeTab(5)
+            self.tabs.insertTab(5, self.about_tab_widget, "📖 关于")
+            self.tabs.setCurrentIndex(5)  # 确保切换到关于标签页显示错误信息
 
     def create_config_tab(self):
         """创建外观配置标签页"""
@@ -2355,6 +2395,308 @@ class ConfigManager(QMainWindow):
             # 更新时间轴编辑器显示（仅预览，不保存）
             QTimer.singleShot(50, lambda: self.timeline_editor.set_tasks(temp_tasks) if self.timeline_editor else None)
 
+
+    def create_scene_tab(self):
+        """创建场景设置选项卡"""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+
+        # 说明标签
+        info_label = QLabel("配置场景效果,让进度条更具个性化")
+        info_label.setStyleSheet("color: #333333; font-style: italic; padding: 5px;")
+        layout.addWidget(info_label)
+
+        # 基础设置组
+        basic_group = QGroupBox("⚙️ 基础设置")
+        basic_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
+        basic_layout = QFormLayout()
+        basic_layout.setVerticalSpacing(12)
+
+        # 启用场景系统
+        self.scene_enabled_check = QCheckBox("启用场景系统")
+        scene_config = self.config.get('scene', {})
+        self.scene_enabled_check.setChecked(scene_config.get('enabled', False))
+        self.scene_enabled_check.setMinimumHeight(36)
+        self.scene_enabled_check.setStyleSheet("font-weight: bold;")
+        basic_layout.addRow(self.scene_enabled_check)
+
+        basic_group.setLayout(basic_layout)
+        layout.addWidget(basic_group)
+
+        # 场景选择组
+        scene_select_group = QGroupBox("🎬 场景选择")
+        scene_select_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
+        scene_select_layout = QVBoxLayout()
+        scene_select_layout.setSpacing(10)
+
+        # 场景选择下拉框
+        scene_combo_layout = QHBoxLayout()
+        scene_label = QLabel("当前场景:")
+        scene_label.setStyleSheet("font-weight: bold;")
+        scene_combo_layout.addWidget(scene_label)
+
+        self.scene_combo = QComboBox()
+        self.scene_combo.setMinimumHeight(36)
+        self.scene_combo.setStyleSheet("""
+            QComboBox {
+                padding: 5px 10px;
+                border: 1px solid #cccccc;
+                border-radius: 4px;
+                background-color: white;
+            }
+            QComboBox:hover {
+                border-color: #888888;
+            }
+            QComboBox::drop-down {
+                border: none;
+            }
+        """)
+
+        # 从main_window的scene_manager加载场景列表
+        if hasattr(self, 'main_window') and hasattr(self.main_window, 'scene_manager'):
+            scene_manager = self.main_window.scene_manager
+            scene_list = scene_manager.get_scene_list()
+
+            # 添加"无场景"选项
+            self.scene_combo.addItem("无场景", None)
+
+            # 添加所有可用场景
+            for scene_name in scene_list:
+                metadata = scene_manager.get_scene_metadata(scene_name)
+                if metadata:
+                    display_name = metadata.get('name', scene_name)
+                    self.scene_combo.addItem(display_name, scene_name)
+
+            # 设置当前选中的场景
+            current_scene = scene_config.get('current_scene')
+            if current_scene:
+                index = self.scene_combo.findData(current_scene)
+                if index >= 0:
+                    self.scene_combo.setCurrentIndex(index)
+        else:
+            self.scene_combo.addItem("无可用场景", None)
+            self.scene_combo.setEnabled(False)
+
+        # 连接场景切换事件
+        self.scene_combo.currentIndexChanged.connect(self.on_scene_changed)
+
+        scene_combo_layout.addWidget(self.scene_combo)
+
+        # 添加刷新按钮
+        refresh_button = QPushButton("🔄 刷新场景")
+        refresh_button.setMinimumHeight(36)
+        refresh_button.setStyleSheet("""
+            QPushButton {
+                padding: 5px 15px;
+                border: 1px solid #cccccc;
+                border-radius: 4px;
+                background-color: white;
+                color: #333333;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #f0f0f0;
+                border-color: #888888;
+            }
+            QPushButton:pressed {
+                background-color: #e0e0e0;
+            }
+        """)
+        refresh_button.clicked.connect(self._refresh_scene_list)
+        refresh_button.setToolTip("重新扫描scenes目录，加载新导出的场景")
+        scene_combo_layout.addWidget(refresh_button)
+
+        scene_combo_layout.addStretch()
+        scene_select_layout.addLayout(scene_combo_layout)
+
+        # 场景描述
+        self.scene_description_label = QLabel("请选择一个场景")
+        self.scene_description_label.setStyleSheet("color: #666666; padding: 5px; font-style: italic;")
+        self.scene_description_label.setWordWrap(True)
+        scene_select_layout.addWidget(self.scene_description_label)
+
+        # 更新场景描述
+        self.update_scene_description()
+
+        scene_select_group.setLayout(scene_select_layout)
+        layout.addWidget(scene_select_group)
+
+        # 高级功能组
+        advanced_group = QGroupBox("🛠️ 高级功能")
+        advanced_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
+        advanced_layout = QVBoxLayout()
+        advanced_layout.setSpacing(10)
+
+        # 打开场景编辑器按钮
+        editor_btn_layout = QHBoxLayout()
+        self.open_scene_editor_btn = QPushButton("🎨 打开场景编辑器")
+        self.open_scene_editor_btn.setMinimumHeight(40)
+        self.open_scene_editor_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 8px 16px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #45a049;
+            }
+            QPushButton:pressed {
+                background-color: #3d8b40;
+            }
+        """)
+        self.open_scene_editor_btn.clicked.connect(self.open_scene_editor)
+        editor_btn_layout.addWidget(self.open_scene_editor_btn)
+        editor_btn_layout.addStretch()
+        advanced_layout.addLayout(editor_btn_layout)
+
+        # 编辑器说明
+        editor_hint = QLabel("场景编辑器可以创建和编辑自定义场景效果")
+        editor_hint.setStyleSheet("color: #888888; padding: 5px; font-size: 9pt;")
+        advanced_layout.addWidget(editor_hint)
+
+        advanced_group.setLayout(advanced_layout)
+        layout.addWidget(advanced_group)
+
+        # 添加弹簧,将内容推到顶部
+        layout.addStretch()
+
+        return widget
+
+    def on_scene_changed(self, index):
+        """场景选择改变时的处理"""
+        self.update_scene_description()
+
+    def update_scene_description(self):
+        """更新场景描述信息"""
+        if not hasattr(self, 'scene_combo') or not hasattr(self, 'scene_description_label'):
+            return
+
+        index = self.scene_combo.currentIndex()
+        if index < 0:
+            return
+
+        scene_name = self.scene_combo.itemData(index)
+
+        if not scene_name:
+            self.scene_description_label.setText("未选择场景,将显示默认进度条样式")
+            return
+
+        # 获取场景元数据
+        if hasattr(self, 'main_window') and hasattr(self.main_window, 'scene_manager'):
+            scene_manager = self.main_window.scene_manager
+            metadata = scene_manager.get_scene_metadata(scene_name)
+
+            if metadata:
+                description = metadata.get('description', '无描述')
+                version = metadata.get('version', '1.0')
+                author = metadata.get('author', '未知')
+
+                desc_text = f"描述: {description}\n版本: {version}  作者: {author}"
+                self.scene_description_label.setText(desc_text)
+            else:
+                self.scene_description_label.setText("无法加载场景信息")
+        else:
+            self.scene_description_label.setText("场景管理器未初始化")
+
+    def open_scene_editor(self):
+        """打开场景编辑器"""
+        try:
+            # 如果编辑器已打开,激活窗口
+            if self.scene_editor_window is not None:
+                self.scene_editor_window.show()
+                self.scene_editor_window.activateWindow()
+                self.scene_editor_window.raise_()
+                return
+
+            # 创建新的编辑器窗口
+            self.scene_editor_window = SceneEditorWindow()
+
+            # 连接窗口关闭信号,刷新场景列表
+            self.scene_editor_window.editor_closed.connect(self._on_scene_editor_closed)
+            # 连接窗口销毁信号,清理引用
+            self.scene_editor_window.destroyed.connect(lambda: setattr(self, 'scene_editor_window', None))
+
+            # 显示编辑器
+            self.scene_editor_window.show()
+
+            logging.info("场景编辑器已打开")
+
+        except Exception as e:
+            logging.error(f"打开场景编辑器失败: {e}", exc_info=True)
+            QMessageBox.critical(
+                self,
+                "错误",
+                f"打开场景编辑器失败:\n{str(e)}\n\n请检查日志文件获取详细信息"
+            )
+
+    def _on_scene_editor_closed(self):
+        """场景编辑器窗口关闭时的处理"""
+        self.scene_editor_window = None
+        logging.info("场景编辑器已关闭")
+
+        # 刷新场景列表(用户可能在编辑器中创建了新场景)
+        if hasattr(self, 'scene_combo') and self.scene_combo:
+            self._refresh_scene_list()
+
+    def _refresh_scene_list(self):
+        """刷新场景选择下拉框"""
+        if not hasattr(self, 'scene_combo') or not self.scene_combo:
+            return
+
+        try:
+            # 保存当前选中的场景
+            current_scene = self.scene_combo.itemData(self.scene_combo.currentIndex())
+
+            # 清空下拉框
+            self.scene_combo.clear()
+
+            # 重新加载场景列表
+            if hasattr(self, 'main_window') and hasattr(self.main_window, 'scene_manager'):
+                scene_manager = self.main_window.scene_manager
+
+                # 重新扫描场景目录
+                scene_manager.scan_scenes()
+                scene_list = scene_manager.get_scene_list()
+
+                # 添加"无场景"选项
+                self.scene_combo.addItem("无场景", None)
+
+                # 添加所有可用场景
+                for scene_name in scene_list:
+                    metadata = scene_manager.get_scene_metadata(scene_name)
+                    if metadata:
+                        display_name = metadata.get('name', scene_name)
+                        self.scene_combo.addItem(display_name, scene_name)
+
+                # 恢复之前选中的场景
+                if current_scene:
+                    index = self.scene_combo.findData(current_scene)
+                    if index >= 0:
+                        self.scene_combo.setCurrentIndex(index)
+
+                logging.info(f"场景列表已刷新,共 {len(scene_list)} 个场景")
+
+                # 显示成功提示
+                from PySide6.QtWidgets import QMessageBox
+                QMessageBox.information(
+                    self,
+                    "刷新成功",
+                    f"场景列表已刷新！\n\n共找到 {len(scene_list)} 个场景。"
+                )
+
+                # 更新场景描述
+                self.update_scene_description()
+        except Exception as e:
+            logging.error(f"刷新场景列表失败: {e}", exc_info=True)
+            from PySide6.QtWidgets import QMessageBox
+            QMessageBox.critical(
+                self,
+                "刷新失败",
+                f"刷新场景列表时出错:\n{e}"
+            )
 
     def create_notification_tab(self):
         """创建通知设置选项卡"""
@@ -5579,6 +5921,10 @@ class ConfigManager(QMainWindow):
                         "start": self.quiet_start_time.time().toString("HH:mm") if hasattr(self, 'quiet_start_time') else self.config.get('notification', {}).get('quiet_hours', {}).get('start', '22:00'),
                         "end": self.quiet_end_time.time().toString("HH:mm") if hasattr(self, 'quiet_end_time') else self.config.get('notification', {}).get('quiet_hours', {}).get('end', '08:00')
                     }
+                },
+                "scene": {
+                    "enabled": (getattr(self, 'scene_enabled_check', None) and self.scene_enabled_check.isChecked()) if hasattr(self, 'scene_enabled_check') else self.config.get('scene', {}).get('enabled', False),
+                    "current_scene": self.scene_combo.itemData(self.scene_combo.currentIndex()) if hasattr(self, 'scene_combo') and self.scene_combo.currentIndex() >= 0 else self.config.get('scene', {}).get('current_scene')
                 }
             }
 

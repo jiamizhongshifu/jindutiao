@@ -1,0 +1,309 @@
+{
+  "scene_id": "senlin",
+  "name": "senlin",
+  "version": "1.0.0",
+  "canvas": {
+    "width": 2400,
+    "height": 150
+  },
+  "layers": {
+    "road": {
+      "type": "tiled",
+      "image": "assets/road.png",
+      "offset_x": 0,
+      "offset_y": 115,
+      "scale": 0.21,
+      "z_index": 50
+    },
+    "scene": {
+      "items": [
+        {
+          "id": "item_1",
+          "image": "assets/tree1.png",
+          "position": {
+            "x_percent": 37.37210796915167,
+            "y_pixel": 46
+          },
+          "scale": 0.38,
+          "z_index": 51,
+          "events": []
+        },
+        {
+          "id": "item_2",
+          "image": "assets/tree2.png",
+          "position": {
+            "x_percent": 17.416666666666668,
+            "y_pixel": 39
+          },
+          "scale": 0.32,
+          "z_index": 52,
+          "events": []
+        },
+        {
+          "id": "item_3",
+          "image": "assets/cao.png",
+          "position": {
+            "x_percent": 10.958333333333334,
+            "y_pixel": 90
+          },
+          "scale": 0.21,
+          "z_index": 53,
+          "events": []
+        },
+        {
+          "id": "item_4",
+          "image": "assets/hua2.png",
+          "position": {
+            "x_percent": 10.989717223650382,
+            "y_pixel": 91
+          },
+          "scale": 0.18,
+          "z_index": 54,
+          "events": []
+        },
+        {
+          "id": "item_5",
+          "image": "assets/hua3.png",
+          "position": {
+            "x_percent": 10.989717223650388,
+            "y_pixel": 93
+          },
+          "scale": 0.16,
+          "z_index": 55,
+          "events": []
+        },
+        {
+          "id": "item_6",
+          "image": "assets/hua1.png",
+          "position": {
+            "x_percent": 10.989717223650388,
+            "y_pixel": 100
+          },
+          "scale": 0.12,
+          "z_index": 56,
+          "events": []
+        },
+        {
+          "id": "item_7",
+          "image": "assets/hua1_1.png",
+          "position": {
+            "x_percent": 59.76863753213365,
+            "y_pixel": 103
+          },
+          "scale": 0.18000000000000002,
+          "z_index": 56,
+          "events": []
+        },
+        {
+          "id": "item_8",
+          "image": "assets/hua2_1.png",
+          "position": {
+            "x_percent": 10.989717223650388,
+            "y_pixel": 99
+          },
+          "scale": 0.12,
+          "z_index": 54,
+          "events": []
+        },
+        {
+          "id": "item_9",
+          "image": "assets/cao_1.png",
+          "position": {
+            "x_percent": 10.989717223650388,
+            "y_pixel": 89
+          },
+          "scale": 0.16,
+          "z_index": 53,
+          "events": []
+        },
+        {
+          "id": "item_10",
+          "image": "assets/cao_2.png",
+          "position": {
+            "x_percent": 10.989717223650388,
+            "y_pixel": 89
+          },
+          "scale": 0.16,
+          "z_index": 53,
+          "events": []
+        },
+        {
+          "id": "item_11",
+          "image": "assets/baiyun.png",
+          "position": {
+            "x_percent": 82.53299057412168,
+            "y_pixel": 96
+          },
+          "scale": 0.21,
+          "z_index": 61,
+          "events": []
+        },
+        {
+          "id": "item_12",
+          "image": "assets/baiyun_1.png",
+          "position": {
+            "x_percent": 67.86632390745501,
+            "y_pixel": 81
+          },
+          "scale": 0.21,
+          "z_index": 61,
+          "events": []
+        },
+        {
+          "id": "item_13",
+          "image": "assets/baiyun_2.png",
+          "position": {
+            "x_percent": 47.62210796915167,
+            "y_pixel": 50
+          },
+          "scale": 0.21,
+          "z_index": 61,
+          "events": []
+        },
+        {
+          "id": "item_14",
+          "image": "assets/caocong1.png",
+          "position": {
+            "x_percent": 10.989717223650382,
+            "y_pixel": 96
+          },
+          "scale": 0.21,
+          "z_index": 46,
+          "events": []
+        },
+        {
+          "id": "item_16",
+          "image": "assets/caocong2.png",
+          "position": {
+            "x_percent": 43.35925449871464,
+            "y_pixel": 96
+          },
+          "scale": 0.21,
+          "z_index": 66,
+          "events": []
+        },
+        {
+          "id": "item_17",
+          "image": "assets/mutou.png",
+          "position": {
+            "x_percent": 26.397600685518423,
+            "y_pixel": 74
+          },
+          "scale": 0.24,
+          "z_index": 67,
+          "events": []
+        },
+        {
+          "id": "item_18",
+          "image": "assets/hua3_1.png",
+          "position": {
+            "x_percent": 51.12210796915168,
+            "y_pixel": 70
+          },
+          "scale": 0.16,
+          "z_index": 74,
+          "events": []
+        },
+        {
+          "id": "item_19",
+          "image": "assets/hua2_2.png",
+          "position": {
+            "x_percent": 10.989717223650388,
+            "y_pixel": 96
+          },
+          "scale": 0.12,
+          "z_index": 54,
+          "events": []
+        },
+        {
+          "id": "item_20",
+          "image": "assets/hua2_3.png",
+          "position": {
+            "x_percent": 10.989717223650388,
+            "y_pixel": 96
+          },
+          "scale": 0.12,
+          "z_index": 54,
+          "events": []
+        },
+        {
+          "id": "item_21",
+          "image": "assets/cao_3.png",
+          "position": {
+            "x_percent": 10.989717223650388,
+            "y_pixel": 95
+          },
+          "scale": 0.16,
+          "z_index": 47,
+          "events": []
+        },
+        {
+          "id": "item_22",
+          "image": "assets/caocong2_1.png",
+          "position": {
+            "x_percent": 62.288774635818335,
+            "y_pixel": 66
+          },
+          "scale": 0.21,
+          "z_index": 66,
+          "events": []
+        },
+        {
+          "id": "item_22",
+          "image": "assets/baiyun_3.png",
+          "position": {
+            "x_percent": 22.5,
+            "y_pixel": 90
+          },
+          "scale": 0.21,
+          "z_index": 61,
+          "events": []
+        },
+        {
+          "id": "item_23",
+          "image": "assets/baiyun_4.png",
+          "position": {
+            "x_percent": 27.76349614395886,
+            "y_pixel": 40
+          },
+          "scale": 0.26,
+          "z_index": 61,
+          "events": []
+        },
+        {
+          "id": "item_24",
+          "image": "assets/caocong1_1.png",
+          "position": {
+            "x_percent": 75.5784061696658,
+            "y_pixel": 96
+          },
+          "scale": 0.24,
+          "z_index": 58,
+          "events": []
+        },
+        {
+          "id": "item_25",
+          "image": "assets/caocong1_2.png",
+          "position": {
+            "x_percent": 14.26735218508997,
+            "y_pixel": 86
+          },
+          "scale": 0.14,
+          "z_index": 58,
+          "events": []
+        },
+        {
+          "id": "item_26",
+          "image": "assets/hua2_4.png",
+          "position": {
+            "x_percent": 10.989717223650388,
+            "y_pixel": 96
+          },
+          "scale": 0.12,
+          "z_index": 54,
+          "events": []
+        }
+      ]
+    }
+  }
+}

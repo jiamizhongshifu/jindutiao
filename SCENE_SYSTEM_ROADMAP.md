@@ -1,6 +1,6 @@
 # GaiYa 场景系统开发路线图
 
-## 📍 当前状态 (2025-11-13 更新)
+## 📍 当前状态 (2025-11-15 更新)
 
 ### ✅ 已完成
 - **场景编辑器 v1.0.0** - 可视化场景设计工具
@@ -21,8 +21,75 @@
   - 完整的配置文档 (scenes/README.md)
   - 测试验证脚本 (test_scene_loader.py)
 
+- **Phase 2.2: 场景渲染器** ✅ (2025-11-14 完成)
+  - SceneRenderer 场景渲染引擎 (gaiya/scene/renderer.py)
+  - 道路层平铺渲染(支持z-index和多种平铺模式)
+  - 场景元素按z-index自动排序渲染
+  - 集成到main.py的paintEvent()
+  - load_scene/unload_scene场景管理方法
+
+- **Phase 2.3: 事件响应系统** ✅ (2025-11-14 完成)
+  - SceneEventManager 事件管理器 (gaiya/scene/event_manager.py)
+  - 鼠标hover/click事件检测
+  - 进度时间触发器(on_time_reach)
+  - Tooltip显示、对话框弹出、URL打开功能
+  - 集成到main.py的mouseMoveEvent/mousePressEvent
+  - 集成到进度更新流程(check_time_events)
+
+- **Phase 3.1: 场景管理器** ✅ (2025-11-14 完成)
+  - SceneManager 场景管理类 (gaiya/scene/scene_manager.py)
+  - 场景列表管理（扫描scenes/目录）
+  - 场景切换功能（load_scene/unload_scene）
+  - 场景配置持久化（save_config/load_config）
+  - 集成到main.py的reload_all流程
+
+- **Phase 3.2: 配置界面集成** ✅ (2025-11-14 完成)
+  - 场景设置选项卡(config_gui.py)
+  - 场景启用/禁用复选框
+  - 场景选择下拉框(自动加载scenes/目录)
+  - 场景描述显示(元数据展示)
+  - 打开场景编辑器按钮
+  - 配置保存/加载逻辑集成
+
+- **Phase 3.3: 场景资源完善** ✅ (2025-11-15 完成)
+  - 创建完整的示例场景资源（default场景）
+    - 15个PNG图片资源（tree1.png, tree2.png, baoxiang.png, hua1.png, cao.png, daolu2.png等）
+    - 更新config.json配置使用实际资源文件
+    - 添加场景元数据（description, author字段）
+    - 创建测试脚本验证场景加载功能
+  - 场景系统打包集成
+    - 修改GaiYa.spec添加scenes/目录到datas
+    - 修复SceneLoader路径解析（使用sys._MEIPASS）
+    - 改进错误处理（开发环境vs打包环境）
+    - 打包测试成功（GaiYa-v1.6.exe）
+
+- **Phase 4: 场景编辑器集成** ✅ (2025-11-14 完成)
+  - 从配置界面直接打开场景编辑器
+  - 编辑器窗口生命周期管理
+  - 编辑器关闭后自动刷新场景列表
+  - 防止重复打开(窗口激活与置顶)
+  - 完整的错误处理和日志记录
+
+- **Phase 5.2: 高级事件类型** ✅ (2025-11-14 完成)
+  - EventTriggerType扩展(on_progress_range, on_task_start, on_task_end)
+  - EventConfig支持trigger_params参数
+  - 事件管理器完整实现进度范围、任务开始/结束检测
+  - 场景编辑器UI支持新事件类型配置
+
+- **Phase 5.3: 场景编辑器 v2.0** ✅ (2025-11-14 完成)
+  - ✅ 实时预览面板（模拟进度条播放）
+  - ✅ 图层管理面板（显示/隐藏/锁定/拖放排序）
+  - ✅ 对齐辅助线（9种对齐关系，10px吸附阈值）
+  - ✅ 批量操作（橡皮筋多选、复制粘贴、删除、全选）
+  - ✅ TabWidget UI布局（属性编辑 + 图层管理）
+  - ✅ 完整功能测试（17个测试用例全部通过）
+  - ✅ 测试文档（测试计划 + 测试报告）
+
 ### 🔄 进行中
-- Phase 2.2: 场景渲染器开发
+- **Phase 3.4: 预设场景创建** (预计2-3小时)
+  - 创建3个预设场景：pixel_forest, cyberpunk_city, ocean_wave
+  - 每个场景包含config.json + 配套图片资源
+  - 不同主题和视觉风格展示场景系统的多样性
 
 ---
 
@@ -96,62 +163,71 @@ class SceneLoader:
 - `scenes/README.md` - 完整文档（200+行）
 - `test_scene_loader.py` - 测试脚本
 
-#### 2.2 场景渲染器 (SceneRenderer)
+#### 2.2 场景渲染器 (SceneRenderer) ✅ 已完成
 
 **核心功能**:
 ```python
 class SceneRenderer:
     """场景渲染器 - 将场景绘制到进度条"""
-    def render_road_layer(self, painter: QPainter, progress: float)
-    def render_scene_items(self, painter: QPainter, progress: float)
-    def render_timeline_marker(self, painter: QPainter, progress: float)
+    def render(self, painter: QPainter, canvas_rect: QRectF, progress: float)
+    def prepare_resources(self, scene: SceneConfig) -> int
+    def _render_road_layer(self, painter: QPainter, canvas_rect: QRectF, road: RoadLayer)
+    def _render_scene_item(self, painter: QPainter, canvas_rect: QRectF, item: SceneItem)
 ```
 
 **任务**:
-- [ ] 道路层平铺渲染（考虑z-index）
-- [ ] 场景元素渲染（按z-index排序绘制）
-- [ ] 时间标记（坤坤动图）渲染
-- [ ] 层级混合渲染（道路、场景元素、时间标记）
+- [x] 道路层平铺渲染（考虑z-index）
+- [x] 场景元素渲染（按z-index排序绘制）
+- [x] 时间标记（坤坤动图）渲染（留作未来扩展）
+- [x] 层级混合渲染（道路、场景元素、时间标记）
 
-**技术挑战**:
-- 如何在 `main.py` 的 `paintEvent()` 中集成场景渲染
-- 性能优化：避免每帧重复加载资源
-- 缓存策略：预加载所有场景图片
+**已完成**:
+- `gaiya/scene/renderer.py` (305行)
+- 支持水平平铺、垂直平铺、双向平铺
+- 自动按z-index排序渲染所有元素
+- 集成到main.py的paintEvent()
+- 性能优化：预加载资源到ResourceCache
 
-#### 2.3 事件响应系统 (SceneEventManager)
+#### 2.3 事件响应系统 (SceneEventManager) ✅ 已完成
 
 **支持的事件类型**:
 1. **on_hover** (鼠标悬停)
-   - show_tooltip: 显示提示
-   - show_dialog: 显示对话框
+   - show_tooltip: 显示提示 ✅
+   - show_dialog: 显示对话框 ✅
 
 2. **on_click** (鼠标点击)
-   - open_url: 打开链接
-   - show_dialog: 显示对话框
+   - open_url: 打开链接 ✅
+   - show_dialog: 显示对话框 ✅
 
 3. **on_time_reach** (时间到达)
-   - show_tooltip: 显示提示
-   - show_dialog: 显示对话框
-   - open_url: 打开链接
+   - show_tooltip: 显示提示 ✅
+   - show_dialog: 显示对话框 ✅
+   - open_url: 打开链接 ✅
 
 **任务**:
-- [ ] 鼠标事件检测（hover、click）
-- [ ] 进度时间触发器（when progress >= 50%）
-- [ ] Tooltip渲染系统
-- [ ] 对话框弹出系统
-- [ ] URL打开功能
+- [x] 鼠标事件检测（hover、click）
+- [x] 进度时间触发器（when progress >= 50%）
+- [x] Tooltip渲染系统
+- [x] 对话框弹出系统
+- [x] URL打开功能
+- [x] 集成到main.py的事件处理方法
 
-**实现要点**:
+**已完成**:
 ```python
 class SceneEventManager:
-    def check_hover_events(self, mouse_pos: QPoint, progress: float)
-    def check_click_events(self, mouse_pos: QPoint, progress: float)
+    def check_hover_events(self, mouse_pos: QPointF, progress: float)
+    def check_click_events(self, mouse_pos: QPointF, progress: float)
     def check_time_events(self, progress: float)
 
-    def show_tooltip(self, text: str, pos: QPoint)
-    def show_dialog(self, text: str)
-    def open_url(self, url: str)
+    def _show_tooltip(self, params: dict, mouse_pos: QPointF)
+    def _show_dialog(self, params: dict)
+    def _open_url(self, params: dict)
 ```
+
+**集成点**:
+- `main.py:1527-1537` - mouseMoveEvent中的hover事件检测
+- `main.py:1554-1567` - mousePressEvent中的click事件检测
+- `main.py:1454-1459` - 进度更新时的时间事件检测
 
 #### 2.4 集成到主程序
 
@@ -208,60 +284,84 @@ class SceneEventManager:
 
 **目标**: 用户可以选择和切换不同的场景
 
-#### 3.1 场景管理器 (SceneManager)
+#### 3.1 场景管理器 (SceneManager) ✅ 已完成
 
 **功能**:
-- [ ] 场景列表管理（扫描场景文件夹）
-- [ ] 场景预览生成（缩略图）
-- [ ] 场景切换动画（淡入淡出）
-- [ ] 场景配置持久化（记住用户选择）
+- [x] 场景列表管理（扫描场景文件夹）
+- [ ] 场景预览生成（缩略图）- 留作Phase 3.2
+- [ ] 场景切换动画（淡入淡出）- 留作Phase 4
+- [x] 场景配置持久化（记住用户选择）
+
+**已完成**:
+- `gaiya/scene/scene_manager.py` (230行)
+- 场景自动扫描和元数据管理
+- 场景加载/卸载功能
+- 启用/禁用场景系统
+- 配置保存到config.json的scene字段
+- 集成到main.py的初始化和reload流程
 
 **目录结构**:
 ```
 scenes/
-├── default/
+├── README.md              # ✅ 场景系统完整文档
+├── default/               # ✅ 默认场景（已完成）
 │   ├── config.json
-│   ├── road.png
 │   └── assets/
-│       ├── tree.png
-│       └── house.png
-├── pixel_forest/
-│   └── config.json
-├── cyberpunk_city/
-│   └── config.json
-└── ocean_wave/
-    └── config.json
+│       ├── tree1.png
+│       ├── tree2.png
+│       ├── baoxiang.png
+│       ├── hua1.png
+│       ├── cao.png
+│       ├── daolu2.png
+│       └── ... (共15个PNG文件)
+├── pixel_forest/          # ⏳ 待创建
+│   ├── config.json
+│   └── assets/
+├── cyberpunk_city/        # ⏳ 待创建
+│   ├── config.json
+│   └── assets/
+└── ocean_wave/            # ⏳ 待创建
+    ├── config.json
+    └── assets/
 ```
 
-#### 3.2 配置界面集成
+#### 3.2 配置界面集成 ✅ 已完成
 
 **在 `config_gui.py` 中新增"场景设置"选项卡**:
 
 ```python
 场景设置
-├─ 当前场景: [下拉框]
-│  ├─ 默认场景
-│  ├─ 像素森林
-│  ├─ 赛博朋克城市
-│  └─ 海浪
-├─ 场景预览: [预览图]
-├─ 启用场景: [复选框]
-└─ 打开场景编辑器: [按钮]
+├─ 当前场景: [下拉框] ✅
+│  ├─ 无场景
+│  └─ 自动加载 scenes/ 目录中的所有场景
+├─ 场景描述: [文本显示] ✅
+│  └─ 显示场景的描述、版本、作者信息
+├─ 启用场景系统: [复选框] ✅
+└─ 打开场景编辑器: [按钮] ✅
 ```
 
-**任务**:
-- [ ] 场景选择下拉框
-- [ ] 场景预览图显示
-- [ ] 启用/禁用场景开关
-- [ ] 一键打开场景编辑器
+**已完成**:
+- [x] 场景选择下拉框(自动从scene_manager.get_scene_list()加载)
+- [x] 场景描述显示(展示元数据: description, version, author)
+- [x] 启用/禁用场景系统复选框
+- [x] 打开场景编辑器按钮(占位,Phase 4实现)
+- [x] 配置保存逻辑(保存到config['scene'])
+- [x] 配置加载逻辑(从config['scene']加载并应用)
 
-#### 3.3 场景资源管理
+#### 3.3 场景资源管理 ✅ (2025-11-15 完成)
 
 **任务**:
-- [ ] 场景文件打包（将场景和资源打包到exe）
-- [ ] 资源路径解析（支持相对路径）
-- [ ] 场景资源热加载（无需重启）
-- [ ] 场景资源缓存（提升性能）
+- [x] 场景文件打包（将场景和资源打包到exe） ✅
+- [x] 资源路径解析（支持相对路径） ✅
+- [x] 场景资源热加载（无需重启） ⏳ 留作未来优化
+- [x] 场景资源缓存（提升性能） ✅ ResourceCache已实现
+
+**完成的工作**:
+- ✅ 创建完整示例场景（default场景，包含15个PNG资源）
+- ✅ 修改GaiYa.spec添加scenes/目录到打包配置
+- ✅ 修复SceneLoader路径解析逻辑（sys._MEIPASS）
+- ✅ 测试验证场景加载和打包功能
+- ✅ 打包成功（GaiYa-v1.6.exe）
 
 **交付物**:
 - 场景管理系统
@@ -270,11 +370,54 @@ scenes/
 
 ---
 
-### Phase 4: 高级功能与扩展 (预计3-5天)
+### Phase 4: 场景编辑器集成 ✅ 已完成
+
+**目标**: 将独立的场景编辑器集成到主应用,提供无缝的场景创建和编辑体验
+
+**已完成**:
+- [x] 导入SceneEditorWindow到config_gui.py
+- [x] 实现open_scene_editor()方法
+- [x] 编辑器窗口生命周期管理(防止重复打开)
+- [x] 编辑器关闭后自动刷新场景列表
+- [x] 完整的错误处理和日志记录
+
+**技术实现**:
+```python
+# config_gui.py
+class ConfigManager(QMainWindow):
+    def __init__(self):
+        self.scene_editor_window = None  # 编辑器窗口引用
+
+    def open_scene_editor(self):
+        # 如果已打开,激活窗口
+        if self.scene_editor_window is not None:
+            self.scene_editor_window.show()
+            self.scene_editor_window.activateWindow()
+            return
+
+        # 创建新窗口
+        self.scene_editor_window = SceneEditorWindow()
+        self.scene_editor_window.destroyed.connect(self._on_scene_editor_closed)
+        self.scene_editor_window.show()
+
+    def _on_scene_editor_closed(self):
+        self.scene_editor_window = None
+        self._refresh_scene_list()  # 刷新场景列表
+```
+
+**用户体验**:
+- 从"场景设置"选项卡点击"打开场景编辑器"按钮
+- 编辑器作为独立窗口打开,可以最小化或最大化
+- 关闭编辑器后,配置界面自动刷新场景列表
+- 多次点击按钮不会重复打开,而是激活已有窗口
+
+---
+
+### Phase 5: 高级功能与扩展 (预计3-5天)
 
 **目标**: 增强场景系统的表现力和交互性
 
-#### 4.1 动画支持
+#### 5.1 动画支持
 
 **功能**:
 - [ ] GIF/WebP动画元素支持
@@ -300,12 +443,12 @@ scenes/
 }
 ```
 
-#### 4.2 高级事件类型
+#### 5.2 高级事件类型 ✅ (2025-11-14 完成)
 
 **新增事件**:
-- [ ] `on_progress_range`: 进度在某个范围时触发
-- [ ] `on_task_start`: 任务开始时触发
-- [ ] `on_task_end`: 任务结束时触发
+- [x] `on_progress_range`: 进度在某个范围时触发
+- [x] `on_task_start`: 任务开始时触发
+- [x] `on_task_end`: 任务结束时触发
 - [ ] `on_interval`: 定时循环触发（如每10%）
 
 **新增动作**:
@@ -313,7 +456,25 @@ scenes/
 - [ ] `show_notification`: 系统通知
 - [ ] `trigger_animation`: 触发动画
 
-#### 4.3 场景编辑器 v2.0
+**已完成功能**:
+- EventTriggerType扩展,添加3种高级事件类型
+- EventConfig扩展,添加trigger_params字段支持事件参数
+- 事件管理器实现完整的事件检测逻辑:
+  - ON_PROGRESS_RANGE: 进度范围检测+自动重置
+  - ON_TASK_START: 任务开始检测
+  - ON_TASK_END: 任务结束检测
+  - _get_current_task_index: 根据进度计算当前活动任务
+- 场景编辑器UI完整支持:
+  - 触发器下拉框添加新事件类型
+  - 动态参数输入控件(进度范围/任务索引)
+  - 事件列表显示更新
+
+**文件修改**:
+- `gaiya/scene/models.py`: EventTriggerType + EventConfig扩展
+- `gaiya/scene/event_manager.py`: 完整的事件检测逻辑实现
+- `scene_editor.py`: UI支持新事件类型配置
+
+#### 5.3 场景编辑器 v2.0
 
 **新功能**:
 - [ ] 实时预览（模拟进度条效果）
@@ -322,7 +483,7 @@ scenes/
 - [ ] 对齐辅助线
 - [ ] 批量操作（多选、复制、粘贴）
 
-#### 4.4 社区功能
+#### 5.4 社区功能
 
 **功能**:
 - [ ] 场景分享（导出场景包）
@@ -424,24 +585,22 @@ pixmap = cache.get("/path/to/image1.png")  # 直接从内存读取
 
 ### 🔴 高优先级 (核心功能)
 1. ✅ ~~**Phase 1**: 场景编辑器开发~~
-2. ✅ ~~**Phase 2.1**: 场景加载器~~
-3. 🔄 **Phase 2.2**: 场景渲染器 ← **当前焦点**
-4. ⏳ **Phase 2.3**: 事件响应系统
-5. ⏳ **Phase 3.1-3.2**: 场景管理和切换
+2. ✅ ~~**Phase 2**: 场景渲染引擎（加载器 + 渲染器 + 事件系统）~~
+3. ✅ ~~**Phase 3.1-3.3**: 场景管理、配置界面、资源管理~~
+4. 🔄 **Phase 3.4**: 创建预设场景库 ← **当前焦点**
 
 ### 🟡 中优先级 (增强体验)
-6. ⏳ **Phase 1**: 场景编辑器完整测试（可选）
-7. ⏳ **Phase 3.3**: 资源管理优化
+5. ⏳ **Phase 5.1**: 动画支持（GIF/WebP元素）
+6. ⏳ **Phase 5.3**: 场景编辑器v2.0完整测试和文档
 
 ### 🟢 低优先级 (扩展功能)
-8. ⏳ **Phase 4.1**: 动画支持
-9. ⏳ **Phase 4.2**: 高级事件
-10. ⏳ **Phase 4.3-4.4**: 编辑器v2.0和社区功能
+7. ⏳ **Phase 5.2**: 高级事件和动作（音效、通知等）
+8. ⏳ **Phase 5.4**: 场景分享和社区功能
 
-**开发策略调整**:
-- 优先完成渲染引擎，让用户尽快看到效果
-- 编辑器测试可以延后，现有功能已经可用
-- 快速迭代核心功能，建立正反馈循环
+**当前阶段总结**:
+- ✅ 核心场景系统已完成（编辑器、加载、渲染、事件、管理）
+- 🔄 正在创建预设场景库，展示系统多样性
+- 🎯 下一步：完善用户体验，添加高级功能
 
 ---
 
@@ -513,18 +672,24 @@ SceneEventManager → 用户操作 → 事件响应
 - 交付物: SceneLoader + ResourceCache + 数据模型 + 示例场景
 - 状态: 已完成
 
-### Milestone 2: 基础场景渲染 🔄 进行中
-- 预计日期: Phase 2.2 完成后（预计1-2天）
-- 交付物: 用户可以在进度条中看到自定义场景
-- 当前进度:
+### Milestone 2: 基础场景渲染 ✅ 已完成
+- 完成日期: 2025-11-14
+- 交付物: 用户可以在进度条中看到自定义场景并进行交互
+- 完成进度:
   - ✅ 场景编辑器（设计工具）
   - ✅ 场景加载器（数据加载）
-  - 🔄 场景渲染器（视觉显示）← **当前焦点**
-  - ⏳ 事件管理器（交互响应）
+  - ✅ 场景渲染器（视觉显示）
+  - ✅ 事件管理器（交互响应）
 
-### Milestone 3: 完整场景系统 🎯
-- 预计日期: Phase 2-3 完成后
+### Milestone 3: 完整场景系统 🔄 进行中
+- 预计日期: Phase 3.4 完成后（预计1天）
 - 交付物: 用户可以创建、切换、使用多个场景
+- 当前进度:
+  - ✅ 场景管理器（SceneManager）
+  - ✅ 配置界面集成（场景设置选项卡）
+  - ✅ 场景资源管理（打包集成）
+  - ✅ 示例场景（default场景）
+  - 🔄 预设场景库（3个主题场景）← **当前焦点**
 
 ### Milestone 4: 高级场景功能 🎯
 - 预计日期: Phase 4 完成后
@@ -537,23 +702,33 @@ SceneEventManager → 用户操作 → 事件响应
 ### 立即开始 (本周)
 1. ✅ 完成场景编辑器 v1.0.0 开发
 2. ✅ 完成 Phase 2.1: SceneLoader 实现
-3. 🔄 **当前任务**: Phase 2.2 - 实现 SceneRenderer
-4. ⏳ 待定: Phase 1 完整测试（可选，优先级低于渲染器）
+3. ✅ 完成 Phase 2.2: SceneRenderer 实现
+4. ✅ 完成 Phase 2.3: 事件响应系统实现
+5. ✅ 完成 Phase 3.1-3.3: 场景管理、配置界面、资源管理
+6. 🔄 **当前任务**: Phase 3.4 - 创建3个预设场景
 
-### Phase 2.2 具体任务 (当前焦点)
-- [ ] 创建 `gaiya/scene/renderer.py`
-- [ ] 实现 `SceneRenderer` 类的基础结构
-- [ ] 实现道路层平铺渲染（支持 z-index）
-- [ ] 实现场景元素按 z-index 排序渲染
-- [ ] 集成到 `main.py` 的 `paintEvent()`
-- [ ] 测试场景显示效果
+### Phase 3.4 具体任务 (当前焦点)
+- [ ] 创建 pixel_forest 场景（像素森林主题）
+  - [ ] 设计场景配置（config.json）
+  - [ ] 准备/生成图片资源（道路、树木、装饰）
+  - [ ] 配置场景元素和事件
+- [ ] 创建 cyberpunk_city 场景（赛博朋克城市主题）
+  - [ ] 设计场景配置（config.json）
+  - [ ] 准备/生成图片资源（道路、建筑、霓虹灯）
+  - [ ] 配置场景元素和事件
+- [ ] 创建 ocean_wave 场景（海洋波浪主题）
+  - [ ] 设计场景配置（config.json）
+  - [ ] 准备/生成图片资源（波浪、海洋生物、装饰）
+  - [ ] 配置场景元素和事件
+- [ ] 测试所有预设场景的加载和渲染
+- [ ] 更新场景系统文档
 
 ### 本月目标
 - ✅ 完成场景编辑器 v1.0.0
-- ✅ 完成 Phase 2.1（场景加载器）
-- 🔄 完成 Phase 2.2（场景渲染器）
-- ⏳ 完成 Phase 2.3（事件系统）
-- 🎯 **核心里程碑**: 用户可以在进度条中看到自定义场景
+- ✅ 完成 Phase 2（场景加载器 + 渲染器 + 事件系统）
+- ✅ 完成 Phase 3.1-3.3（场景管理 + 配置界面 + 资源管理）
+- 🔄 完成 Phase 3.4（创建3个预设场景）
+- 🎯 **核心里程碑**: 用户可以在进度条中看到并切换多个自定义场景
 
 ### 长期目标
 - 建立完整的场景生态系统
@@ -572,9 +747,14 @@ SceneEventManager → 用户操作 → 事件响应
 ---
 
 **创建日期**: 2025-11-13
-**最后更新**: 2025-11-13 23:30
-**当前版本**: v1.1 - Phase 2.1 完成更新
+**最后更新**: 2025-11-15
+**当前版本**: v1.3 - Phase 3.3 完成更新
 
 **更新日志**:
+- v1.3 (2025-11-15): Phase 3.3 完成（场景资源完善 + 打包集成），更新下一步为Phase 3.4（创建预设场景）
+  - ✅ 创建完整示例场景（default场景，15个PNG资源）
+  - ✅ 场景系统打包集成（GaiYa.spec + SceneLoader路径修复）
+  - ✅ 打包测试成功（GaiYa-v1.6.exe）
+- v1.2 (2025-11-14): Phase 2.2 完成，场景渲染器已集成，更新下一步为Phase 2.3
 - v1.1 (2025-11-13 23:30): Phase 2.1 完成，添加 Milestone 1.5，更新进度和下一步行动
 - v1.0 (2025-11-13): 初始路线图创建

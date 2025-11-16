@@ -29,6 +29,7 @@ from gaiya.core.pomodoro_state import PomodoroState
 from gaiya.core.notification_manager import NotificationManager
 from gaiya.ui.pomodoro_panel import PomodoroPanel, PomodoroSettingsDialog
 from gaiya.utils import time_utils, path_utils, data_loader, task_calculator
+from gaiya.scene import SceneLoader, SceneRenderer, SceneEventManager, ResourceCache, SceneManager
 
 # Qt-Material主题支持（已移除，改用自定义浅色主题）
 # try:
@@ -99,6 +100,18 @@ class TimeProgressBar(QWidget):
 
         # 初始化用户认证客户端
         self.auth_client = AuthClient()
+
+        # 初始化场景系统
+        self.scene_manager = SceneManager()
+        self.scene_renderer = SceneRenderer()
+        self.scene_event_manager = SceneEventManager()
+
+        # 加载场景配置
+        self.scene_manager.load_config(self.config)
+        # 如果场景系统已启用，加载当前场景
+        if self.scene_manager.is_enabled() and self.scene_manager.get_current_scene_name():
+            scene_name = self.scene_manager.get_current_scene_name()
+            self.load_scene(scene_name)
 
         self.init_ui()
         self.init_timer()  # 初始化定时器
@@ -229,7 +242,10 @@ class TimeProgressBar(QWidget):
     def showEvent(self, event):
         """窗口显示事件"""
         super().showEvent(event)
-        self.logger.info("窗口显示事件触发")
+        # 验证窗口实际位置
+        actual_geometry = self.geometry()
+        self.logger.info(f"窗口显示事件触发")
+        self.logger.info(f"[窗口验证] 实际窗口位置: x={actual_geometry.x()}, y={actual_geometry.y()}, w={actual_geometry.width()}, h={actual_geometry.height()}")
 
     def hideEvent(self, event):
         """窗口隐藏事件"""
@@ -333,33 +349,53 @@ class TimeProgressBar(QWidget):
             # 如果图片底对齐,可能需要的高度 = 图片高度 - 进度条高度 + Y轴偏移
             marker_extra_space = max(0, marker_size - bar_height + abs(marker_y_offset))
 
-        # 取悬停空间和标记空间的最大值
-        hover_extra_space = max(hover_extra_space, marker_extra_space)
+        # 计算场景需要的额外空间
+        scene_extra_space = 0
+        if self.scene_manager.is_enabled():
+            scene_config = self.scene_manager.get_current_scene_config()
+            if scene_config and scene_config.canvas:
+                # 场景需要的总高度减去进度条高度
+                scene_extra_space = max(0, scene_config.canvas.height - bar_height)
+                self.logger.info(f"[场景几何] 场景已启用: {scene_config.name}, 画布高度: {scene_config.canvas.height}, 额外空间: {scene_extra_space}")
+            else:
+                self.logger.warning(f"[场景几何] 场景已启用但配置无效: scene_config={scene_config}")
+        else:
+            self.logger.debug(f"[场景几何] 场景未启用")
+
+        # 取悬停空间、标记空间和场景空间的最大值
+        hover_extra_space = max(hover_extra_space, marker_extra_space, scene_extra_space)
+        self.logger.info(f"[场景几何] 悬停空间: {hover_extra_space} (悬停50, 标记{marker_extra_space}, 场景{scene_extra_space})")
 
         # 根据配置定位到屏幕顶部或任务栏上方
         if self.config['position'] == 'bottom':
             # 使用可用几何(available geometry)而不是完整屏幕几何
             # 可用几何会排除任务栏、Dock等系统UI的空间
             available_geometry = screen.availableGeometry()
-            # 定位到可用区域的底部(任务栏上方),留出悬停空间
-            y_pos = available_geometry.y() + available_geometry.height() - bar_height - hover_extra_space
-            # 增加窗口高度以容纳悬停效果
+            self.logger.info(f"[场景几何] 可用区域: x={available_geometry.x()}, y={available_geometry.y()}, w={available_geometry.width()}, h={available_geometry.height()}")
+
+            # 增加窗口高度以容纳悬停效果或场景
             total_height = bar_height + hover_extra_space
+
+            # 窗口底部紧贴任务栏上方（不留空白间距）
+            y_pos = available_geometry.y() + available_geometry.height() - total_height
+            self.logger.info(f"[场景几何] 底部定位计算: y_pos = {available_geometry.y()} + {available_geometry.height()} - {total_height} = {y_pos}")
         else:
             # 顶部位置:使用可用区域的顶部
             available_geometry = screen.availableGeometry()
-            y_pos = available_geometry.y()
             total_height = bar_height + hover_extra_space
+            y_pos = available_geometry.y()
+            self.logger.info(f"[场景几何] 顶部定位: y_pos = {y_pos}")
 
         # 设置窗口几何属性
+        # 注意：X坐标也使用available_geometry，确保坐标系一致
         self.setGeometry(
-            screen_geometry.x(),  # 多显示器支持 x 坐标
-            y_pos,                # 修正后的 y 坐标
+            available_geometry.x(),  # 使用可用区域的X坐标
+            y_pos,                   # 计算后的Y坐标
             bar_width,
-            total_height          # 增加高度以容纳悬停效果
+            total_height             # 窗口总高度
         )
 
-        self.logger.info(f"窗口位置设置: x={screen_geometry.x()}, y={y_pos}, w={bar_width}, h={total_height} (bar_h={bar_height}), position={self.config['position']}")
+        self.logger.info(f"[场景几何] ✓ 窗口位置设置: x={available_geometry.x()}, y={y_pos}, w={bar_width}, h={total_height} (bar_h={bar_height}), position={self.config['position']}")
 
     def setup_logging(self):
         """设置日志系统"""
@@ -937,8 +973,8 @@ class TimeProgressBar(QWidget):
                     self.config_window.tab_widget.setCurrentIndex(initial_tab)
                 return
 
-            # 创建新窗口
-            self.config_window = ConfigManager()
+            # 创建新窗口（传递主窗口引用以便访问 scene_manager）
+            self.config_window = ConfigManager(main_window=self)
             self.config_window.config_saved.connect(self.reload_all)
             self.config_window.show()
 
@@ -966,6 +1002,14 @@ class TimeProgressBar(QWidget):
         old_height = self.config.get('bar_height', 20)
         old_position = self.config.get('position', 'bottom')
         old_screen_index = self.config.get('screen_index', 0)
+
+        # 保存旧的场景启用状态
+        old_scene_enabled = self.scene_manager.is_enabled()
+        old_scene_id = None
+        if old_scene_enabled:
+            scene_config = self.scene_manager.get_current_scene_config()
+            if scene_config:
+                old_scene_id = scene_config.scene_id
 
         # 保存旧的动画配置
         old_marker_type = self.config.get('marker_type', 'gif')
@@ -1001,15 +1045,26 @@ class TimeProgressBar(QWidget):
         if hasattr(self, 'notification_manager'):
             self.notification_manager.reload_config(self.config, self.tasks)
 
-        # 如果高度、位置或屏幕索引改变,需要重新设置窗口几何
+        # 如果高度、位置、屏幕索引或场景启用状态改变,需要重新设置窗口几何
         new_height = self.config.get('bar_height', 20)
         new_position = self.config.get('position', 'bottom')
         new_screen_index = self.config.get('screen_index', 0)
 
+        # 检查场景启用状态是否改变
+        new_scene_enabled = self.scene_manager.is_enabled()
+        new_scene_id = None
+        if new_scene_enabled:
+            scene_config = self.scene_manager.get_current_scene_config()
+            if scene_config:
+                new_scene_id = scene_config.scene_id
+
+        scene_changed = (old_scene_enabled != new_scene_enabled or old_scene_id != new_scene_id)
+
         if (old_height != new_height or
             old_position != new_position or
-            old_screen_index != new_screen_index):
-            self.logger.info(f"检测到几何变化: 高度 {old_height}->{new_height}, 位置 {old_position}->{new_position}, 屏幕 {old_screen_index}->{new_screen_index}")
+            old_screen_index != new_screen_index or
+            scene_changed):
+            self.logger.info(f"检测到几何变化: 高度 {old_height}->{new_height}, 位置 {old_position}->{new_position}, 屏幕 {old_screen_index}->{new_screen_index}, 场景 {old_scene_enabled}/{old_scene_id}->{new_scene_enabled}/{new_scene_id}")
             # 重新设置窗口几何
             self.setup_geometry()
 
@@ -1023,9 +1078,54 @@ class TimeProgressBar(QWidget):
             # 应用主题到进度条
             self.apply_theme()
 
+        # 重新加载场景配置
+        if hasattr(self, 'scene_manager'):
+            self.scene_manager.load_config(self.config)
+            # 如果场景系统已启用，重新加载当前场景
+            if self.scene_manager.is_enabled() and self.scene_manager.get_current_scene_name():
+                scene_name = self.scene_manager.get_current_scene_name()
+                self.load_scene(scene_name)
+
         # 触发重绘
         self.update()
         self.logger.info("配置和任务重载完成")
+
+    def load_scene(self, scene_name: str):
+        """加载场景配置并准备资源
+
+        Args:
+            scene_name: 场景名称（对应scenes/目录下的文件夹名）
+        """
+        try:
+            # 使用SceneManager加载场景
+            scene_config = self.scene_manager.load_scene(scene_name)
+
+            if not scene_config:
+                self.logger.error(f"场景加载失败: {scene_name}")
+                return False
+
+            # 设置场景到渲染器和事件管理器
+            self.scene_renderer.set_scene(scene_config)
+            self.scene_event_manager.set_scene(scene_config)
+
+            # 预加载场景资源
+            self.scene_renderer.prepare_resources()
+
+            # 触发重绘以显示场景
+            self.update()
+
+            self.logger.info(f"场景加载成功: {scene_name}")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"加载场景时出错: {e}", exc_info=True)
+            return False
+
+    def unload_scene(self):
+        """卸载当前场景"""
+        self.scene_manager.unload_scene()
+        self.logger.info("场景已卸载")
+        self.update()
 
     def toggle_edit_mode(self):
         """切换编辑模式"""
@@ -1395,6 +1495,14 @@ class TimeProgressBar(QWidget):
         # 仅当百分比实际变化时才重绘(避免浮点误差)
         if abs(new_percentage - self.current_time_percentage) > 0.00001:
             self.current_time_percentage = new_percentage
+
+            # 场景事件检测(时间触发) - 在进度更新时检查
+            if self.scene_manager.is_enabled() and self.scene_manager.get_current_scene_config():
+                try:
+                    self.scene_event_manager.check_time_events(self.current_time_percentage)
+                except Exception as e:
+                    self.logger.error(f"场景时间事件检查失败: {e}", exc_info=True)
+
             self.update()
 
     def _update_task_statistics(self, current_seconds: int):
@@ -1469,6 +1577,25 @@ class TimeProgressBar(QWidget):
         if old_hovered_index != self.hovered_task_index:
             self.update()
 
+        # 场景事件检测(hover)
+        scene_config = self.scene_manager.get_current_scene_config()
+        if self.scene_manager.is_enabled() and scene_config:
+            try:
+                # 更新画布区域 - 使用场景配置的画布高度
+                if scene_config.canvas:
+                    canvas_height = scene_config.canvas.height
+                else:
+                    canvas_height = bar_height
+                canvas_y = height - canvas_height
+                canvas_rect = QRectF(0, canvas_y, width, canvas_height)
+
+                self.scene_event_manager.set_canvas_rect(canvas_rect)
+                # 检查hover事件
+                mouse_pos = event.position()
+                self.scene_event_manager.check_hover_events(mouse_pos, self.current_time_percentage)
+            except Exception as e:
+                self.logger.error(f"场景hover事件检查失败: {e}", exc_info=True)
+
         super().mouseMoveEvent(event)
 
     def leaveEvent(self, event):
@@ -1483,7 +1610,30 @@ class TimeProgressBar(QWidget):
         super().leaveEvent(event)
 
     def mousePressEvent(self, event):
-        """鼠标按下事件 - 编辑模式下检测边缘点击"""
+        """鼠标按下事件 - 场景点击事件 + 编辑模式下检测边缘点击"""
+        # 场景事件检测(click) - 优先处理
+        scene_config = self.scene_manager.get_current_scene_config()
+        if self.scene_manager.is_enabled() and scene_config and event.button() == Qt.LeftButton:
+            try:
+                width = self.width()
+                height = self.height()
+                bar_height = self.config['bar_height']
+
+                # 使用场景配置的画布高度
+                if scene_config.canvas:
+                    canvas_height = scene_config.canvas.height
+                else:
+                    canvas_height = bar_height
+                canvas_y = height - canvas_height
+                canvas_rect = QRectF(0, canvas_y, width, canvas_height)
+
+                self.scene_event_manager.set_canvas_rect(canvas_rect)
+                mouse_pos = event.position()
+                self.scene_event_manager.check_click_events(mouse_pos, self.current_time_percentage)
+            except Exception as e:
+                self.logger.error(f"场景click事件检查失败: {e}", exc_info=True)
+
+        # 编辑模式下的边缘检测
         if not self.edit_mode or event.button() != Qt.LeftButton:
             return super().mousePressEvent(event)
 
@@ -1701,11 +1851,48 @@ class TimeProgressBar(QWidget):
         bar_y_offset = height - bar_height
 
         # 1. 绘制半透明背景条(只在进度条区域)
-        bg_color = QColor(self.config['background_color'])
-        bg_color.setAlpha(self.config['background_opacity'])
-        painter.fillRect(0, bar_y_offset, width, bar_height, bg_color)
+        # 如果场景已启用，跳过背景绘制（场景的道路层将作为背景）
+        scene_enabled = self.scene_manager.is_enabled()
+        scene_config = self.scene_manager.get_current_scene_config()
+
+        if not (scene_enabled and scene_config):
+            bg_color = QColor(self.config['background_color'])
+            bg_color.setAlpha(self.config['background_opacity'])
+            painter.fillRect(0, bar_y_offset, width, bar_height, bg_color)
+
+        # 1.5. 绘制场景(如果已启用) - 在任务色块之前绘制,让道路层作为背景
+        if scene_enabled and scene_config:
+            try:
+                # 定义画布原始尺寸（配置中定义的设计尺寸）
+                if scene_config.canvas:
+                    canvas_width = scene_config.canvas.width   # 1200px (设计宽度)
+                    canvas_height = scene_config.canvas.height # 150px
+                else:
+                    canvas_width = width
+                    canvas_height = bar_height  # 回退到进度条尺寸
+
+                # 不缩放场景,使用原始尺寸渲染
+                # 场景编辑器中1200px可视范围对应屏幕中间的1200px区域
+                # 左右两侧超出部分由道路层平铺填充
+
+                # 画布底部对齐到窗口底部
+                canvas_y = height - canvas_height  # 0 (窗口高度150px = 画布高度150px)
+
+                # 画布水平居中显示
+                canvas_x = (width - canvas_width) / 2  # 居中: (2560 - 1200) / 2 = 680
+
+                # 场景画布区域 - 使用原始尺寸,水平居中
+                canvas_rect = QRectF(canvas_x, canvas_y, canvas_width, canvas_height)
+
+                # 计算当前进度(0.0-1.0)
+                progress = self.current_time_percentage
+                # 渲染场景 - 使用原始尺寸,不缩放
+                self.scene_renderer.render(painter, canvas_rect, progress)
+            except Exception as e:
+                self.logger.error(f"场景渲染失败: {e}", exc_info=True)
 
         # 2. 绘制任务色块(使用紧凑模式位置) - 先绘制所有色块,不绘制悬停文字
+        # 如果场景已启用，跳过任务色块的绘制（但仍然处理悬停逻辑以显示提示）
         current_time = QTime.currentTime()
         current_seconds = current_time.hour() * 3600 + current_time.minute() * 60 + current_time.second()
 
@@ -1715,115 +1902,117 @@ class TimeProgressBar(QWidget):
         painter.setPen(Qt.NoPen)
         painter.setBrush(Qt.NoBrush)
 
-        for i, pos in enumerate(self.task_positions):
-            task = pos['task']
+        # 只有在场景未启用时才绘制任务色块
+        if not (scene_enabled and scene_config):
+            for i, pos in enumerate(self.task_positions):
+                task = pos['task']
 
-            # 使用紧凑模式的百分比位置
-            start_pct = pos['compact_start_pct']
-            end_pct = pos['compact_end_pct']
+                # 使用紧凑模式的百分比位置
+                start_pct = pos['compact_start_pct']
+                end_pct = pos['compact_end_pct']
 
-            # 三种状态:未开始、进行中、已完成
-            is_completed = pos['original_end'] <= current_seconds  # 已完成
-            is_in_progress = pos['original_start'] <= current_seconds < pos['original_end']  # 进行中
-            is_not_started = current_seconds < pos['original_start']  # 未开始
+                # 三种状态:未开始、进行中、已完成
+                is_completed = pos['original_end'] <= current_seconds  # 已完成
+                is_in_progress = pos['original_start'] <= current_seconds < pos['original_end']  # 进行中
+                is_not_started = current_seconds < pos['original_start']  # 未开始
 
-            # 计算任务块的位置和宽度
-            x = start_pct * width
+                # 计算任务块的位置和宽度
+                x = start_pct * width
 
-            # 为避免浮点数舍入导致的像素间隙，让每个任务块延伸到下一个任务的起始位置
-            if i < len(self.task_positions) - 1:
-                # 不是最后一个任务,使用下一个任务的起始位置作为结束位置
-                next_start_pct = self.task_positions[i + 1]['compact_start_pct']
-                task_width = next_start_pct * width - x
-            else:
-                # 最后一个任务,延伸到进度条末端
-                task_width = width - x
+                # 为避免浮点数舍入导致的像素间隙，让每个任务块延伸到下一个任务的起始位置
+                if i < len(self.task_positions) - 1:
+                    # 不是最后一个任务,使用下一个任务的起始位置作为结束位置
+                    next_start_pct = self.task_positions[i + 1]['compact_start_pct']
+                    task_width = next_start_pct * width - x
+                else:
+                    # 最后一个任务,延伸到进度条末端
+                    task_width = width - x
 
-            # 解析颜色
-            color = QColor(task['color'])
+                # 解析颜色
+                color = QColor(task['color'])
 
-            # 未开始的任务置灰处理
-            if is_not_started:
-                # 转换为灰度并降低饱和度
-                gray_value = int(color.red() * 0.299 + color.green() * 0.587 + color.blue() * 0.114)
-                color = QColor(gray_value, gray_value, gray_value, 120)  # 半透明灰色
+                # 未开始的任务置灰处理
+                if is_not_started:
+                    # 转换为灰度并降低饱和度
+                    gray_value = int(color.red() * 0.299 + color.green() * 0.587 + color.blue() * 0.114)
+                    color = QColor(gray_value, gray_value, gray_value, 120)  # 半透明灰色
 
-            # 绘制任务块(在进度条位置)
-            # 不留边距，让任务块占满整个进度条高度，避免显示背景色形成"白色描边"
-            rect = QRectF(x, bar_y_offset, task_width, bar_height)
+                # 绘制任务块(在进度条位置)
+                # 不留边距，让任务块占满整个进度条高度，避免显示背景色形成"白色描边"
+                rect = QRectF(x, bar_y_offset, task_width, bar_height)
 
-            # 使用QPainterPath绘制，彻底避免描边问题
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(color)
+                # 使用QPainterPath绘制，彻底避免描边问题
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(color)
 
-            if self.config.get('corner_radius', 0) > 0:
-                # 使用QPainterPath创建圆角矩形，然后fillPath（不会产生描边）
-                path = QPainterPath()
-                path.addRoundedRect(
-                    rect,
-                    self.config['corner_radius'],
-                    self.config['corner_radius']
-                )
-                painter.fillPath(path, color)
-            else:
-                painter.fillRect(rect, color)
+                if self.config.get('corner_radius', 0) > 0:
+                    # 使用QPainterPath创建圆角矩形，然后fillPath（不会产生描边）
+                    path = QPainterPath()
+                    path.addRoundedRect(
+                        rect,
+                        self.config['corner_radius'],
+                        self.config['corner_radius']
+                    )
+                    painter.fillPath(path, color)
+                else:
+                    painter.fillRect(rect, color)
 
-            # 编辑模式下的视觉反馈
-            if self.edit_mode:
-                # 1. 金色边缘高亮（悬停或拖拽）
-                if self.hover_edge and self.hover_edge[1] == i:
-                    edge_type = self.hover_edge[0]
-                    painter.setPen(QPen(QColor("#FFD700"), 3))  # 金色，3像素
-                    if edge_type == 'left':
-                        # 左边缘高亮
-                        painter.drawLine(int(rect.left()), int(rect.top()),
-                                       int(rect.left()), int(rect.bottom()))
-                    elif edge_type == 'right':
-                        # 右边缘高亮
-                        painter.drawLine(int(rect.right()), int(rect.top()),
-                                       int(rect.right()), int(rect.bottom()))
+                # 编辑模式下的视觉反馈
+                if self.edit_mode:
+                    # 1. 金色边缘高亮（悬停或拖拽）
+                    if self.hover_edge and self.hover_edge[1] == i:
+                        edge_type = self.hover_edge[0]
+                        painter.setPen(QPen(QColor("#FFD700"), 3))  # 金色，3像素
+                        if edge_type == 'left':
+                            # 左边缘高亮
+                            painter.drawLine(int(rect.left()), int(rect.top()),
+                                           int(rect.left()), int(rect.bottom()))
+                        elif edge_type == 'right':
+                            # 右边缘高亮
+                            painter.drawLine(int(rect.right()), int(rect.top()),
+                                           int(rect.right()), int(rect.bottom()))
 
-                # 2. 拖拽中的任务高亮
-                if self.dragging and self.drag_task_index == i:
-                    # 绘制半透明金色覆盖层
-                    overlay_color = QColor("#FFD700")
-                    overlay_color.setAlpha(50)
-                    painter.fillRect(rect, overlay_color)
+                    # 2. 拖拽中的任务高亮
+                    if self.dragging and self.drag_task_index == i:
+                        # 绘制半透明金色覆盖层
+                        overlay_color = QColor("#FFD700")
+                        overlay_color.setAlpha(50)
+                        painter.fillRect(rect, overlay_color)
 
-                    # 绘制拖拽边缘的粗线
-                    painter.setPen(QPen(QColor("#FFD700"), 4))
-                    if self.drag_edge == 'left':
-                        painter.drawLine(int(rect.left()), int(rect.top()),
-                                       int(rect.left()), int(rect.bottom()))
-                    elif self.drag_edge == 'right':
-                        painter.drawLine(int(rect.right()), int(rect.top()),
-                                       int(rect.right()), int(rect.bottom()))
+                        # 绘制拖拽边缘的粗线
+                        painter.setPen(QPen(QColor("#FFD700"), 4))
+                        if self.drag_edge == 'left':
+                            painter.drawLine(int(rect.left()), int(rect.top()),
+                                           int(rect.left()), int(rect.bottom()))
+                        elif self.drag_edge == 'right':
+                            painter.drawLine(int(rect.right()), int(rect.top()),
+                                           int(rect.right()), int(rect.bottom()))
 
-                # 3. 绘制拖拽手柄图标（⋮⋮）
-                if task_width > 20:  # 宽度足够才绘制
-                    painter.setPen(QColor("#FFFFFF"))
-                    painter.setFont(QFont("Arial", 12, QFont.Bold))
+                    # 3. 绘制拖拽手柄图标（⋮⋮）
+                    if task_width > 20:  # 宽度足够才绘制
+                        painter.setPen(QColor("#FFFFFF"))
+                        painter.setFont(QFont("Arial", 12, QFont.Bold))
 
-                    # 左边缘手柄
-                    handle_text = "⋮"
-                    handle_rect_left = QRectF(rect.left() + 2, rect.top(),
-                                              10, rect.height())
-                    painter.drawText(handle_rect_left, Qt.AlignCenter, handle_text)
+                        # 左边缘手柄
+                        handle_text = "⋮"
+                        handle_rect_left = QRectF(rect.left() + 2, rect.top(),
+                                                  10, rect.height())
+                        painter.drawText(handle_rect_left, Qt.AlignCenter, handle_text)
 
-                    # 右边缘手柄
-                    handle_rect_right = QRectF(rect.right() - 12, rect.top(),
-                                               10, rect.height())
-                    painter.drawText(handle_rect_right, Qt.AlignCenter, handle_text)
+                        # 右边缘手柄
+                        handle_rect_right = QRectF(rect.right() - 12, rect.top(),
+                                                   10, rect.height())
+                        painter.drawText(handle_rect_right, Qt.AlignCenter, handle_text)
 
-            # 如果是悬停任务,保存信息稍后绘制
-            if i == self.hovered_task_index:
-                hover_info = {
-                    'task': task,
-                    'color': color,
-                    'x': x,
-                    'task_width': task_width,
-                    'bar_y_offset': bar_y_offset
-                }
+                # 如果是悬停任务,保存信息稍后绘制
+                if i == self.hovered_task_index:
+                    hover_info = {
+                        'task': task,
+                        'color': color,
+                        'x': x,
+                        'task_width': task_width,
+                        'bar_y_offset': bar_y_offset
+                    }
 
         # 3. 绘制时间标记(最上层,在进度条区域)
         # 重置pen状态，防止任务循环中的pen设置影响后续绘制

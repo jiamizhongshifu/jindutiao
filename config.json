@@ -16,7 +16,6 @@
     "enable_shadow": true,
     "corner_radius": 0,
     "autostart_enabled": false,
-    "ui_theme": "light_blue.xml",
     "theme": {
         "mode": "preset",
         "current_theme_id": "business",
@@ -37,5 +36,9 @@
             "start": "22:00",
             "end": "08:00"
         }
+    },
+    "scene": {
+        "enabled": true,
+        "current_scene": "senlin"
     }
 }

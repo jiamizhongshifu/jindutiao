@@ -11,9 +11,12 @@ from enum import Enum
 
 class EventTriggerType(Enum):
     """事件触发器类型"""
-    ON_HOVER = "on_hover"           # 鼠标悬停
-    ON_CLICK = "on_click"           # 鼠标点击
-    ON_TIME_REACH = "on_time_reach"  # 时间到达
+    ON_HOVER = "on_hover"                   # 鼠标悬停
+    ON_CLICK = "on_click"                   # 鼠标点击
+    ON_TIME_REACH = "on_time_reach"         # 时间到达(精确时间点)
+    ON_PROGRESS_RANGE = "on_progress_range" # 进度在范围内(需要start_percent和end_percent参数)
+    ON_TASK_START = "on_task_start"         # 任务开始时(需要task_index参数)
+    ON_TASK_END = "on_task_end"             # 任务结束时(需要task_index参数)
 
 
 class EventActionType(Enum):
@@ -46,20 +49,25 @@ class EventAction:
 @dataclass
 class EventConfig:
     """事件配置"""
-    trigger: str                   # 触发器类型（on_hover, on_click, on_time_reach）
-    action: EventAction            # 动作配置
+    trigger: str                            # 触发器类型
+    action: EventAction                     # 动作配置
+    trigger_params: Dict[str, Any] = field(default_factory=dict)  # 触发器参数
 
     def to_dict(self) -> dict:
-        return {
+        result = {
             "trigger": self.trigger,
             "action": self.action.to_dict()
         }
+        if self.trigger_params:
+            result["trigger_params"] = self.trigger_params
+        return result
 
     @classmethod
     def from_dict(cls, data: dict) -> 'EventConfig':
         return cls(
             trigger=data.get("trigger", ""),
-            action=EventAction.from_dict(data.get("action", {}))
+            action=EventAction.from_dict(data.get("action", {})),
+            trigger_params=data.get("trigger_params", {})
         )
 
 
@@ -189,12 +197,14 @@ class CanvasConfig:
 @dataclass
 class SceneConfig:
     """场景完整配置"""
-    scene_id: str                  # 场景ID
-    name: str                      # 场景名称
-    version: str                   # 配置版本
-    canvas: CanvasConfig           # 画布配置
-    road_layer: Optional[RoadLayer]  # 道路层（可选）
-    scene_layer: SceneLayer        # 场景层
+    scene_id: str                          # 场景ID
+    name: str                              # 场景名称
+    version: str                           # 配置版本
+    canvas: CanvasConfig                   # 画布配置
+    scene_layer: SceneLayer                # 场景层
+    description: str = ""                  # 场景描述（可选）
+    author: str = ""                       # 场景作者（可选）
+    road_layer: Optional[RoadLayer] = None  # 道路层（可选）
 
     def to_dict(self) -> dict:
         layers = {
@@ -203,13 +213,21 @@ class SceneConfig:
         if self.road_layer:
             layers["road"] = self.road_layer.to_dict()
 
-        return {
+        result = {
             "scene_id": self.scene_id,
             "name": self.name,
             "version": self.version,
             "canvas": self.canvas.to_dict(),
             "layers": layers
         }
+
+        # 添加可选字段
+        if self.description:
+            result["description"] = self.description
+        if self.author:
+            result["author"] = self.author
+
+        return result
 
     @classmethod
     def from_dict(cls, data: dict) -> 'SceneConfig':
@@ -219,8 +237,10 @@ class SceneConfig:
             name=data.get("name", ""),
             version=data.get("version", "1.0.0"),
             canvas=CanvasConfig.from_dict(data.get("canvas", {})),
-            road_layer=RoadLayer.from_dict(layers.get("road")),
-            scene_layer=SceneLayer.from_dict(layers.get("scene", {}))
+            scene_layer=SceneLayer.from_dict(layers.get("scene", {})),
+            description=data.get("description", ""),
+            author=data.get("author", ""),
+            road_layer=RoadLayer.from_dict(layers.get("road"))
         )
 
     def get_all_items_sorted_by_z(self) -> List[SceneItem]:

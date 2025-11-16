@@ -1,0 +1,129 @@
+{
+  "scene_id": "scene_001",
+  "name": "未命名场景",
+  "version": "1.0.0",
+  "canvas": {
+    "width": 1200,
+    "height": 150
+  },
+  "layers": {
+    "road": {
+      "type": "tiled",
+      "image": "daolu2.png"
+    },
+    "scene": {
+      "items": [
+        {
+          "id": "item_1",
+          "image": "tree2.png",
+          "position": {
+            "x_percent": 0.0,
+            "y_pixel": 0
+          },
+          "scale": 0.29,
+          "z_index": 51,
+          "events": []
+        },
+        {
+          "id": "item_2",
+          "image": "tree1.png",
+          "position": {
+            "x_percent": 0.0,
+            "y_pixel": 0
+          },
+          "scale": 0.38,
+          "z_index": 52,
+          "events": []
+        },
+        {
+          "id": "item_3",
+          "image": "hua3.png",
+          "position": {
+            "x_percent": 0.0,
+            "y_pixel": 0
+          },
+          "scale": 0.24,
+          "z_index": 53,
+          "events": []
+        },
+        {
+          "id": "item_4",
+          "image": "hua2.png",
+          "position": {
+            "x_percent": 0.0,
+            "y_pixel": 0
+          },
+          "scale": 0.26,
+          "z_index": 54,
+          "events": []
+        },
+        {
+          "id": "item_5",
+          "image": "mutou.png",
+          "position": {
+            "x_percent": 0.0,
+            "y_pixel": 0
+          },
+          "scale": 0.26,
+          "z_index": 55,
+          "events": []
+        },
+        {
+          "id": "item_6",
+          "image": "cao.png",
+          "position": {
+            "x_percent": 0.0,
+            "y_pixel": 0
+          },
+          "scale": 0.24,
+          "z_index": 56,
+          "events": []
+        },
+        {
+          "id": "item_7",
+          "image": "cao.png",
+          "position": {
+            "x_percent": 0.0,
+            "y_pixel": 0
+          },
+          "scale": 0.24,
+          "z_index": 57,
+          "events": []
+        },
+        {
+          "id": "item_8",
+          "image": "baiyun.png",
+          "position": {
+            "x_percent": 0.0,
+            "y_pixel": 0
+          },
+          "scale": 0.24,
+          "z_index": 58,
+          "events": []
+        },
+        {
+          "id": "item_9",
+          "image": "baiyun.png",
+          "position": {
+            "x_percent": 0.0,
+            "y_pixel": 0
+          },
+          "scale": 0.24,
+          "z_index": 59,
+          "events": []
+        },
+        {
+          "id": "item_10",
+          "image": "baiyun.png",
+          "position": {
+            "x_percent": 0.0,
+            "y_pixel": 0
+          },
+          "scale": 0.24,
+          "z_index": 60,
+          "events": []
+        }
+      ]
+    }
+  }
+}

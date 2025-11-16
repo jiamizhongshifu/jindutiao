@@ -14,6 +14,8 @@ a = Analysis(
     datas=[
         # UI主题系统（浅色主题）
         ('gaiya/ui/', 'gaiya/ui/'),
+        # 场景系统资源（不打包到exe中，保持在exe所在目录的scenes/文件夹）
+        # ('scenes/', 'scenes/'),  # 已移除，场景文件夹应与exe同级
         # 任务模板文件
         ('tasks_template_24h.json', '.'),
         ('tasks_template_workday.json', '.'),
