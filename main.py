@@ -1875,8 +1875,8 @@ class TimeProgressBar(QWidget):
                 # 场景编辑器中1200px可视范围对应屏幕中间的1200px区域
                 # 左右两侧超出部分由道路层平铺填充
 
-                # 画布底部对齐到窗口底部，并向下偏移19px
-                canvas_y = height - canvas_height + 19
+                # 画布底部对齐到窗口底部，并向下偏移21px
+                canvas_y = height - canvas_height + 21
 
                 # 画布水平居中显示
                 canvas_x = (width - canvas_width) / 2  # 居中: (2560 - 1200) / 2 = 680
@@ -1886,8 +1886,15 @@ class TimeProgressBar(QWidget):
 
                 # 计算当前进度(0.0-1.0)
                 progress = self.current_time_percentage
+
+                # 设置裁剪区域，防止场景元素绘制到窗口外（避免左下角闪现深色块）
+                painter.save()  # 保存当前painter状态
+                painter.setClipRect(0, 0, width, height)  # 裁剪到窗口范围内
+
                 # 渲染场景 - 使用原始尺寸,不缩放
                 self.scene_renderer.render(painter, canvas_rect, progress)
+
+                painter.restore()  # 恢复painter状态
             except Exception as e:
                 self.logger.error(f"场景渲染失败: {e}", exc_info=True)
 
@@ -1902,8 +1909,13 @@ class TimeProgressBar(QWidget):
         painter.setPen(Qt.NoPen)
         painter.setBrush(Qt.NoBrush)
 
-        # 只有在场景未启用时才绘制任务色块
-        if not (scene_enabled and scene_config):
+        # 判断是否需要绘制进度条:
+        # 1. 场景未启用时,正常绘制进度条
+        # 2. 场景已启用,但用户勾选了"依然展示进度条",则在场景上方叠加进度条
+        show_progress_in_scene = self.config.get('scene', {}).get('show_progress_bar', False)
+        should_draw_progress_bar = not (scene_enabled and scene_config) or show_progress_in_scene
+
+        if should_draw_progress_bar:
             for i, pos in enumerate(self.task_positions):
                 task = pos['task']
 
@@ -2261,9 +2273,11 @@ class TimeProgressBar(QWidget):
                 text_width = metrics.horizontalAdvance(watermark_text)
                 text_height = metrics.height()
 
-                # 水印位置：进度条右侧，距离右边缘10px
+                # 水印位置：固定在窗口底部右侧
+                # X坐标：距离右边缘10px
                 watermark_x = width - text_width - 10
-                watermark_y = bar_y_offset + (bar_height - text_height) // 2
+                # Y坐标：固定在窗口底部，距离底部2px（不受进度条高度影响）
+                watermark_y = height - text_height - 2
                 watermark_rect = QRectF(watermark_x, watermark_y, text_width, text_height)
 
                 # 绘制半透明背景（可选）

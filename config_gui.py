@@ -1554,8 +1554,9 @@ class ConfigManager(QMainWindow):
         height_preset_layout.setContentsMargins(0, 0, 0, 0)
         height_preset_layout.setSpacing(5)
 
-        # 预设高度选项 - 精简为3个档位
+        # 预设高度选项 - 精简为4个档位
         self.height_presets = [
+            ("极细", 6),
             ("细", 10),
             ("标准", 20),
             ("粗", 30)
@@ -1579,7 +1580,7 @@ class ConfigManager(QMainWindow):
 
         self.height_spin = QSpinBox()
         self.height_spin.setStyleSheet(StyleManager.input_number())
-        self.height_spin.setRange(8, 100)
+        self.height_spin.setRange(2, 50)
         # 延迟读取配置值，避免配置未加载时出错
         current_height = self.config.get('bar_height', 20) if self.config else 20
         self.height_spin.setValue(current_height)
@@ -2419,6 +2420,13 @@ class ConfigManager(QMainWindow):
         self.scene_enabled_check.setMinimumHeight(36)
         self.scene_enabled_check.setStyleSheet("font-weight: bold;")
         basic_layout.addRow(self.scene_enabled_check)
+
+        # 依然展示进度条
+        self.show_progress_in_scene_check = QCheckBox("依然展示进度条")
+        self.show_progress_in_scene_check.setChecked(scene_config.get('show_progress_bar', False))
+        self.show_progress_in_scene_check.setMinimumHeight(36)
+        self.show_progress_in_scene_check.setToolTip("场景模式下在场景上方叠加显示进度条")
+        basic_layout.addRow(self.show_progress_in_scene_check)
 
         basic_group.setLayout(basic_layout)
         layout.addWidget(basic_group)
@@ -5916,7 +5924,8 @@ class ConfigManager(QMainWindow):
                 },
                 "scene": {
                     "enabled": (getattr(self, 'scene_enabled_check', None) and self.scene_enabled_check.isChecked()) if hasattr(self, 'scene_enabled_check') else self.config.get('scene', {}).get('enabled', False),
-                    "current_scene": self.scene_combo.itemData(self.scene_combo.currentIndex()) if hasattr(self, 'scene_combo') and self.scene_combo.currentIndex() >= 0 else self.config.get('scene', {}).get('current_scene')
+                    "current_scene": self.scene_combo.itemData(self.scene_combo.currentIndex()) if hasattr(self, 'scene_combo') and self.scene_combo.currentIndex() >= 0 else self.config.get('scene', {}).get('current_scene'),
+                    "show_progress_bar": (getattr(self, 'show_progress_in_scene_check', None) and self.show_progress_in_scene_check.isChecked()) if hasattr(self, 'show_progress_in_scene_check') else self.config.get('scene', {}).get('show_progress_bar', False)
                 }
             }
 
