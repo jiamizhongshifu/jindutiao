@@ -11,6 +11,7 @@ try:
     from auth_manager import AuthManager
     from rate_limiter import RateLimiter
     from cors_config import get_cors_origin
+    from validators_enhanced import validate_email
 except ImportError:
     # Vercel环境可能需要不同的导入路径
     import os
@@ -19,6 +20,7 @@ except ImportError:
     from auth_manager import AuthManager
     from rate_limiter import RateLimiter
     from cors_config import get_cors_origin
+    from validators_enhanced import validate_email
 
 
 class handler(BaseHTTPRequestHandler):
@@ -89,7 +91,14 @@ class handler(BaseHTTPRequestHandler):
             password = data.get("password")
 
             if not email or not password:
-                self._send_error(400, "Missing email or password")
+                self._send_error(400, "Missing email or password", rate_info)
+                return
+
+            # ✅ 安全增强: 使用RFC 5322严格邮箱验证
+            is_valid_email, email_error = validate_email(email)
+            if not is_valid_email:
+                self._send_error(400, email_error, rate_info)
+                print(f"[AUTH-SIGNIN] Invalid email format: {email}", file=sys.stderr)
                 return
 
             print(f"[AUTH-SIGNIN] Login attempt for: {email} from IP: {client_ip}", file=sys.stderr)

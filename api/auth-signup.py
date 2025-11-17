@@ -10,6 +10,7 @@ try:
     from auth_manager import AuthManager
     from rate_limiter import RateLimiter
     from cors_config import get_cors_origin
+    from validators_enhanced import validate_email, validate_password
 except ImportError:
     import os
     import sys
@@ -17,6 +18,7 @@ except ImportError:
     from auth_manager import AuthManager
     from rate_limiter import RateLimiter
     from cors_config import get_cors_origin
+    from validators_enhanced import validate_email, validate_password
 
 
 class handler(BaseHTTPRequestHandler):
@@ -91,9 +93,18 @@ class handler(BaseHTTPRequestHandler):
                 self._send_error(400, "Missing email or password", rate_info)
                 return
 
-            # 简单的密码强度验证
-            if len(password) < 6:
-                self._send_error(400, "Password must be at least 6 characters", rate_info)
+            # ✅ 安全增强: 使用RFC 5322严格邮箱验证
+            is_valid_email, email_error = validate_email(email)
+            if not is_valid_email:
+                self._send_error(400, email_error, rate_info)
+                print(f"[AUTH-SIGNUP] Invalid email format: {email}", file=sys.stderr)
+                return
+
+            # ✅ 安全增强: 使用强密码验证（至少8位，包含大小写字母和数字）
+            is_valid_password, password_error = validate_password(password)
+            if not is_valid_password:
+                self._send_error(400, password_error, rate_info)
+                print(f"[AUTH-SIGNUP] Weak password for: {email}", file=sys.stderr)
                 return
 
             print(f"[AUTH-SIGNUP] Registration attempt for: {email} from IP: {client_ip}", file=sys.stderr)

@@ -15,7 +15,7 @@ import time
 try:
     from zpay_manager import ZPayManager
     from subscription_manager import SubscriptionManager
-    from validators import validate_user_id, validate_plan_type, validate_payment_amount
+    from validators_enhanced import validate_user_id, validate_plan_type, validate_payment_amount
     from rate_limiter import RateLimiter
     from cors_config import get_cors_origin
 except ImportError:
@@ -24,7 +24,7 @@ except ImportError:
     sys.path.insert(0, os.path.dirname(__file__))
     from zpay_manager import ZPayManager
     from subscription_manager import SubscriptionManager
-    from validators import validate_user_id, validate_plan_type, validate_payment_amount
+    from validators_enhanced import validate_user_id, validate_plan_type, validate_payment_amount
     from rate_limiter import RateLimiter
     from cors_config import get_cors_origin
 
@@ -61,15 +61,16 @@ class handler(BaseHTTPRequestHandler):
             body = self.rfile.read(content_length).decode('utf-8')
             data = json.loads(body)
 
-            # 2. ✅ 安全验证：使用validators模块
+            # 2. ✅ 安全验证：使用validators_enhanced模块
             user_id = data.get("user_id")
             plan_type = data.get("plan_type")
             pay_type = data.get("pay_type", "alipay")  # 默认支付宝
 
-            # 验证user_id
-            is_valid, error_msg = validate_user_id(user_id)
+            # ✅ 安全增强：验证UUID格式的user_id（Supabase Auth使用UUID）
+            is_valid, error_msg = validate_user_id(user_id, require_uuid=True)
             if not is_valid:
                 self._send_error(400, error_msg)
+                print(f"[PAYMENT-CREATE] Invalid user_id format: {user_id}", file=sys.stderr)
                 return
 
             # ✅ 安全修复: 速率限制检查（防止订单创建滥用）
