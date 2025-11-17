@@ -16,6 +16,14 @@ import urllib.request
 import urllib.parse
 import urllib.error
 
+# ✅ 安全修复: 使用keyring进行Token加密存储
+try:
+    import keyring
+    KEYRING_AVAILABLE = True
+except ImportError:
+    KEYRING_AVAILABLE = False
+    print("[SECURITY WARNING] keyring库不可用，Token将以明文存储！建议运行: pip install keyring")
+
 # ✅ 安全修复: 移除全局禁用SSL警告
 # SSL证书验证是关键安全措施，不应全局禁用
 # 如果遇到SSL问题，应该更新CA证书或修复服务器配置
@@ -205,19 +213,68 @@ class AuthClient:
         self._load_tokens()
 
     def _load_tokens(self):
-        """从本地加载Token"""
+        """
+        从本地加载Token（优先使用加密存储）
+
+        ✅ 安全修复: 优先从keyring读取加密的Token
+        ✅ 自动迁移: 如果发现旧的明文文件，自动迁移到keyring并删除明文文件
+        """
         try:
+            # ✅ 优先从keyring读取
+            if KEYRING_AVAILABLE:
+                try:
+                    json_data = keyring.get_password("gaiya", "auth_data")
+                    if json_data:
+                        # 成功从keyring读取
+                        data = json.loads(json_data)
+                        self.access_token = data.get("access_token")
+                        self.refresh_token = data.get("refresh_token")
+                        self.user_info = data.get("user_info")
+                        print("[AUTH] Token已从加密存储加载（keyring）")
+
+                        # ✅ 清理旧的明文文件（如果存在且之前删除失败）
+                        if self.auth_file.exists():
+                            try:
+                                self.auth_file.unlink()
+                                print("[AUTH] 已清理旧的明文Token文件")
+                            except Exception:
+                                # 忽略删除失败，下次再试
+                                pass
+
+                        return
+                except Exception as keyring_error:
+                    print(f"[AUTH] keyring读取失败: {keyring_error}")
+                    # 继续尝试从文件读取（可能是首次使用keyring）
+
+            # ✅ 自动迁移: 如果keyring中没有数据，但文件存在，则迁移
             if self.auth_file.exists():
                 with open(self.auth_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     self.access_token = data.get("access_token")
                     self.refresh_token = data.get("refresh_token")
                     self.user_info = data.get("user_info")
+
+                    # 如果keyring可用，自动迁移到加密存储
+                    if KEYRING_AVAILABLE and self.access_token and self.refresh_token:
+                        print("[AUTH] 检测到明文Token文件，正在迁移到加密存储...")
+                        self._save_tokens(self.access_token, self.refresh_token, self.user_info)
+                    else:
+                        print("[AUTH] Token已从明文文件加载（不安全）")
+
         except Exception as e:
-            print(f"加载Token失败: {e}")
+            print(f"[ERROR] 加载Token失败: {e}")
 
     def _save_tokens(self, access_token: str, refresh_token: str, user_info: Dict = None):
-        """保存Token到本地"""
+        """
+        保存Token到本地（使用加密存储）
+
+        ✅ 安全修复: 优先使用keyring进行平台特定的加密存储
+        - Windows: DPAPI (Data Protection API)
+        - macOS: Keychain
+        - Linux: Secret Service API (GNOME Keyring等)
+
+        降级策略: 如果keyring不可用，fallback到明文文件存储（并警告）
+        """
         try:
             data = {
                 "access_token": access_token,
@@ -226,28 +283,76 @@ class AuthClient:
                 "saved_at": datetime.now().isoformat()
             }
 
-            with open(self.auth_file, 'w', encoding='utf-8') as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
+            # ✅ 优先使用keyring加密存储
+            if KEYRING_AVAILABLE:
+                try:
+                    # 将所有数据序列化为JSON字符串存储在keyring中
+                    # 使用单一key "gaiya_auth_data" 保持数据完整性
+                    json_data = json.dumps(data, ensure_ascii=False)
+                    keyring.set_password("gaiya", "auth_data", json_data)
 
+                    # 成功使用keyring后，尝试删除旧的明文文件（如果存在）
+                    if self.auth_file.exists():
+                        try:
+                            self.auth_file.unlink()
+                            print("[AUTH] 已迁移到加密存储，旧的明文文件已删除")
+                        except Exception as delete_error:
+                            # Windows文件锁定，稍后再删除
+                            print(f"[AUTH] 已迁移到加密存储，但明文文件删除失败（将在下次启动时重试）: {delete_error}")
+
+                    print("[AUTH] Token已使用加密存储（keyring）")
+
+                except Exception as keyring_error:
+                    # keyring失败，fallback到明文文件
+                    print(f"[SECURITY WARNING] keyring存储失败，fallback到明文文件: {keyring_error}")
+                    self._save_tokens_to_file(data)
+            else:
+                # keyring不可用，使用明文文件
+                print("[SECURITY WARNING] 使用明文文件存储Token（不安全）")
+                self._save_tokens_to_file(data)
+
+            # 更新内存中的Token
             self.access_token = access_token
             self.refresh_token = refresh_token
             self.user_info = user_info
 
         except Exception as e:
-            print(f"保存Token失败: {e}")
+            print(f"[ERROR] 保存Token失败: {e}")
+
+    def _save_tokens_to_file(self, data: dict):
+        """Fallback方法: 保存Token到明文文件"""
+        with open(self.auth_file, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
 
     def _clear_tokens(self):
-        """清除本地Token"""
+        """
+        清除本地Token（同时清除加密存储和文件）
+
+        ✅ 安全修复: 确保同时清除keyring和文件中的Token
+        """
         try:
+            # ✅ 清除keyring中的Token
+            if KEYRING_AVAILABLE:
+                try:
+                    keyring.delete_password("gaiya", "auth_data")
+                    print("[AUTH] 已清除加密存储中的Token")
+                except Exception as e:
+                    # Token可能不存在或keyring访问失败，记录但继续
+                    if "not found" not in str(e).lower():
+                        print(f"[AUTH] 清除keyring失败: {e}")
+
+            # ✅ 清除文件中的Token（如果存在）
             if self.auth_file.exists():
                 self.auth_file.unlink()
+                print("[AUTH] 已清除明文文件中的Token")
 
+            # 清除内存中的Token
             self.access_token = None
             self.refresh_token = None
             self.user_info = None
 
         except Exception as e:
-            print(f"清除Token失败: {e}")
+            print(f"[ERROR] 清除Token失败: {e}")
 
     def is_logged_in(self) -> bool:
         """检查是否已登录"""
