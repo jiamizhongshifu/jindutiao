@@ -150,11 +150,25 @@ class RateLimiter:
                 # 计算重置时间
                 if response.data:
                     oldest_request = min(response.data, key=lambda x: x["created_at"])
-                    reset_at = datetime.fromisoformat(oldest_request["created_at"].replace("Z", "+00:00")) + timedelta(seconds=window_seconds)
+
+                    # ✅ 修复: 处理Supabase返回的datetime对象或字符串
+                    created_at = oldest_request["created_at"]
+                    if isinstance(created_at, str):
+                        # 字符串格式，需要解析
+                        oldest_time = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                    else:
+                        # 已经是datetime对象，直接使用
+                        oldest_time = created_at
+
+                    # 确保时区一致（转换为UTC）
+                    if oldest_time.tzinfo is not None:
+                        oldest_time = oldest_time.replace(tzinfo=None)
+
+                    reset_at = oldest_time + timedelta(seconds=window_seconds)
                 else:
                     reset_at = now + timedelta(seconds=window_seconds)
 
-                print(f"[RATE_LIMITER] 🚫 速率限制触发: {endpoint}, key={limit_key}, {current_count}/{max_requests}", file=sys.stderr)
+                print(f"[RATE_LIMITER] BLOCKED: {endpoint}, key={limit_key}, {current_count}/{max_requests}", file=sys.stderr)
 
                 return False, {
                     "remaining": 0,
@@ -174,7 +188,7 @@ class RateLimiter:
 
             remaining = max_requests - current_count - 1
 
-            print(f"[RATE_LIMITER] ✅ 允许请求: {endpoint}, key={limit_key}, {current_count + 1}/{max_requests}", file=sys.stderr)
+            print(f"[RATE_LIMITER] ALLOWED: {endpoint}, key={limit_key}, {current_count + 1}/{max_requests}", file=sys.stderr)
 
             return True, {
                 "remaining": remaining,
@@ -184,6 +198,8 @@ class RateLimiter:
 
         except Exception as e:
             print(f"[RATE_LIMITER] 检查速率限制失败: {e}", file=sys.stderr)
+            import traceback
+            traceback.print_exc(file=sys.stderr)
             # ✅ 安全降级：出错时允许请求，避免阻塞正常用户
             return True, {"remaining": 999, "total": 999}
 
