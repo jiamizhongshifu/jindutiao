@@ -9,6 +9,8 @@ import traceback
 sys.path.insert(0, os.path.dirname(__file__))
 
 from quota_manager import QuotaManager
+from rate_limiter import RateLimiter
+from cors_config import get_cors_origin
 
 TUZI_API_KEY = os.getenv("TUZI_API_KEY")
 TUZI_BASE_URL = os.getenv("TUZI_BASE_URL", "https://api.tu-zi.com/v1")
@@ -17,15 +19,24 @@ class handler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         """处理CORS预检请求"""
         print("CORS preflight request for plan-tasks", file=sys.stderr)
+        # ✅ 安全修复: CORS源白名单验证
+        request_origin = self.headers.get('Origin', '')
+        allowed_origin = get_cors_origin(request_origin)
+
         self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Origin', allowed_origin)
         self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.send_header('Access-Control-Max-Age', '3600')
         self.end_headers()
 
     def do_POST(self):
         """处理POST请求 - 任务规划"""
         print("Plan tasks function called", file=sys.stderr)
+
+        # ✅ 安全修复: CORS源白名单验证
+        request_origin = self.headers.get('Origin', '')
+        self.allowed_origin = get_cors_origin(request_origin)
 
         if not TUZI_API_KEY:
             print("API key not configured", file=sys.stderr)
@@ -46,6 +57,22 @@ class handler(BaseHTTPRequestHandler):
             user_data = json.loads(body)
             user_id = user_data.get('user_id', 'user_demo')
             user_tier = user_data.get('user_tier', 'free')
+
+            # ✅ 安全修复: 速率限制检查（防止AI资源滥用）
+            limiter = RateLimiter()
+
+            # 检查速率限制 (20次/24小时，基于user_id)
+            is_allowed, rate_info = limiter.check_rate_limit("plan_tasks", user_id)
+
+            if not is_allowed:
+                # 返回429 Too Many Requests
+                print(f"[PLAN-TASKS] 🚫 Rate limit exceeded for user: {user_id}", file=sys.stderr)
+                self._send_json_response(429, {
+                    'success': False,
+                    'error': 'Daily AI quota exceeded. Please try again tomorrow.',
+                    'retry_after': rate_info.get("retry_after", 60)
+                }, rate_info)
+                return
 
             # 检查并扣除配额
             quota_manager = QuotaManager()
@@ -153,7 +180,7 @@ class handler(BaseHTTPRequestHandler):
                         "success": True,
                         "tasks": tasks,
                         "quota_info": quota_info
-                    })
+                    }, rate_info)
 
                 except json.JSONDecodeError as e:
                     print(f"JSON decode error: {str(e)}", file=sys.stderr)
@@ -180,10 +207,19 @@ class handler(BaseHTTPRequestHandler):
                 'details': str(e)
             })
 
-    def _send_json_response(self, status_code, data):
-        """发送JSON响应的辅助方法"""
+    def _send_json_response(self, status_code, data, rate_info: dict = None):
+        """发送JSON响应的辅助方法（包含速率限制响应头）"""
         self.send_response(status_code)
         self.send_header('Content-Type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Origin', getattr(self, 'allowed_origin', '*'))
+
+        # ✅ 添加速率限制响应头
+        if rate_info:
+            self.send_header('X-RateLimit-Limit', str(rate_info.get("total", 0)))
+            self.send_header('X-RateLimit-Remaining', str(rate_info.get("remaining", 0)))
+            self.send_header('X-RateLimit-Reset', rate_info.get("reset_at", ""))
+            if status_code == 429:
+                self.send_header('Retry-After', str(rate_info.get("retry_after", 60)))
+
         self.end_headers()
         self.wfile.write(json.dumps(data).encode('utf-8'))

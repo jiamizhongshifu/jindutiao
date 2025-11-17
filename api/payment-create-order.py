@@ -16,6 +16,8 @@ try:
     from zpay_manager import ZPayManager
     from subscription_manager import SubscriptionManager
     from validators import validate_user_id, validate_plan_type, validate_payment_amount
+    from rate_limiter import RateLimiter
+    from cors_config import get_cors_origin
 except ImportError:
     import os
     import sys
@@ -23,6 +25,8 @@ except ImportError:
     from zpay_manager import ZPayManager
     from subscription_manager import SubscriptionManager
     from validators import validate_user_id, validate_plan_type, validate_payment_amount
+    from rate_limiter import RateLimiter
+    from cors_config import get_cors_origin
 
 
 class handler(BaseHTTPRequestHandler):
@@ -30,15 +34,24 @@ class handler(BaseHTTPRequestHandler):
 
     def do_OPTIONS(self):
         """处理CORS预检请求"""
+        # ✅ 安全修复: CORS源白名单验证
+        request_origin = self.headers.get('Origin', '')
+        allowed_origin = get_cors_origin(request_origin)
+
         self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Origin', allowed_origin)
         self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.send_header('Access-Control-Max-Age', '3600')
         self.end_headers()
 
     def do_POST(self):
         """处理创建订单请求"""
         try:
+            # ✅ 安全修复: CORS源白名单验证
+            request_origin = self.headers.get('Origin', '')
+            self.allowed_origin = get_cors_origin(request_origin)
+
             # 1. 读取请求体
             content_length = int(self.headers.get('Content-Length', 0))
             if content_length == 0:
@@ -59,15 +72,41 @@ class handler(BaseHTTPRequestHandler):
                 self._send_error(400, error_msg)
                 return
 
+            # ✅ 安全修复: 速率限制检查（防止订单创建滥用）
+            limiter = RateLimiter()
+
+            # 检查速率限制 (10次/1小时，基于user_id)
+            is_allowed, rate_info = limiter.check_rate_limit("payment_create_order", user_id)
+
+            if not is_allowed:
+                # 返回429 Too Many Requests
+                self.send_response(429)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', self.allowed_origin)
+                self.send_header('Retry-After', str(rate_info.get("retry_after", 60)))
+                self.send_header('X-RateLimit-Limit', str(rate_info.get("total", 0)))
+                self.send_header('X-RateLimit-Remaining', '0')
+                self.send_header('X-RateLimit-Reset', rate_info.get("reset_at", ""))
+                self.end_headers()
+
+                error_response = {
+                    "success": False,
+                    "error": "Too many payment order requests. Please try again later.",
+                    "retry_after": rate_info.get("retry_after", 60)
+                }
+                self.wfile.write(json.dumps(error_response).encode('utf-8'))
+                print(f"[PAYMENT-CREATE] 🚫 Rate limit exceeded for user: {user_id}", file=sys.stderr)
+                return
+
             # 验证plan_type并获取正确价格
             is_valid, error_msg, correct_price = validate_plan_type(plan_type)
             if not is_valid:
-                self._send_error(400, error_msg)
+                self._send_error(400, error_msg, rate_info)
                 return
 
             # ✅ 安全：验证支付方式
             if pay_type not in ["alipay", "wxpay"]:
-                self._send_error(400, "Invalid pay_type")
+                self._send_error(400, "Invalid pay_type", rate_info)
                 return
 
             print(f"[PAYMENT-CREATE] User {user_id} requesting {plan_type} (¥{correct_price}) via {pay_type}", file=sys.stderr)
@@ -79,7 +118,7 @@ class handler(BaseHTTPRequestHandler):
             # ✅ 双重验证：确保price与validators的价格一致
             if abs(plan_info["price"] - correct_price) > 0.01:
                 print(f"[SECURITY] Price mismatch detected for {plan_type}", file=sys.stderr)
-                self._send_error(500, "Internal price configuration error")
+                self._send_error(500, "Internal price configuration error", rate_info)
                 return
 
             # 4. 生成唯一订单号
@@ -108,7 +147,7 @@ class handler(BaseHTTPRequestHandler):
             )
 
             if result["success"]:
-                # 7. 返回支付信息
+                # 7. 返回支付信息（包含速率限制信息）
                 self._send_success({
                     "success": True,
                     "payment_url": result["payment_url"],
@@ -116,11 +155,11 @@ class handler(BaseHTTPRequestHandler):
                     "out_trade_no": out_trade_no,
                     "amount": plan_info["price"],
                     "plan_name": plan_info["name"]
-                })
+                }, rate_info)
 
                 print(f"[PAYMENT-CREATE] Order created: {out_trade_no}", file=sys.stderr)
             else:
-                self._send_error(500, result.get("error", "Failed to create order"))
+                self._send_error(500, result.get("error", "Failed to create order"), rate_info)
 
         except json.JSONDecodeError:
             self._send_error(400, "Invalid JSON")
@@ -139,19 +178,33 @@ class handler(BaseHTTPRequestHandler):
         user_hash = hashlib.md5(user_id.encode()).hexdigest()[:6]
         return f"GAIYA{timestamp}{user_hash}"
 
-    def _send_success(self, data: dict):
-        """发送成功响应"""
+    def _send_success(self, data: dict, rate_info: dict = None):
+        """发送成功响应（包含速率限制响应头）"""
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Origin', self.allowed_origin)
+
+        # ✅ 添加速率限制响应头
+        if rate_info:
+            self.send_header('X-RateLimit-Limit', str(rate_info.get("total", 0)))
+            self.send_header('X-RateLimit-Remaining', str(rate_info.get("remaining", 0)))
+            self.send_header('X-RateLimit-Reset', rate_info.get("reset_at", ""))
+
         self.end_headers()
         self.wfile.write(json.dumps(data).encode('utf-8'))
 
-    def _send_error(self, code: int, message: str):
-        """发送错误响应"""
+    def _send_error(self, code: int, message: str, rate_info: dict = None):
+        """发送错误响应（包含速率限制响应头）"""
         self.send_response(code)
         self.send_header('Content-Type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Origin', getattr(self, 'allowed_origin', '*'))
+
+        # ✅ 添加速率限制响应头
+        if rate_info:
+            self.send_header('X-RateLimit-Limit', str(rate_info.get("total", 0)))
+            self.send_header('X-RateLimit-Remaining', str(rate_info.get("remaining", 0)))
+            self.send_header('X-RateLimit-Reset', rate_info.get("reset_at", ""))
+
         self.end_headers()
 
         error_response = {

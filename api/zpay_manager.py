@@ -265,6 +265,49 @@ class ZPayManager:
                     print(f"[SECURITY] Required field '{field}' missing in payment callback", file=sys.stderr)
                     return False
 
+            # ✅ 安全检查3：时间戳验证（防止重放攻击）
+            timestamp = params.get("timestamp")
+            if timestamp:
+                try:
+                    # 解析时间戳（支持多种格式）
+                    if isinstance(timestamp, str):
+                        # 尝试ISO格式
+                        try:
+                            callback_time = datetime.fromisoformat(timestamp)
+                        except ValueError:
+                            # 尝试Unix时间戳（秒）
+                            try:
+                                callback_time = datetime.fromtimestamp(float(timestamp))
+                            except ValueError:
+                                print(f"[SECURITY] Invalid timestamp format in payment callback: {timestamp}", file=sys.stderr)
+                                return False
+                    elif isinstance(timestamp, (int, float)):
+                        # Unix时间戳（秒）
+                        callback_time = datetime.fromtimestamp(timestamp)
+                    else:
+                        print(f"[SECURITY] Invalid timestamp type in payment callback", file=sys.stderr)
+                        return False
+
+                    # 计算时间差
+                    now = datetime.now()
+                    age_seconds = (now - callback_time).total_seconds()
+
+                    # 拒绝超过5分钟的回调（防止重放攻击）
+                    # 使用绝对值以防止时间漂移导致的未来时间戳
+                    if abs(age_seconds) > 300:
+                        print(f"[SECURITY] Payment callback too old or future-dated: {age_seconds:.1f}s", file=sys.stderr)
+                        return False
+
+                    print(f"[ZPAY-VERIFY] Timestamp validation passed (age: {age_seconds:.1f}s)", file=sys.stderr)
+
+                except Exception as e:
+                    print(f"[SECURITY] Timestamp validation error: {type(e).__name__}", file=sys.stderr)
+                    return False
+            else:
+                # ⚠️ 如果ZPAY不提供timestamp字段，记录警告但暂不强制要求
+                # 生产环境建议与ZPAY确认是否支持timestamp，并在后续版本中强制要求
+                print(f"[WARNING] Payment callback missing timestamp field (order: {params.get('out_trade_no')})", file=sys.stderr)
+
             # 2. 移除sign和sign_type参数
             verify_params = {k: v for k, v in params.items() if k not in ["sign", "sign_type"]}
 
@@ -371,9 +414,11 @@ class ZPayManager:
         # 5. MD5加密（小写）
         sign = hashlib.md5(sign_str.encode('utf-8')).hexdigest()
 
-        # ✅ 安全：不输出签名字符串和签名值（包含商户密钥信息）
-        # 仅在严重调试时才输出，生产环境禁用
-        # print(f"[DEBUG] Sign string: {sign_str[:50]}...", file=sys.stderr)
+        # ✅ 安全：仅输出参数名列表用于调试，不输出实际值和密钥
+        # 生产环境可通过环境变量 ZPAY_DEBUG_MODE=true 启用
+        if os.getenv("ZPAY_DEBUG_MODE") == "true":
+            param_names = list(filtered_params.keys())
+            print(f"[DEBUG] Generating signature for params: {param_names}", file=sys.stderr)
 
         return sign
 

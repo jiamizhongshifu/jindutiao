@@ -9,10 +9,12 @@ import sys
 
 try:
     from auth_manager import AuthManager
+    from cors_config import get_cors_origin
 except ImportError:
     import os
     sys.path.insert(0, os.path.dirname(__file__))
     from auth_manager import AuthManager
+    from cors_config import get_cors_origin
 
 
 class handler(BaseHTTPRequestHandler):
@@ -21,6 +23,10 @@ class handler(BaseHTTPRequestHandler):
     def do_GET(self):
         """处理邮箱确认请求"""
         try:
+            # ✅ 安全修复: CORS源白名单验证（虽然是GET，但保持一致性）
+            request_origin = self.headers.get('Origin', '')
+            self.allowed_origin = get_cors_origin(request_origin)
+
             # 1. 解析查询参数
             parsed_url = urlparse(self.path)
             params = parse_qs(parsed_url.query)

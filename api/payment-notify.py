@@ -12,6 +12,7 @@ try:
     from zpay_manager import ZPayManager
     from subscription_manager import SubscriptionManager
     from supabase import create_client, Client
+    from cors_config import get_cors_origin
     import os
 except ImportError:
     import os
@@ -20,6 +21,7 @@ except ImportError:
     from zpay_manager import ZPayManager
     from subscription_manager import SubscriptionManager
     from supabase import create_client, Client
+    from cors_config import get_cors_origin
 
 # Supabase配置
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
@@ -32,6 +34,10 @@ class handler(BaseHTTPRequestHandler):
     def do_GET(self):
         """处理支付通知（ZPAY使用GET方式）"""
         try:
+            # ✅ 安全修复: CORS源白名单验证（虽然是ZPAY回调，但保持一致性）
+            request_origin = self.headers.get('Origin', '')
+            self.allowed_origin = get_cors_origin(request_origin)
+
             # 1. 解析查询参数
             parsed_url = urlparse(self.path)
             params = {}

@@ -9,11 +9,13 @@ import sys
 
 try:
     from auth_manager import AuthManager
+    from cors_config import get_cors_origin
 except ImportError:
     import os
     import sys
     sys.path.insert(0, os.path.dirname(__file__))
     from auth_manager import AuthManager
+    from cors_config import get_cors_origin
 
 
 class handler(BaseHTTPRequestHandler):
@@ -21,15 +23,24 @@ class handler(BaseHTTPRequestHandler):
 
     def do_OPTIONS(self):
         """处理CORS预检请求"""
+        # ✅ 安全修复: CORS源白名单验证
+        request_origin = self.headers.get('Origin', '')
+        allowed_origin = get_cors_origin(request_origin)
+
         self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Origin', allowed_origin)
         self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.send_header('Access-Control-Max-Age', '3600')
         self.end_headers()
 
     def do_POST(self):
         """处理刷新Token请求"""
         try:
+            # ✅ 安全修复: CORS源白名单验证
+            request_origin = self.headers.get('Origin', '')
+            self.allowed_origin = get_cors_origin(request_origin)
+
             # 1. 读取请求体
             content_length = int(self.headers.get('Content-Length', 0))
             if content_length == 0:
@@ -73,7 +84,7 @@ class handler(BaseHTTPRequestHandler):
         """发送成功响应"""
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Origin', getattr(self, 'allowed_origin', '*'))
         self.end_headers()
         self.wfile.write(json.dumps(data).encode('utf-8'))
 
@@ -81,7 +92,7 @@ class handler(BaseHTTPRequestHandler):
         """发送错误响应"""
         self.send_response(code)
         self.send_header('Content-Type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Origin', getattr(self, 'allowed_origin', '*'))
         self.end_headers()
 
         error_response = {

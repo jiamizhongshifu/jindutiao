@@ -16,14 +16,15 @@ import urllib.request
 import urllib.parse
 import urllib.error
 
-# 禁用SSL警告（临时解决SSL兼容性问题）
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+# ✅ 安全修复: 移除全局禁用SSL警告
+# SSL证书验证是关键安全措施，不应全局禁用
+# 如果遇到SSL问题，应该更新CA证书或修复服务器配置
 
 
 class SSLAdapter(HTTPAdapter):
     """
-    自定义SSL适配器，完全禁用SSL证书验证
-    解决Windows SSL库与Vercel服务器的兼容性问题
+    自定义SSL适配器，在保持兼容性的同时启用证书验证
+    解决Windows SSL库与代理服务器的兼容性问题
     """
     def init_poolmanager(self, *args, **kwargs):
         """初始化连接池管理器，使用强化的SSL配置（兼容Clash代理）"""
@@ -35,9 +36,17 @@ class SSLAdapter(HTTPAdapter):
             # 强制使用TLS 1.2或更高版本（兼容现代服务器）
             ctx.minimum_version = ssl.TLSVersion.TLSv1_2
 
-            # 禁用证书验证（解决证书问题）
-            ctx.check_hostname = False
-            ctx.verify_mode = ssl.CERT_NONE
+            # ✅ 安全修复: 仅在环境变量明确要求时禁用证书验证
+            disable_ssl_verify = os.getenv("DISABLE_SSL_VERIFY", "false").lower() == "true"
+
+            if disable_ssl_verify:
+                # 开发/调试模式：禁用证书验证
+                ctx.check_hostname = False
+                ctx.verify_mode = ssl.CERT_NONE
+            else:
+                # ✅ 生产模式：启用证书验证
+                ctx.check_hostname = True
+                ctx.verify_mode = ssl.CERT_REQUIRED
 
             # 设置更宽松的cipher suites（兼容代理软件）
             # SECLEVEL=1 允许使用1024位密钥和SHA-1签名
@@ -49,7 +58,9 @@ class SSLAdapter(HTTPAdapter):
             # 如果高级配置失败，回退到基础配置
             print(f"[AUTH] 高级SSL配置失败，使用基础配置: {e}")
             kwargs['ssl_version'] = ssl.PROTOCOL_TLS
-            kwargs['cert_reqs'] = ssl.CERT_NONE
+            # ✅ 安全修复: 默认启用证书验证
+            disable_ssl_verify = os.getenv("DISABLE_SSL_VERIFY", "false").lower() == "true"
+            kwargs['cert_reqs'] = ssl.CERT_NONE if disable_ssl_verify else ssl.CERT_REQUIRED
 
         return super().init_poolmanager(*args, **kwargs)
 
@@ -76,9 +87,16 @@ class AuthClient:
             # 强制使用TLS 1.2或更高版本
             ctx.minimum_version = ssl.TLSVersion.TLSv1_2
 
-            # 禁用证书验证
-            ctx.check_hostname = False
-            ctx.verify_mode = ssl.CERT_NONE
+            # ✅ 安全修复: 仅在环境变量明确要求时禁用证书验证
+            disable_ssl_verify = os.getenv("DISABLE_SSL_VERIFY", "false").lower() == "true"
+
+            if disable_ssl_verify:
+                # 开发/调试模式：禁用证书验证
+                ctx.check_hostname = False
+                ctx.verify_mode = ssl.CERT_NONE
+            else:
+                # ✅ 生产模式：启用证书验证（使用默认配置）
+                pass  # create_default_context已经启用了证书验证
 
             # 设置更宽松的cipher suites（兼容Clash代理）
             ctx.set_ciphers('DEFAULT@SECLEVEL=1')
@@ -148,14 +166,28 @@ class AuthClient:
             status_forcelist=[500, 502, 503, 504],  # 这些HTTP状态码会触发重试
         )
 
-        # 使用自定义的SSLAdapter，完全禁用SSL验证（解决Windows SSL库兼容性问题）
+        # 使用自定义的SSLAdapter（解决SSL兼容性问题但保持证书验证）
         ssl_adapter = SSLAdapter(max_retries=retry_strategy)
         self.session.mount("http://", ssl_adapter)
         self.session.mount("https://", ssl_adapter)
 
-        # 禁用SSL验证（多重保险）
-        # 注意：这会降低安全性，但可以解决Windows SSL库兼容性问题
-        self.session.verify = False
+        # ✅ 安全修复: 默认启用SSL证书验证
+        # 仅在开发/调试环境下通过环境变量禁用（不推荐）
+        disable_ssl_verify = os.getenv("DISABLE_SSL_VERIFY", "false").lower() == "true"
+
+        if disable_ssl_verify:
+            print("[SECURITY WARNING] SSL证书验证已禁用！这仅应用于开发环境，生产环境绝不应禁用！")
+            self.session.verify = False
+        else:
+            # 使用系统默认CA证书包
+            # 如果遇到SSL错误，建议运行: pip install --upgrade certifi
+            try:
+                import certifi
+                self.session.verify = certifi.where()
+                print(f"[AUTH] 使用CA证书包: {certifi.where()}")
+            except ImportError:
+                self.session.verify = True  # 使用系统默认证书
+                print("[AUTH] 使用系统默认CA证书")
 
         # 强制使用SOCKS5代理而非HTTP代理（解决Clash HTTP代理干扰SSL的问题）
         # SOCKS5在TCP层工作，对SSL流量完全透明，不会干扰SSL握手
@@ -264,8 +296,8 @@ class AuthClient:
                     "password": password,
                     "username": username
                 },
-                timeout=30,
-                verify=False
+                timeout=30
+                # ✅ 安全修复: 移除verify=False，使用session的默认SSL验证配置
             )
 
             print(f"[AUTH-SIGNUP] requests成功! 响应状态: {response.status_code}")
@@ -404,8 +436,8 @@ class AuthClient:
                     "email": email,
                     "password": password
                 },
-                timeout=10,
-                verify=False  # 显式禁用SSL验证
+                timeout=10
+                # ✅ 安全修复: 使用session的默认SSL验证配置
             )
 
             print(f"[AUTH-SIGNIN] requests成功! 响应状态: {response.status_code}")
@@ -497,8 +529,7 @@ class AuthClient:
             response = self.session.post(
                 f"{self.backend_url}/api/auth-signout",
                 headers={"Authorization": f"Bearer {self.access_token}"},
-                timeout=10,
-                verify=False  # 显式禁用SSL验证
+                timeout=10
             )
 
             # 无论成功与否，都清除本地Token
@@ -528,8 +559,7 @@ class AuthClient:
             response = self.session.post(
                 f"{self.backend_url}/api/auth-refresh",
                 json={"refresh_token": self.refresh_token},
-                timeout=10,
-                verify=False  # 显式禁用SSL验证
+                timeout=10
             )
 
             if response.status_code == 200:
@@ -564,8 +594,7 @@ class AuthClient:
             response = self.session.post(
                 f"{self.backend_url}/api/auth-reset-password",
                 json={"email": email},
-                timeout=10,
-                verify=False  # 显式禁用SSL验证
+                timeout=10
             )
 
             if response.status_code == 200:
@@ -592,8 +621,7 @@ class AuthClient:
             response = self.session.get(
                 f"{self.backend_url}/api/subscription-status",
                 params={"user_id": self.get_user_id()},
-                timeout=10,
-                verify=False  # 显式禁用SSL验证
+                timeout=10
             )
 
             if response.status_code == 200:
@@ -635,8 +663,7 @@ class AuthClient:
                     "plan_type": plan_type,
                     "pay_type": pay_type
                 },
-                timeout=10,
-                verify=False  # 显式禁用SSL验证
+                timeout=10
             )
 
             if response.status_code == 200:
@@ -661,8 +688,7 @@ class AuthClient:
             response = self.session.get(
                 f"{self.backend_url}/api/payment-query",
                 params={"out_trade_no": out_trade_no},
-                timeout=10,
-                verify=False  # 显式禁用SSL验证
+                timeout=10
             )
 
             if response.status_code == 200:
@@ -688,8 +714,7 @@ class AuthClient:
             response = self.session.get(
                 f"{self.backend_url}/api/quota-status",
                 params={"user_tier": user_tier},
-                timeout=10,
-                verify=False  # 显式禁用SSL验证
+                timeout=10
             )
 
             if response.status_code == 200:
@@ -729,8 +754,7 @@ class AuthClient:
         try:
             response = self.session.get(
                 f"{self.backend_url}/api/auth-wechat-qrcode",
-                timeout=10,
-                verify=False  # 显式禁用SSL验证
+                timeout=10
             )
 
             if response.status_code == 200:
@@ -763,8 +787,7 @@ class AuthClient:
             response = self.session.get(
                 f"{self.backend_url}/api/auth-wechat-status",
                 params={"state": state},
-                timeout=10,
-                verify=False  # 显式禁用SSL验证
+                timeout=10
             )
 
             if response.status_code == 200:
@@ -823,8 +846,7 @@ class AuthClient:
                     "email": email,
                     "purpose": purpose
                 },
-                timeout=10,
-                verify=False  # 显式禁用SSL验证
+                timeout=10
             )
 
             print(f"[OTP] 响应状态码: {response.status_code}")
@@ -871,8 +893,7 @@ class AuthClient:
                     "email": email,
                     "otp_code": otp_code
                 },
-                timeout=10,
-                verify=False  # 显式禁用SSL验证
+                timeout=10
             )
 
             if response.status_code == 200:
