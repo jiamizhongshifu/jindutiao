@@ -3,9 +3,9 @@
 **更新时间**: 2025-11-17
 **审计日期**: 2025-11-17
 **总问题数**: 12个
-**已修复**: 9个 (75.0%)
+**已修复**: 10个 (83.3%)
 **进行中**: 0个
-**待修复**: 3个 (25.0%)
+**待修复**: 2个 (16.7%)
 
 ---
 
@@ -546,6 +546,107 @@ python tests/test_keyring_auth.py
 
 ---
 
+### 8. 🟡 日志规范化（中危）
+
+**文件**: `api/logger_util.py`, `api/LOGGING_MIGRATION_GUIDE.md`, `tests/unit/test_logger_util.py`
+
+**问题描述**:
+- 日志格式不统一（有的有时间戳，有的没有）
+- 日志级别不明确（全部使用print，无DEBUG/INFO/ERROR区分）
+- 敏感信息可能泄露（邮箱、IP、Token等以明文记录）
+- 缺少结构化日志（难以解析和分析）
+
+**修复措施**:
+1. ✅ 创建统一日志工具模块（logger_util.py, 273行）
+2. ✅ 实现5个日志级别（DEBUG/INFO/WARNING/ERROR/CRITICAL）
+3. ✅ 自动脱敏敏感信息（邮箱、IP、Token、UUID等）
+4. ✅ 统一日志格式（时间戳 + 级别 + 模块名 + 消息 + 参数）
+5. ✅ 环境变量控制（LOG_LEVEL和LOG_VERBOSE）
+6. ✅ 创建完整单元测试（10个测试用例，100%通过）
+7. ✅ 编写详细迁移指南文档
+
+**核心功能**:
+
+1. **统一日志格式**:
+```python
+from logger_util import get_logger
+
+logger = get_logger("auth-signin")
+logger.info("Login attempt", email="user@example.com", client_ip="192.168.1.1")
+
+# 输出:
+# [2025-11-17T10:30:45.123Z] [INFO] [auth-signin] Login attempt email=u***@example.com | client_ip=192.168.***.***
+```
+
+2. **自动脱敏功能**:
+```python
+# 邮箱脱敏
+logger.info("User signup", email="user@example.com")
+# 输出: email=u***@example.com
+
+# IP地址脱敏
+logger.info("API request", client_ip="192.168.1.100")
+# 输出: client_ip=192.168.***.***
+
+# Token脱敏
+logger.info("Auth token received", access_token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
+# 输出: access_token=eyJh...VC***
+
+# UUID脱敏
+logger.info("User created", user_id="550e8400-e29b-41d4-a716-446655440000")
+# 输出: user_id=550e8400***
+```
+
+3. **日志级别控制**:
+```python
+# 环境变量控制日志详细程度
+LOG_LEVEL=DEBUG  # 开发环境 - 显示所有日志
+LOG_LEVEL=INFO   # 生产环境 - 仅显示INFO及以上（默认）
+LOG_LEVEL=ERROR  # 严格模式 - 仅显示错误
+
+# 详细模式（⚠️ 生产环境必须禁用）
+LOG_VERBOSE=true   # 显示未脱敏的完整数据（仅用于开发/调试）
+LOG_VERBOSE=false  # 自动脱敏（默认）
+```
+
+**测试覆盖** (`tests/unit/test_logger_util.py`, 10个测试用例):
+1. ✅ test_sanitize_email - 邮箱地址脱敏
+2. ✅ test_sanitize_ip - IP地址脱敏
+3. ✅ test_sanitize_token - Token脱敏
+4. ✅ test_sanitize_value_auto_detection - 根据键名自动脱敏
+5. ✅ test_log_level_filtering - 日志级别过滤
+6. ✅ test_default_log_level - 默认级别（INFO）
+7. ✅ test_log_message_format - 日志格式验证
+8. ✅ test_log_with_multiple_params - 多参数日志
+9. ✅ test_verbose_mode_no_sanitization - 详细模式（不脱敏）
+10. ✅ test_get_logger_function - 便捷函数测试
+
+**影响**:
+- 建立统一的日志规范基础，所有模块可共享使用
+- 自动防止敏感信息泄露（邮箱、IP、Token等）
+- 支持生产环境和开发环境不同的日志详细程度
+- 结构化日志便于解析和分析
+- 后续可逐步迁移现有280个print日志语句
+
+**迁移指南**:
+详见 `api/LOGGING_MIGRATION_GUIDE.md`，包含：
+- 使用方法和完整示例
+- 日志级别使用指南
+- 自动脱敏功能说明
+- 环境变量配置
+- 最佳实践和避免事项
+- 迁移清单和进度跟踪
+
+**验证方法**:
+```bash
+# 运行单元测试
+python -m pytest tests/unit/test_logger_util.py -v
+
+# 结果: 10 passed in 0.08s
+```
+
+---
+
 ## ⏳ 待修复问题（按优先级排序）
 
 ### 🟡 第三优先级（两周内）
@@ -556,9 +657,6 @@ python tests/test_keyring_auth.py
    - `subscription_manager.py`: 在create_subscription中使用数据库事务
    - **挑战**: Supabase Python客户端不支持显式事务（无BEGIN/COMMIT/ROLLBACK）
    - **建议**: 实现PostgreSQL存储过程，通过Supabase RPC调用
-
-10. 🟡 **日志规范化**
-    - 统一日志格式和安全性标准
 
 11. 🔵 **代码重复**
     - 提取公共的验证/错误处理逻辑
@@ -579,13 +677,14 @@ python tests/test_keyring_auth.py
 │   ├── ✅ 已修复: 4个 (敏感日志清理, CORS配置框架, CORS所有端点, 输入验证)
 │   └── ⏳ 待修复: 0个
 ├── 🟡 中危 (Medium): 2个
-│   ├── ✅ 已修复: 1个 (Token加密存储)
-│   └── ⏳ 待修复: 1个 (事务管理)
+│   ├── ✅ 已修复: 2个 (Token加密存储, 日志规范化)
+│   └── ⏳ 待修复: 0个
 └── 🔵 低危 (Low): 2个
+    ├── ✅ 已修复: 0个
     └── ⏳ 待修复: 2个
 ```
 
-**已完成 (9个 / 75.0%)**:
+**已完成 (10个 / 83.3%)**:
 1. ✅ SSL证书验证问题
 2. ✅ API速率限制保护（9个端点集成完成）
 3. ✅ 支付回调时间戳验证
@@ -594,7 +693,8 @@ python tests/test_keyring_auth.py
 6. ✅ 创建速率限制数据库表SQL脚本
 7. ✅ CORS白名单配置（所有API端点）
 8. ✅ 完善输入验证（UUID、Decimal、RFC 5322邮箱，35个测试用例）
-9. ✅ Token加密存储（keyring库集成，自动迁移，6个测试用例）⭐ **刚完成**
+9. ✅ Token加密存储（keyring库集成，自动迁移，6个测试用例）
+10. ✅ 日志规范化（统一日志工具，敏感信息脱敏，10个测试用例）⭐ **刚完成**
 
 **预计完成时间**:
 - 🔴 关键问题: 本周内 (2天)
