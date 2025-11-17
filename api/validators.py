@@ -28,6 +28,15 @@ def validate_email(email: str) -> Tuple[bool, str]:
     if len(email) > 254:
         return False, "邮箱地址过长"
 
+    # 检查连续的点号（不符合RFC 5322标准）
+    local_part = email.split('@')[0]
+    if '..' in local_part:
+        return False, "邮箱格式不正确"
+
+    # 检查是否以点号开头或结尾
+    if local_part.startswith('.') or local_part.endswith('.'):
+        return False, "邮箱格式不正确"
+
     return True, ""
 
 
