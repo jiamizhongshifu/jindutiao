@@ -3,9 +3,9 @@
 **更新时间**: 2025-11-17
 **审计日期**: 2025-11-17
 **总问题数**: 12个
-**已修复**: 8个 (66.7%)
+**已修复**: 9个 (75.0%)
 **进行中**: 0个
-**待修复**: 4个 (33.3%)
+**待修复**: 3个 (25.0%)
 
 ---
 
@@ -376,40 +376,186 @@ pytest test_validators_enhanced.py -v
 
 ---
 
+### 7. 🟡 Token加密存储（中危）
+
+**文件**: `gaiya/core/auth_client.py`, `requirements.txt`, `tests/test_keyring_auth.py`
+
+**问题描述**:
+- Token以明文JSON存储在 `~/.gaiya/auth.json`
+- 任何进程都可以读取用户的access_token和refresh_token
+- 存在本地Token窃取风险
+
+**修复措施**:
+1. ✅ 安装并集成 `keyring` 库（跨平台安全存储）
+2. ✅ 使用操作系统级别的加密存储:
+   - Windows: DPAPI (Data Protection API)
+   - macOS: Keychain
+   - Linux: Secret Service API (GNOME Keyring等)
+3. ✅ 实现自动迁移逻辑（检测旧明文文件并迁移到加密存储）
+4. ✅ 清理旧的明文Token文件
+5. ✅ 优雅降级策略（keyring不可用时fallback到明文+警告）
+6. ✅ 创建完整的单元测试（6个测试用例）
+
+**核心实现** (`gaiya/core/auth_client.py`):
+
+1. **导入keyring模块** (lines 19-25):
+```python
+# ✅ 安全修复: 使用keyring进行Token加密存储
+try:
+    import keyring
+    KEYRING_AVAILABLE = True
+except ImportError:
+    KEYRING_AVAILABLE = False
+    print("[SECURITY WARNING] keyring库不可用，Token将以明文存储！")
+```
+
+2. **优先从keyring加载Token** (`_load_tokens()`, lines 215-255):
+```python
+def _load_tokens(self):
+    # ✅ 优先从keyring读取
+    if KEYRING_AVAILABLE:
+        try:
+            json_data = keyring.get_password("gaiya", "auth_data")
+            if json_data:
+                data = json.loads(json_data)
+                self.access_token = data.get("access_token")
+                self.refresh_token = data.get("refresh_token")
+                self.user_info = data.get("user_info")
+                print("[AUTH] Token已从加密存储加载（keyring）")
+
+                # ✅ 清理旧的明文文件
+                if self.auth_file.exists():
+                    try:
+                        self.auth_file.unlink()
+                        print("[AUTH] 已清理旧的明文Token文件")
+                    except Exception:
+                        pass
+                return
+        except Exception as keyring_error:
+            print(f"[AUTH] keyring读取失败: {keyring_error}")
+
+    # ✅ 自动迁移: 如果keyring中没有数据，但文件存在，则迁移
+    if self.auth_file.exists():
+        with open(self.auth_file, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            self.access_token = data.get("access_token")
+            self.refresh_token = data.get("refresh_token")
+            self.user_info = data.get("user_info")
+
+            if KEYRING_AVAILABLE and self.access_token:
+                print("[AUTH] 检测到明文Token文件，正在迁移到加密存储...")
+                self._save_tokens(self.access_token, self.refresh_token, self.user_info)
+```
+
+3. **优先使用keyring保存Token** (`_save_tokens()`, lines 257-311):
+```python
+def _save_tokens(self, access_token: str, refresh_token: str, user_info: Dict = None):
+    data = {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "user_info": user_info,
+        "saved_at": datetime.now().isoformat()
+    }
+
+    # ✅ 优先使用keyring加密存储
+    if KEYRING_AVAILABLE:
+        try:
+            json_data = json.dumps(data, ensure_ascii=False)
+            keyring.set_password("gaiya", "auth_data", json_data)
+
+            # 成功使用keyring后，尝试删除旧的明文文件
+            if self.auth_file.exists():
+                try:
+                    self.auth_file.unlink()
+                    print("[AUTH] 已迁移到加密存储，旧的明文文件已删除")
+                except Exception as delete_error:
+                    print(f"[AUTH] 已迁移到加密存储，但明文文件删除失败（将在下次启动时重试）: {delete_error}")
+
+            print("[AUTH] Token已使用加密存储（keyring）")
+        except Exception as keyring_error:
+            print(f"[SECURITY WARNING] keyring存储失败，fallback到明文文件: {keyring_error}")
+            self._save_tokens_to_file(data)
+    else:
+        print("[SECURITY WARNING] 使用明文文件存储Token（不安全）")
+        self._save_tokens_to_file(data)
+```
+
+4. **同时清除keyring和文件中的Token** (`_clear_tokens()`, lines 313-342):
+```python
+def _clear_tokens(self):
+    # ✅ 清除keyring中的Token
+    if KEYRING_AVAILABLE:
+        try:
+            keyring.delete_password("gaiya", "auth_data")
+            print("[AUTH] 已清除加密存储中的Token")
+        except Exception as e:
+            if "not found" not in str(e).lower():
+                print(f"[AUTH] 清除keyring失败: {e}")
+
+    # ✅ 清除文件中的Token（如果存在）
+    if self.auth_file.exists():
+        self.auth_file.unlink()
+        print("[AUTH] 已清除明文文件中的Token")
+
+    self.access_token = None
+    self.refresh_token = None
+    self.user_info = None
+```
+
+**依赖更新** (`requirements.txt`):
+```python
+keyring>=25.7.0  # ✅ 安全修复: Token加密存储(Windows DPAPI, macOS Keychain, Linux Secret Service)
+```
+
+**测试覆盖** (`tests/test_keyring_auth.py`, 6个测试用例):
+1. ✅ 创建AuthClient实例
+2. ✅ 清除旧的Token数据
+3. ✅ 保存测试Token到内存
+4. ✅ 创建新实例，验证从加密存储读取Token
+5. ✅ 测试清除Token功能
+6. ✅ 验证清除后重新读取为空
+
+**影响**:
+- 彻底消除本地Token明文存储的安全风险
+- 使用操作系统级别的加密保护（DPAPI/Keychain/Secret Service）
+- 自动迁移现有用户的明文Token到加密存储
+- 清理旧的明文文件，防止信息残留
+- 保持优雅降级策略，确保在keyring不可用时仍可工作
+
+**验证方法**:
+```bash
+# 运行单元测试
+python tests/test_keyring_auth.py
+
+# 结果:
+# [PASS] Token已保存到内存
+# [PASS] Token已从加密存储读取并验证
+# [PASS] Token已清除
+# [PASS] 清除成功，无法读取到Token
+# [SUCCESS] 所有测试通过！Token加密存储功能正常
+```
+
+**遇到的问题和解决**:
+1. **Windows Unicode编码错误**:
+   - 问题: 控制台无法显示emoji字符（✅ ❌）
+   - 解决: 使用ASCII文本标记（[PASS]/[FAIL]）替代emoji
+
+2. **Windows文件锁定错误**:
+   - 问题: WinError 32 "另一个程序正在使用此文件"
+   - 解决: 使用try-except包裹文件删除，失败时记录警告并在下次启动时重试
+
+---
+
 ## ⏳ 待修复问题（按优先级排序）
 
 ### 🟡 第三优先级（两周内）
-
-#### 8. 🟡 Token加密存储
-
-**文件**: `gaiya/core/auth_client.py`
-
-**当前问题**: Token以明文JSON存储在本地文件
-
-**修复建议**:
-```python
-# 使用平台特定的安全存储
-# Windows: DPAPI
-# macOS: Keychain
-# Linux: Secret Service API
-
-import keyring
-
-# 存储
-keyring.set_password("gaiya", "access_token", token)
-
-# 读取
-token = keyring.get_password("gaiya", "access_token")
-```
-
-**依赖**: `keyring` 库
-
----
 
 #### 9-12. 其他中低优先级问题
 
 9. 🟡 **事务管理**
    - `subscription_manager.py`: 在create_subscription中使用数据库事务
+   - **挑战**: Supabase Python客户端不支持显式事务（无BEGIN/COMMIT/ROLLBACK）
+   - **建议**: 实现PostgreSQL存储过程，通过Supabase RPC调用
 
 10. 🟡 **日志规范化**
     - 统一日志格式和安全性标准
@@ -433,12 +579,13 @@ token = keyring.get_password("gaiya", "access_token")
 │   ├── ✅ 已修复: 4个 (敏感日志清理, CORS配置框架, CORS所有端点, 输入验证)
 │   └── ⏳ 待修复: 0个
 ├── 🟡 中危 (Medium): 2个
-│   └── ⏳ 待修复: 2个
+│   ├── ✅ 已修复: 1个 (Token加密存储)
+│   └── ⏳ 待修复: 1个 (事务管理)
 └── 🔵 低危 (Low): 2个
     └── ⏳ 待修复: 2个
 ```
 
-**已完成 (8个 / 66.7%)**:
+**已完成 (9个 / 75.0%)**:
 1. ✅ SSL证书验证问题
 2. ✅ API速率限制保护（9个端点集成完成）
 3. ✅ 支付回调时间戳验证
@@ -446,7 +593,8 @@ token = keyring.get_password("gaiya", "access_token")
 5. ✅ CORS配置修复（框架建立，21个端点全部完成）
 6. ✅ 创建速率限制数据库表SQL脚本
 7. ✅ CORS白名单配置（所有API端点）
-8. ✅ 完善输入验证（UUID、Decimal、RFC 5322邮箱，35个测试用例） ⭐ **刚完成**
+8. ✅ 完善输入验证（UUID、Decimal、RFC 5322邮箱，35个测试用例）
+9. ✅ Token加密存储（keyring库集成，自动迁移，6个测试用例）⭐ **刚完成**
 
 **预计完成时间**:
 - 🔴 关键问题: 本周内 (2天)
@@ -467,7 +615,8 @@ token = keyring.get_password("gaiya", "access_token")
 4. ✅ 支付回调时间戳验证 (zpay_manager.py)
 5. ✅ 清理敏感日志输出 (zpay_manager.py)
 6. ✅ CORS配置修复（所有21个API端点）
-7. ✅ 完善输入验证（validators_enhanced.py, 35个测试用例）⭐ **刚完成**
+7. ✅ 完善输入验证（validators_enhanced.py, 35个测试用例）
+8. ✅ Token加密存储（auth_client.py + keyring库, 6个测试用例）⭐ **刚完成**
 
 ### 立即执行（今天）:
 1. ⏳ 在Supabase创建 `rate_limits` 表 (执行 rate_limits_table.sql)
