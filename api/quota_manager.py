@@ -5,7 +5,7 @@ PyDayBar 配额管理工具
 import os
 from datetime import datetime, timedelta
 from supabase import create_client, Client
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 import sys
 
 # Supabase配置
@@ -103,7 +103,7 @@ class QuotaManager:
         # 使用UTC+8时区（中国标准时间）判断是否需要重置
         china_tz = timezone(timedelta(hours=8))
         now_china = datetime.now(china_tz)
-        updates = {}
+        updates: Dict[str, Any] = {}
 
         # 检查每日配额
         if user_quota.get("daily_plan_reset_at"):

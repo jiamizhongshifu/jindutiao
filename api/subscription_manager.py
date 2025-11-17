@@ -4,7 +4,7 @@ GaiYa每日进度条 - 订阅管理器
 """
 import os
 from datetime import datetime, timedelta
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Any, cast
 from supabase import create_client, Client
 import sys
 
@@ -75,7 +75,7 @@ class SubscriptionManager:
 
             # 计算过期时间
             if plan["duration_days"]:
-                expires_at = now + timedelta(days=plan["duration_days"])
+                expires_at = now + timedelta(days=cast(int, plan["duration_days"]))
             else:
                 expires_at = None  # 终身会员
 
@@ -382,12 +382,12 @@ class SubscriptionManager:
 
                 if old_expires > now:
                     # 还未过期，从过期时间延长
-                    new_expires = old_expires + timedelta(days=plan["duration_days"])
+                    new_expires = old_expires + timedelta(days=cast(int, plan["duration_days"]))
                 else:
                     # 已过期，从现在开始
-                    new_expires = now + timedelta(days=plan["duration_days"])
+                    new_expires = now + timedelta(days=cast(int, plan["duration_days"]))
             else:
-                new_expires = datetime.now() + timedelta(days=plan["duration_days"])
+                new_expires = datetime.now() + timedelta(days=cast(int, plan["duration_days"]))
 
             # 3. 创建新的订阅记录
             new_subscription_data = {

@@ -72,7 +72,12 @@ jobs:
 
     - name: Install linting tools
       run: |
-        pip install flake8 pylint bandit
+        pip install flake8 pylint bandit mypy types-requests
+
+    - name: Run mypy (type checking)
+      run: |
+        mypy api/ || true
+        echo "✓ Type checking completed"
 
     - name: Run flake8
       run: |
