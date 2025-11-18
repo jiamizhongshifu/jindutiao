@@ -167,7 +167,7 @@ def validate_plan_type(plan_type: str) -> Tuple[bool, str, Optional[float]]:
     VALID_PLANS = {
         "pro_monthly": 29.0,   # 月度会员：29元（2025-11更新）
         "pro_yearly": 199.0,   # 年度会员：199元（16.6元/月，年省149元）
-        # "lifetime": 暂时隐藏（后续调整价格后启用）
+        "lifetime": 599.0,     # 会员合伙人：599元（2025-11启用）
     }
 
     if not plan_type:
