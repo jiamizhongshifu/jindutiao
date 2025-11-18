@@ -89,16 +89,21 @@ class SceneLoader:
     def _get_default_scenes_dir(self) -> Path:
         """获取默认的场景目录
 
-        处理两种环境：
+        处理三种环境：
         1. 开发环境：项目根目录下的 scenes/
-        2. 打包环境：exe所在目录下的 scenes/ (与exe同级)
+        2. 打包环境（资源内嵌）：sys._MEIPASS 临时目录下的 scenes/
+        3. 打包环境（外部资源）：exe所在目录下的 scenes/ (备用)
         """
         if getattr(sys, 'frozen', False):
             # PyInstaller 打包环境
-            # sys.executable 是 exe 文件的完整路径
-            # 场景目录应该在 exe 所在目录下（而不是临时解压目录）
-            base_dir = Path(sys.executable).parent
-            self.logger.info(f"Running in packaged mode, exe_dir: {base_dir}")
+            # 优先使用 _MEIPASS 临时目录（内嵌资源）
+            if hasattr(sys, '_MEIPASS'):
+                base_dir = Path(sys._MEIPASS)
+                self.logger.info(f"Running in packaged mode, using _MEIPASS: {base_dir}")
+            else:
+                # 备用：exe 所在目录（外部资源）
+                base_dir = Path(sys.executable).parent
+                self.logger.info(f"Running in packaged mode, using exe_dir: {base_dir}")
         else:
             # 开发环境
             # __file__ 是当前文件路径（gaiya/scene/loader.py）
@@ -108,12 +113,14 @@ class SceneLoader:
 
         scenes_dir = base_dir / "scenes"
 
-        # 确保目录存在
+        # 确保目录存在（仅在非打包环境或外部资源模式下创建）
         if not scenes_dir.exists():
             self.logger.warning(f"Scenes directory not found: {scenes_dir}")
-            # 在开发环境中创建目录，在打包环境中也创建（用户可能删除了）
-            scenes_dir.mkdir(parents=True, exist_ok=True)
-            self.logger.info(f"Created scenes directory: {scenes_dir}")
+            # 只在开发环境或外部资源模式下创建目录
+            # 打包环境的 _MEIPASS 是只读的，不应创建目录
+            if not getattr(sys, 'frozen', False) or not hasattr(sys, '_MEIPASS'):
+                scenes_dir.mkdir(parents=True, exist_ok=True)
+                self.logger.info(f"Created scenes directory: {scenes_dir}")
 
         return scenes_dir
 

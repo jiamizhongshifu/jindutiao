@@ -1,117 +1,317 @@
 {
-  "scene_id": "default_scene",
-  "name": "默认场景 - 奇幻森林",
-  "description": "一个充满奇幻元素的森林场景，包含树木、宝箱和各种植物",
-  "author": "GaiYa Team",
+  "scene_id": "default",
+  "name": "森林步道",
   "version": "1.0.0",
   "canvas": {
-    "width": 1000,
+    "width": 2400,
     "height": 150
   },
   "layers": {
     "road": {
       "type": "tiled",
-      "image": "assets/daolu2.png",
-      "z_index": 50,
-      "offset_x": 0,
-      "offset_y": 0,
-      "scale": 1.0
+      "image": "assets/road.png",
+      "offset_x": 63,
+      "offset_y": 109,
+      "scale": 0.20000000000000004,
+      "z_index": 50
     },
     "scene": {
       "items": [
         {
-          "id": "tree_1",
+          "id": "item_1",
           "image": "assets/tree1.png",
           "position": {
-            "x_percent": 15.0,
-            "y_pixel": 30
+            "x_percent": 40.48843187660669,
+            "y_pixel": 38
           },
-          "scale": 0.8,
+          "scale": 0.38,
           "z_index": 51,
-          "events": [
-            {
-              "trigger": "on_hover",
-              "action": {
-                "type": "show_tooltip",
-                "params": {
-                  "text": "🌲 一棵茂盛的树木"
-                }
-              }
-            }
-          ]
+          "events": []
         },
         {
-          "id": "treasure_chest",
-          "image": "assets/baoxiang.png",
-          "position": {
-            "x_percent": 50.0,
-            "y_pixel": 35
-          },
-          "scale": 1.0,
-          "z_index": 52,
-          "events": [
-            {
-              "trigger": "on_click",
-              "action": {
-                "type": "show_dialog",
-                "params": {
-                  "text": "🎁 恭喜！你发现了一个宝箱！\n\n任务完成奖励已到账 ✨"
-                }
-              }
-            }
-          ]
-        },
-        {
-          "id": "tree_2",
+          "id": "item_2",
           "image": "assets/tree2.png",
           "position": {
-            "x_percent": 75.0,
-            "y_pixel": 25
+            "x_percent": 7.726006855184229,
+            "y_pixel": 30
           },
-          "scale": 0.9,
-          "z_index": 45,
-          "events": [
-            {
-              "trigger": "on_hover",
-              "action": {
-                "type": "show_tooltip",
-                "params": {
-                  "text": "🌳 另一棵树，稍微小一些"
-                }
-              }
-            }
-          ]
+          "scale": 0.32,
+          "z_index": 52,
+          "events": []
         },
         {
-          "id": "flower_1",
-          "image": "assets/hua1.png",
-          "position": {
-            "x_percent": 30.0,
-            "y_pixel": 60
-          },
-          "scale": 0.6,
-          "z_index": 48,
-          "events": [
-            {
-              "trigger": "on_hover",
-              "action": {
-                "type": "show_tooltip",
-                "params": {
-                  "text": "🌸 美丽的花朵"
-                }
-              }
-            }
-          ]
-        },
-        {
-          "id": "grass_1",
+          "id": "item_3",
           "image": "assets/cao.png",
           "position": {
-            "x_percent": 60.0,
-            "y_pixel": 65
+            "x_percent": 84.22285562903511,
+            "y_pixel": 81
           },
-          "scale": 0.7,
+          "scale": 0.21,
+          "z_index": 53,
+          "events": []
+        },
+        {
+          "id": "item_4",
+          "image": "assets/hua2.png",
+          "position": {
+            "x_percent": 76.86685285318498,
+            "y_pixel": 91
+          },
+          "scale": 0.18,
+          "z_index": 54,
+          "events": []
+        },
+        {
+          "id": "item_5",
+          "image": "assets/hua3.png",
+          "position": {
+            "x_percent": 82.55734556657849,
+            "y_pixel": 89
+          },
+          "scale": 0.16,
+          "z_index": 55,
+          "events": []
+        },
+        {
+          "id": "item_6",
+          "image": "assets/hua1.png",
+          "position": {
+            "x_percent": 68.05352877268534,
+            "y_pixel": 93
+          },
+          "scale": 0.12,
+          "z_index": 56,
+          "events": []
+        },
+        {
+          "id": "item_7",
+          "image": "assets/hua1_1.png",
+          "position": {
+            "x_percent": 22.557840616966576,
+            "y_pixel": 85
+          },
+          "scale": 0.18000000000000002,
+          "z_index": 56,
+          "events": []
+        },
+        {
+          "id": "item_8",
+          "image": "assets/hua2_1.png",
+          "position": {
+            "x_percent": 52.36997568455212,
+            "y_pixel": 94
+          },
+          "scale": 0.12,
+          "z_index": 54,
+          "events": []
+        },
+        {
+          "id": "item_9",
+          "image": "assets/cao_1.png",
+          "position": {
+            "x_percent": 46.193709202942124,
+            "y_pixel": 90
+          },
+          "scale": 0.16,
+          "z_index": 53,
+          "events": []
+        },
+        {
+          "id": "item_10",
+          "image": "assets/cao_2.png",
+          "position": {
+            "x_percent": 11.564979154364737,
+            "y_pixel": 88
+          },
+          "scale": 0.16,
+          "z_index": 53,
+          "events": []
+        },
+        {
+          "id": "item_11",
+          "image": "assets/baiyun.png",
+          "position": {
+            "x_percent": 47.23650385604113,
+            "y_pixel": 53
+          },
+          "scale": 0.21,
+          "z_index": 61,
+          "events": []
+        },
+        {
+          "id": "item_12",
+          "image": "assets/baiyun_1.png",
+          "position": {
+            "x_percent": 20.02761102657097,
+            "y_pixel": 41
+          },
+          "scale": 0.21,
+          "z_index": 61,
+          "events": []
+        },
+        {
+          "id": "item_13",
+          "image": "assets/baiyun_2.png",
+          "position": {
+            "x_percent": 85.97847824186643,
+            "y_pixel": 39
+          },
+          "scale": 0.21,
+          "z_index": 61,
+          "events": []
+        },
+        {
+          "id": "item_14",
+          "image": "assets/caocong1.png",
+          "position": {
+            "x_percent": 88.24783827997196,
+            "y_pixel": 84
+          },
+          "scale": 0.21,
           "z_index": 46,
+          "events": []
+        },
+        {
+          "id": "item_16",
+          "image": "assets/caocong2.png",
+          "position": {
+            "x_percent": 54.18561691306202,
+            "y_pixel": 82
+          },
+          "scale": 0.21,
+          "z_index": 66,
+          "events": []
+        },
+        {
+          "id": "item_17",
+          "image": "assets/mutou.png",
+          "position": {
+            "x_percent": 18.755784061696662,
+            "y_pixel": 86
+          },
+          "scale": 0.24,
+          "z_index": 67,
+          "events": []
+        },
+        {
+          "id": "item_18",
+          "image": "assets/hua3_1.png",
+          "position": {
+            "x_percent": 58.11820197699039,
+            "y_pixel": 89
+          },
+          "scale": 0.16,
+          "z_index": 74,
+          "events": []
+        },
+        {
+          "id": "item_19",
+          "image": "assets/hua2_2.png",
+          "position": {
+            "x_percent": 65.69405618420512,
+            "y_pixel": 96
+          },
+          "scale": 0.12,
+          "z_index": 54,
+          "events": []
+        },
+        {
+          "id": "item_20",
+          "image": "assets/hua2_3.png",
+          "position": {
+            "x_percent": 14.132640500652037,
+            "y_pixel": 92
+          },
+          "scale": 0.12,
+          "z_index": 54,
+          "events": []
+        },
+        {
+          "id": "item_21",
+          "image": "assets/cao_3.png",
+          "position": {
+            "x_percent": 70.75998262417737,
+            "y_pixel": 92
+          },
+          "scale": 0.16,
+          "z_index": 47,
+          "events": []
+        },
+        {
+          "id": "item_22",
+          "image": "assets/caocong2_1.png",
+          "position": {
+            "x_percent": 29.276028277634953,
+            "y_pixel": 86
+          },
+          "scale": 0.21,
+          "z_index": 66,
+          "events": []
+        },
+        {
+          "id": "item_22",
+          "image": "assets/baiyun_3.png",
+          "position": {
+            "x_percent": 72.6963227865301,
+            "y_pixel": 50
+          },
+          "scale": 0.21,
+          "z_index": 61,
+          "events": []
+        },
+        {
+          "id": "item_23",
+          "image": "assets/baiyun_4.png",
+          "position": {
+            "x_percent": 36.12714945526619,
+            "y_pixel": 44
+          },
+          "scale": 0.26,
+          "z_index": 61,
+          "events": []
+        },
+        {
+          "id": "item_24",
+          "image": "assets/caocong1_1.png",
+          "position": {
+            "x_percent": 79.69712029337906,
+            "y_pixel": 82
+          },
+          "scale": 0.24,
+          "z_index": 58,
+          "events": []
+        },
+        {
+          "id": "item_25",
+          "image": "assets/caocong1_2.png",
+          "position": {
+            "x_percent": 26.207588453462584,
+            "y_pixel": 91
+          },
+          "scale": 0.14,
+          "z_index": 58,
+          "events": []
+        },
+        {
+          "id": "item_26",
+          "image": "assets/hua2_4.png",
+          "position": {
+            "x_percent": 35.09030878656459,
+            "y_pixel": 96
+          },
+          "scale": 0.12,
+          "z_index": 54,
+          "events": []
+        },
+        {
+          "id": "item_27",
+          "image": "assets/tree2_1.png",
+          "position": {
+            "x_percent": 62.92952013710368,
+            "y_pixel": 37
+          },
+          "scale": 0.3,
+          "z_index": 52,
           "events": []
         }
       ]

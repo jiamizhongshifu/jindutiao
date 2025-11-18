@@ -39,6 +39,6 @@
     },
     "scene": {
         "enabled": true,
-        "current_scene": "senlin"
+        "current_scene": "default"
     }
 }

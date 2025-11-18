@@ -25,6 +25,9 @@ from gaiya.core.auth_client import AuthClient
 # 确保 config_gui 模块被 PyInstaller 检测到（必须在顶部导入）
 import config_gui
 from config_gui import ConfigManager
+# 确保 scene_editor 模块被 PyInstaller 检测到
+import scene_editor
+from scene_editor import SceneEditorWindow
 from gaiya.core.pomodoro_state import PomodoroState
 from gaiya.core.notification_manager import NotificationManager
 from gaiya.ui.pomodoro_panel import PomodoroPanel, PomodoroSettingsDialog
@@ -91,6 +94,9 @@ class TimeProgressBar(QWidget):
 
         # 统计窗口实例
         self.statistics_window = None
+
+        # 场景编辑器窗口实例
+        self.scene_editor_window = None
 
         # 初始化主题管理器（延迟加载主题，避免初始化时触发信号）
         self.theme_manager = ThemeManager(self.app_dir)
@@ -743,6 +749,11 @@ class TimeProgressBar(QWidget):
         statistics_action.triggered.connect(self.show_statistics)
         tray_menu.addAction(statistics_action)
 
+        # 场景编辑器
+        scene_editor_action = QAction('🎨 场景编辑器', self)
+        scene_editor_action.triggered.connect(self.open_scene_editor)
+        tray_menu.addAction(scene_editor_action)
+
         tray_menu.addSeparator()
 
         # 通知功能子菜单
@@ -775,7 +786,28 @@ class TimeProgressBar(QWidget):
         tray_menu.addAction(quit_action)
 
         self.tray_icon.setContextMenu(tray_menu)
+
+        # 绑定左键点击事件：点击托盘图标打开配置管理器
+        self.tray_icon.activated.connect(self.on_tray_icon_activated)
+
         self.tray_icon.show()
+
+    def on_tray_icon_activated(self, reason):
+        """
+        托盘图标点击事件处理
+
+        Args:
+            reason: 点击类型（QSystemTrayIcon.ActivationReason）
+        """
+        # 左键单击：打开配置管理器
+        if reason == QSystemTrayIcon.ActivationReason.Trigger:
+            self.logger.info("托盘图标左键点击：打开配置管理器")
+            self.open_config_gui()
+        # 双击：也打开配置管理器
+        elif reason == QSystemTrayIcon.ActivationReason.DoubleClick:
+            self.logger.info("托盘图标双击：打开配置管理器")
+            self.open_config_gui()
+        # 右键已经由 setContextMenu 处理，无需额外操作
 
     def init_notification_manager(self):
         """初始化通知管理器"""
@@ -955,6 +987,45 @@ class TimeProgressBar(QWidget):
         """统计窗口关闭时的回调"""
         self.logger.info("统计报告窗口已关闭")
         self.statistics_window = None
+
+    def open_scene_editor(self):
+        """打开场景编辑器窗口"""
+        try:
+            # 如果窗口已经打开,则激活它
+            if self.scene_editor_window is not None and self.scene_editor_window.isVisible():
+                self.scene_editor_window.activateWindow()
+                self.scene_editor_window.raise_()
+                self.logger.info("场景编辑器窗口已激活")
+                return
+
+            # 创建场景编辑器窗口
+            self.scene_editor_window = SceneEditorWindow()
+
+            # 连接关闭信号
+            self.scene_editor_window.editor_closed.connect(self.on_scene_editor_closed)
+
+            # 显示窗口
+            self.scene_editor_window.show()
+
+            self.logger.info("场景编辑器窗口已打开")
+
+        except Exception as e:
+            self.logger.error(f"打开场景编辑器失败: {e}", exc_info=True)
+            self.tray_icon.showMessage(
+                "错误",
+                f"打开场景编辑器失败: {str(e)}",
+                QSystemTrayIcon.Critical,
+                5000
+            )
+
+    def on_scene_editor_closed(self):
+        """场景编辑器窗口关闭时的回调"""
+        self.logger.info("场景编辑器窗口已关闭")
+        self.scene_editor_window = None
+        # 刷新主窗口的场景列表（用户可能添加/修改了场景）
+        if hasattr(self, 'scene_manager'):
+            self.scene_manager.refresh_scenes()
+            self.logger.info("已刷新场景列表")
 
     def open_config_gui(self, initial_tab=0):
         """打开配置界面
