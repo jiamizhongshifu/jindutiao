@@ -4172,7 +4172,7 @@ class ConfigManager(QMainWindow):
         table = QTableWidget()
         table.setStyleSheet(StyleManager.table())
         table.setColumnCount(5)  # 功能名称 + 4个等级
-        table.setHorizontalHeaderLabels(["功能特性", "免费版", "Pro 月度", "Pro 年度", "永久会员"])
+        table.setHorizontalHeaderLabels(["功能特性", "免费版", "Pro 月度", "Pro 年度", "会员合伙人"])
 
         # 设置表格样式
         table.setStyleSheet("""
@@ -4229,7 +4229,7 @@ class ConfigManager(QMainWindow):
                 "free": "3次/天",
                 "monthly": "20次/天",
                 "yearly": "20次/天",
-                "lifetime": "无限制",
+                "lifetime": "50次/天",
             },
             # 统计报告分析
             {
@@ -4272,6 +4272,15 @@ class ConfigManager(QMainWindow):
                 "yearly": "✓",
                 "lifetime": "✓",
             },
+            # 场景系统
+            {
+                "type": "feature",
+                "name": "场景系统",
+                "free": "✗",
+                "monthly": "✓",
+                "yearly": "✓",
+                "lifetime": "✓",
+            },
             # 抢先体验新功能
             {
                 "type": "feature",
@@ -4303,6 +4312,33 @@ class ConfigManager(QMainWindow):
                 "monthly": "30天",
                 "yearly": "365天",
                 "lifetime": "永久",
+            },
+            # 引荐返现比例（会员合伙人独有）
+            {
+                "type": "feature",
+                "name": "引荐返现比例",
+                "free": "✗",
+                "monthly": "✗",
+                "yearly": "✗",
+                "lifetime": "33%",
+            },
+            # 专属合伙人社群（会员合伙人独有）
+            {
+                "type": "feature",
+                "name": "专属合伙人社群",
+                "free": "✗",
+                "monthly": "✗",
+                "yearly": "✗",
+                "lifetime": "✓",
+            },
+            # 1v1咨询服务（会员合伙人独有）
+            {
+                "type": "feature",
+                "name": "1v1咨询服务",
+                "free": "✗",
+                "monthly": "✗",
+                "yearly": "✗",
+                "lifetime": "✓",
             },
         ]
 
@@ -4372,7 +4408,7 @@ class ConfigManager(QMainWindow):
         table.setColumnWidth(1, 120)  # 免费版
         table.setColumnWidth(2, 120)  # Pro 月度
         table.setColumnWidth(3, 120)  # Pro 年度
-        table.setColumnWidth(4, 120)  # 永久会员
+        table.setColumnWidth(4, 120)  # 会员合伙人
 
         # 设置行高
         for row in range(table.rowCount()):
