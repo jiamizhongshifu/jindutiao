@@ -2965,7 +2965,7 @@ class ConfigManager(QMainWindow):
                         "validity": "有效期30天",
                         "renewal": "到期后不会自动扣费",
                         "type": "monthly",
-                        "features": ["所有免费功能 +", "20次/天 AI智能规划", "统计报告分析", "去除进度条水印", "番茄时钟", "数据云同步", "抢先体验新功能", "加入VIP会员群"]
+                        "features": ["所有免费功能 +", "20次/天 AI智能规划", "统计报告分析", "去除进度条水印", "番茄时钟", "数据云同步", "场景系统", "抢先体验新功能", "加入VIP会员群"]
                     },
                     {
                         "id": "pro_yearly",
@@ -2978,17 +2978,17 @@ class ConfigManager(QMainWindow):
                         "validity": "有效期365天",
                         "renewal": "到期后不会自动扣费",
                         "type": "yearly",
-                        "features": ["所有免费功能 +", "20次/天 AI智能规划", "统计报告分析", "去除进度条水印", "番茄时钟", "数据云同步", "抢先体验新功能", "加入VIP会员群"]
+                        "features": ["所有免费功能 +", "20次/天 AI智能规划", "统计报告分析", "去除进度条水印", "番茄时钟", "数据云同步", "场景系统", "抢先体验新功能", "加入VIP会员群"]
                     },
                     {
                         "id": "lifetime",
                         "name": "会员合伙人",
-                        "price": "¥1200",
+                        "price": "¥599",
                         "period": "",
                         "validity": "永久有效",
                         "renewal": "一次购买,终身可用",
                         "type": "lifetime",
-                        "features": ["所有免费功能 +", "无限次 AI智能规划", "统计报告分析", "去除进度条水印", "番茄时钟", "数据云同步", "33%引荐返现比例", "专属合伙人社群", "优先体验所有新功能", "专属1v1咨询服务", "共同成长,分享价值"]
+                        "features": ["所有免费功能 +", "50次/天 AI智能规划", "统计报告分析", "去除进度条水印", "番茄时钟", "数据云同步", "场景系统", "33%引荐返现比例", "专属合伙人社群", "优先体验所有新功能", "专属1v1咨询服务", "共同成长,分享价值"]
                     },
                 ]
 
@@ -3962,7 +3962,7 @@ class ConfigManager(QMainWindow):
         <p style="margin-bottom: 15px;">成为会员合伙人，你将获得：</p>
 
         <p style="margin-bottom: 10px;"><b>1. 终身的工具陪伴</b></p>
-        <p style="margin-bottom: 15px; margin-left: 20px;">一次付费，永久使用。无限次AI任务生成、去水印、数据云同步、所有未来新功能 —— 我会持续打磨，让它真正成为你效率工作流的一部分。</p>
+        <p style="margin-bottom: 15px; margin-left: 20px;">一次付费，永久使用。50次/天AI任务生成、去水印、数据云同步、场景系统、所有未来新功能 —— 我会持续打磨，让它真正成为你效率工作流的一部分。</p>
 
         <p style="margin-bottom: 10px;"><b>2. 产品决策的话语权</b></p>
         <p style="margin-bottom: 15px; margin-left: 20px;">你将获邀加入<b>会员合伙人专属微信群（首批限额1000人）</b>，与我和其他种子用户直接对话。作为首批成员，你将亲历社群从0到1的搭建过程。你的需求、你的吐槽、你的建议 —— 都会直接影响产品的走向。</p>
@@ -3973,7 +3973,7 @@ class ConfigManager(QMainWindow):
         <p style="margin-bottom: 10px;"><b>4. 共享成长的价值（规划中）</b></p>
         <p style="margin-bottom: 15px; margin-left: 20px;">我正在搭建<b>33%推荐返现机制</b>。当 GaiYa 帮到你的朋友时，你也将获得实际收益。这不是分销，而是价值共享 —— 好产品，值得一起传播。</p>
 
-        <p style="margin-bottom: 15px; margin-top: 20px;"><b style="color: #8B4513;">💰 关于1200元会员费用</b></p>
+        <p style="margin-bottom: 15px; margin-top: 20px;"><b style="color: #8B4513;">💰 关于599元会员费用</b></p>
 
         <p style="margin-bottom: 15px;">这不是一个拍脑袋的数字。让我和你算笔账：</p>
 
@@ -3981,7 +3981,7 @@ class ConfigManager(QMainWindow):
         <p style="margin-bottom: 10px; margin-left: 20px;">• 云同步服务器费用，每用户每年约50元</p>
         <p style="margin-bottom: 10px; margin-left: 20px;">• 持续开发投入（新功能、bug修复、1v1客服支持）</p>
 
-        <p style="margin-bottom: 15px;">1200元换算下来，相当于<b>年费200元使用6年</b>——而我承诺的是<b style="color: #4CAF50;">终身使用</b>。这是我对产品长期主义的承诺。</p>
+        <p style="margin-bottom: 15px;">599元换算下来，相当于<b>年费199元使用3年</b>——而我承诺的是<b style="color: #4CAF50;">终身使用</b>。这是我对产品长期主义的承诺。</p>
 
         <p style="margin-bottom: 15px;">这笔费用将100%投入到：<b>产品研发（60%）</b>、<b>服务器成本（30%）</b>、<b>用户运营（10%）</b>。每一分钱，都会让 GaiYa 变得更好。</p>
 
@@ -4002,7 +4002,7 @@ class ConfigManager(QMainWindow):
 
         <p style="margin-bottom: 15px; margin-top: 20px;"><b style="color: #8B4513;">📋 最后的话</b></p>
 
-        <p style="margin-bottom: 15px;">会员合伙人计划属于数字服务，一旦加入<b>无法退款</b>。但我相信，如果你真的认同这个理念，1200元换来的不只是一个工具，而是：</p>
+        <p style="margin-bottom: 15px;">会员合伙人计划属于数字服务，一旦加入<b>无法退款</b>。但我相信，如果你真的认同这个理念，599元换来的不只是一个工具，而是：</p>
 
         <p style="margin-bottom: 10px; margin-left: 20px;">• 终身的时间管理解决方案</p>
         <p style="margin-bottom: 10px; margin-left: 20px;">• 一个与你志同道合的效率社群</p>
