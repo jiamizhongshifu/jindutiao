@@ -280,11 +280,8 @@ class handler(BaseHTTPRequestHandler):
 
             supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-            # 根据plan_type确定item_type
-            if plan_type == "lifetime":
-                item_type = "lifetime"
-            else:
-                item_type = "subscription"
+            # item_type统一设为subscription（所有会员购买都是订阅类型）
+            item_type = "subscription"
 
             payment_data = {
                 "user_id": user_id,
