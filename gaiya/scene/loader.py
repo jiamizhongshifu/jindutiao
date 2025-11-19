@@ -86,8 +86,28 @@ class SceneLoader:
 
         self.logger.info(f"SceneLoader initialized with scenes_dir: {self.scenes_dir}")
 
+    def _get_user_scenes_dir(self) -> Path:
+        """获取用户场景目录（可编辑）
+
+        返回 %LOCALAPPDATA%/GaiYa/scenes/ 目录
+        这是用户导出的自定义场景保存位置
+
+        Returns:
+            用户场景目录路径
+        """
+        import os
+        user_data_dir = Path(os.getenv('LOCALAPPDATA')) / "GaiYa"
+        user_scenes_dir = user_data_dir / "scenes"
+
+        # 确保目录存在
+        if not user_scenes_dir.exists():
+            user_scenes_dir.mkdir(parents=True, exist_ok=True)
+            self.logger.info(f"Created user scenes directory: {user_scenes_dir}")
+
+        return user_scenes_dir
+
     def _get_default_scenes_dir(self) -> Path:
-        """获取默认的场景目录
+        """获取内置场景目录（只读）
 
         处理三种环境：
         1. 开发环境：项目根目录下的 scenes/
@@ -124,30 +144,65 @@ class SceneLoader:
 
         return scenes_dir
 
+    def _get_all_scenes_dirs(self) -> List[Path]:
+        """获取所有场景目录（用户目录优先）
+
+        Returns:
+            场景目录列表，顺序为：[用户目录, 内置目录]
+        """
+        dirs = []
+
+        # 用户目录（优先级最高）
+        user_dir = self._get_user_scenes_dir()
+        if user_dir.exists():
+            dirs.append(user_dir)
+
+        # 内置目录（备用）
+        builtin_dir = self._get_default_scenes_dir()
+        if builtin_dir.exists():
+            dirs.append(builtin_dir)
+
+        return dirs
+
     def get_available_scenes(self) -> List[str]:
         """获取所有可用的场景列表
 
-        扫描 scenes/ 目录，返回包含 config.json 的子目录名称
+        扫描用户场景目录和内置场景目录，返回包含 config.json 的子目录名称
+        如果同名场景在两个目录都存在，优先使用用户目录的版本
 
         Returns:
             场景名称列表，例如：['default', 'pixel_forest', 'cyberpunk_city']
         """
-        if not self.scenes_dir.exists():
-            self.logger.warning(f"Scenes directory does not exist: {self.scenes_dir}")
+        all_dirs = self._get_all_scenes_dirs()
+        if not all_dirs:
+            self.logger.warning("No scenes directories found")
             return []
 
-        scenes = []
-        for item in self.scenes_dir.iterdir():
-            if item.is_dir():
-                config_file = item / "config.json"
-                if config_file.exists():
-                    scenes.append(item.name)
+        # 使用字典去重，保持顺序（用户目录优先）
+        scenes_dict = {}
+        for scenes_dir in all_dirs:
+            self.logger.debug(f"Scanning directory: {scenes_dir}")
+            if not scenes_dir.exists():
+                continue
 
+            for item in scenes_dir.iterdir():
+                if item.is_dir():
+                    config_file = item / "config.json"
+                    if config_file.exists():
+                        scene_name = item.name
+                        # 只记录第一次遇到的场景（用户目录优先）
+                        if scene_name not in scenes_dict:
+                            scenes_dict[scene_name] = str(scenes_dir)
+                            self.logger.debug(f"Found scene '{scene_name}' in {scenes_dir}")
+
+        scenes = list(scenes_dict.keys())
         self.logger.info(f"Found {len(scenes)} available scenes: {scenes}")
         return scenes
 
     def load_scene(self, scene_name: str) -> Optional[SceneConfig]:
         """加载场景配置
+
+        优先从用户目录加载，如果不存在则从内置目录加载
 
         Args:
             scene_name: 场景名称（子目录名），例如 'default'
@@ -155,11 +210,23 @@ class SceneLoader:
         Returns:
             SceneConfig 对象，如果加载失败则返回 None
         """
-        scene_dir = self.scenes_dir / scene_name
-        config_file = scene_dir / "config.json"
+        # 尝试所有场景目录（用户目录优先）
+        all_dirs = self._get_all_scenes_dirs()
+        scene_dir = None
+        config_file = None
 
-        if not config_file.exists():
-            self.logger.error(f"Scene config not found: {config_file}")
+        for search_dir in all_dirs:
+            candidate_dir = search_dir / scene_name
+            candidate_config = candidate_dir / "config.json"
+
+            if candidate_config.exists():
+                scene_dir = candidate_dir
+                config_file = candidate_config
+                self.logger.info(f"Found scene '{scene_name}' in {search_dir}")
+                break
+
+        if not config_file or not config_file.exists():
+            self.logger.error(f"Scene config not found for '{scene_name}' in any directory")
             return None
 
         try:

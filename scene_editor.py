@@ -565,11 +565,20 @@ class SceneCanvas(QGraphicsView):
         # 启用拖拽接受
         self.setAcceptDrops(True)
 
+        # 缩放控制
+        self.current_zoom = 100  # 当前缩放百分比
+        self.min_zoom = 25  # 最小缩放25%
+        self.max_zoom = 400  # 最大缩放400%
+
+        # 空格键拖动状态
+        self.is_space_pressed = False  # 空格键是否按下
+        self.original_drag_mode = QGraphicsView.RubberBandDrag  # 原始拖动模式
+
         # 视图设置 - 显示完整场景
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        # 禁用交互式缩放
-        self.setTransformationAnchor(QGraphicsView.AnchorViewCenter)
+        # 以鼠标位置为锚点进行缩放
+        self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.AnchorViewCenter)
 
         # 启用框选模式（橡皮筋选择）
@@ -1102,22 +1111,33 @@ class SceneCanvas(QGraphicsView):
             self.road_layer_selected.emit()
 
     def resizeEvent(self, event):
-        """窗口大小改变时，适配视图以显示完整场景"""
+        """窗口大小改变时的处理"""
         super().resizeEvent(event)
-        self.fit_scene_in_view()
+        # 不自动 fit_scene_in_view，保持当前缩放
 
     def showEvent(self, event):
-        """首次显示时，适配视图"""
+        """首次显示时的处理"""
         super().showEvent(event)
-        self.fit_scene_in_view()
+        # 不自动 fit_scene_in_view，保持当前缩放（默认100%）
 
     def fit_scene_in_view(self):
-        """适配场景到视图中，确保完整显示"""
+        """计算适应窗口的缩放比例并应用"""
         if self.scene:
-            # 获取场景矩形
+            # 获取场景矩形和视口大小
             scene_rect = self.scene.sceneRect()
-            # 适配整个场景到视图，保持宽高比
-            self.fitInView(scene_rect, Qt.KeepAspectRatio)
+            viewport_rect = self.viewport().rect()
+
+            # 计算缩放比例（保持宽高比）
+            scale_x = viewport_rect.width() / scene_rect.width()
+            scale_y = viewport_rect.height() / scene_rect.height()
+            scale = min(scale_x, scale_y)
+
+            # 转换为百分比并限制在范围内
+            zoom_percent = int(scale * 100)
+            zoom_percent = max(self.min_zoom, min(self.max_zoom, zoom_percent))
+
+            # 应用缩放
+            self.set_zoom(zoom_percent)
 
     # ==================== 播放控制方法 ====================
 
@@ -1169,6 +1189,210 @@ class SceneCanvas(QGraphicsView):
             new_progress = 0.0
 
         self.set_progress(new_progress)
+
+    def wheelEvent(self, event):
+        """处理鼠标滚轮事件 - Ctrl+滚轮缩放"""
+        if event.modifiers() == Qt.ControlModifier:
+            # Ctrl+滚轮：缩放
+            delta = event.angleDelta().y()
+            if delta > 0:
+                # 向上滚动：放大
+                self.zoom_in()
+            else:
+                # 向下滚动：缩小
+                self.zoom_out()
+            event.accept()
+        else:
+            # 普通滚轮：传递给父类处理（滚动）
+            super().wheelEvent(event)
+
+    def keyPressEvent(self, event):
+        """处理键盘按下事件 - 空格键启用拖动模式"""
+        if event.key() == Qt.Key_Space and not event.isAutoRepeat():
+            if not self.is_space_pressed:
+                self.is_space_pressed = True
+                # 保存当前拖动模式
+                self.original_drag_mode = self.dragMode()
+                # 切换到拖动模式
+                self.setDragMode(QGraphicsView.ScrollHandDrag)
+                # 改变光标为手型
+                self.viewport().setCursor(Qt.OpenHandCursor)
+            event.accept()
+        else:
+            super().keyPressEvent(event)
+
+    def keyReleaseEvent(self, event):
+        """处理键盘释放事件 - 空格键恢复原模式"""
+        if event.key() == Qt.Key_Space and not event.isAutoRepeat():
+            if self.is_space_pressed:
+                self.is_space_pressed = False
+                # 恢复原拖动模式
+                self.setDragMode(self.original_drag_mode)
+                # 恢复默认光标
+                self.viewport().setCursor(Qt.ArrowCursor)
+            event.accept()
+        else:
+            super().keyReleaseEvent(event)
+
+    def set_zoom(self, zoom_percent: int):
+        """设置缩放级别（百分比）"""
+        # 限制在范围内
+        zoom_percent = max(self.min_zoom, min(self.max_zoom, zoom_percent))
+
+        # 重置所有变换
+        self.resetTransform()
+
+        # 应用绝对缩放（100% = 1.0倍）
+        scale_factor = zoom_percent / 100.0
+        self.scale(scale_factor, scale_factor)
+
+        # 更新当前缩放值
+        self.current_zoom = zoom_percent
+
+        # 更新滚动条策略
+        self.update_scrollbars()
+
+    def zoom_in(self):
+        """放大（每次增加10%）"""
+        new_zoom = self.current_zoom + 10
+        self.set_zoom(new_zoom)
+
+    def zoom_out(self):
+        """缩小（每次减少10%）"""
+        new_zoom = self.current_zoom - 10
+        self.set_zoom(new_zoom)
+
+    def zoom_fit(self):
+        """适应窗口（计算合适的缩放比例）"""
+        # 调用 fit_scene_in_view 计算并应用适合的缩放
+        self.fit_scene_in_view()
+        # 居中显示场景
+        self.centerOn(self.sceneRect().center())
+
+    def update_scrollbars(self):
+        """根据缩放级别更新滚动条策略"""
+        if self.current_zoom > 100:
+            # 缩放大于100%时显示滚动条
+            self.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+            self.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        else:
+            # 默认隐藏滚动条
+            self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+            self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+
+class MiniMapWidget(QWidget):
+    """小地图组件 - 显示场景缩略图和可视区域"""
+
+    def __init__(self, canvas: 'SceneCanvas', parent=None):
+        super().__init__(parent)
+        self.canvas = canvas
+
+        # 设置固定尺寸
+        self.setFixedSize(150, 80)
+
+        # 背景色
+        self.setAutoFillBackground(True)
+        palette = self.palette()
+        palette.setColor(self.backgroundRole(), QColor(240, 240, 240))
+        self.setPalette(palette)
+
+        # 监听画布视图变化
+        if self.canvas:
+            # 连接画布的滚动条信号
+            self.canvas.horizontalScrollBar().valueChanged.connect(self.update)
+            self.canvas.verticalScrollBar().valueChanged.connect(self.update)
+
+    def paintEvent(self, event):
+        """绘制小地图"""
+        super().paintEvent(event)
+
+        if not self.canvas:
+            return
+
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        # 获取场景尺寸
+        scene_rect = self.canvas.sceneRect()
+        scene_width = scene_rect.width()
+        scene_height = scene_rect.height()
+
+        if scene_width == 0 or scene_height == 0:
+            return
+
+        # 计算缩放比例（保持宽高比）
+        widget_width = self.width()
+        widget_height = self.height()
+
+        scale_x = widget_width / scene_width
+        scale_y = widget_height / scene_height
+        scale = min(scale_x, scale_y)
+
+        # 计算缩略图尺寸和位置（居中显示）
+        thumb_width = scene_width * scale
+        thumb_height = scene_height * scale
+        thumb_x = (widget_width - thumb_width) / 2
+        thumb_y = (widget_height - thumb_height) / 2
+
+        # 绘制场景缩略图背景
+        painter.setBrush(QBrush(QColor(255, 255, 255)))
+        painter.setPen(QPen(QColor(200, 200, 200), 1))
+        painter.drawRect(int(thumb_x), int(thumb_y), int(thumb_width), int(thumb_height))
+
+        # 绘制可视区域矩形
+        # 获取当前视图的可见区域（场景坐标）
+        visible_rect = self.canvas.mapToScene(self.canvas.viewport().rect()).boundingRect()
+
+        # 转换到缩略图坐标
+        view_x = thumb_x + (visible_rect.x() - scene_rect.x()) * scale
+        view_y = thumb_y + (visible_rect.y() - scene_rect.y()) * scale
+        view_w = visible_rect.width() * scale
+        view_h = visible_rect.height() * scale
+
+        # 绘制半透明蓝色矩形表示可视区域
+        painter.setBrush(QBrush(QColor(100, 150, 255, 80)))
+        painter.setPen(QPen(QColor(50, 100, 200), 2))
+        painter.drawRect(int(view_x), int(view_y), int(view_w), int(view_h))
+
+        # 绘制边框
+        painter.setPen(QPen(QColor(180, 180, 180), 1))
+        painter.setBrush(Qt.NoBrush)
+        painter.drawRect(0, 0, widget_width - 1, widget_height - 1)
+
+    def mousePressEvent(self, event):
+        """点击小地图跳转到对应位置"""
+        if not self.canvas or event.button() != Qt.LeftButton:
+            return
+
+        # 获取场景尺寸
+        scene_rect = self.canvas.sceneRect()
+        scene_width = scene_rect.width()
+        scene_height = scene_rect.height()
+
+        # 计算缩放比例
+        widget_width = self.width()
+        widget_height = self.height()
+
+        scale_x = widget_width / scene_width
+        scale_y = widget_height / scene_height
+        scale = min(scale_x, scale_y)
+
+        # 计算缩略图位置
+        thumb_width = scene_width * scale
+        thumb_height = scene_height * scale
+        thumb_x = (widget_width - thumb_width) / 2
+        thumb_y = (widget_height - thumb_height) / 2
+
+        # 将点击位置转换为场景坐标
+        click_x = event.pos().x()
+        click_y = event.pos().y()
+
+        scene_x = scene_rect.x() + (click_x - thumb_x) / scale
+        scene_y = scene_rect.y() + (click_y - thumb_y) / scale
+
+        # 将场景中心移动到点击位置
+        self.canvas.centerOn(scene_x, scene_y)
 
 
 class AssetLibraryPanel(QWidget):
@@ -1224,6 +1448,9 @@ class AssetLibraryPanel(QWidget):
         # 连接点击事件 - 点击道路层图片时显示道路层调整面板
         self.road_list.itemClicked.connect(self.on_road_item_clicked)
 
+        # 连接点击事件 - 点击场景层图片时在画布中选中对应元素
+        self.scene_list.itemClicked.connect(self.on_scene_item_clicked)
+
         # 设置拖拽模式
         self.road_list.setDragDropMode(QListWidget.DragOnly)
         self.scene_list.setDragDropMode(QListWidget.DragOnly)
@@ -1234,25 +1461,41 @@ class AssetLibraryPanel(QWidget):
     def load_default_assets(self):
         """加载默认素材库（scenes/default/assets/目录）"""
         import os
+        import sys
         from pathlib import Path
 
-        # 默认素材路径
-        default_assets_dir = Path("scenes/default/assets")
+        # 确定默认素材路径（支持开发环境和打包环境）
+        if getattr(sys, 'frozen', False):
+            # PyInstaller 打包环境：资源在 _MEIPASS 临时目录
+            base_dir = Path(sys._MEIPASS)
+            default_assets_dir = base_dir / "scenes" / "default" / "assets"
+            logging.info(f"[素材库] 打包环境，素材目录: {default_assets_dir}")
+        else:
+            # 开发环境：相对路径
+            default_assets_dir = Path("scenes/default/assets")
+            logging.info(f"[素材库] 开发环境，素材目录: {default_assets_dir}")
 
         if not default_assets_dir.exists():
-            print(f"默认素材目录不存在: {default_assets_dir}")
+            logging.warning(f"[素材库] 默认素材目录不存在: {default_assets_dir}")
             return
 
         # 加载所有PNG图片
-        for asset_file in default_assets_dir.glob("*.png"):
+        asset_files = list(default_assets_dir.glob("*.png"))
+        logging.info(f"[素材库] 找到 {len(asset_files)} 个PNG素材文件")
+
+        for asset_file in asset_files:
             file_path = str(asset_file)
 
             # 根据文件名判断是道路层还是场景层
             # 道路层通常包含 "road" 关键词
             if "road" in asset_file.name.lower():
                 self.add_road_asset(file_path)
+                logging.debug(f"[素材库] 添加道路层素材: {asset_file.name}")
             else:
                 self.add_scene_asset(file_path)
+                logging.debug(f"[素材库] 添加场景层素材: {asset_file.name}")
+
+        logging.info(f"[素材库] 素材加载完成！道路层: {self.road_list.count()} 个，场景层: {self.scene_list.count()} 个")
 
     def import_road_asset(self):
         """导入道路层素材"""
@@ -1335,6 +1578,43 @@ class AssetLibraryPanel(QWidget):
         parent_window = self.window()
         if hasattr(parent_window, 'property_panel'):
             parent_window.property_panel.show_road_panel()
+
+    def on_scene_item_clicked(self, item):
+        """场景层图片被点击时，在画布中选中对应的所有元素"""
+        import os
+
+        # 获取点击的图片文件路径
+        file_path = item.data(Qt.UserRole)
+        if not file_path:
+            return
+
+        # 获取文件名（用于匹配）
+        filename = os.path.basename(file_path)
+
+        # 获取父窗口和画布
+        parent_window = self.window()
+        if not hasattr(parent_window, 'canvas'):
+            return
+
+        canvas = parent_window.canvas
+
+        # 清空当前选中
+        canvas.scene.clearSelection()
+
+        # 查找并选中所有使用该图片的元素
+        matched_items = []
+        for scene_item in canvas.scene_items:
+            if isinstance(scene_item, SceneItemGraphics):
+                item_filename = os.path.basename(scene_item.image_path)
+                if item_filename == filename:
+                    scene_item.setSelected(True)
+                    matched_items.append(scene_item)
+
+        # 如果找到了匹配的元素，日志输出
+        if matched_items:
+            logging.info(f"[素材库] 点击 {filename}，在画布中选中了 {len(matched_items)} 个元素")
+        else:
+            logging.info(f"[素材库] 点击 {filename}，画布中没有使用该素材的元素")
 
 
 class PropertyPanel(QWidget):
@@ -1589,6 +1869,23 @@ class PropertyPanel(QWidget):
 
         # 更新道路层属性显示
         if self.canvas.road_image_path:
+            import os
+
+            # 更新道路图片预览
+            if self.canvas.road_pixmap and not self.canvas.road_pixmap.isNull():
+                # 创建缩略图（最大宽度200px）
+                scaled_pixmap = self.canvas.road_pixmap.scaledToWidth(
+                    200, Qt.SmoothTransformation
+                )
+                self.road_preview.setPixmap(scaled_pixmap)
+            else:
+                self.road_preview.setText("图片加载失败")
+
+            # 更新文件名显示
+            filename = os.path.basename(self.canvas.road_image_path)
+            self.road_filename_label.setText(f"文件: {filename}")
+
+            # 更新位置和缩放
             self.road_x_input.setValue(self.canvas.road_offset_x)
             self.road_y_input.setValue(self.canvas.road_offset_y)
 
@@ -1608,6 +1905,11 @@ class PropertyPanel(QWidget):
             self.road_z_input.setEnabled(True)
             self.clear_road_button.setEnabled(True)
         else:
+            # 未选择道路图片时的状态
+            self.road_preview.clear()
+            self.road_preview.setText("未选择道路图片")
+            self.road_filename_label.setText("文件: 无")
+
             self.road_x_input.setEnabled(False)
             self.road_y_input.setEnabled(False)
             self.road_scale_slider.setEnabled(False)
@@ -1961,7 +2263,10 @@ class LayerPanel(QWidget):
 
     def refresh_layers(self):
         """刷新图层列表"""
+        logging.info("[图层面板] refresh_layers() 被调用")
+
         if not self.canvas:
+            logging.warning("[图层面板] canvas 为 None，跳过刷新")
             return
 
         # 清空列表
@@ -1984,8 +2289,12 @@ class LayerPanel(QWidget):
             })
 
         # 2. 场景元素
+        scene_items_found = 0
+        logging.debug(f"[图层面板] 开始遍历 scene.items()，总数: {len(self.canvas.scene.items())}")
+
         for item in self.canvas.scene.items():
             if isinstance(item, SceneItemGraphics):
+                scene_items_found += 1
                 # 从路径中提取文件名
                 import os
                 filename = os.path.basename(item.image_path)
@@ -2002,76 +2311,139 @@ class LayerPanel(QWidget):
         # 按z-index排序（从高到低，高的在上方）
         layers.sort(key=lambda x: x['z_index'], reverse=True)
 
+        logging.info(f"[图层面板] 找到 {len(layers)} 个图层（包含道路层和场景元素）")
+        logging.debug(f"[图层面板] 其中 SceneItemGraphics: {scene_items_found} 个")
+
         # 添加到列表
         for layer_data in layers:
             self._add_layer_item(layer_data)
 
+        # 最终验证
+        final_count = self.layers_list.count()
+        logging.info(f"[图层面板] refresh_layers() 完成！QListWidget 最终项数: {final_count}")
+        if final_count != len(layers):
+            logging.error(f"[图层面板] 警告：预期添加 {len(layers)} 个图层，但 QListWidget 只有 {final_count} 项！")
+
+        # UI状态诊断
+        logging.debug(f"[图层面板] QListWidget.isVisible(): {self.layers_list.isVisible()}")
+        logging.debug(f"[图层面板] QListWidget.isHidden(): {self.layers_list.isHidden()}")
+        logging.debug(f"[图层面板] QListWidget.width(): {self.layers_list.width()}, height(): {self.layers_list.height()}")
+        logging.debug(f"[图层面板] LayerPanel.isVisible(): {self.isVisible()}")
+
     def _add_layer_item(self, layer_data):
         """添加图层项到列表"""
-        # 创建列表项
-        list_item = QListWidgetItem(self.layers_list)
+        try:
+            logging.debug(f"[图层面板] _add_layer_item() 被调用，图层ID: {layer_data['id']}, 名称: {layer_data['name']}")
 
-        # 创建自定义widget
-        layer_widget = QWidget()
-        layer_layout = QHBoxLayout(layer_widget)
-        layer_layout.setContentsMargins(5, 2, 5, 2)
+            # 验证 layer_data 完整性
+            required_keys = ['id', 'name', 'visible', 'locked', 'z_index', 'item']
+            for key in required_keys:
+                if key not in layer_data:
+                    logging.error(f"[图层面板] layer_data 缺少必需字段: {key}")
+                    return
 
-        # 可见性复选框
-        visibility_cb = QCheckBox()
-        visibility_cb.setChecked(layer_data['visible'])
-        visibility_cb.setToolTip("切换可见性")
-        visibility_cb.toggled.connect(
-            lambda checked, lid=layer_data['id']: self._on_visibility_changed(lid, checked)
-        )
-        layer_layout.addWidget(visibility_cb)
+            # 创建列表项
+            list_item = QListWidgetItem(self.layers_list)
+            logging.debug(f"[图层面板] 创建 QListWidgetItem 成功")
 
-        # 锁定复选框
-        lock_cb = QCheckBox()
-        lock_cb.setText("🔒" if layer_data['locked'] else "🔓")
-        lock_cb.setChecked(layer_data['locked'])
-        lock_cb.setToolTip("切换锁定状态")
-        lock_cb.toggled.connect(
-            lambda checked, lid=layer_data['id']: self._on_lock_changed(lid, checked)
-        )
-        layer_layout.addWidget(lock_cb)
+            # 创建自定义widget
+            layer_widget = QWidget()
+            layer_layout = QHBoxLayout(layer_widget)
+            layer_layout.setContentsMargins(5, 2, 5, 2)
 
-        # 图层名称
-        name_label = QLabel(layer_data['name'])
-        layer_layout.addWidget(name_label)
+            # 可见性复选框
+            visibility_cb = QCheckBox()
+            visibility_cb.setChecked(layer_data['visible'])
+            visibility_cb.setToolTip("切换可见性")
+            visibility_cb.toggled.connect(
+                lambda checked, lid=layer_data['id']: self._on_visibility_changed(lid, checked)
+            )
+            layer_layout.addWidget(visibility_cb)
 
-        layer_layout.addStretch()
+            # 锁定复选框
+            lock_cb = QCheckBox()
+            lock_cb.setText("🔒" if layer_data['locked'] else "🔓")
+            lock_cb.setChecked(layer_data['locked'])
+            lock_cb.setToolTip("切换锁定状态")
+            lock_cb.toggled.connect(
+                lambda checked, lid=layer_data['id']: self._on_lock_changed(lid, checked)
+            )
+            layer_layout.addWidget(lock_cb)
 
-        # Z-Index显示
-        z_label = QLabel(f"Z: {int(layer_data['z_index'])}")
-        z_label.setStyleSheet("color: #888; font-size: 9pt;")
-        layer_layout.addWidget(z_label)
+            # 图层名称
+            name_label = QLabel(layer_data['name'])
+            layer_layout.addWidget(name_label)
 
-        # 设置widget到列表项
-        list_item.setSizeHint(layer_widget.sizeHint())
-        self.layers_list.addItem(list_item)
-        self.layers_list.setItemWidget(list_item, layer_widget)
+            layer_layout.addStretch()
 
-        # 保存引用
-        self.layer_items[layer_data['id']] = {
-            'list_item': list_item,
-            'widget': layer_widget,
-            'graphics_item': layer_data['item']
-        }
+            # Z-Index显示
+            z_label = QLabel(f"Z: {int(layer_data['z_index'])}")
+            z_label.setStyleSheet("color: #888; font-size: 9pt;")
+            layer_layout.addWidget(z_label)
+
+            # 设置widget到列表项
+            list_item.setSizeHint(layer_widget.sizeHint())
+            self.layers_list.addItem(list_item)
+            self.layers_list.setItemWidget(list_item, layer_widget)
+
+            logging.debug(f"[图层面板] 图层 '{layer_data['name']}' 已添加到 QListWidget，当前列表项数: {self.layers_list.count()}")
+
+            # 保存引用
+            self.layer_items[layer_data['id']] = {
+                'list_item': list_item,
+                'widget': layer_widget,
+                'graphics_item': layer_data['item']
+            }
+
+            logging.debug(f"[图层面板] 图层 '{layer_data['name']}' 引用已保存到 layer_items 字典")
+
+        except Exception as e:
+            logging.error(f"[图层面板] _add_layer_item() 异常: layer_data={layer_data.get('id', 'unknown')}, error={e}", exc_info=True)
 
     def _on_visibility_changed(self, layer_id, visible):
         """切换图层可见性"""
-        if layer_id in self.layer_items:
+        try:
+            logging.debug(f"[图层面板] _on_visibility_changed() 被调用, layer_id={layer_id}, visible={visible}")
+
+            if layer_id not in self.layer_items:
+                logging.warning(f"[图层面板] layer_id '{layer_id}' 不在 layer_items 中,跳过")
+                return
+
             graphics_item = self.layer_items[layer_id]['graphics_item']
+
+            # 检查 graphics_item 是否有效
+            if graphics_item is None:
+                logging.error(f"[图层面板] layer_id '{layer_id}' 的 graphics_item 为 None")
+                return
+
+            # 设置可见性
             graphics_item.setVisible(visible)
+            logging.info(f"[图层面板] 图层 '{layer_id}' 可见性已设置为: {visible}")
 
             # 刷新画布
             if self.canvas:
                 self.canvas.update()
 
+        except Exception as e:
+            logging.error(f"[图层面板] _on_visibility_changed() 异常: layer_id={layer_id}, error={e}", exc_info=True)
+
     def _on_lock_changed(self, layer_id, locked):
         """切换图层锁定状态"""
-        if layer_id in self.layer_items:
+        try:
+            from PySide6.QtCore import QSignalBlocker
+
+            logging.debug(f"[图层面板] _on_lock_changed() 被调用, layer_id={layer_id}, locked={locked}")
+
+            if layer_id not in self.layer_items:
+                logging.warning(f"[图层面板] layer_id '{layer_id}' 不在 layer_items 中,跳过")
+                return
+
             graphics_item = self.layer_items[layer_id]['graphics_item']
+
+            # 检查 graphics_item 是否有效
+            if graphics_item is None:
+                logging.error(f"[图层面板] layer_id '{layer_id}' 的 graphics_item 为 None")
+                return
 
             # 设置可移动性
             if locked:
@@ -2081,44 +2453,71 @@ class LayerPanel(QWidget):
                 graphics_item.setFlag(graphics_item.ItemIsMovable, True)
                 graphics_item.setFlag(graphics_item.ItemIsSelectable, True)
 
-            # 更新锁定标记文本
+            logging.info(f"[图层面板] 图层 '{layer_id}' 锁定状态已设置为: {locked}")
+
+            # 更新锁定标记文本 (使用信号阻塞防止递归)
             for widget in self.layer_items[layer_id]['widget'].findChildren(QCheckBox):
                 if "锁定" in widget.toolTip():
+                    # 使用 QSignalBlocker 阻止 toggled 信号在更新文本时触发
+                    blocker = QSignalBlocker(widget)
                     widget.setText("🔒" if locked else "🔓")
+                    logging.debug(f"[图层面板] 锁定标记文本已更新: {'🔒' if locked else '🔓'}")
                     break
+
+        except Exception as e:
+            logging.error(f"[图层面板] _on_lock_changed() 异常: layer_id={layer_id}, error={e}", exc_info=True)
 
     def _on_layer_reordered(self):
         """图层顺序改变时更新z-index"""
-        if not self.canvas:
-            return
+        try:
+            logging.debug(f"[图层面板] _on_layer_reordered() 被调用")
 
-        # 从上到下遍历列表，分配z-index
-        item_count = self.layers_list.count()
+            if not self.canvas:
+                logging.warning(f"[图层面板] canvas 为 None,跳过图层排序")
+                return
 
-        for i in range(item_count):
-            list_item = self.layers_list.item(i)
-            layer_widget = self.layers_list.itemWidget(list_item)
+            # 从上到下遍历列表，分配z-index
+            item_count = self.layers_list.count()
+            logging.debug(f"[图层面板] 开始重新排序 {item_count} 个图层")
 
-            # 找到对应的layer_id
-            for layer_id, layer_info in self.layer_items.items():
-                if layer_info['list_item'] == list_item:
-                    # 计算新的z-index（上方=高z-index）
-                    new_z = 100 - i  # 从100开始递减
+            for i in range(item_count):
+                list_item = self.layers_list.item(i)
+                if list_item is None:
+                    logging.warning(f"[图层面板] list_item at index {i} is None,跳过")
+                    continue
 
-                    # 更新graphics item的z-index
-                    graphics_item = layer_info['graphics_item']
-                    graphics_item.setZValue(new_z)
+                layer_widget = self.layers_list.itemWidget(list_item)
 
-                    # 更新UI显示
-                    for label in layer_widget.findChildren(QLabel):
-                        if label.text().startswith("Z:"):
-                            label.setText(f"Z: {new_z}")
+                # 找到对应的layer_id
+                for layer_id, layer_info in self.layer_items.items():
+                    if layer_info['list_item'] == list_item:
+                        # 计算新的z-index（上方=高z-index）
+                        new_z = 100 - i  # 从100开始递减
+
+                        # 更新graphics item的z-index
+                        graphics_item = layer_info['graphics_item']
+                        if graphics_item is None:
+                            logging.error(f"[图层面板] layer_id '{layer_id}' 的 graphics_item 为 None")
                             break
 
-                    break
+                        graphics_item.setZValue(new_z)
+                        logging.debug(f"[图层面板] 图层 '{layer_id}' 新 z-index: {new_z}")
 
-        # 刷新画布
-        self.canvas.update()
+                        # 更新UI显示
+                        if layer_widget:
+                            for label in layer_widget.findChildren(QLabel):
+                                if label.text().startswith("Z:"):
+                                    label.setText(f"Z: {new_z}")
+                                    break
+
+                        break
+
+            # 刷新画布
+            self.canvas.update()
+            logging.info(f"[图层面板] 图层重新排序完成")
+
+        except Exception as e:
+            logging.error(f"[图层面板] _on_layer_reordered() 异常: {e}", exc_info=True)
 
 
 # ============================================================================
@@ -2140,20 +2539,27 @@ class SceneEditorWindow(QMainWindow):
         self.setWindowTitle("GaiYa 场景编辑器 v2.0.0")
         self.setGeometry(100, 100, 1400, 800)
 
-        # 确定场景保存目录（与 gaiya/scene/loader.py 保持一致）
-        if getattr(sys, 'frozen', False):
-            # PyInstaller 打包环境：exe 所在目录下的 scenes/（与exe同级）
-            # 这样可以确保场景编辑器导出的场景，主窗口能够扫描到
-            base_dir = Path(sys.executable).parent
-            self.logger.info(f"[场景编辑器] 打包环境, exe目录: {base_dir}")
-        else:
-            # 开发环境：项目根目录（__file__ 是 scene_editor.py）
-            base_dir = Path(__file__).parent
-            self.logger.info(f"[场景编辑器] 开发环境, 项目根目录: {base_dir}")
-
-        self.scenes_dir = base_dir / "scenes"
+        # 确定场景保存目录：使用用户目录（可编辑）
+        # 用户目录：%LOCALAPPDATA%/GaiYa/scenes/
+        # 这样导出的场景与exe分离，重新打包不会丢失
+        user_data_dir = Path(os.getenv('LOCALAPPDATA')) / "GaiYa"
+        self.scenes_dir = user_data_dir / "scenes"
         self.scenes_dir.mkdir(parents=True, exist_ok=True)
-        self.logger.info(f"[场景编辑器] 场景目录: {self.scenes_dir}")
+        self.logger.info(f"[场景编辑器] 用户场景目录: {self.scenes_dir}")
+
+        # 内置场景目录（只读，用于加载默认场景作为模板）
+        if getattr(sys, 'frozen', False):
+            # PyInstaller 打包环境：sys._MEIPASS 临时目录
+            if hasattr(sys, '_MEIPASS'):
+                self.builtin_scenes_dir = Path(sys._MEIPASS) / "scenes"
+                self.logger.info(f"[场景编辑器] 内置场景目录: {self.builtin_scenes_dir}")
+            else:
+                self.builtin_scenes_dir = None
+                self.logger.warning(f"[场景编辑器] 未找到sys._MEIPASS，无法加载内置场景")
+        else:
+            # 开发环境：项目根目录下的 scenes/
+            self.builtin_scenes_dir = Path(__file__).parent / "scenes"
+            self.logger.info(f"[场景编辑器] 内置场景目录（开发环境）: {self.builtin_scenes_dir}")
 
         # 创建撤销栈
         self.undo_stack = QUndoStack(self)
@@ -2172,11 +2578,58 @@ class SceneEditorWindow(QMainWindow):
         self.asset_panel = AssetLibraryPanel()
         splitter.addWidget(self.asset_panel)
 
-        # 中间：画布容器（画布 + 进度控制）
+        # 中间：画布容器（缩放工具栏 + 画布 + 进度控制）
         canvas_container = QWidget()
         canvas_layout = QVBoxLayout(canvas_container)
         canvas_layout.setContentsMargins(0, 0, 0, 0)
         canvas_layout.setSpacing(0)
+
+        # 缩放工具栏（画布上方）
+        zoom_toolbar = QWidget()
+        zoom_toolbar.setMaximumHeight(40)
+        zoom_layout = QHBoxLayout(zoom_toolbar)
+        zoom_layout.setContentsMargins(5, 5, 5, 5)
+
+        zoom_layout.addWidget(QLabel("缩放:"))
+
+        # 缩放百分比下拉菜单
+        self.zoom_combo = QComboBox()
+        zoom_levels = ["25%", "50%", "75%", "100%", "125%", "150%", "200%", "300%", "400%"]
+        self.zoom_combo.addItems(zoom_levels)
+        self.zoom_combo.setCurrentText("100%")
+        self.zoom_combo.currentTextChanged.connect(self.on_zoom_combo_changed)
+        self.zoom_combo.setMaximumWidth(80)
+        zoom_layout.addWidget(self.zoom_combo)
+
+        # 缩小按钮
+        zoom_out_btn = QPushButton("−")
+        zoom_out_btn.clicked.connect(self.zoom_out)
+        zoom_out_btn.setMaximumWidth(30)
+        zoom_out_btn.setToolTip("缩小 (Ctrl+滚轮向下)")
+        zoom_layout.addWidget(zoom_out_btn)
+
+        # 放大按钮
+        zoom_in_btn = QPushButton("+")
+        zoom_in_btn.clicked.connect(self.zoom_in)
+        zoom_in_btn.setMaximumWidth(30)
+        zoom_in_btn.setToolTip("放大 (Ctrl+滚轮向上)")
+        zoom_layout.addWidget(zoom_in_btn)
+
+        # 适应窗口按钮
+        zoom_fit_btn = QPushButton("适应窗口")
+        zoom_fit_btn.clicked.connect(self.zoom_fit)
+        zoom_fit_btn.setMaximumWidth(80)
+        zoom_fit_btn.setToolTip("缩放到适合窗口大小并居中")
+        zoom_layout.addWidget(zoom_fit_btn)
+
+        zoom_layout.addStretch()
+
+        # 提示文字
+        hint_label = QLabel("💡 Ctrl+滚轮缩放 | 空格键拖动视图")
+        hint_label.setStyleSheet("color: #888; font-size: 9pt;")
+        zoom_layout.addWidget(hint_label)
+
+        canvas_layout.addWidget(zoom_toolbar)
 
         # 画布（传递撤销栈）
         self.canvas = SceneCanvas(undo_stack=self.undo_stack)
@@ -2227,18 +2680,40 @@ class SceneEditorWindow(QMainWindow):
 
         splitter.addWidget(canvas_container)
 
-        # 右侧：使用TabWidget组织属性面板和图层面板
-        right_panel_tabs = QTabWidget()
+        # 右侧：面板容器（Tab + 小地图）
+        right_panel_container = QWidget()
+        right_panel_layout = QVBoxLayout(right_panel_container)
+        right_panel_layout.setContentsMargins(0, 0, 0, 0)
+        right_panel_layout.setSpacing(5)
+
+        # TabWidget组织属性面板和图层面板
+        self.right_panel_tabs = QTabWidget()
 
         # Tab 1: 属性面板（传递canvas引用）
         self.property_panel = PropertyPanel(canvas=self.canvas)
-        right_panel_tabs.addTab(self.property_panel, "⚙ 属性编辑")
+        self.right_panel_tabs.addTab(self.property_panel, "⚙ 属性编辑")
 
         # Tab 2: 图层管理面板
         self.layer_panel = LayerPanel(canvas=self.canvas)
-        right_panel_tabs.addTab(self.layer_panel, "📚 图层管理")
+        self.right_panel_tabs.addTab(self.layer_panel, "📚 图层管理")
 
-        splitter.addWidget(right_panel_tabs)
+        right_panel_layout.addWidget(self.right_panel_tabs)
+
+        # 小地图（在Tab下方）
+        minimap_label = QLabel("🗺️ 小地图")
+        minimap_label.setStyleSheet("font-weight: bold; padding: 5px;")
+        right_panel_layout.addWidget(minimap_label)
+
+        self.minimap = MiniMapWidget(self.canvas)
+        # 居中显示小地图
+        minimap_container = QWidget()
+        minimap_container_layout = QHBoxLayout(minimap_container)
+        minimap_container_layout.addStretch()
+        minimap_container_layout.addWidget(self.minimap)
+        minimap_container_layout.addStretch()
+        right_panel_layout.addWidget(minimap_container)
+
+        splitter.addWidget(right_panel_container)
 
         # 设置分割比例（1:3:1）
         splitter.setSizes([250, 800, 350])
@@ -2317,6 +2792,18 @@ class SceneEditorWindow(QMainWindow):
 
         # 创建快捷键
         self.create_shortcuts()
+
+        # 自动加载默认场景作为模板
+        # 延迟加载确保UI完全初始化
+        if self.builtin_scenes_dir:
+            config_path = self.builtin_scenes_dir / "default" / "config.json"
+            if config_path.exists():
+                QTimer.singleShot(100, lambda: self.load_builtin_default_scene())
+                self.logger.info("[场景编辑器] 将自动加载默认场景作为模板")
+            else:
+                self.logger.warning(f"[场景编辑器] 默认场景配置文件不存在: {config_path}")
+        else:
+            self.logger.warning("[场景编辑器] builtin_scenes_dir 未设置，无法自动加载")
 
     def create_shortcuts(self):
         """创建快捷键"""
@@ -2491,17 +2978,90 @@ class SceneEditorWindow(QMainWindow):
         speed = float(text.replace('x', ''))
         self.canvas.set_play_speed(speed)
 
+    def on_zoom_combo_changed(self, text):
+        """缩放下拉菜单改变"""
+        # 提取百分比数值 ("100%" -> 100)
+        zoom_value = int(text.replace('%', ''))
+        self.canvas.set_zoom(zoom_value)
+
+    def zoom_in(self):
+        """放大画布"""
+        self.canvas.zoom_in()
+        # 同步更新下拉菜单
+        self._update_zoom_combo()
+
+    def zoom_out(self):
+        """缩小画布"""
+        self.canvas.zoom_out()
+        # 同步更新下拉菜单
+        self._update_zoom_combo()
+
+    def zoom_fit(self):
+        """适应窗口"""
+        self.canvas.zoom_fit()
+        # 同步更新下拉菜单
+        self._update_zoom_combo()
+
+    def _update_zoom_combo(self):
+        """更新缩放下拉菜单显示"""
+        current_zoom = self.canvas.current_zoom
+        zoom_text = f"{current_zoom}%"
+
+        # 阻止信号触发（避免循环调用）
+        self.zoom_combo.blockSignals(True)
+
+        # 如果下拉菜单中没有当前值，添加它
+        if self.zoom_combo.findText(zoom_text) == -1:
+            self.zoom_combo.addItem(zoom_text)
+
+        self.zoom_combo.setCurrentText(zoom_text)
+        self.zoom_combo.blockSignals(False)
+
     def delete_selected(self):
         """删除选中的元素（已废弃，使用canvas.delete_selected_items）"""
         self.canvas.delete_selected_items()
 
     def on_item_selected(self, item: SceneItemGraphics):
         """处理元素选中事件"""
+        import os
+
+        # 更新属性面板
         self.property_panel.set_selected_item(item)
+
+        # 在素材库中高亮对应的图片
+        if item and hasattr(item, 'image_path'):
+            filename = os.path.basename(item.image_path)
+
+            # 遍历素材库中的所有项，找到匹配的图片
+            for i in range(self.asset_panel.scene_list.count()):
+                list_item = self.asset_panel.scene_list.item(i)
+                item_path = list_item.data(Qt.UserRole)
+                if item_path and os.path.basename(item_path) == filename:
+                    # 选中素材库中的对应项
+                    self.asset_panel.scene_list.setCurrentItem(list_item)
+                    logging.info(f"[素材库] 在画布中选中了 {filename}，素材库同步高亮")
+                    break
 
     def on_road_layer_selected(self):
         """处理道路层选中事件"""
+        import os
+
+        # 显示道路属性面板
         self.property_panel.show_road_panel()
+
+        # 在素材库中高亮对应的道路图片
+        if self.canvas.road_image_path:
+            filename = os.path.basename(self.canvas.road_image_path)
+
+            # 遍历道路层素材库,找到匹配的图片
+            for i in range(self.asset_panel.road_list.count()):
+                list_item = self.asset_panel.road_list.item(i)
+                item_path = list_item.data(Qt.UserRole)
+                if item_path and os.path.basename(item_path) == filename:
+                    # 选中素材库中的对应项
+                    self.asset_panel.road_list.setCurrentItem(list_item)
+                    logging.info(f"[素材库] 在画布中选中了道路层 {filename},素材库同步高亮")
+                    break
 
     def export_config(self):
         """导出场景配置（自动复制所有图片到标准目录结构）"""
@@ -2830,7 +3390,6 @@ class SceneEditorWindow(QMainWindow):
 
         message = f"场景已成功导出到:\n{scene_dir.absolute()}\n\n"
         message += f"包含:\n- config.json\n- {file_count} 个图片文件\n\n"
-        message += f"调试日志已保存到:\n{log_file}\n\n"
         message += "⚠️ 重要提示:\n"
         message += "新导出的场景需要【重启主程序】后才能在场景列表中显示。\n"
         message += "或者在主程序的场景设置中点击【刷新场景】按钮。"
@@ -2911,6 +3470,89 @@ class SceneEditorWindow(QMainWindow):
 
         return dest_path.name
 
+    def load_builtin_default_scene(self):
+        """自动加载内置默认场景作为模板"""
+        try:
+            # 构造默认场景配置文件路径
+            config_path = self.builtin_scenes_dir / "default" / "config.json"
+
+            if not config_path.exists():
+                self.logger.warning(f"[场景编辑器] 默认场景配置不存在: {config_path}")
+                return
+
+            self.logger.info(f"[场景编辑器] 正在加载默认场景: {config_path}")
+
+            # 读取配置文件
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+
+            # 清空当前场景
+            self._clear_scene()
+
+            # 加载场景名称（作为模板的提示）
+            scene_name = config.get("name", "未命名场景")
+            template_name = f"{scene_name}（模板）"
+            self.property_panel.scene_name_input.setText(template_name)
+
+            # 加载画布配置
+            canvas_config = config.get("canvas", {})
+            canvas_width = canvas_config.get("width", 1800)
+            canvas_height = canvas_config.get("height", 150)
+
+            # 更新画布宽度
+            width_index = self.canvas_width_combo.findText(f"{canvas_width}px")
+            if width_index >= 0:
+                self.canvas_width_combo.setCurrentIndex(width_index)
+            else:
+                self.canvas.canvas_width = canvas_width
+                self.canvas.scene.setSceneRect(0, 0, canvas_width, canvas_height)
+
+            # 更新画布高度
+            self.property_panel.canvas_height_input.setValue(canvas_height)
+            self.canvas.canvas_height = canvas_height
+            self.canvas.scene.setSceneRect(0, 0, self.canvas.canvas_width, canvas_height)
+
+            # 加载道路层（传入config.json的完整路径）
+            layers = config.get("layers", {})
+            road_config = layers.get("road")
+            if road_config:
+                self._load_road_layer(road_config, str(config_path))
+
+            # 加载场景元素（传入config.json的完整路径）
+            scene_layer = layers.get("scene", {})
+            items = scene_layer.get("items", [])
+            self._load_scene_items(items, str(config_path))
+
+            # 触发场景变化信号，自动刷新图层列表
+            self.canvas.scene_changed.emit()
+
+            # 额外手动刷新一次（确保图层面板更新）
+            self.layer_panel.refresh_layers()
+
+            # 自动切换到图层管理Tab（索引1）
+            self.right_panel_tabs.setCurrentIndex(1)
+            current_tab_index = self.right_panel_tabs.currentIndex()
+            current_tab_title = self.right_panel_tabs.tabText(current_tab_index)
+            logging.info(f"[场景编辑器] 已切换到图层管理Tab，当前Tab索引: {current_tab_index}, Tab标题: '{current_tab_title}'")
+
+            # 验证LayerPanel可见性
+            logging.debug(f"[场景编辑器] LayerPanel.isVisible(): {self.layer_panel.isVisible()}")
+            logging.debug(f"[场景编辑器] LayerPanel 父容器: {self.layer_panel.parent()}")
+            logging.debug(f"[场景编辑器] TabWidget当前widget: {self.right_panel_tabs.currentWidget()}")
+            logging.debug(f"[场景编辑器] 当前widget == LayerPanel: {self.right_panel_tabs.currentWidget() == self.layer_panel}")
+
+            # 如果导入了道路层，显示道路层属性面板
+            if self.canvas.road_image_path:
+                self.property_panel.show_road_panel()
+
+            # 刷新画布
+            self.canvas.viewport().update()
+
+            self.logger.info(f"[场景编辑器] 默认场景加载成功，包含 {len(items)} 个元素")
+
+        except Exception as e:
+            self.logger.error(f"[场景编辑器] 加载默认场景失败: {e}", exc_info=True)
+
     def import_config(self):
         """导入场景配置"""
         # 选择文件
@@ -2968,6 +3610,10 @@ class SceneEditorWindow(QMainWindow):
 
             # 刷新图层列表
             self.layer_panel.refresh_layers()
+
+            # 如果导入了道路层，显示道路层属性面板
+            if self.canvas.road_image_path:
+                self.property_panel.show_road_panel()
 
             # 刷新画布
             self.canvas.viewport().update()
@@ -3143,6 +3789,16 @@ class SceneEditorWindow(QMainWindow):
 
 def main():
     """主函数"""
+    # 配置日志输出
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.StreamHandler(sys.stdout),
+            logging.FileHandler('scene_editor_debug.log', encoding='utf-8')
+        ]
+    )
+
     app = QApplication(sys.argv)
 
     window = SceneEditorWindow()
