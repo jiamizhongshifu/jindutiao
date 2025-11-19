@@ -1035,6 +1035,118 @@
         },
         "2025-11-18": {
             "date": "2025-11-18",
+            "tasks": {
+                "深度睡眠": {
+                    "start": "00:00",
+                    "end": "06:00",
+                    "color": "#1976D2",
+                    "status": "completed",
+                    "completed_at": "2025-11-18T21:11:00.999248"
+                },
+                "起床准备": {
+                    "start": "06:00",
+                    "end": "07:00",
+                    "color": "#388E3C",
+                    "status": "completed",
+                    "completed_at": "2025-11-18T21:11:01.002247"
+                },
+                "早餐时间": {
+                    "start": "07:00",
+                    "end": "08:00",
+                    "color": "#F57C00",
+                    "status": "completed",
+                    "completed_at": "2025-11-18T21:11:01.004248"
+                },
+                "晨间通勤": {
+                    "start": "08:00",
+                    "end": "09:00",
+                    "color": "#7B1FA2",
+                    "status": "completed",
+                    "completed_at": "2025-11-18T21:11:01.005749"
+                },
+                "上午工作": {
+                    "start": "09:00",
+                    "end": "12:00",
+                    "color": "#1976D2",
+                    "status": "completed",
+                    "completed_at": "2025-11-18T21:11:01.007752"
+                },
+                "午餐休息": {
+                    "start": "12:00",
+                    "end": "13:00",
+                    "color": "#388E3C",
+                    "status": "completed",
+                    "completed_at": "2025-11-18T21:11:01.008751"
+                },
+                "午休小憩": {
+                    "start": "13:00",
+                    "end": "14:00",
+                    "color": "#F57C00",
+                    "status": "completed",
+                    "completed_at": "2025-11-18T21:11:01.011257"
+                },
+                "下午工作": {
+                    "start": "14:00",
+                    "end": "18:00",
+                    "color": "#7B1FA2",
+                    "status": "completed",
+                    "completed_at": "2025-11-18T21:11:01.012257"
+                },
+                "晚间通勤": {
+                    "start": "18:00",
+                    "end": "19:00",
+                    "color": "#1976D2",
+                    "status": "completed",
+                    "completed_at": "2025-11-18T21:11:01.014761"
+                },
+                "晚餐时间": {
+                    "start": "19:00",
+                    "end": "20:00",
+                    "color": "#388E3C",
+                    "status": "completed",
+                    "completed_at": "2025-11-18T21:11:01.015836"
+                },
+                "健身运动": {
+                    "start": "20:00",
+                    "end": "21:00",
+                    "color": "#F57C00",
+                    "status": "completed",
+                    "completed_at": "2025-11-18T21:11:01.017840"
+                },
+                "学习充电": {
+                    "start": "21:00",
+                    "end": "22:00",
+                    "color": "#7B1FA2",
+                    "status": "in_progress",
+                    "completed_at": null
+                },
+                "休闲娱乐": {
+                    "start": "22:00",
+                    "end": "23:00",
+                    "color": "#1976D2",
+                    "status": "not_started",
+                    "completed_at": null
+                },
+                "洗漱准备": {
+                    "start": "23:00",
+                    "end": "24:00",
+                    "color": "#388E3C",
+                    "status": "not_started",
+                    "completed_at": null
+                }
+            },
+            "summary": {
+                "total_tasks": 14,
+                "completed_tasks": 11,
+                "in_progress_tasks": 1,
+                "not_started_tasks": 2,
+                "total_planned_minutes": 1440,
+                "total_completed_minutes": 1260,
+                "completion_rate": 87.5
+            }
+        },
+        "2025-11-19": {
+            "date": "2025-11-19",
             "tasks": {},
             "summary": {
                 "total_tasks": 0,
@@ -1176,6 +1288,14 @@
                 "color": "#1976D2",
                 "duration_minutes": 360,
                 "completed_at": "2025-11-16T06:00:00.869388"
+            },
+            {
+                "date": "2025-11-18",
+                "start": "00:00",
+                "end": "06:00",
+                "color": "#1976D2",
+                "duration_minutes": 360,
+                "completed_at": "2025-11-18T21:11:00.999248"
             }
         ],
         "起床准备": [
@@ -1234,6 +1354,14 @@
                 "color": "#388E3C",
                 "duration_minutes": 60,
                 "completed_at": "2025-11-16T07:00:00.873292"
+            },
+            {
+                "date": "2025-11-18",
+                "start": "06:00",
+                "end": "07:00",
+                "color": "#388E3C",
+                "duration_minutes": 60,
+                "completed_at": "2025-11-18T21:11:01.002247"
             }
         ],
         "早餐时间": [
@@ -1292,6 +1420,14 @@
                 "color": "#F57C00",
                 "duration_minutes": 60,
                 "completed_at": "2025-11-16T08:00:00.882223"
+            },
+            {
+                "date": "2025-11-18",
+                "start": "07:00",
+                "end": "08:00",
+                "color": "#F57C00",
+                "duration_minutes": 60,
+                "completed_at": "2025-11-18T21:11:01.004248"
             }
         ],
         "晨间通勤": [
@@ -1350,6 +1486,14 @@
                 "color": "#7B1FA2",
                 "duration_minutes": 60,
                 "completed_at": "2025-11-16T09:00:00.876227"
+            },
+            {
+                "date": "2025-11-18",
+                "start": "08:00",
+                "end": "09:00",
+                "color": "#7B1FA2",
+                "duration_minutes": 60,
+                "completed_at": "2025-11-18T21:11:01.005749"
             }
         ],
         "上午工作": [
@@ -1392,6 +1536,14 @@
                 "color": "#1976D2",
                 "duration_minutes": 180,
                 "completed_at": "2025-11-15T23:06:00.342738"
+            },
+            {
+                "date": "2025-11-18",
+                "start": "09:00",
+                "end": "12:00",
+                "color": "#1976D2",
+                "duration_minutes": 180,
+                "completed_at": "2025-11-18T21:11:01.007752"
             }
         ],
         "午餐休息": [
@@ -1426,6 +1578,14 @@
                 "color": "#388E3C",
                 "duration_minutes": 60,
                 "completed_at": "2025-11-15T23:06:00.343737"
+            },
+            {
+                "date": "2025-11-18",
+                "start": "12:00",
+                "end": "13:00",
+                "color": "#388E3C",
+                "duration_minutes": 60,
+                "completed_at": "2025-11-18T21:11:01.008751"
             }
         ],
         "午休小憩": [
@@ -1460,6 +1620,14 @@
                 "color": "#F57C00",
                 "duration_minutes": 60,
                 "completed_at": "2025-11-15T23:06:00.345737"
+            },
+            {
+                "date": "2025-11-18",
+                "start": "13:00",
+                "end": "14:00",
+                "color": "#F57C00",
+                "duration_minutes": 60,
+                "completed_at": "2025-11-18T21:11:01.011257"
             }
         ],
         "下午工作": [
@@ -1494,6 +1662,14 @@
                 "color": "#7B1FA2",
                 "duration_minutes": 240,
                 "completed_at": "2025-11-15T23:06:00.346739"
+            },
+            {
+                "date": "2025-11-18",
+                "start": "14:00",
+                "end": "18:00",
+                "color": "#7B1FA2",
+                "duration_minutes": 240,
+                "completed_at": "2025-11-18T21:11:01.012257"
             }
         ],
         "晚间通勤": [
@@ -1520,6 +1696,14 @@
                 "color": "#1976D2",
                 "duration_minutes": 60,
                 "completed_at": "2025-11-15T23:06:00.347737"
+            },
+            {
+                "date": "2025-11-18",
+                "start": "18:00",
+                "end": "19:00",
+                "color": "#1976D2",
+                "duration_minutes": 60,
+                "completed_at": "2025-11-18T21:11:01.014761"
             }
         ],
         "晚餐时间": [
@@ -1546,6 +1730,14 @@
                 "color": "#388E3C",
                 "duration_minutes": 60,
                 "completed_at": "2025-11-15T23:06:00.349736"
+            },
+            {
+                "date": "2025-11-18",
+                "start": "19:00",
+                "end": "20:00",
+                "color": "#388E3C",
+                "duration_minutes": 60,
+                "completed_at": "2025-11-18T21:11:01.015836"
             }
         ],
         "健身运动": [
@@ -1564,6 +1756,14 @@
                 "color": "#F57C00",
                 "duration_minutes": 60,
                 "completed_at": "2025-11-15T23:06:00.351542"
+            },
+            {
+                "date": "2025-11-18",
+                "start": "20:00",
+                "end": "21:00",
+                "color": "#F57C00",
+                "duration_minutes": 60,
+                "completed_at": "2025-11-18T21:11:01.017840"
             }
         ],
         "学习充电": [
@@ -1597,6 +1797,6 @@
     },
     "metadata": {
         "created_at": "2025-10-30T13:15:00.303688",
-        "last_updated": "2025-11-18T12:59:42.903868"
+        "last_updated": "2025-11-19T11:31:19.951878"
     }
 }
