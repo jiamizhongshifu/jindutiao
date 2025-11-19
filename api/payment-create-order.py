@@ -176,7 +176,7 @@ class handler(BaseHTTPRequestHandler):
         """
         import hashlib
         timestamp = str(int(time.time() * 1000))  # 毫秒时间戳
-        user_hash = hashlib.md5(user_id.encode()).hexdigest()[:6]
+        user_hash = hashlib.md5(user_id.encode(), usedforsecurity=False).hexdigest()[:6]
         return f"GAIYA{timestamp}{user_hash}"
 
     def _send_success(self, data: dict, rate_info: dict = None):

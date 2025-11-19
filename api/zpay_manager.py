@@ -412,7 +412,7 @@ class ZPayManager:
         sign_str += self.pkey
 
         # 5. MD5加密（小写）
-        sign = hashlib.md5(sign_str.encode('utf-8')).hexdigest()
+        sign = hashlib.md5(sign_str.encode('utf-8'), usedforsecurity=False).hexdigest()
 
         # ✅ 安全：仅输出参数名列表用于调试，不输出实际值和密钥
         # 生产环境可通过环境变量 ZPAY_DEBUG_MODE=true 启用
