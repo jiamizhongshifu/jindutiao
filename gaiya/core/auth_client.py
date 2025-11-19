@@ -804,6 +804,38 @@ class AuthClient:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
+    def create_stripe_checkout_session(self, plan_type: str, user_id: str, user_email: str) -> Dict:
+        """
+        创建Stripe Checkout Session（国际支付）
+
+        Args:
+            plan_type: 订阅类型（pro_monthly, pro_yearly, lifetime）
+            user_id: 用户ID
+            user_email: 用户邮箱
+
+        Returns:
+            {"success": True/False, "checkout_url": "...", "session_id": "..."}
+        """
+        try:
+            response = self.session.post(
+                f"{self.backend_url}/api/stripe-create-checkout",
+                json={
+                    "user_id": user_id,
+                    "user_email": user_email,
+                    "plan_type": plan_type
+                },
+                timeout=15
+            )
+
+            if response.status_code == 200:
+                return response.json()
+            else:
+                error_text = response.text if response.text else f"HTTP {response.status_code}"
+                return {"success": False, "error": error_text}
+
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
     # ==================== 配额API ====================
 
     def get_quota_status(self) -> Dict:

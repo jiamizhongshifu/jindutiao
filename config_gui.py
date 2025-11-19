@@ -4472,14 +4472,422 @@ class ConfigManager(QMainWindow):
                         }}
                     """)
 
+    def _show_payment_method_dialog(self, plan_id: str):
+        """显示支付方式选择对话框"""
+        from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QRadioButton, QButtonGroup, QPushButton
+        from PySide6.QtCore import Qt
+
+        # 套餐信息映射
+        plan_info = {
+            "pro_monthly": {"name": "Pro 月度", "price_cny": "¥29", "price_usd": "$4.99", "period": "/月"},
+            "pro_yearly": {"name": "Pro 年度", "price_cny": "¥199", "price_usd": "$39.99", "period": "/年"},
+            "lifetime": {"name": "会员合伙人", "price_cny": "¥599", "price_usd": "$89.99", "period": ""}
+        }
+
+        plan = plan_info.get(plan_id, {})
+
+        # 创建对话框
+        dialog = QDialog(self)
+        dialog.setWindowTitle("选择支付方式")
+        dialog.setFixedWidth(420)
+        dialog.setStyleSheet("""
+            QDialog {
+                background-color: #FFFFFF;
+            }
+        """)
+
+        layout = QVBoxLayout(dialog)
+        layout.setSpacing(20)
+        layout.setContentsMargins(30, 30, 30, 30)
+
+        # 标题
+        title_label = QLabel(f"您选择的套餐：{plan['name']} - {plan['price_cny']}{plan['period']}")
+        title_label.setStyleSheet("""
+            QLabel {
+                font-size: 16px;
+                font-weight: bold;
+                color: #333333;
+                background: transparent;
+            }
+        """)
+        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(title_label)
+
+        # 分隔线
+        separator = QLabel()
+        separator.setFixedHeight(1)
+        separator.setStyleSheet("background-color: #E0E0E0;")
+        layout.addWidget(separator)
+
+        # 提示文字
+        hint_label = QLabel("请选择支付方式：")
+        hint_label.setStyleSheet("""
+            QLabel {
+                font-size: 14px;
+                color: #666666;
+                background: transparent;
+            }
+        """)
+        layout.addWidget(hint_label)
+
+        # 支付方式选项
+        payment_group = QButtonGroup(dialog)
+
+        # 微信支付选项
+        wxpay_option = QRadioButton()
+        wxpay_option.setProperty("pay_method", "wxpay")
+        wxpay_option.setChecked(True)  # 默认选中
+        payment_group.addButton(wxpay_option)
+
+        wxpay_container = self._create_payment_option_widget(
+            wxpay_option,
+            "💚 微信支付",
+            f"{plan['price_cny']}{plan['period']}",
+            ""
+        )
+        layout.addWidget(wxpay_container)
+
+        # Stripe 国际支付选项
+        stripe_option = QRadioButton()
+        stripe_option.setProperty("pay_method", "stripe")
+        payment_group.addButton(stripe_option)
+
+        stripe_container = self._create_payment_option_widget(
+            stripe_option,
+            "💳 国际支付 (Stripe)",
+            f"{plan['price_usd']}{plan['period']}",
+            "支持 Visa/Mastercard/Amex"
+        )
+        layout.addWidget(stripe_container)
+
+        layout.addSpacing(10)
+
+        # 按钮区域
+        button_layout = QHBoxLayout()
+        button_layout.setSpacing(15)
+
+        cancel_button = QPushButton("取消")
+        cancel_button.setFixedHeight(40)
+        cancel_button.setStyleSheet("""
+            QPushButton {
+                background-color: #F5F5F5;
+                color: #666666;
+                border: 1px solid #E0E0E0;
+                border-radius: 6px;
+                font-size: 14px;
+                font-weight: 600;
+            }
+            QPushButton:hover {
+                background-color: #EEEEEE;
+            }
+            QPushButton:pressed {
+                background-color: #E0E0E0;
+            }
+        """)
+        cancel_button.clicked.connect(dialog.reject)
+        button_layout.addWidget(cancel_button)
+
+        confirm_button = QPushButton("确认支付")
+        confirm_button.setFixedHeight(40)
+        confirm_button.setStyleSheet("""
+            QPushButton {
+                background-color: #FF9800;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-size: 14px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #F57C00;
+            }
+            QPushButton:pressed {
+                background-color: #E65100;
+            }
+        """)
+
+        def on_confirm():
+            selected_button = payment_group.checkedButton()
+            if selected_button:
+                pay_method = selected_button.property("pay_method")
+                dialog.accept()
+
+                if pay_method == "wxpay":
+                    self._on_wxpay_selected(plan_id)
+                elif pay_method == "stripe":
+                    self._on_stripe_selected(plan_id)
+
+        confirm_button.clicked.connect(on_confirm)
+        button_layout.addWidget(confirm_button)
+
+        layout.addLayout(button_layout)
+
+        # 显示对话框
+        dialog.exec()
+
+    def _create_payment_option_widget(self, radio_button, title, price, subtitle):
+        """创建支付选项卡片"""
+        from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QLabel
+        from PySide6.QtCore import Qt
+
+        container = QWidget()
+        container.setFixedHeight(80)
+        container.setStyleSheet("""
+            QWidget {
+                background-color: #F9F9F9;
+                border: 2px solid #E0E0E0;
+                border-radius: 8px;
+            }
+            QWidget:hover {
+                background-color: #F0F0F0;
+                border-color: #FF9800;
+            }
+        """)
+
+        main_layout = QHBoxLayout(container)
+        main_layout.setContentsMargins(15, 10, 15, 10)
+        main_layout.setSpacing(15)
+
+        # 单选按钮
+        radio_button.setStyleSheet("""
+            QRadioButton::indicator {
+                width: 20px;
+                height: 20px;
+            }
+            QRadioButton::indicator:unchecked {
+                border: 2px solid #CCCCCC;
+                border-radius: 10px;
+                background-color: white;
+            }
+            QRadioButton::indicator:checked {
+                border: 2px solid #FF9800;
+                border-radius: 10px;
+                background-color: #FF9800;
+            }
+        """)
+        main_layout.addWidget(radio_button, 0, Qt.AlignmentFlag.AlignVCenter)
+
+        # 文字区域
+        text_layout = QVBoxLayout()
+        text_layout.setSpacing(5)
+
+        # 标题和价格
+        title_layout = QHBoxLayout()
+        title_layout.setSpacing(10)
+
+        title_label = QLabel(title)
+        title_label.setStyleSheet("""
+            QLabel {
+                font-size: 15px;
+                font-weight: bold;
+                color: #333333;
+                background: transparent;
+            }
+        """)
+        title_layout.addWidget(title_label)
+
+        title_layout.addStretch()
+
+        price_label = QLabel(price)
+        price_label.setStyleSheet("""
+            QLabel {
+                font-size: 16px;
+                font-weight: bold;
+                color: #FF9800;
+                background: transparent;
+            }
+        """)
+        title_layout.addWidget(price_label)
+
+        text_layout.addLayout(title_layout)
+
+        # 副标题
+        if subtitle:
+            subtitle_label = QLabel(subtitle)
+            subtitle_label.setStyleSheet("""
+                QLabel {
+                    font-size: 12px;
+                    color: #999999;
+                    background: transparent;
+                }
+            """)
+            text_layout.addWidget(subtitle_label)
+
+        main_layout.addLayout(text_layout)
+
+        return container
+
+    def _on_wxpay_selected(self, plan_id: str):
+        """处理微信支付"""
+        from PySide6.QtWidgets import QMessageBox
+        from PySide6.QtCore import QUrl, QTimer
+        from PySide6.QtGui import QDesktopServices
+        from gaiya.core.auth_client import AuthClient
+        import logging
+
+        pay_type = "wxpay"
+        auth_client = AuthClient()
+
+        logging.info(f"[支付调试] 微信支付 - plan_type: {plan_id}, pay_type: {pay_type}")
+
+        result = auth_client.create_payment_order(
+            plan_type=plan_id,
+            pay_type=pay_type
+        )
+
+        logging.info(f"[支付调试] 订单创建结果: {result}")
+
+        if result.get("success"):
+            payment_url = result.get("payment_url")
+            params = result.get("params", {})
+            out_trade_no = result.get("out_trade_no")
+
+            from urllib.parse import urlencode
+            query_string = urlencode(params)
+            full_payment_url = f"{payment_url}?{query_string}"
+
+            logging.info(f"[PAYMENT] Opening payment URL: {full_payment_url[:100]}...")
+            logging.info(f"[PAYMENT] Order No: {out_trade_no}, Type: {pay_type}")
+
+            QDesktopServices.openUrl(QUrl(full_payment_url))
+
+            # 显示等待支付对话框
+            self.payment_polling_dialog = QMessageBox(self)
+            self.payment_polling_dialog.setWindowTitle("等待支付")
+            self.payment_polling_dialog.setText(
+                "正在等待支付完成...\n\n"
+                "请在打开的浏览器页面中完成支付。\n"
+                "支付完成后，此窗口将自动关闭。"
+            )
+            self.payment_polling_dialog.setStandardButtons(QMessageBox.StandardButton.Cancel)
+            self.payment_polling_dialog.setIcon(QMessageBox.Icon.Information)
+
+            # 创建定时器轮询支付状态
+            self.payment_timer = QTimer()
+            self.payment_timer.setInterval(3000)
+            self.payment_timer.timeout.connect(partial(self._check_payment_status, out_trade_no, auth_client))
+            self.payment_timer.start()
+
+            self.payment_polling_dialog.rejected.connect(self._stop_payment_polling)
+            self.payment_polling_dialog.show()
+        else:
+            error_msg = result.get("error", "创建订单失败")
+
+            if "MERCHANT_STATUS_NOT_NORMAL" in error_msg or "渠道" in error_msg:
+                detailed_msg = (
+                    f"支付渠道暂时不可用：{error_msg}\n\n"
+                    "可能的原因：\n"
+                    "• 支付渠道临时维护中\n"
+                    "• 需要在商户后台完成渠道签约\n\n"
+                    "建议操作：\n"
+                    "1. 稍后重试（5-10分钟后）\n"
+                    "2. 联系支付服务商客服（zpayz.cn）"
+                )
+                logging.error(f"[PAYMENT] Channel error: {error_msg}")
+            else:
+                detailed_msg = (
+                    f"创建订单失败：{error_msg}\n\n"
+                    f"调试信息：\n"
+                    f"• 套餐类型: {plan_id}\n"
+                    f"• 支付方式: {pay_type}"
+                )
+                logging.error(f"[PAYMENT] Create order failed - plan_type: {plan_id}, error: {error_msg}")
+
+            QMessageBox.critical(self, "创建订单失败", detailed_msg)
+
+    def _on_stripe_selected(self, plan_id: str):
+        """处理Stripe国际支付"""
+        from PySide6.QtWidgets import QMessageBox
+        from PySide6.QtCore import QUrl
+        from PySide6.QtGui import QDesktopServices
+        from gaiya.core.auth_client import AuthClient
+        import logging
+        import traceback
+
+        try:
+            auth_client = AuthClient()
+
+            logging.info(f"[STRIPE] 创建Stripe Checkout Session - plan_type: {plan_id}")
+            print(f"[STRIPE] 开始创建Stripe支付会话 - 套餐: {plan_id}")
+
+            # 获取用户信息
+            user_id = auth_client.get_user_id()
+            email = auth_client.get_user_email()
+
+            logging.info(f"[STRIPE] 用户信息 - user_id: {user_id}, email: {email}")
+            print(f"[STRIPE] 用户信息 - user_id: {user_id}, email: {email}")
+
+            if not user_id or not email:
+                error_msg = "用户信息不完整，请重新登录"
+                logging.error(f"[STRIPE] {error_msg}")
+                print(f"[STRIPE ERROR] {error_msg}")
+                QMessageBox.critical(self, "错误", error_msg)
+                return
+
+            # 调用Stripe创建Checkout Session
+            print(f"[STRIPE] 调用API: /api/stripe-create-checkout")
+            result = auth_client.create_stripe_checkout_session(
+                plan_type=plan_id,
+                user_id=user_id,
+                user_email=email
+            )
+
+            logging.info(f"[STRIPE] Checkout Session创建结果: {result}")
+            print(f"[STRIPE] API返回结果: {result}")
+
+            if result.get("success"):
+                checkout_url = result.get("checkout_url")
+                session_id = result.get("session_id")
+
+                logging.info(f"[STRIPE] Opening Stripe Checkout: {checkout_url[:100] if checkout_url else 'None'}...")
+                logging.info(f"[STRIPE] Session ID: {session_id}")
+                print(f"[STRIPE] 打开Checkout URL: {checkout_url}")
+                print(f"[STRIPE] Session ID: {session_id}")
+
+                # 在浏览器中打开Stripe Checkout页面
+                QDesktopServices.openUrl(QUrl(checkout_url))
+
+                # 显示提示信息
+                QMessageBox.information(
+                    self,
+                    "支付窗口已打开",
+                    "Stripe支付页面已在浏览器中打开。\n\n"
+                    "请在浏览器中完成支付。\n"
+                    "支付成功后，会员权益将自动激活。"
+                )
+            else:
+                error_msg = result.get("error", "创建支付会话失败")
+                detailed_msg = (
+                    f"创建Stripe支付会话失败：{error_msg}\n\n"
+                    f"调试信息：\n"
+                    f"• 套餐类型: {plan_id}\n"
+                    f"• 用户ID: {user_id}\n"
+                    f"• 邮箱: {email}"
+                )
+                logging.error(f"[STRIPE] Create checkout session failed: {error_msg}")
+                print(f"[STRIPE ERROR] 创建会话失败: {error_msg}")
+                QMessageBox.critical(self, "创建支付会话失败", detailed_msg)
+
+        except Exception as e:
+            error_msg = f"Stripe支付异常: {str(e)}"
+            logging.error(f"[STRIPE] Exception: {error_msg}")
+            logging.error(traceback.format_exc())
+            print(f"[STRIPE EXCEPTION] {error_msg}")
+            print(traceback.format_exc())
+            QMessageBox.critical(
+                self,
+                "支付异常",
+                f"处理Stripe支付时发生异常：\n\n{error_msg}\n\n请查看日志获取详细信息。"
+            )
+
     def _on_plan_button_clicked(self, plan_id: str):
-        """处理套餐按钮点击 - 直接触发支付流程"""
+        """处理套餐按钮点击 - 显示支付方式选择对话框"""
         # 设置选中的套餐
         self.selected_plan_id = plan_id
         # 更新卡片样式（选中状态）
         self._on_plan_card_clicked(plan_id)
-        # 直接触发支付
-        self._on_purchase_clicked()
+        # 显示支付方式选择对话框
+        self._show_payment_method_dialog(plan_id)
 
     def _on_purchase_clicked(self):
         """处理前往付费按钮点击 - 使用真实支付流程"""

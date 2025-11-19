@@ -20,7 +20,7 @@
 
 **📥 [下载 Windows 版本](https://github.com/jiamizhongshifu/jindutiao/releases/latest)** | **📖 [查看文档](#-文档导航)** | **🤝 [参与贡献](CONTRIBUTING.md)**
 
-当前版本: **v1.6.2** | 最后更新: 2025-11-19 | 🔒 **企业级安全认证**
+当前版本: **v1.6.3** | 最后更新: 2025-11-20 | 🔒 **企业级安全认证** | 🌍 **全球支付支持**
 
 </div>
 
@@ -57,7 +57,7 @@
 | **🍅 番茄钟** | 集成番茄钟、智能通知、免打扰模式 |
 | **📈 数据统计** | 任务完成跟踪、多维度分析、数据导出（会员功能） |
 | **⚙️ 配置管理** | 图形化界面、时间轴编辑、开机自启动 |
-| **💎 会员系统** | 月付(¥29)/年付(¥199)/会员合伙人(¥1200限量1000名)，解锁AI配额、去水印、专属社群 |
+| **💎 会员系统** | 月付(¥29)/年付(¥199)/会员合伙人(¥1200限量1000名)，支持国内支付（微信）和国际支付（Stripe），解锁AI配额、去水印、专属社群 |
 
 ---
 
@@ -109,11 +109,11 @@
 
 1. **下载最新版本**
    - 访问 [Releases 页面](https://github.com/jiamizhongshifu/jindutiao/releases/latest)
-   - 下载 `GaiYa-v1.6.exe` (约82MB，含场景编辑器)
+   - 下载 `GaiYa-v1.6.3.exe` (约82MB，含场景编辑器)
 
 2. **首次运行**
    ```
-   双击 GaiYa-v1.6.exe → 系统托盘出现图标
+   双击 GaiYa-v1.6.3.exe → 系统托盘出现图标
    ```
 
 3. **打开配置**
@@ -171,7 +171,8 @@ python main.py
 |-----|------|
 | **Vercel** | Serverless Functions托管 |
 | **Supabase** | 用户认证与数据库 |
-| **ZPAY** | 支付网关 |
+| **ZPAY** | 国内支付网关（微信支付） |
+| **Stripe** | 国际支付网关（支持Visa/Mastercard等） |
 
 ### AI 服务
 
@@ -447,10 +448,10 @@ rm -rf build dist
 pyinstaller Gaiya.spec
 
 # 3. 测试生成的exe
-./dist/GaiYa-v1.6.exe
+./dist/GaiYa-v1.6.3.exe
 
 # 输出文件
-dist/GaiYa-v1.6.exe  # 约 82 MB，单文件绿色版（含场景编辑器）
+dist/GaiYa-v1.6.3.exe  # 约 82 MB，单文件绿色版（含场景编辑器）
 ```
 
 ### 打包配置
@@ -519,10 +520,44 @@ datas=[
 
 ## 🔄 最新更新
 
+### v1.6.3 (2025-11-20) - Stripe国际支付集成 🌍💳
+
+**💳 国际支付支持**
+- ✅ **Stripe支付集成** - 支持Visa、Mastercard、American Express等国际信用卡
+- ✅ **双支付通道** - 国内用户使用微信支付，海外用户使用Stripe
+- ✅ **多币种显示** - 国内支付显示人民币（¥29/¥199/¥1200），国际支付显示美元（$4.99/$39.99/$169.99）
+- ✅ **支付方式选择** - 点击升级按钮时弹出支付方式对话框，用户可选择微信支付或Stripe
+
+**🎯 支付流程优化**
+- ✅ **智能分流** - 根据用户选择自动路由到对应支付网关
+- ✅ **浏览器支付** - Stripe使用托管Checkout页面，无需PCI合规
+- ✅ **Webhook自动处理** - 支付成功后自动创建订阅、升级用户等级、更新配额
+- ✅ **完整错误处理** - 用户验证、API错误、异常捕获，详细日志记录
+
+**🔧 技术实现**
+- ✅ **后端API** - `/api/stripe-create-checkout` 创建Checkout Session
+- ✅ **Webhook处理** - `/api/stripe-webhook` 接收支付完成事件
+- ✅ **客户端集成** - `AuthClient.create_stripe_checkout_session()` 方法
+- ✅ **UI组件** - 支付方式选择对话框，支持两种支付选项
+- ✅ **数据统一** - payments和subscriptions表支持payment_provider字段区分支付来源
+
+**📝 文档更新**
+- ✅ Stripe集成方案文档（STRIPE_INTEGRATION_PLAN.md）
+- ✅ 支付流程说明与测试指南
+- ✅ 价格对照表（CNY vs USD）
+
+**🌍 全球化支持**
+- ✅ 为海外用户提供便捷的支付方式
+- ✅ 支持全球主流信用卡品牌
+- ✅ 自动货币转换与显示
+- ✅ 符合国际支付标准与安全规范
+
+---
+
 ### v1.6.2 (2025-11-19) - 场景编辑器整合优化 🎨
 
 **🏗️ 架构优化**
-- ✅ **场景编辑器完全整合** - 移除独立SceneEditor.exe，完全集成到主应用GaiYa-v1.6.exe
+- ✅ **场景编辑器完全整合** - 移除独立SceneEditor.exe，完全集成到主应用
 - ✅ **开发流程优化** - 统一使用 `python main.py` 测试，`pyinstaller Gaiya.spec` 打包
 - ✅ **文件清理** - 删除SceneEditor.spec和独立构建文件，简化项目结构
 
@@ -578,8 +613,8 @@ datas=[
 ### v1.6.0 (2025-11-16) - 场景系统重磅上线
 
 **🎨 场景系统(Scene System)**
-- ✅ 可视化场景编辑器 - 拖拽式设计,所见即所得
-- ✅ **一体化集成** - 场景编辑器已集成到主应用,无需独立exe文件
+- ✅ 可视化场景编辑器 - 拖拽式设计，所见即所得
+- ✅ **一体化集成** - 场景编辑器已集成到主应用，无需独立exe文件
 - ✅ **快速访问** - 配置界面 → 🎬场景设置 → 🎨打开场景编辑器
 - ✅ 画布预览 - 实时查看场景效果
 - ✅ 元素管理 - 支持添加、移动、缩放、删除场景元素
@@ -675,8 +710,9 @@ datas=[
 - ✅ 会员功能解锁（AI配额、统计报告）
 
 **💳 支付集成**
-- ✅ 支持微信支付
-- ✅ ZPAY支付网关集成
+- ✅ 支持微信支付（ZPAY网关）
+- ✅ 支持Stripe国际支付（v1.6.3新增）
+- ✅ 双支付通道（国内/国际）
 - ✅ 订单状态轮询与通知
 
 **🎨 UI优化**
@@ -751,7 +787,7 @@ datas=[
 **方法二（手动）**:
 - **Windows**:
   1. `Win+R` 输入 `shell:startup`
-  2. 复制 `GaiYa-v1.5.exe` 的快捷方式到启动文件夹
+  2. 复制 `GaiYa-v1.6.3.exe` 的快捷方式到启动文件夹
 
 **验证**: 重启电脑，检查系统托盘是否自动出现图标
 </details>
@@ -824,6 +860,30 @@ python main.py
 ```
 </details>
 
+<details>
+<summary><strong>Q8: 支持哪些支付方式？</strong></summary>
+
+**国内用户**:
+- ✅ **微信支付** - 使用ZPAY支付网关
+- 💰 **价格**: 月付¥29、年付¥199、会员合伙人¥1200
+
+**海外用户**:
+- ✅ **Stripe国际支付** - 支持Visa、Mastercard、American Express等
+- 💰 **价格**: 月付$4.99、年付$39.99、会员合伙人$169.99
+
+**支付流程**:
+1. 点击"升级会员"或"成为合伙人"按钮
+2. 选择支付方式（微信支付 / 国际支付）
+3. 浏览器自动打开支付页面
+4. 完成支付后自动激活会员权益
+
+**安全保障**:
+- 🔒 Stripe通过PCI DSS Level 1认证（最高级别）
+- 🔒 不存储任何信用卡信息
+- 🔒 使用Stripe托管Checkout页面
+- 🔒 Webhook签名验证防止伪造支付
+</details>
+
 更多问题请查看 [Issues](https://github.com/jiamizhongshifu/jindutiao/issues) 或加入微信群讨论。
 
 ---
@@ -837,8 +897,9 @@ python main.py
 - [x] 主题系统
 - [x] AI任务生成
 - [x] 会员系统
-- [x] 支付集成
+- [x] 支付集成（微信支付 + Stripe国际支付）
 - [x] 数据统计（会员功能）
+- [x] 场景系统（可视化编辑器）
 
 ### 🚧 进行中（v1.6）
 
@@ -994,6 +1055,7 @@ in the Software without restriction...
 - [Vercel](https://vercel.com/) - Serverless部署平台
 - [Supabase](https://supabase.com/) - 开源后端服务
 - [Anthropic](https://www.anthropic.com/) - Claude AI API
+- [Stripe](https://stripe.com/) - 国际支付网关
 
 ### 灵感来源
 
