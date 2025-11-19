@@ -482,7 +482,7 @@ class TestGetPlanInfo:
         plan = zpay_manager.get_plan_info("lifetime")
 
         assert plan["name"] == "GaiYa 会员合伙人"
-        assert plan["price"] == 1200.0
+        assert plan["price"] == 599.0
 
     def test_get_unknown_plan_info(self, zpay_manager):
         """测试获取不存在的计划"""

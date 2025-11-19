@@ -261,12 +261,12 @@ class TestUpdatedPlanTypeValidation:
             assert error == ""
             assert price == expected_price
 
-    def test_lifetime_plan_removed(self):
-        """测试终身会员已移除（暂时隐藏）"""
+    def test_lifetime_plan_exists(self):
+        """测试终身会员存在（价格已调整为599元）"""
         is_valid, error, price = validate_plan_type("lifetime")
-        assert is_valid is False
-        assert "无效的计划类型: lifetime" in error
-        assert price is None
+        assert is_valid is True
+        assert error == ""
+        assert price == 599.0
 
     def test_invalid_plan_type(self):
         """测试无效的订阅计划"""
@@ -322,11 +322,11 @@ class TestEnhancedPaymentAmountValidation:
         assert is_valid is False
         assert "金额不正确" in error
 
-    def test_lifetime_plan_payment_rejected(self):
-        """测试终身会员支付被拒绝（计划已移除）"""
-        is_valid, error = validate_payment_amount("lifetime", 1200.0)
-        assert is_valid is False
-        assert "无效的计划类型" in error
+    def test_lifetime_plan_payment_accepted(self):
+        """测试终身会员支付通过（新价格599元）"""
+        is_valid, error = validate_payment_amount("lifetime", 599.0)
+        assert is_valid is True
+        assert error == ""
 
 
 class TestEnhancedPasswordValidation:

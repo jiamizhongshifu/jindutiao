@@ -169,7 +169,7 @@ class TestPlanTypeValidation:
         valid_plans = {
             "pro_monthly": 29.0,
             "pro_yearly": 199.0,
-            "lifetime": 1200.0
+            "lifetime": 599.0
         }
         for plan_type, expected_price in valid_plans.items():
             is_valid, error, price = validate_plan_type(plan_type)
@@ -208,7 +208,7 @@ class TestPaymentAmountValidation:
         test_cases = [
             ("pro_monthly", 29.0),
             ("pro_yearly", 199.0),
-            ("lifetime", 1200.0)
+            ("lifetime", 599.0)
         ]
         for plan_type, amount in test_cases:
             is_valid, error = validate_payment_amount(plan_type, amount)

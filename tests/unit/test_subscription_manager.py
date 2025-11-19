@@ -56,7 +56,7 @@ class TestSubscriptionManagerInit:
         """测试订阅计划价格定义"""
         assert SubscriptionManager.PLANS["pro_monthly"]["price"] == 29.0
         assert SubscriptionManager.PLANS["pro_yearly"]["price"] == 199.0
-        assert SubscriptionManager.PLANS["lifetime"]["price"] == 1200.0
+        assert SubscriptionManager.PLANS["lifetime"]["price"] == 599.0
 
 
 class TestCreateSubscription:
