@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>支付成功 - GaiYa</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 60px 40px;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: #10b981;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            animation: scaleIn 0.5s ease-out;
+        }
+        .success-icon::after {
+            content: "✓";
+            color: white;
+            font-size: 48px;
+            font-weight: bold;
+        }
+        h1 {
+            color: #1f2937;
+            font-size: 32px;
+            margin-bottom: 16px;
+        }
+        p {
+            color: #6b7280;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        .session-info {
+            background: #f3f4f6;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            font-size: 14px;
+            color: #6b7280;
+        }
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 14px 32px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+            }
+            to {
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success-icon"></div>
+        <h1>支付成功！</h1>
+        <p>感谢您升级GaiYa会员，您的会员权益已激活。</p>
+
+        <div class="session-info" id="sessionInfo">
+            正在处理订单...
+        </div>
+
+        <a href="gaiya://open" class="btn">打开GaiYa应用</a>
+    </div>
+
+    <script>
+        // 从URL获取session_id
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session_id');
+
+        if (sessionId) {
+            document.getElementById('sessionInfo').innerHTML = `
+                <strong>订单ID：</strong><br>
+                <code style="font-size: 12px; word-break: break-all;">${sessionId}</code>
+            `;
+        }
+
+        // 5秒后自动尝试打开应用
+        setTimeout(() => {
+            window.location.href = 'gaiya://payment-success?session_id=' + sessionId;
+        }, 5000);
+    </script>
+</body>
+</html>
