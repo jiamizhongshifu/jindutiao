@@ -280,6 +280,12 @@ class handler(BaseHTTPRequestHandler):
 
             supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+            # 根据plan_type确定item_type
+            if plan_type == "lifetime":
+                item_type = "lifetime"
+            else:
+                item_type = "subscription"
+
             payment_data = {
                 "user_id": user_id,
                 "order_id": order_id,
@@ -289,6 +295,7 @@ class handler(BaseHTTPRequestHandler):
                 "plan_type": plan_type,
                 "payment_method": payment_method,
                 "status": "completed",
+                "item_type": item_type,
                 "stripe_customer_id": stripe_customer_id,
                 "stripe_subscription_id": stripe_subscription_id
             }
