@@ -52,7 +52,15 @@ class SubscriptionManager:
                 print(f"Failed to initialize Supabase client: {e}", file=sys.stderr)
                 self.client = None
 
-    def create_subscription(self, user_id: str, plan_type: str, payment_id: str) -> Dict:
+    def create_subscription(
+        self,
+        user_id: str,
+        plan_type: str,
+        payment_id: str,
+        stripe_subscription_id: str = "",
+        stripe_customer_id: str = "",
+        payment_provider: str = "zpay"
+    ) -> Dict:
         """
         创建订阅
 
@@ -60,6 +68,9 @@ class SubscriptionManager:
             user_id: 用户ID
             plan_type: 订阅类型 (pro_monthly, pro_yearly, lifetime)
             payment_id: 支付记录ID
+            stripe_subscription_id: Stripe订阅ID（可选）
+            stripe_customer_id: Stripe客户ID（可选）
+            payment_provider: 支付提供商（zpay/stripe）
 
         Returns:
             订阅信息
@@ -90,16 +101,25 @@ class SubscriptionManager:
                 "started_at": now.isoformat(),
                 "expires_at": expires_at.isoformat() if expires_at else None,
                 "payment_id": payment_id,
+                "payment_provider": payment_provider,
                 "auto_renew": True if plan["duration_days"] else False
             }
 
+            # 添加Stripe特有字段
+            if stripe_subscription_id:
+                subscription_data["stripe_subscription_id"] = stripe_subscription_id
+            if stripe_customer_id:
+                subscription_data["stripe_customer_id"] = stripe_customer_id
+
             sub_response = self.client.table("subscriptions").insert(subscription_data).execute()
 
-            # 2. 更新用户等级
+            # 2. 更新用户等级和Stripe客户ID
             user_tier = "lifetime" if plan_type == "lifetime" else "pro"
-            self.client.table("users").update({
-                "user_tier": user_tier
-            }).eq("id", user_id).execute()
+            user_update_data = {"user_tier": user_tier}
+            if stripe_customer_id:
+                user_update_data["stripe_customer_id"] = stripe_customer_id
+
+            self.client.table("users").update(user_update_data).eq("id", user_id).execute()
 
             # 3. 更新配额
             if user_tier in ["pro", "lifetime"]:
