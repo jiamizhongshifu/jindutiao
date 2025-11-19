@@ -20,7 +20,8 @@ except ImportError:
 
 # Supabase配置
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
-SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY", "")
+# 优先使用Service Key（绕过RLS），否则使用Anon Key
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY") or os.getenv("SUPABASE_ANON_KEY", "")
 
 
 class handler(BaseHTTPRequestHandler):
