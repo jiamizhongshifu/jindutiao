@@ -98,9 +98,29 @@ class handler(BaseHTTPRequestHandler):
             user_id = metadata.get("user_id")
             plan_type = metadata.get("plan_type")
 
-            if not user_id or not plan_type:
-                print(f"[STRIPE-WEBHOOK] Missing user_id or plan_type in metadata", file=sys.stderr)
-                return
+            # 如果metadata中没有信息，尝试从其他地方获取
+            if not user_id:
+                # 尝试从customer_details获取email，然后查找用户
+                customer_details = session.get("customer_details", {})
+                customer_email = customer_details.get("email") or session.get("customer_email", "")
+
+                if customer_email:
+                    print(f"[STRIPE-WEBHOOK] No user_id in metadata, looking up by email: {customer_email}", file=sys.stderr)
+                    user_id = self._get_user_id_by_email(customer_email)
+
+                if not user_id:
+                    print(f"[STRIPE-WEBHOOK] Cannot find user_id for email: {customer_email}", file=sys.stderr)
+                    return
+
+            # 如果没有plan_type，从金额推断
+            if not plan_type:
+                amount_total = session.get("amount_total", 0) / 100  # 转换为美元
+                plan_type = self._infer_plan_type(amount_total)
+                print(f"[STRIPE-WEBHOOK] Inferred plan_type from amount ${amount_total}: {plan_type}", file=sys.stderr)
+
+                if not plan_type:
+                    print(f"[STRIPE-WEBHOOK] Cannot infer plan_type from amount: ${amount_total}", file=sys.stderr)
+                    return
 
             print(f"[STRIPE-WEBHOOK] Checkout completed: user={user_id}, plan={plan_type}, mode={mode}", file=sys.stderr)
 
@@ -335,6 +355,42 @@ class handler(BaseHTTPRequestHandler):
 
         except Exception as e:
             print(f"[STRIPE-WEBHOOK] Error cancelling subscription: {e}", file=sys.stderr)
+
+    def _get_user_id_by_email(self, email: str) -> str:
+        """通过邮箱查找用户ID"""
+        try:
+            if not SUPABASE_URL or not SUPABASE_KEY:
+                return ""
+
+            supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+            # 查找用户
+            response = supabase.table("users").select("id").eq("email", email).execute()
+
+            if response.data and len(response.data) > 0:
+                user_id = response.data[0]["id"]
+                print(f"[STRIPE-WEBHOOK] Found user_id {user_id} for email {email}", file=sys.stderr)
+                return user_id
+            else:
+                print(f"[STRIPE-WEBHOOK] No user found for email {email}", file=sys.stderr)
+                return ""
+
+        except Exception as e:
+            print(f"[STRIPE-WEBHOOK] Error looking up user by email: {e}", file=sys.stderr)
+            return ""
+
+    def _infer_plan_type(self, amount: float) -> str:
+        """从金额推断计划类型"""
+        # Stripe金额精度可能有浮点误差，使用接近判断
+        if abs(amount - 4.99) < 0.01:
+            return "pro_monthly"
+        elif abs(amount - 39.99) < 0.01:
+            return "pro_yearly"
+        elif abs(amount - 89.99) < 0.01:
+            return "lifetime"
+        else:
+            print(f"[STRIPE-WEBHOOK] Unknown amount: ${amount}", file=sys.stderr)
+            return ""
 
     def _send_response(self, code: int, message: str):
         """发送响应"""
