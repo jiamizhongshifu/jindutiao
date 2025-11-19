@@ -15,6 +15,14 @@
       "src": "/email-verified",
       "dest": "/public/email-verified.html"
     },
+    {
+      "src": "/payment-success",
+      "dest": "/public/payment-success.html"
+    },
+    {
+      "src": "/payment-cancel",
+      "dest": "/public/payment-cancel.html"
+    },
     { "handle": "filesystem" },
     {
       "src": "/api/(.*)",
