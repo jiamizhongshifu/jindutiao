@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>结账 - GaiYa盖亚</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .checkout-container {
+            max-width: 900px;
+            margin: 100px auto 60px;
+            padding: 0 24px;
+        }
+        .checkout-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 48px;
+            position: relative;
+        }
+        .checkout-steps::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #e0e0e0;
+            z-index: 0;
+        }
+        .checkout-step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #e0e0e0;
+            margin: 0 auto 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #999;
+        }
+        .checkout-step.active .step-circle {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+        .checkout-step.completed .step-circle {
+            background: #4CAF50;
+            border-color: #4CAF50;
+            color: white;
+        }
+        .checkout-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+        }
+        .form-group {
+            margin-bottom: var(--spacing-md);
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+        .payment-option {
+            border: 2px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .payment-option:hover {
+            border-color: var(--primary-color);
+        }
+        .payment-option.selected {
+            border-color: var(--primary-color);
+            background: rgba(76, 175, 80, 0.05);
+        }
+        .payment-option.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: var(--gray-50);
+        }
+        .order-summary {
+            background: var(--gray-50);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .summary-row.total {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--primary-color);
+            padding-top: 12px;
+            border-top: 2px solid var(--gray-300);
+            margin-top: 12px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="index.html" class="navbar-logo">
+                🌍 <span>GaiYa 盖亚</span>
+            </a>
+        </div>
+    </nav>
+
+    <div class="checkout-container">
+        <!-- 进度指示器 -->
+        <div class="checkout-steps">
+            <div class="checkout-step completed">
+                <div class="step-circle">1</div>
+                <div>选择套餐</div>
+            </div>
+            <div class="checkout-step active">
+                <div class="step-circle">2</div>
+                <div>登录账户</div>
+            </div>
+            <div class="checkout-step">
+                <div class="step-circle">3</div>
+                <div>支付</div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 350px; gap: 24px;">
+            <!-- 左侧：登录表单 -->
+            <div>
+                <div class="checkout-card">
+                    <h2 style="margin-bottom: 24px;">登录或注册</h2>
+
+                    <div class="form-group">
+                        <label for="email">邮箱地址 *</label>
+                        <input type="email" id="email" placeholder="请输入邮箱地址" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">密码 *</label>
+                        <input type="password" id="password" placeholder="请输入密码（新用户将自动注册）" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" required>
+                            我已阅读并同意 <a href="#" style="color: var(--primary-color);">《用户协议》</a> 和 <a href="#" style="color: var(--primary-color);">《隐私政策》</a>
+                        </label>
+                    </div>
+
+                    <p style="font-size: 12px; color: #999; margin-bottom: 16px;">
+                        💡 新用户注册后需验证邮箱，验证链接将发送至您的邮箱
+                    </p>
+
+                    <button class="btn btn-primary" style="width: 100%;" onclick="alert('此功能需要后端API支持，请使用GaiYa桌面应用登录')">
+                        登录/注册并继续支付
+                    </button>
+                </div>
+
+                <!-- 支付方式 -->
+                <div class="checkout-card" style="margin-top: 24px;">
+                    <h2 style="margin-bottom: 24px;">选择支付方式</h2>
+
+                    <div class="payment-option selected">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <input type="radio" name="payment" value="wechat" checked>
+                            <div style="flex: 1;">
+                                <h3 style="margin: 0; font-size: 16px;">💚 微信支付（推荐）</h3>
+                                <p style="margin: 4px 0 0; font-size: 12px; color: #666;">扫码支付，安全便捷</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="payment-option disabled">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <input type="radio" name="payment" value="stripe" disabled>
+                            <div style="flex: 1;">
+                                <h3 style="margin: 0; font-size: 16px;">💳 Stripe 国际支付</h3>
+                                <p style="margin: 4px 0 0; font-size: 12px; color: #666;">⏳ 准备中，即将上线...</p>
+                                <p style="margin: 4px 0 0; font-size: 11px; color: #999;">支持Visa/Mastercard等国际信用卡</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p style="margin-top: 16px; padding: 12px; background: #e8f5e9; border-radius: 8px; font-size: 13px; color: #2e7d32;">
+                        💡 <strong>提示：</strong>支付成功后，会员权益将自动激活，重启应用即可使用
+                    </p>
+                </div>
+            </div>
+
+            <!-- 右侧：订单摘要 -->
+            <div>
+                <div class="checkout-card order-summary">
+                    <h3 style="margin-bottom: 16px;">订单摘要</h3>
+
+                    <div class="summary-row">
+                        <span>套餐</span>
+                        <span id="plan-name">Pro 年度</span>
+                    </div>
+
+                    <div class="summary-row">
+                        <span>有效期</span>
+                        <span id="plan-validity">365天</span>
+                    </div>
+
+                    <div style="margin: 16px 0; padding: 12px; background: white; border-radius: 8px;">
+                        <p style="font-size: 13px; margin: 0; color: #666;">✓ 20次/天 AI智能规划</p>
+                        <p style="font-size: 13px; margin: 4px 0 0; color: #666;">✓ 去除进度条水印</p>
+                        <p style="font-size: 13px; margin: 4px 0 0; color: #666;">✓ 统计报告分析</p>
+                        <p style="font-size: 13px; margin: 4px 0 0; color: #666;">✓ 数据云同步</p>
+                        <p style="font-size: 13px; margin: 4px 0 0; color: #666;">✓ 场景系统</p>
+                        <p style="font-size: 13px; margin: 4px 0 0; color: #666;">✓ 加入VIP会员群</p>
+                    </div>
+
+                    <div class="summary-row total">
+                        <span>总计</span>
+                        <span id="plan-price">¥199</span>
+                    </div>
+
+                    <p style="margin-top: 16px; font-size: 12px; color: #999; text-align: center;">
+                        到期后不会自动续费
+                    </p>
+                </div>
+
+                <div style="margin-top: 16px; padding: 12px; background: #fff3cd; border-radius: 8px; font-size: 12px; color: #856404;">
+                    🔒 <strong>安全保障</strong><br>
+                    • 所有支付信息经过加密传输<br>
+                    • 7天内未使用可全额退款<br>
+                    • 完整的隐私保护承诺
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 从URL获取套餐信息
+        const urlParams = new URLSearchParams(window.location.search);
+        const planId = urlParams.get('plan') || 'pro_yearly';
+
+        const plans = {
+            'pro_monthly': { name: 'Pro 月度', price: '¥29', validity: '30天' },
+            'pro_yearly': { name: 'Pro 年度', price: '¥199', validity: '365天' },
+            'lifetime': { name: '会员合伙人', price: '¥599', validity: '永久' }
+        };
+
+        const plan = plans[planId];
+        if (plan) {
+            document.getElementById('plan-name').textContent = plan.name;
+            document.getElementById('plan-price').textContent = plan.price;
+            document.getElementById('plan-validity').textContent = plan.validity;
+        }
+    </script>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-bottom">
+                <p>© 2025 GaiYa 团队 | 需要帮助？<a href="help.html" style="color: var(--primary-color); margin-left: 8px;">查看帮助中心</a></p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

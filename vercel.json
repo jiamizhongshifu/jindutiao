@@ -12,6 +12,54 @@
   ],
   "routes": [
     {
+      "src": "/",
+      "dest": "/public/index.html"
+    },
+    {
+      "src": "/index.html",
+      "dest": "/public/index.html"
+    },
+    {
+      "src": "/download",
+      "dest": "/public/download.html"
+    },
+    {
+      "src": "/download.html",
+      "dest": "/public/download.html"
+    },
+    {
+      "src": "/about",
+      "dest": "/public/about.html"
+    },
+    {
+      "src": "/about.html",
+      "dest": "/public/about.html"
+    },
+    {
+      "src": "/help",
+      "dest": "/public/help.html"
+    },
+    {
+      "src": "/help.html",
+      "dest": "/public/help.html"
+    },
+    {
+      "src": "/pricing",
+      "dest": "/public/pricing.html"
+    },
+    {
+      "src": "/pricing.html",
+      "dest": "/public/pricing.html"
+    },
+    {
+      "src": "/checkout",
+      "dest": "/public/checkout.html"
+    },
+    {
+      "src": "/checkout.html",
+      "dest": "/public/checkout.html"
+    },
+    {
       "src": "/email-verified",
       "dest": "/public/email-verified.html"
     },

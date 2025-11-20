@@ -13,7 +13,7 @@ GaiYa每日进度条 - 版本信息
 __version__ = "1.6.3"
 __app_name__ = "GaiYa"
 __app_name_zh__ = "盖亚"
-__slogan__ = "守护你的每一分钟"
+__slogan__ = "让每一天都清晰可见"
 __release_date__ = "2025-11-19"
 __build_type__ = "release"  # release / debug / beta
 
@@ -28,7 +28,7 @@ VERSION_PATCH = 3
 
 # 完整版本字符串
 VERSION_STRING = f"{__app_name__} v{__version__}"
-VERSION_STRING_ZH = f"{__app_name_zh__}每日进度条 v{__version__}"
+VERSION_STRING_ZH = f"{__app_name__}每日进度条 v{__version__}"
 
 # ========================================
 # PyInstaller 相关

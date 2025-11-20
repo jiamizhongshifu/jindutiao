@@ -3947,7 +3947,7 @@ class ConfigManager(QMainWindow):
 
         <p style="margin-bottom: 15px;">我是 GaiYa 的创造者，一名产品经理，也是时间管理的长期实践者。2023年初的某个深夜，我盯着屏幕上密密麻麻的任务清单，突然意识到：<b>我们需要的不是更多任务管理工具，而是一种让时间「看得见、摸得着」的方式</b>。</p>
 
-        <p style="margin-bottom: 15px;">于是有了 GaiYa —— 一条桌面进度条，默默守护你的每一分钟。</p>
+        <p style="margin-bottom: 15px;">于是有了 GaiYa —— 一条桌面进度条，让每一天都清晰可见。</p>
 
         <p style="margin-bottom: 15px; margin-top: 20px;"><b style="color: #8B4513;">✨ 为什么做 GaiYa？</b></p>
 
@@ -6717,7 +6717,7 @@ class ConfigManager(QMainWindow):
 
     def create_about_tab(self):
         """创建关于标签页"""
-        from version import __version__, __app_name_zh__, __slogan__, APP_METADATA
+        from version import __version__, __app_name__, __slogan__, APP_METADATA
         from PySide6.QtGui import QPixmap
         from gaiya.utils.path_utils import get_resource_path
 
@@ -6743,7 +6743,7 @@ class ConfigManager(QMainWindow):
             logo_label.setPixmap(scaled_pixmap)
         else:
             # 如果图片加载失败，显示应用名称作为后备
-            logo_label.setText(__app_name_zh__)
+            logo_label.setText(__app_name__)
             logo_label.setStyleSheet("""
                 QLabel {
                     font-size: 48px;

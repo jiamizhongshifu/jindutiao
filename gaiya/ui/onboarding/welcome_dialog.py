@@ -32,7 +32,7 @@ class WelcomeDialog(QDialog):
         layout.setContentsMargins(30, 30, 30, 30)
 
         # 标题
-        title = QLabel("守护你的每一分钟 ⏱️")
+        title = QLabel("让每一天都清晰可见 ⏱️")
         title_font = QFont()
         title_font.setPointSize(18)  # 增加字号 16→18
         title_font.setBold(True)

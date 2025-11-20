@@ -689,7 +689,7 @@ class TimeProgressBar(QWidget):
                 self.style().StandardPixmap.SP_ComputerIcon
             )
         self.tray_icon.setIcon(icon)
-        self.tray_icon.setToolTip('GaiYa每日进度条 - 守护你的每一分钟')
+        self.tray_icon.setToolTip('GaiYa每日进度条 - 让每一天都清晰可见')
 
         # 创建右键菜单
         tray_menu = QMenu()
