@@ -1,7 +1,11 @@
-# Vercel部署忽略文件
-# 只部署api目录，排除其他所有文件
+# Vercel部署配置
+# 保留：api/目录（API接口）、public/目录（静态网站）、index.py（虚拟入口）
 
-# 排除构建产物（大文件）
+# ============================================
+# 排除桌面应用相关文件（不需要部署到云端）
+# ============================================
+
+# 构建产物
 dist/
 build/
 *.exe
@@ -9,8 +13,9 @@ build/
 *.dmg
 *.deb
 *.rpm
+*.spec
 
-# 排除主程序文件
+# 桌面应用主程序
 main.py
 config_gui.py
 statistics_gui.py
@@ -24,60 +29,80 @@ api_key_manager.py
 statistics_manager.py
 proxy_server.py
 
-# 排除测试文件
+# 桌面应用模块
+gaiya/
+
+# 测试文件
 test_*.py
 *_test.py
+tests/
 
-# 排除文档文件
+# ============================================
+# 排除文档和配置（保留必要的）
+# ============================================
+
+# 文档（保留README.md）
 *.md
-!api/README.md
+!README.md
 
-# 排除配置文件
+# 配置文件（保留package.json和vercel.json）
 *.json
 !package.json
-!api/requirements.txt
+!vercel.json
+!api/*/requirements.txt
 
-# 排除资源和数据文件
+# 桌面应用资源（云端不需要）
 resources/
-*.png
-*.jpg
-*.jpeg
-*.gif
-*.webp
-*.svg
-*.ico
-kun.webp
 templates/
 data/
+kun.webp
 
-# 排除缓存和临时文件
+# ============================================
+# 排除开发工具和缓存
+# ============================================
+
+# Python缓存
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+# 日志和临时文件
 *.log
 *.tmp
 *.temp
 *.bak
+gaiya.log
+first_run.json
 
-# 排除IDE配置
+# IDE配置
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# 排除环境文件
+# 环境文件
 .env
 .env.local
 .venv/
 venv/
 env/
 
-# 排除其他目录
+# ============================================
+# 排除其他无关目录
+# ============================================
+
 docs/
 vercel_api/
 railway.json
 Procfile
-*.spec
 copy/
 backup/
+.benchmarks/
+.bmad-core/
+.claude/
+
+# ============================================
+# 重要：不要排除public/目录中的任何文件！
+# public/目录包含网站的所有静态资源
+# ============================================
