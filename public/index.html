@@ -35,32 +35,9 @@
 
     <!-- Hero 区域 -->
     <section class="hero">
-        <!-- 视觉隐喻：时间流逝的4个阶段 -->
-        <div class="hero-visual" style="display: flex; align-items: flex-end; justify-content: center; gap: 32px; margin-bottom: 48px; opacity: 0; animation: fadeInUp 0.8s ease-out 0.4s forwards;">
-            <!-- 阶段1：开始 -->
-            <div class="visual-stage" style="animation-delay: 0.6s;">
-                <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(76, 175, 80, 0.15);">
-                    <span style="font-size: 28px;">📅</span>
-                </div>
-            </div>
-            <!-- 阶段2：规划 -->
-            <div class="visual-stage" style="animation-delay: 0.8s;">
-                <div style="width: 75px; height: 75px; background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 16px rgba(76, 175, 80, 0.2);">
-                    <span style="font-size: 36px;">📊</span>
-                </div>
-            </div>
-            <!-- 阶段3：执行 -->
-            <div class="visual-stage" style="animation-delay: 1s;">
-                <div style="width: 90px; height: 90px; background: linear-gradient(135deg, #a5d6a7 0%, #81c784 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px rgba(76, 175, 80, 0.25);">
-                    <span style="font-size: 44px;">⏱️</span>
-                </div>
-            </div>
-            <!-- 阶段4：成就 -->
-            <div class="visual-stage" style="animation-delay: 1.2s;">
-                <div style="width: 105px; height: 105px; background: linear-gradient(135deg, #81c784 0%, #66bb6a 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 24px rgba(76, 175, 80, 0.3);">
-                    <span style="font-size: 52px;">🏆</span>
-                </div>
-            </div>
+        <!-- 插画视觉 -->
+        <div class="hero-visual" style="display: flex; justify-content: center; margin-bottom: 48px; opacity: 0; animation: fadeInUp 0.8s ease-out 0.4s forwards;">
+            <img src="images/GaiYa1120.png" alt="GaiYa工作场景" style="max-width: 400px; width: 100%; height: auto; filter: drop-shadow(0 10px 30px rgba(0,0,0,0.1));">
         </div>
 
         <h1 class="hero-title" style="opacity: 0; animation: fadeInUp 0.8s ease-out 0.8s forwards;">
@@ -113,58 +90,20 @@
             }
         }
 
-        .visual-stage {
-            opacity: 0;
-            animation: fadeInUp 0.8s ease-out forwards;
+        /* 插画悬停效果 */
+        .hero-visual img {
+            transition: transform 0.3s ease, filter 0.3s ease;
         }
 
-        .hero-brand {
-            position: absolute;
-            top: 100px;
-        }
-
-        /* 悬停效果 */
-        .visual-stage > div {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .visual-stage > div:hover {
-            transform: translateY(-8px) scale(1.05);
-            box-shadow: 0 12px 32px rgba(76, 175, 80, 0.4) !important;
+        .hero-visual img:hover {
+            transform: translateY(-8px);
+            filter: drop-shadow(0 15px 40px rgba(0,0,0,0.15));
         }
 
         /* 响应式调整 */
         @media (max-width: 768px) {
-            .hero-visual {
-                gap: 16px !important;
-            }
-            .visual-stage > div {
-                width: 40px !important;
-                height: 40px !important;
-            }
-            .visual-stage > div span {
-                font-size: 20px !important;
-            }
-            .visual-stage:nth-child(2) > div {
-                width: 50px !important;
-                height: 50px !important;
-            }
-            .visual-stage:nth-child(2) > div span {
-                font-size: 24px !important;
-            }
-            .visual-stage:nth-child(3) > div {
-                width: 60px !important;
-                height: 60px !important;
-            }
-            .visual-stage:nth-child(3) > div span {
-                font-size: 28px !important;
-            }
-            .visual-stage:nth-child(4) > div {
-                width: 70px !important;
-                height: 70px !important;
-            }
-            .visual-stage:nth-child(4) > div span {
-                font-size: 32px !important;
+            .hero-visual img {
+                max-width: 280px !important;
             }
         }
     </style>
