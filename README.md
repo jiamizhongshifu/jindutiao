@@ -18,7 +18,7 @@
 [![Issues](https://img.shields.io/github/issues/jiamizhongshifu/jindutiao?label=Issues)](https://github.com/jiamizhongshifu/jindutiao/issues)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-**📥 [下载 Windows 版本](https://github.com/jiamizhongshifu/jindutiao/releases/latest)** | **📖 [查看文档](#-文档导航)** | **🤝 [参与贡献](CONTRIBUTING.md)**
+**🌐 [访问官网](https://www.gaiyatime.com)** | **📥 [下载应用](https://github.com/jiamizhongshifu/jindutiao/releases/latest)** | **📖 [查看文档](#-文档导航)** | **🤝 [参与贡献](CONTRIBUTING.md)**
 
 当前版本: **v1.6.3** | 最后更新: 2025-11-20 | 🔒 **企业级安全认证** | 🌍 **全球支付支持**
 
@@ -520,6 +520,32 @@ datas=[
 
 ## 🔄 最新更新
 
+### v1.6.4 (2025-11-20) - 官网上线 & Favicon 🌐
+
+**🌐 官网正式上线**
+- ✅ **域名**: [www.gaiyatime.com](https://www.gaiyatime.com)
+- ✅ **技术栈**: 静态网站 + Vercel Serverless Functions
+- ✅ **响应式设计**: 完美支持桌面和移动端
+- ✅ **页面结构**:
+  - 首页 - 产品介绍与核心功能展示
+  - 下载页 - 最新版本下载与安装指南
+  - 定价页 - 会员套餐详情与对比
+  - 帮助中心 - FAQ与常见问题解答
+  - 关于我们 - 团队故事与开源理念
+
+**🎨 品牌视觉优化**
+- ✅ **Favicon**: 添加GaiYa Logo图标，浏览器标签页显示品牌标识
+- ✅ **统一设计**: Material Design风格，绿色主题（#4CAF50）
+- ✅ **专业排版**: 清晰的视觉层级与信息架构
+
+**☁️ 部署架构**
+- ✅ **Vercel托管**: 静态网站 + API Serverless Functions
+- ✅ **自定义域名**: www.gaiyatime.com
+- ✅ **自动SSL证书**: HTTPS加密传输
+- ✅ **全球CDN加速**: 快速访问体验
+
+---
+
 ### v1.6.3 (2025-11-20) - Stripe国际支付集成 🌍💳
 
 **💳 国际支付支持**
@@ -984,6 +1010,7 @@ git push origin feature/your-feature-name
 
 ### 获取帮助
 
+- 🌐 **官网**: [www.gaiyatime.com](https://www.gaiyatime.com)
 - 📖 **文档**: [在线文档](https://github.com/jiamizhongshifu/jindutiao#-文档导航)
 - 💬 **讨论区**: [GitHub Discussions](https://github.com/jiamizhongshifu/jindutiao/discussions)
 - 🐛 **Bug反馈**: [GitHub Issues](https://github.com/jiamizhongshifu/jindutiao/issues)
@@ -991,7 +1018,7 @@ git push origin feature/your-feature-name
 
 ### 联系我们
 
-- **官网**: https://gaiya.app (规划中)
+- **官网**: [www.gaiyatime.com](https://www.gaiyatime.com)
 - **邮箱**: support@gaiya.app
 - **GitHub**: https://github.com/jiamizhongshifu/jindutiao
 
@@ -1081,7 +1108,7 @@ in the Software without restriction...
 - 💎 **限量1000名 ¥1200**: 一次购买，终身使用
 - ✨ **九大专属权益**: 无限AI配额、专属社群、33%返现等
 - 🤝 **共享价值**: 与我们一起成长，见证项目发展
-- 🌟 **官网查看详情**: [https://gaiya.app](https://gaiya.app)（规划中）
+- 🌟 **官网查看详情**: [www.gaiyatime.com/pricing](https://www.gaiyatime.com/pricing.html)
 
 ---
 
@@ -1091,6 +1118,6 @@ Made with ❤️ by GaiYa 团队
 
 ⭐ **如果这个项目对你有帮助，请给我们一个 Star！** ⭐
 
-[官网](https://gaiya.app) · [文档](#-文档导航) · [反馈](https://github.com/jiamizhongshifu/jindutiao/issues) · [贡献](CONTRIBUTING.md) · [行为准则](CODE_OF_CONDUCT.md)
+[官网](https://www.gaiyatime.com) · [下载](https://www.gaiyatime.com/download.html) · [定价](https://www.gaiyatime.com/pricing.html) · [文档](#-文档导航) · [反馈](https://github.com/jiamizhongshifu/jindutiao/issues) · [贡献](CONTRIBUTING.md)
 
 </div>
