@@ -2,7 +2,6 @@
   "framework": null,
   "installCommand": "echo 'No dependencies needed for static site'",
   "buildCommand": "echo 'No build needed for static site'",
-  "outputDirectory": "public",
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/:path*" }
   ]
