@@ -2337,8 +2337,8 @@ class TimeProgressBar(QWidget):
         try:
             user_tier = self.auth_client.get_user_tier()
             if user_tier == "free":
-                # 水印文本
-                watermark_text = "激活高级版,解锁更多服务"
+                # 水印文本 (国际化)
+                watermark_text = tr('watermark.free_version')
 
                 # 设置字体（稍小一点，避免过于显眼）
                 watermark_font = QFont("Microsoft YaHei", 8)

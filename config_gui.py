@@ -480,7 +480,7 @@ class ConfigManager(QMainWindow):
     def _add_schedule_dialog(self):
         """打开添加时间表规则对话框"""
         # 首先检查是否已登录
-        if not self._check_login_and_guide("模板自动应用"):
+        if not self._check_login_and_guide(tr('auth.features.template_auto_apply')):
             return
 
         try:
@@ -731,7 +731,7 @@ class ConfigManager(QMainWindow):
     def _edit_schedule(self, row):
         """编辑时间表规则"""
         # 首先检查是否已登录
-        if not self._check_login_and_guide("模板自动应用"):
+        if not self._check_login_and_guide(tr('auth.features.template_auto_apply')):
             return
 
         try:
@@ -1026,7 +1026,7 @@ class ConfigManager(QMainWindow):
     def _toggle_schedule(self, row):
         """切换时间表规则的启用状态"""
         # 首先检查是否已登录
-        if not self._check_login_and_guide("模板自动应用"):
+        if not self._check_login_and_guide(tr('auth.features.template_auto_apply')):
             return
 
         try:
@@ -1040,7 +1040,7 @@ class ConfigManager(QMainWindow):
     def _delete_schedule(self, row):
         """删除时间表规则"""
         # 首先检查是否已登录
-        if not self._check_login_and_guide("模板自动应用"):
+        if not self._check_login_and_guide(tr('auth.features.template_auto_apply')):
             return
 
         try:
@@ -3341,12 +3341,12 @@ class ConfigManager(QMainWindow):
                 )
                 self.close()
 
-    def _check_login_and_guide(self, feature_name: str = "此功能") -> bool:
+    def _check_login_and_guide(self, feature_name: str = None) -> bool:
         """
         检查用户是否已登录，如果未登录则显示引导对话框
 
         Args:
-            feature_name: 功能名称，用于提示
+            feature_name: 功能名称，用于提示。如果为None，使用默认值
 
         Returns:
             True: 已登录，可以继续
@@ -3361,16 +3361,24 @@ class ConfigManager(QMainWindow):
         if auth_client.is_logged_in():
             return True
 
+        # 如果没有指定功能名称，使用默认值
+        if feature_name is None:
+            feature_name = tr('auth.features.this_feature')
+
         # 未登录，显示引导对话框
+        message = (
+            f"💡 {feature_name}{tr('auth.guide.requires_login')}\n\n"
+            f"{tr('auth.guide.benefits_intro')}\n"
+            f"{tr('auth.guide.free_user_quota')}\n"
+            f"• {tr('account.membership.pro')}: {tr('account.feature.ai_quota_20_per_day')}\n"
+            f"{tr('auth.guide.more_features')}\n\n"
+            f"{tr('auth.guide.go_to_login')}"
+        )
+
         reply = QMessageBox.question(
             self,
-            "需要登录",
-            f"💡 {feature_name}需要登录后才能使用。\n\n"
-            f"登录后您将享有：\n"
-            f"• 免费用户：3次/天 AI智能规划\n"
-            f"• {tr('account.membership.pro')}: {tr('account.feature.ai_quota_20_per_day')}\n"
-            f"• 更多高级功能和服务\n\n"
-            f"是否前往个人中心登录？",
+            tr('auth.login_required'),
+            message,
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.Yes
         )

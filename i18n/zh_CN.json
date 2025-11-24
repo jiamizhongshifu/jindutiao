@@ -1412,6 +1412,7 @@
       "ai_smart_planning": "AI智能规划"
     },
     "guide": {
+      "requires_login": "需要登录后才能使用。",
       "benefits_intro": "登录后您将享有：",
       "free_user_quota": "• 免费用户：3次/天 AI智能规划",
       "pro_member_quota": "• Pro会员：20次/天 AI智能规划",

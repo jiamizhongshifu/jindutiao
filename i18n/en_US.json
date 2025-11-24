@@ -1412,6 +1412,7 @@
       "ai_smart_planning": "AI Smart Planning"
     },
     "guide": {
+      "requires_login": "requires login to use.",
       "benefits_intro": "Benefits after login:",
       "free_user_quota": "• Free users: 3 AI plans/day",
       "pro_member_quota": "• Pro members: 20 AI plans/day",
