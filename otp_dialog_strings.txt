@@ -1,0 +1,36 @@
+=== otp_dialog.py 中文字符串提取 ===
+共找到 33 个中文字符串
+
+Line 45: 邮箱验证
+Line 63: 验证您的邮箱
+Line 72: 我们已向 <b>{self.email}</b> 发送了一封包含6位验证码的邮件
+Line 117: 没收到验证码？
+Line 120: 重新发送 (60s)
+Line 144: 验证
+Line 169: 取消
+Line 199: 发送中...
+Line 221: 发送失败
+Line 222: 发送验证码失败
+Line 225: 重新发送
+Line 229: 网络错误
+Line 233: 重新发送
+Line 236: 超时
+Line 236: 请求超时，请稍后重试
+Line 238: 重新发送
+Line 240: 错误
+Line 240: 发送失败：{str(e)}
+Line 242: 重新发送
+Line 249: 重新发送 ({self.countdown}s)
+Line 253: 重新发送
+Line 261: 输入错误
+Line 261: 请输入完整的6位验证码
+Line 266: 验证中...
+Line 284: 验证成功
+Line 285: 邮箱验证成功！
+Line 294: 验证失败
+Line 295: 验证失败
+Line 304: 网络错误
+Line 309: 错误
+Line 309: 验证失败：{str(e)}
+Line 313: 验证
+Line 325: 验证成功！

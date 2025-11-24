@@ -1,0 +1,8 @@
+=== 关于页面方法中文字符串提取 ===
+范围: 第6792-6929行
+共找到 4 个中文字符串
+
+Line 6793: 创建关于标签页
+Line 6858: 版本 v{__version__}
+Line 6872: 检查更新
+Line 6902: <a href="#" style="color: #2196F3; text-decoration: none;">直接向创始人反馈问题</a>

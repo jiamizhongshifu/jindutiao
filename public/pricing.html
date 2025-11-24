@@ -18,16 +18,21 @@
                 <span style="font-weight: 700; color: var(--text-primary); margin-left: 8px;">GaiYa每日进度条</span>
             </a>
             <ul class="navbar-menu">
-                <li><a href="index.html#features">功能</a></li>
-                <li><a href="index.html#pricing">定价</a></li>
-                <li><a href="index.html#testimonials">评价</a></li>
-                <li><a href="index.html#faq">帮助</a></li>
-                <li><a href="index.html#about">关于</a></li>
-                <li><a href="index.html#download">下载</a></li>
+                <li><a href="index.html#features" data-i18n="nav.features">功能</a></li>
+                <li><a href="index.html#pricing" data-i18n="nav.pricing">定价</a></li>
+                <li><a href="index.html#testimonials" data-i18n="nav.testimonials">评价</a></li>
+                <li><a href="index.html#faq" data-i18n="nav.help">帮助</a></li>
+                <li><a href="index.html#about" data-i18n="nav.about">关于</a></li>
+                <li><a href="index.html#download" data-i18n="nav.download">下载</a></li>
             </ul>
             <div class="navbar-actions">
-                <a href="#" class="btn btn-secondary btn-small">登录</a>
-                <a href="download.html" class="btn btn-primary btn-small">下载</a>
+                <!-- Language Switcher -->
+                <div class="language-switcher">
+                    <button class="lang-btn" data-lang-switch="zh_CN" onclick="switchLanguage('zh_CN')">中</button>
+                    <button class="lang-btn" data-lang-switch="en_US" onclick="switchLanguage('en_US')">EN</button>
+                </div>
+                <a href="#" class="btn btn-secondary btn-small" data-i18n="common.login">登录</a>
+                <a href="download.html" class="btn btn-primary btn-small" data-i18n="nav.download">下载</a>
             </div>
         </div>
     </nav>
@@ -35,17 +40,17 @@
     <!-- 标题区 -->
     <section class="section" style="margin-top: 64px; padding-top: 80px;">
         <div class="container">
-            <h1 class="section-title">💎 选择最适合你的方案</h1>
-            <p class="section-subtitle">从免费体验到终身权益，灵活定价满足不同需求</p>
+            <h1 class="section-title" data-i18n="pricing_page.title">💎 选择最适合你的方案</h1>
+            <p class="section-subtitle" data-i18n="pricing_page.subtitle">从免费体验到终身权益，灵活定价满足不同需求</p>
 
             <!-- 套餐卡片 -->
             <div class="pricing-grid" style="margin-top: 48px;">
                 <!-- 免费版 -->
                 <div class="pricing-card">
                     <div class="pricing-header">
-                        <h3 class="pricing-name">免费版</h3>
+                        <h3 class="pricing-name" data-i18n="pricing_page.free_plan">免费版</h3>
                         <div class="pricing-price">¥0</div>
-                        <p class="pricing-period">永久免费</p>
+                        <p class="pricing-period" data-i18n="pricing_page.free_forever">永久免费</p>
                     </div>
                     <ul class="pricing-features">
                         <li>每日进度条（带水印）</li>
@@ -55,15 +60,15 @@
                         <li>主题自定义</li>
                         <li>12种任务模板</li>
                     </ul>
-                    <a href="download.html" class="btn btn-secondary pricing-cta">免费下载</a>
+                    <a href="download.html" class="btn btn-secondary pricing-cta" data-i18n="pricing_page.free_download">免费下载</a>
                 </div>
 
                 <!-- Pro 月度 -->
                 <div class="pricing-card">
                     <div class="pricing-header">
-                        <h3 class="pricing-name">Pro 月度</h3>
-                        <div class="pricing-price">¥29<span class="pricing-period">/月</span></div>
-                        <p style="font-size: 12px; color: #999; margin-top: 8px;">有效期30天<br>到期后不会自动扣费</p>
+                        <h3 class="pricing-name" data-i18n="pricing_page.pro_monthly">Pro 月度</h3>
+                        <div class="pricing-price">¥29<span class="pricing-period" data-i18n="pricing_page.per_month">/月</span></div>
+                        <p style="font-size: 12px; color: #999; margin-top: 8px;"><span data-i18n="pricing_page.validity_30">有效期30天</span><br><span data-i18n="pricing_page.no_auto_charge">到期后不会自动扣费</span></p>
                     </div>
                     <ul class="pricing-features">
                         <li>所有免费功能 +</li>
@@ -75,16 +80,16 @@
                         <li>抢先体验新功能</li>
                         <li>加入VIP会员群</li>
                     </ul>
-                    <a href="checkout.html?plan=pro_monthly" class="btn btn-primary pricing-cta">立即购买</a>
+                    <a href="checkout.html?plan=pro_monthly" class="btn btn-primary pricing-cta" data-i18n="pricing_page.buy_now">立即购买</a>
                 </div>
 
                 <!-- Pro 年度 - 推荐 -->
                 <div class="pricing-card featured">
                     <div class="pricing-header">
-                        <h3 class="pricing-name">Pro 年度</h3>
-                        <div class="pricing-price">¥199<span class="pricing-period">/年</span></div>
-                        <div class="pricing-discount">节省 ¥149 (相当于 ¥16.6/月)</div>
-                        <p style="font-size: 12px; color: #999; margin-top: 8px;">有效期365天<br>到期后不会自动扣费</p>
+                        <h3 class="pricing-name" data-i18n="pricing_page.pro_yearly">Pro 年度</h3>
+                        <div class="pricing-price">¥199<span class="pricing-period" data-i18n="pricing_page.per_year">/年</span></div>
+                        <div class="pricing-discount" data-i18n="pricing_page.save_149">节省 ¥149 (相当于 ¥16.6/月)</div>
+                        <p style="font-size: 12px; color: #999; margin-top: 8px;"><span data-i18n="pricing_page.validity_365">有效期365天</span><br><span data-i18n="pricing_page.no_auto_charge">到期后不会自动扣费</span></p>
                     </div>
                     <ul class="pricing-features">
                         <li>所有免费功能 +</li>
@@ -96,16 +101,16 @@
                         <li>抢先体验新功能</li>
                         <li>加入VIP会员群</li>
                     </ul>
-                    <a href="checkout.html?plan=pro_yearly" class="btn btn-primary pricing-cta">立即购买</a>
+                    <a href="checkout.html?plan=pro_yearly" class="btn btn-primary pricing-cta" data-i18n="pricing_page.buy_now">立即购买</a>
                 </div>
 
                 <!-- 会员合伙人 -->
                 <div class="pricing-card lifetime">
                     <div class="pricing-header">
-                        <h3 class="pricing-name">会员合伙人</h3>
+                        <h3 class="pricing-name" data-i18n="pricing_page.lifetime">会员合伙人</h3>
                         <div class="pricing-price">¥599</div>
-                        <p class="pricing-period">一次购买，终身可用</p>
-                        <div class="pricing-discount" style="background: #fff3cd; color: #856404; margin-top: 12px;">🔥 限量1000名</div>
+                        <p class="pricing-period" data-i18n="pricing_page.one_time_forever">一次购买，终身可用</p>
+                        <div class="pricing-discount" style="background: #fff3cd; color: #856404; margin-top: 12px;" data-i18n="pricing_page.limited_1000">🔥 限量1000名</div>
                     </div>
                     <ul class="pricing-features">
                         <li>所有免费功能 +</li>
@@ -121,7 +126,7 @@
                         <li>共同成长，分享价值</li>
                         <li>终身免费更新</li>
                     </ul>
-                    <a href="checkout.html?plan=lifetime" class="btn btn-primary pricing-cta">成为合伙人</a>
+                    <a href="checkout.html?plan=lifetime" class="btn btn-primary pricing-cta" data-i18n="pricing_page.become_partner">成为合伙人</a>
                 </div>
             </div>
         </div>
@@ -130,8 +135,8 @@
     <!-- 详细功能对比表 -->
     <section class="section bg-light">
         <div class="container">
-            <h2 class="section-title">📊 详细功能对比</h2>
-            <p class="section-subtitle">一目了然，选择最适合你的方案</p>
+            <h2 class="section-title" data-i18n="pricing_page.comparison_title">📊 详细功能对比</h2>
+            <p class="section-subtitle" data-i18n="pricing_page.comparison_subtitle">一目了然，选择最适合你的方案</p>
 
             <div class="comparison-table">
                 <table>
@@ -352,5 +357,8 @@
             </div>
         </div>
     </footer>
+
+    <!-- i18n Internationalization -->
+    <script src="js/i18n.js"></script>
 </body>
 </html>

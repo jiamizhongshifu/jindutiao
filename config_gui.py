@@ -28,6 +28,9 @@ import logging
 from gaiya.utils import path_utils, time_utils, data_loader
 from version import __version__, VERSION_STRING, VERSION_STRING_ZH
 
+# i18n国际化支持
+from i18n.translator import tr
+
 # 浅色主题支持（MacOS极简风格）
 from gaiya.ui.style_manager import StyleManager, apply_light_theme
 
@@ -51,22 +54,27 @@ class SaveTemplateDialog(QDialog):
             parent: 父窗口
         """
         super().__init__(parent)
+
+        # Initialize i18n translator
+        from i18n.translator import _translator
+        self.i18n = _translator
+
         self.existing_templates = existing_templates
         self.template_name = None
         self.init_ui()
 
     def init_ui(self):
         """初始化UI"""
-        self.setWindowTitle("保存为模板")
+        self.setWindowTitle(self.i18n.tr("dialog.save_template_title"))
         self.setMinimumWidth(400)
 
         layout = QVBoxLayout()
 
         # 提示文本
         if self.existing_templates:
-            hint_label = QLabel("选择要覆盖的模板或输入新的模板名称:")
+            hint_label = QLabel(self.i18n.tr("dialog.select_or_new"))
         else:
-            hint_label = QLabel("请输入模板名称:")
+            hint_label = QLabel(self.i18n.tr("dialog.enter_name"))
 
         layout.addWidget(hint_label)
 
@@ -81,16 +89,16 @@ class SaveTemplateDialog(QDialog):
             for template in self.existing_templates:
                 template_name = template.get('name', '')
                 task_count = template.get('task_count', 0)
-                display_text = f"{template_name} ({task_count}个任务)"
+                display_text = self.i18n.tr("config.templates.task_count", template_name=template_name, task_count=task_count)
                 self.input_widget.addItem(display_text, template_name)
 
             # 设置当前文本为空,引导用户选择或输入
             self.input_widget.setCurrentIndex(-1)
-            self.input_widget.setPlaceholderText("选择历史模板或输入新名称")
+            self.input_widget.setPlaceholderText(self.i18n.tr("templates.dialog.placeholder_select"))
         else:
             # 无历史模板,使用普通输入框
             self.input_widget = QLineEdit()
-            self.input_widget.setPlaceholderText("例如: 工作日模板")
+            self.input_widget.setPlaceholderText(self.i18n.tr("templates.dialog.placeholder_example"))
 
         layout.addWidget(self.input_widget)
 
@@ -98,8 +106,8 @@ class SaveTemplateDialog(QDialog):
         if self.existing_templates:
             tip_label = QLabel(
                 "💡 提示:\n"
-                "• 选择历史模板将直接覆盖该模板\n"
-                "• 输入新名称将创建新的模板"
+                + self.i18n.tr("config.dialogs.overwrite_template_warning")
+                + "\n• 输入新名称将创建新的模板"
             )
             tip_label.setStyleSheet(StyleManager.label_hint())
             layout.addWidget(tip_label)
@@ -142,7 +150,7 @@ class SaveTemplateDialog(QDialog):
 
         # 验证名称不为空
         if not self.template_name:
-            QMessageBox.warning(self, "输入错误", "模板名称不能为空!")
+            QMessageBox.warning(self, self.i18n.tr("message.text_2881"), "模板名称不能为空!")
             return
 
         super().accept()
@@ -177,6 +185,10 @@ class ConfigManager(QMainWindow):
         super().__init__()
         # 保存主窗口引用（用于访问 scene_manager 等）
         self.main_window = main_window
+
+        # Initialize i18n translator
+        from i18n.translator import _translator
+        self.i18n = _translator
 
         # 获取应用程序目录(使用统一的path_utils)
         self.app_dir = path_utils.get_app_dir()
@@ -302,6 +314,13 @@ class ConfigManager(QMainWindow):
 
             if hasattr(self, 'marker_y_offset_spin'):
                 self.marker_y_offset_spin.setValue(self.config.get('marker_y_offset', 0))
+
+            # Update language combo box
+            if hasattr(self, 'language_combo'):
+                current_lang = self.config.get('language', 'zh_CN')
+                index = self.language_combo.findData(current_lang)
+                if index >= 0:
+                    self.language_combo.setCurrentIndex(index)
         except Exception as e:
             logging.error(f"更新UI控件失败: {e}")
     
@@ -424,7 +443,7 @@ class ConfigManager(QMainWindow):
 
                 # 切换启用状态按钮
                 toggle_btn = QPushButton("⏸️" if enabled else "▶️")
-                toggle_btn.setToolTip("禁用" if enabled else "启用")
+                toggle_btn.setToolTip(self.i18n.tr("account.message.disabled") if enabled else "启用")
                 toggle_btn.setFixedSize(36, 36)
                 toggle_btn.setStyleSheet("QPushButton { padding: 4px; font-size: 14px; }")
                 # 使用 partial 避免 Lambda 循环引用
@@ -433,7 +452,7 @@ class ConfigManager(QMainWindow):
 
                 # 编辑按钮
                 edit_btn = QPushButton("✏️")
-                edit_btn.setToolTip("编辑")
+                edit_btn.setToolTip(self.i18n.tr("button.edit"))
                 edit_btn.setFixedSize(36, 36)
                 edit_btn.setStyleSheet("QPushButton { padding: 4px; font-size: 14px; }")
                 # 使用 partial 避免 Lambda 循环引用
@@ -442,7 +461,7 @@ class ConfigManager(QMainWindow):
 
                 # 删除按钮
                 delete_btn = QPushButton("🗑️")
-                delete_btn.setToolTip("删除")
+                delete_btn.setToolTip(self.i18n.tr("button.delete"))
                 delete_btn.setFixedSize(36, 36)
                 delete_btn.setStyleSheet("QPushButton { padding: 4px; font-size: 14px; }")
                 # 使用 partial 避免 Lambda 循环引用
@@ -466,11 +485,11 @@ class ConfigManager(QMainWindow):
 
         try:
             if not hasattr(self, 'schedule_manager') or not self.schedule_manager:
-                QMessageBox.warning(self, "警告", "时间表管理器未初始化")
+                QMessageBox.warning(self, self.i18n.tr("message.warning"), "时间表管理器未初始化")
                 return
 
             if not hasattr(self, 'template_manager') or not self.template_manager:
-                QMessageBox.warning(self, "警告", "模板管理器未初始化")
+                QMessageBox.warning(self, self.i18n.tr("message.warning"), "模板管理器未初始化")
                 return
 
             from PySide6.QtWidgets import (
@@ -481,14 +500,14 @@ class ConfigManager(QMainWindow):
             from datetime import date
 
             dialog = QDialog(self)
-            dialog.setWindowTitle("添加模板应用规则")
+            dialog.setWindowTitle(self.i18n.tr("schedule.dialogs.add_rule"))
             dialog.setMinimumWidth(500)
 
             layout = QVBoxLayout()
 
             # 模板选择
             template_layout = QHBoxLayout()
-            template_layout.addWidget(QLabel("选择模板:"))
+            template_layout.addWidget(QLabel(self.i18n.tr("templates.auto_apply.select_template")))
 
             template_combo = QComboBox()
             template_combo.setStyleSheet(StyleManager.dropdown())
@@ -505,9 +524,9 @@ class ConfigManager(QMainWindow):
             type_layout = QVBoxLayout()
 
             rule_type_group = QButtonGroup()
-            weekdays_radio = QRadioButton("按星期重复")
-            monthly_radio = QRadioButton("每月重复")
-            specific_radio = QRadioButton("特定日期")
+            weekdays_radio = QRadioButton(self.i18n.tr("general.text_3012"))
+            monthly_radio = QRadioButton(self.i18n.tr("general.text_4222"))
+            specific_radio = QRadioButton(self.i18n.tr("general.text_7678"))
 
             rule_type_group.addButton(weekdays_radio, 1)
             rule_type_group.addButton(monthly_radio, 2)
@@ -535,7 +554,7 @@ class ConfigManager(QMainWindow):
             # 每月日期选择（monthly）
             monthly_widget = QWidget()
             monthly_layout = QVBoxLayout()
-            monthly_label = QLabel("每月的哪些天?（用逗号分隔，例如: 1,15,28）")
+            monthly_label = QLabel(self.i18n.tr("general.text_1240"))
             monthly_layout.addWidget(monthly_label)
 
             from PySide6.QtWidgets import QLineEdit
@@ -549,7 +568,7 @@ class ConfigManager(QMainWindow):
             # 具体日期选择（specific_dates）
             specific_widget = QWidget()
             specific_layout = QVBoxLayout()
-            specific_label = QLabel("选择具体日期:")
+            specific_label = QLabel(self.i18n.tr("dialog.text_9512"))
             specific_layout.addWidget(specific_label)
 
             dates_list_widget = QWidget()
@@ -564,7 +583,7 @@ class ConfigManager(QMainWindow):
             date_picker.setCalendarPopup(True)
             date_picker.setDate(date.today())
 
-            add_date_btn = QPushButton("+ 添加日期")
+            add_date_btn = QPushButton(self.i18n.tr("general.text_6594"))
 
             specific_dates = []
 
@@ -629,11 +648,11 @@ class ConfigManager(QMainWindow):
             button_layout = QHBoxLayout()
             button_layout.addStretch()
 
-            cancel_btn = QPushButton("取消")
+            cancel_btn = QPushButton(self.i18n.tr("button.cancel"))
             cancel_btn.clicked.connect(dialog.reject)
             button_layout.addWidget(cancel_btn)
 
-            save_btn = QPushButton("保存")
+            save_btn = QPushButton(self.i18n.tr("button.save"))
             save_btn.setStyleSheet(StyleManager.button_primary())
             save_btn.clicked.connect(dialog.accept)
             button_layout.addWidget(save_btn)
@@ -652,7 +671,7 @@ class ConfigManager(QMainWindow):
                 if checked_id == 1:  # 星期
                     weekdays = [i for i, check in weekdays_checks.items() if check.isChecked()]
                     if not weekdays:
-                        QMessageBox.warning(self, "警告", "请至少选择一个星期")
+                        QMessageBox.warning(self, self.i18n.tr("message.warning"), "请至少选择一个星期")
                         return
 
                     success = self.schedule_manager.add_schedule(
@@ -664,14 +683,14 @@ class ConfigManager(QMainWindow):
                 elif checked_id == 2:  # 每月
                     days_text = monthly_input.text().strip()
                     if not days_text:
-                        QMessageBox.warning(self, "警告", "请输入每月的日期")
+                        QMessageBox.warning(self, self.i18n.tr("message.warning"), "请输入每月的日期")
                         return
 
                     try:
                         days_of_month = [int(d.strip()) for d in days_text.split(',')]
                         # 验证日期范围
                         if any(d < 1 or d > 31 for d in days_of_month):
-                            QMessageBox.warning(self, "警告", "日期必须在1-31之间")
+                            QMessageBox.warning(self, self.i18n.tr("message.warning"), "日期必须在1-31之间")
                             return
 
                         success = self.schedule_manager.add_schedule(
@@ -681,12 +700,12 @@ class ConfigManager(QMainWindow):
                         )
 
                     except ValueError:
-                        QMessageBox.warning(self, "警告", "日期格式错误，请使用逗号分隔的数字")
+                        QMessageBox.warning(self, self.i18n.tr("message.warning"), "日期格式错误，请使用逗号分隔的数字")
                         return
 
                 elif checked_id == 3:  # 具体日期
                     if not specific_dates:
-                        QMessageBox.warning(self, "警告", "请至少添加一个日期")
+                        QMessageBox.warning(self, self.i18n.tr("message.warning"), "请至少添加一个日期")
                         return
 
                     success = self.schedule_manager.add_schedule(
@@ -696,18 +715,18 @@ class ConfigManager(QMainWindow):
                     )
 
                 else:
-                    QMessageBox.warning(self, "警告", "请选择规则类型")
+                    QMessageBox.warning(self, self.i18n.tr("message.warning"), "请选择规则类型")
                     return
 
                 if success:
-                    QMessageBox.information(self, "成功", "时间表规则已添加")
+                    QMessageBox.information(self, self.i18n.tr("message.success"), "时间表规则已添加")
                     self._load_schedule_table()  # 刷新表格
                 else:
-                    QMessageBox.warning(self, "冲突", "该规则与现有规则冲突，请检查")
+                    QMessageBox.warning(self, self.i18n.tr("general.text_5397"), "该规则与现有规则冲突，请检查")
 
         except Exception as e:
             logging.error(f"添加时间表规则失败: {e}")
-            QMessageBox.critical(self, "错误", f"添加规则失败:\n{str(e)}")
+            QMessageBox.critical(self, self.i18n.tr("membership.payment.error"), f"添加规则失败:\n{str(e)}")
 
     def _edit_schedule(self, row):
         """编辑时间表规则"""
@@ -717,17 +736,17 @@ class ConfigManager(QMainWindow):
 
         try:
             if not hasattr(self, 'schedule_manager') or not self.schedule_manager:
-                QMessageBox.warning(self, "警告", "时间表管理器未初始化")
+                QMessageBox.warning(self, self.i18n.tr("message.warning"), "时间表管理器未初始化")
                 return
 
             if not hasattr(self, 'template_manager') or not self.template_manager:
-                QMessageBox.warning(self, "警告", "模板管理器未初始化")
+                QMessageBox.warning(self, self.i18n.tr("message.warning"), "模板管理器未初始化")
                 return
 
             # 获取当前规则
             schedules = self.schedule_manager.get_all_schedules()
             if row < 0 or row >= len(schedules):
-                QMessageBox.warning(self, "警告", "无效的规则索引")
+                QMessageBox.warning(self, self.i18n.tr("message.warning"), "无效的规则索引")
                 return
 
             current_schedule = schedules[row]
@@ -740,14 +759,14 @@ class ConfigManager(QMainWindow):
             from datetime import date, datetime
 
             dialog = QDialog(self)
-            dialog.setWindowTitle("编辑模板应用规则")
+            dialog.setWindowTitle(self.i18n.tr("schedule.dialogs.edit_rule"))
             dialog.setMinimumWidth(500)
 
             layout = QVBoxLayout()
 
             # 模板选择
             template_layout = QHBoxLayout()
-            template_layout.addWidget(QLabel("选择模板:"))
+            template_layout.addWidget(QLabel(self.i18n.tr("templates.auto_apply.select_template")))
 
             template_combo = QComboBox()
             template_combo.setStyleSheet(StyleManager.dropdown())
@@ -769,9 +788,9 @@ class ConfigManager(QMainWindow):
             type_layout = QVBoxLayout()
 
             rule_type_group = QButtonGroup()
-            weekdays_radio = QRadioButton("按星期重复")
-            monthly_radio = QRadioButton("每月重复")
-            specific_radio = QRadioButton("特定日期")
+            weekdays_radio = QRadioButton(self.i18n.tr("general.text_3012"))
+            monthly_radio = QRadioButton(self.i18n.tr("general.text_4222"))
+            specific_radio = QRadioButton(self.i18n.tr("general.text_7678"))
 
             rule_type_group.addButton(weekdays_radio, 1)
             rule_type_group.addButton(monthly_radio, 2)
@@ -799,7 +818,7 @@ class ConfigManager(QMainWindow):
             # 每月日期选择（monthly）
             monthly_widget = QWidget()
             monthly_layout = QVBoxLayout()
-            monthly_label = QLabel("每月的哪些天?（用逗号分隔，例如: 1,15,28）")
+            monthly_label = QLabel(self.i18n.tr("general.text_1240"))
             monthly_layout.addWidget(monthly_label)
 
             from PySide6.QtWidgets import QLineEdit
@@ -813,7 +832,7 @@ class ConfigManager(QMainWindow):
             # 具体日期选择（specific_dates）
             specific_widget = QWidget()
             specific_layout = QVBoxLayout()
-            specific_label = QLabel("选择具体日期:")
+            specific_label = QLabel(self.i18n.tr("dialog.text_9512"))
             specific_layout.addWidget(specific_label)
 
             dates_list_widget = QWidget()
@@ -828,7 +847,7 @@ class ConfigManager(QMainWindow):
             date_picker.setCalendarPopup(True)
             date_picker.setDate(date.today())
 
-            add_date_btn = QPushButton("+ 添加日期")
+            add_date_btn = QPushButton(self.i18n.tr("general.text_6594"))
 
             specific_dates = []
 
@@ -929,11 +948,11 @@ class ConfigManager(QMainWindow):
             button_layout = QHBoxLayout()
             button_layout.addStretch()
 
-            cancel_btn = QPushButton("取消")
+            cancel_btn = QPushButton(self.i18n.tr("button.cancel"))
             cancel_btn.clicked.connect(dialog.reject)
             button_layout.addWidget(cancel_btn)
 
-            save_btn = QPushButton("保存")
+            save_btn = QPushButton(self.i18n.tr("button.save"))
             save_btn.setStyleSheet(StyleManager.button_primary())
             save_btn.clicked.connect(dialog.accept)
             button_layout.addWidget(save_btn)
@@ -954,7 +973,7 @@ class ConfigManager(QMainWindow):
                 if checked_id == 1:  # 星期
                     weekdays = [i for i, check in weekdays_checks.items() if check.isChecked()]
                     if not weekdays:
-                        QMessageBox.warning(self, "警告", "请至少选择一个星期")
+                        QMessageBox.warning(self, self.i18n.tr("message.warning"), "请至少选择一个星期")
                         return
 
                     update_data['schedule_type'] = 'weekdays'
@@ -963,46 +982,46 @@ class ConfigManager(QMainWindow):
                 elif checked_id == 2:  # 每月
                     days_text = monthly_input.text().strip()
                     if not days_text:
-                        QMessageBox.warning(self, "警告", "请输入每月的日期")
+                        QMessageBox.warning(self, self.i18n.tr("message.warning"), "请输入每月的日期")
                         return
 
                     try:
                         days_of_month = [int(d.strip()) for d in days_text.split(',')]
                         # 验证日期范围
                         if any(d < 1 or d > 31 for d in days_of_month):
-                            QMessageBox.warning(self, "警告", "日期必须在1-31之间")
+                            QMessageBox.warning(self, self.i18n.tr("message.warning"), "日期必须在1-31之间")
                             return
 
                         update_data['schedule_type'] = 'monthly'
                         update_data['days_of_month'] = days_of_month
 
                     except ValueError:
-                        QMessageBox.warning(self, "警告", "日期格式错误，请使用逗号分隔的数字")
+                        QMessageBox.warning(self, self.i18n.tr("message.warning"), "日期格式错误，请使用逗号分隔的数字")
                         return
 
                 elif checked_id == 3:  # 具体日期
                     if not specific_dates:
-                        QMessageBox.warning(self, "警告", "请至少添加一个日期")
+                        QMessageBox.warning(self, self.i18n.tr("message.warning"), "请至少添加一个日期")
                         return
 
                     update_data['schedule_type'] = 'specific_dates'
                     update_data['dates'] = specific_dates
 
                 else:
-                    QMessageBox.warning(self, "警告", "请选择规则类型")
+                    QMessageBox.warning(self, self.i18n.tr("message.warning"), "请选择规则类型")
                     return
 
                 success = self.schedule_manager.update_schedule(row, **update_data)
 
                 if success:
-                    QMessageBox.information(self, "成功", "时间表规则已更新")
+                    QMessageBox.information(self, self.i18n.tr("message.success"), "时间表规则已更新")
                     self._load_schedule_table()  # 刷新表格
                 else:
-                    QMessageBox.warning(self, "失败", "更新规则失败，请检查")
+                    QMessageBox.warning(self, self.i18n.tr("message.text_8834"), "更新规则失败，请检查")
 
         except Exception as e:
             logging.error(f"编辑时间表规则失败: {e}")
-            QMessageBox.critical(self, "错误", f"编辑规则失败:\n{str(e)}")
+            QMessageBox.critical(self, self.i18n.tr("membership.payment.error"), f"编辑规则失败:\n{str(e)}")
 
     def _toggle_schedule(self, row):
         """切换时间表规则的启用状态"""
@@ -1016,7 +1035,7 @@ class ConfigManager(QMainWindow):
                 self._load_schedule_table()  # 刷新表格
         except Exception as e:
             logging.error(f"切换规则状态失败: {e}")
-            QMessageBox.critical(self, "错误", f"操作失败:\n{str(e)}")
+            QMessageBox.critical(self, self.i18n.tr("membership.payment.error"), f"操作失败:\n{str(e)}")
 
     def _delete_schedule(self, row):
         """删除时间表规则"""
@@ -1037,31 +1056,31 @@ class ConfigManager(QMainWindow):
                 success = self.schedule_manager.remove_schedule(row)
                 if success:
                     self._load_schedule_table()  # 刷新表格
-                    QMessageBox.information(self, "成功", "规则已删除")
+                    QMessageBox.information(self, self.i18n.tr("message.success"), "规则已删除")
 
         except Exception as e:
             logging.error(f"删除规则失败: {e}")
-            QMessageBox.critical(self, "错误", f"删除失败:\n{str(e)}")
+            QMessageBox.critical(self, self.i18n.tr("membership.payment.error"), f"删除失败:\n{str(e)}")
 
     def _test_date_matching(self):
         """测试指定日期会匹配到哪个模板"""
         try:
             if not hasattr(self, 'schedule_manager') or not self.schedule_manager:
-                QMessageBox.warning(self, "警告", "时间表管理器未初始化")
+                QMessageBox.warning(self, self.i18n.tr("message.warning"), "时间表管理器未初始化")
                 return
 
             from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QDateEdit, QPushButton, QTextEdit
             from datetime import datetime
 
             dialog = QDialog(self)
-            dialog.setWindowTitle("测试日期匹配")
+            dialog.setWindowTitle(self.i18n.tr("general.text_4326"))
             dialog.setMinimumWidth(500)
             dialog.setMinimumHeight(350)
 
             layout = QVBoxLayout()
 
             # 说明
-            hint_label = QLabel("选择一个日期，查看该日期会匹配到哪个模板：")
+            hint_label = QLabel(self.i18n.tr("templates.auto_apply.test_instruction"))
             hint_label.setStyleSheet("font-weight: bold; margin-bottom: 10px;")
             layout.addWidget(hint_label)
 
@@ -1089,7 +1108,7 @@ class ConfigManager(QMainWindow):
 
                 # 构建结果文本
                 result_lines = []
-                result_lines.append(f"测试日期: {selected_date.strftime('%Y-%m-%d %A')}")
+                result_lines.append(self.i18n.tr("config.schedule.test_date_display", test_date=selected_date.strftime('%Y-%m-%d %A')))
                 result_lines.append("")
 
                 if matched_template_id:
@@ -1100,11 +1119,11 @@ class ConfigManager(QMainWindow):
                         if template:
                             template_name = template['name']
 
-                    result_lines.append(f"✅ 该日期会自动加载模板: {template_name}")
+                    result_lines.append(self.i18n.tr("config.schedule.date_will_load_template", template_name=template_name))
                     result_lines.append("")
 
                     if len(all_matched) > 1:
-                        result_lines.append(f"⚠️ 警告：该日期有 {len(all_matched)} 个模板规则冲突！")
+                        result_lines.append(self.i18n.tr("config.schedule.date_conflict_warning", conflict_count=len(all_matched)))
                         result_lines.append("冲突的模板：")
                         for tid in all_matched:
                             tname = tid
@@ -1124,13 +1143,13 @@ class ConfigManager(QMainWindow):
                 result_text.setText("\n".join(result_lines))
 
             # 测试按钮
-            test_btn = QPushButton("🔍 执行测试")
+            test_btn = QPushButton(self.i18n.tr("general.text_8461"))
             test_btn.setStyleSheet(StyleManager.button_minimal())
             test_btn.clicked.connect(perform_test)
             layout.addWidget(test_btn)
 
             # 关闭按钮
-            close_btn = QPushButton("关闭")
+            close_btn = QPushButton(self.i18n.tr("button.close"))
             close_btn.clicked.connect(dialog.accept)
             layout.addWidget(close_btn)
 
@@ -1143,7 +1162,7 @@ class ConfigManager(QMainWindow):
 
         except Exception as e:
             logging.error(f"测试日期匹配失败: {e}")
-            QMessageBox.critical(self, "错误", f"测试失败:\n{str(e)}")
+            QMessageBox.critical(self, self.i18n.tr("membership.payment.error"), f"测试失败:\n{str(e)}")
 
     def _init_ai_components(self):
         """延迟初始化AI相关组件(在后台运行,不阻塞UI)"""
@@ -1216,7 +1235,7 @@ class ConfigManager(QMainWindow):
 
         # 检查AI客户端是否已初始化
         if not hasattr(self, 'ai_client') or not self.ai_client:
-            self.quota_label.setText("⏳ AI服务正在初始化...")
+            self.quota_label.setText(self.i18n.tr("ai.text_9372"))
             self.quota_label.setStyleSheet("color: #ff9800; padding: 5px; font-weight: bold;")
             if hasattr(self, 'generate_btn'):
                 self.generate_btn.setEnabled(False)
@@ -1264,7 +1283,7 @@ class ConfigManager(QMainWindow):
         
         if not is_healthy:
             # 代理服务器未响应，继续显示"正在启动"状态
-            self.quota_label.setText("⚠️ AI服务正在启动...")
+            self.quota_label.setText(self.i18n.tr("ai.text_9377"))
             self.quota_label.setStyleSheet("color: #ff9800; padding: 5px; font-weight: bold;")
             if hasattr(self, 'generate_btn'):
                 self.generate_btn.setEnabled(False)
@@ -1284,7 +1303,7 @@ class ConfigManager(QMainWindow):
     def _update_ai_status_error(self, error_msg):
         """显示AI服务错误状态"""
         if hasattr(self, 'quota_label'):
-            self.quota_label.setText(f"❌ AI服务初始化失败")
+            self.quota_label.setText(self.i18n.tr("ai.text_857"))
             self.quota_label.setStyleSheet("color: #f44336; padding: 5px; font-weight: bold;")
             logging.error(f"AI服务错误: {error_msg}")
         if hasattr(self, 'generate_btn'):
@@ -1296,7 +1315,7 @@ class ConfigManager(QMainWindow):
 
     def init_ui(self):
         """初始化界面"""
-        self.setWindowTitle(f'{VERSION_STRING_ZH} - 配置管理器')
+        self.setWindowTitle(self.i18n.tr("config.config_2", VERSION_STRING_ZH=VERSION_STRING_ZH))
 
         # 设置窗口图标
         icon_path = self.get_resource_path('gaiya-logo2-wbk.png')
@@ -1345,24 +1364,24 @@ class ConfigManager(QMainWindow):
         """)
 
         # 立即创建外观配置和任务管理标签页(基础功能)
-        tabs.addTab(self.create_config_tab(), "🎨 外观配置")
-        tabs.addTab(self.create_tasks_tab(), "📋 任务管理")
+        tabs.addTab(self.create_config_tab(), "🎨 " + self.i18n.tr("config.tabs.appearance"))
+        tabs.addTab(self.create_tasks_tab(), "📋 " + self.i18n.tr("config.tabs.tasks"))
 
         # 延迟创建场景设置标签页
         self.scene_tab_widget = None
-        tabs.addTab(QWidget(), "🎬 场景设置")  # 占位widget
+        tabs.addTab(QWidget(), "🎬 " + self.i18n.tr("config.tabs.scene"))  # 占位widget
 
         # 延迟创建通知设置标签页(避免初始化时阻塞)
         self.notification_tab_widget = None
-        tabs.addTab(QWidget(), "🔔 通知设置")  # 占位widget
+        tabs.addTab(QWidget(), "🔔 " + self.i18n.tr("config.tabs.notifications"))  # 占位widget
 
         # 延迟创建个人中心标签页
         self.account_tab_widget = None
-        tabs.addTab(QWidget(), "👤 个人中心")  # 占位widget
+        tabs.addTab(QWidget(), tr("account.tab_title"))  # 占位widget
 
         # 延迟创建关于标签页
         self.about_tab_widget = None
-        tabs.addTab(QWidget(), "📖 关于")  # 占位widget
+        tabs.addTab(QWidget(), "📖 " + self.i18n.tr("config.tabs.about"))  # 占位widget
 
         # 连接标签页切换信号,实现懒加载
         tabs.currentChanged.connect(self.on_tab_changed)
@@ -1375,12 +1394,12 @@ class ConfigManager(QMainWindow):
         # 底部按钮
         button_layout = QHBoxLayout()
 
-        save_btn = QPushButton("保存所有设置")
+        save_btn = QPushButton(self.i18n.tr("config.settings_2"))
         save_btn.clicked.connect(self.save_all)
         save_btn.setFixedHeight(36)
         save_btn.setStyleSheet(StyleManager.button_primary())
 
-        cancel_btn = QPushButton("取消")
+        cancel_btn = QPushButton(self.i18n.tr("button.cancel"))
         cancel_btn.clicked.connect(self.close)
         cancel_btn.setFixedHeight(36)
         cancel_btn.setStyleSheet("QPushButton { padding: 8px 20px; border-radius: 4px; }")
@@ -1398,7 +1417,7 @@ class ConfigManager(QMainWindow):
     def on_tab_changed(self, index):
         """标签页切换时的处理(实现懒加载)"""
         # 控制底部按钮的显示/隐藏
-        # 在"个人中心"(4)和"关于"(5)页面隐藏按钮
+        # 在"个人中心"(4)和self.i18n.tr("config.tabs.about")(5)页面隐藏按钮
         if index in [4, 5]:  # 个人中心或关于页面
             self.save_btn.hide()
             self.cancel_btn.hide()
@@ -1430,7 +1449,7 @@ class ConfigManager(QMainWindow):
             self.tabs.setTabEnabled(2, True)  # 确保标签页可用
             # 替换占位widget
             self.tabs.removeTab(2)
-            self.tabs.insertTab(2, self.scene_tab_widget, "🎬 场景设置")
+            self.tabs.insertTab(2, self.scene_tab_widget, "🎬 " + self.i18n.tr("config.tabs.scene"))
             self.tabs.setCurrentIndex(2)  # 切换到场景设置标签页
         except Exception as e:
             logging.error(f"加载场景设置标签页失败: {e}")
@@ -1438,12 +1457,12 @@ class ConfigManager(QMainWindow):
             from PySide6.QtWidgets import QLabel
             error_widget = QWidget()
             error_layout = QVBoxLayout(error_widget)
-            error_label = QLabel(f"加载场景设置失败: {e}")
+            error_label = QLabel(self.i18n.tr("config.settings_4"))
             error_label.setStyleSheet("color: red; padding: 20px;")
             error_layout.addWidget(error_label)
             self.scene_tab_widget = error_widget
             self.tabs.removeTab(2)
-            self.tabs.insertTab(2, self.scene_tab_widget, "🎬 场景设置")
+            self.tabs.insertTab(2, self.scene_tab_widget, "🎬 " + self.i18n.tr("config.tabs.scene"))
 
     def _load_notification_tab(self):
         """加载通知设置标签页"""
@@ -1455,7 +1474,7 @@ class ConfigManager(QMainWindow):
             self.tabs.setTabEnabled(3, True)  # 确保标签页可用
             # 替换占位widget
             self.tabs.removeTab(3)
-            self.tabs.insertTab(3, self.notification_tab_widget, "🔔 通知设置")
+            self.tabs.insertTab(3, self.notification_tab_widget, "🔔 " + self.i18n.tr("config.tabs.notifications"))
             self.tabs.setCurrentIndex(3)  # 切换到通知设置标签页
         except Exception as e:
             logging.error(f"加载通知设置标签页失败: {e}")
@@ -1463,12 +1482,12 @@ class ConfigManager(QMainWindow):
             from PySide6.QtWidgets import QLabel
             error_widget = QWidget()
             error_layout = QVBoxLayout(error_widget)
-            error_label = QLabel(f"加载通知设置失败: {e}")
+            error_label = QLabel(self.i18n.tr("config.settings_6"))
             error_label.setStyleSheet("color: red; padding: 20px;")
             error_layout.addWidget(error_label)
             self.notification_tab_widget = error_widget
             self.tabs.removeTab(3)
-            self.tabs.insertTab(3, self.notification_tab_widget, "🔔 通知设置")
+            self.tabs.insertTab(3, self.notification_tab_widget, "🔔 " + self.i18n.tr("config.tabs.notifications"))
 
 
     def _load_account_tab(self):
@@ -1481,7 +1500,7 @@ class ConfigManager(QMainWindow):
             self.tabs.setTabEnabled(4, True)  # 确保标签页可用
             # 替换占位widget
             self.tabs.removeTab(4)
-            self.tabs.insertTab(4, self.account_tab_widget, "👤 个人中心")
+            self.tabs.insertTab(4, self.account_tab_widget, tr("account.tab_title"))
             self.tabs.setCurrentIndex(4)  # 切换到个人中心标签页
         except Exception as e:
             import logging
@@ -1489,12 +1508,12 @@ class ConfigManager(QMainWindow):
             from PySide6.QtWidgets import QLabel
             error_widget = QWidget()
             error_layout = QVBoxLayout(error_widget)
-            error_label = QLabel(f"加载个人中心标签页失败: {e}")
+            error_label = QLabel(self.i18n.tr("message.text_347"))
             error_label.setStyleSheet("color: red; padding: 20px;")
             error_layout.addWidget(error_label)
             self.account_tab_widget = error_widget
             self.tabs.removeTab(4)
-            self.tabs.insertTab(4, self.account_tab_widget, "👤 个人中心")
+            self.tabs.insertTab(4, self.account_tab_widget, tr("account.tab_title"))
 
     def _load_about_tab(self):
         """加载关于标签页"""
@@ -1506,7 +1525,7 @@ class ConfigManager(QMainWindow):
             self.tabs.setTabEnabled(5, True)  # 确保标签页可用
             # 替换占位widget
             self.tabs.removeTab(5)
-            self.tabs.insertTab(5, self.about_tab_widget, "📖 关于")
+            self.tabs.insertTab(5, self.about_tab_widget, "📖 " + self.i18n.tr("tabs.about"))
             self.tabs.setCurrentIndex(5)  # 切换到关于标签页
         except Exception as e:
             import logging
@@ -1516,12 +1535,12 @@ class ConfigManager(QMainWindow):
             from PySide6.QtWidgets import QLabel
             error_widget = QWidget()
             error_layout = QVBoxLayout(error_widget)
-            error_label = QLabel(f"加载关于标签页失败: {e}\n\n请检查日志文件获取详细信息")
+            error_label = QLabel(self.i18n.tr("message.text_9945"))
             error_label.setStyleSheet("color: red; padding: 20px;")
             error_layout.addWidget(error_label)
             self.about_tab_widget = error_widget
             self.tabs.removeTab(5)
-            self.tabs.insertTab(5, self.about_tab_widget, "📖 关于")
+            self.tabs.insertTab(5, self.about_tab_widget, "📖 " + self.i18n.tr("tabs.about"))
             self.tabs.setCurrentIndex(5)  # 确保切换到关于标签页显示错误信息
 
     def create_config_tab(self):
@@ -1537,7 +1556,7 @@ class ConfigManager(QMainWindow):
         layout = QVBoxLayout(widget)
 
         # 基本设置组
-        basic_group = QGroupBox("🔧 基本设置")
+        basic_group = QGroupBox(tr("appearance.basic_settings"))
         basic_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
         basic_layout = QFormLayout()
         basic_layout.setVerticalSpacing(12)
@@ -1556,14 +1575,15 @@ class ConfigManager(QMainWindow):
 
         # 预设高度选项 - 精简为4个档位
         self.height_presets = [
-            ("极细", 6),
-            ("细", 10),
-            ("标准", 20),
-            ("粗", 30)
+            ("config.presets.height_extra_thin", 6),
+            ("config.presets.height_thin", 10),
+            ("config.presets.height_standard", 20),
+            ("config.presets.height_thick", 30)
         ]
 
         self.height_preset_buttons = []
-        for name, height in self.height_presets:
+        for name_key, height in self.height_presets:
+            name = self.i18n.tr(name_key)
             btn = QPushButton(f"{name} ({height}px)")
             btn.setCheckable(True)
             btn.setMaximumWidth(100)
@@ -1575,7 +1595,7 @@ class ConfigManager(QMainWindow):
         height_layout.addWidget(self.height_preset_group)
 
         # 自定义高度输入
-        custom_label = QLabel("自定义:")
+        custom_label = QLabel(self.i18n.tr("config.custom_label"))
         height_layout.addWidget(custom_label)
 
         self.height_spin = QSpinBox()
@@ -1591,7 +1611,7 @@ class ConfigManager(QMainWindow):
 
         height_layout.addStretch()
 
-        basic_layout.addRow("进度条高度:", height_container)
+        basic_layout.addRow(tr("appearance.bar_height") + ":", height_container)
 
         # 延迟更新按钮状态，避免配置未加载时出错
         QTimer.singleShot(100, self.update_height_preset_buttons)
@@ -1601,23 +1621,45 @@ class ConfigManager(QMainWindow):
         self.screen_spin.setStyleSheet(StyleManager.input_number())
         self.screen_spin.setRange(0, 10)
         self.screen_spin.setValue(self.config.get('screen_index', 0) if self.config else 0)
-        basic_layout.addRow("显示器索引:", self.screen_spin)
+        basic_layout.addRow(self.i18n.tr("config.labels.show_index") + ":", self.screen_spin)
 
         # 更新间隔
         self.interval_spin = QSpinBox()
         self.interval_spin.setStyleSheet(StyleManager.input_number())
         self.interval_spin.setRange(100, 60000)
         self.interval_spin.setValue(self.config.get('update_interval', 1000) if self.config else 1000)
-        self.interval_spin.setSuffix(" 毫秒")
-        basic_layout.addRow("更新间隔:", self.interval_spin)
+        self.interval_spin.setSuffix(" " + tr("appearance.milliseconds"))
+        basic_layout.addRow(self.i18n.tr("config.labels.update_interval") + ":", self.interval_spin)
 
-        # 开机自启动
+        # 语言选择
+        language_container = QWidget()
+        language_layout = QHBoxLayout(language_container)
+        language_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.language_combo = QComboBox()
+        self.language_combo.setStyleSheet(StyleManager.dropdown())
+        self.language_combo.addItem(tr("config.language_zh_cn"), "zh_CN")
+        self.language_combo.addItem(tr("config.language_en_us"), "en_US")
+
+        # 设置当前语言
+        current_lang = self.config.get('language', 'zh_CN') if self.config else 'zh_CN'
+        index = self.language_combo.findData(current_lang)
+        if index >= 0:
+            self.language_combo.setCurrentIndex(index)
+
+        self.language_combo.currentIndexChanged.connect(self.on_language_changed)
+        language_layout.addWidget(self.language_combo)
+        language_layout.addStretch()
+
+        basic_layout.addRow(tr("config.language") + ":", language_container)
+
+                # 开机自启动
         autostart_container = QWidget()
         autostart_layout = QHBoxLayout(autostart_container)
         autostart_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.autostart_check = QCheckBox("开机自动启动")
-        self.autostart_check.setToolTip("勾选后，GaiYa每日进度条将在Windows开机时自动启动")
+        self.autostart_check = QCheckBox(tr("appearance.autostart"))
+        self.autostart_check.setToolTip(self.i18n.tr("config.auto_start_tooltip"))
         # 从注册表读取当前状态
         if self.autostart_manager:
             self.autostart_check.setChecked(self.autostart_manager.is_enabled())
@@ -1633,13 +1675,13 @@ class ConfigManager(QMainWindow):
         # 连接复选框变化信号，实时更新状态标签
         self.autostart_check.stateChanged.connect(self._update_autostart_status_label)
 
-        basic_layout.addRow("自启动:", autostart_container)
+        basic_layout.addRow(self.i18n.tr("config.labels.autostart") + ":", autostart_container)
 
         basic_group.setLayout(basic_layout)
         layout.addWidget(basic_group)
 
         # 颜色设置组
-        color_group = QGroupBox("🎨 颜色设置")
+        color_group = QGroupBox(tr("appearance.color_settings"))
         color_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
         color_layout = QFormLayout()
         color_layout.setVerticalSpacing(15)  # 增加纵向间距
@@ -1651,7 +1693,7 @@ class ConfigManager(QMainWindow):
         self.bg_color_input = QLineEdit(bg_color)
         self.bg_color_input.setMaximumWidth(100)
         self.bg_color_input.setFixedHeight(36)
-        self.bg_color_btn = QPushButton("选择颜色")
+        self.bg_color_btn = QPushButton(self.i18n.tr("config.color"))
         self.bg_color_btn.setFixedSize(80, 36)
         self.bg_color_btn.setStyleSheet("QPushButton { padding: 8px 12px; font-size: 12px; }")
         # 使用 partial 避免 Lambda 循环引用
@@ -1664,14 +1706,14 @@ class ConfigManager(QMainWindow):
         bg_color_layout.addSpacing(10)  # 横向间距
         bg_color_layout.addWidget(self.bg_color_preview)
         bg_color_layout.addStretch()
-        color_layout.addRow("背景颜色:", bg_color_layout)
+        color_layout.addRow(tr("appearance.background_color") + ":", bg_color_layout)
 
         # 背景透明度
         self.opacity_spin = QSpinBox()
         self.opacity_spin.setStyleSheet(StyleManager.input_number())
         self.opacity_spin.setRange(0, 255)
         self.opacity_spin.setValue(self.config.get('background_opacity', 180) if self.config else 180)
-        color_layout.addRow("背景透明度:", self.opacity_spin)
+        color_layout.addRow(tr("appearance.background_opacity") + ":", self.opacity_spin)
 
         # 时间标记颜色
         marker_color_layout = QHBoxLayout()
@@ -1679,7 +1721,7 @@ class ConfigManager(QMainWindow):
         self.marker_color_input = QLineEdit(marker_color)
         self.marker_color_input.setMaximumWidth(100)
         self.marker_color_input.setFixedHeight(36)
-        self.marker_color_btn = QPushButton("选择颜色")
+        self.marker_color_btn = QPushButton(self.i18n.tr("config.color"))
         self.marker_color_btn.setFixedSize(80, 36)
         self.marker_color_btn.setStyleSheet("QPushButton { padding: 8px 12px; font-size: 12px; }")
         # 使用 partial 避免 Lambda 循环引用
@@ -1692,15 +1734,15 @@ class ConfigManager(QMainWindow):
         marker_color_layout.addSpacing(10)  # 横向间距
         marker_color_layout.addWidget(self.marker_color_preview)
         marker_color_layout.addStretch()
-        color_layout.addRow("时间标记颜色:", marker_color_layout)
+        color_layout.addRow(tr("appearance.marker_color") + ":", marker_color_layout)
 
         # 时间标记宽度
         self.marker_width_spin = QSpinBox()
         self.marker_width_spin.setStyleSheet(StyleManager.input_number())
         self.marker_width_spin.setRange(1, 10)
         self.marker_width_spin.setValue(self.config.get('marker_width', 2) if self.config else 2)
-        self.marker_width_spin.setSuffix(" 像素")
-        color_layout.addRow("时间标记宽度:", self.marker_width_spin)
+        self.marker_width_spin.setSuffix(" " + tr("appearance.pixels"))
+        color_layout.addRow(self.i18n.tr("config.labels.marker_width") + ":", self.marker_width_spin)
 
         # 时间标记类型
         marker_type_layout = QHBoxLayout()
@@ -1712,27 +1754,27 @@ class ConfigManager(QMainWindow):
         self.marker_type_combo.currentTextChanged.connect(self.on_marker_type_changed)
         marker_type_layout.addWidget(self.marker_type_combo)
 
-        marker_type_hint = QLabel("(line=线条, image=图片, gif=动画)")
+        marker_type_hint = QLabel(tr("appearance.marker_type_note"))
         marker_type_hint.setStyleSheet("color: #888888; font-size: 9pt;")
         marker_type_layout.addWidget(marker_type_hint)
         marker_type_layout.addStretch()
 
-        color_layout.addRow("时间标记类型:", marker_type_layout)
+        color_layout.addRow(self.i18n.tr("config.labels.marker_type") + ":", marker_type_layout)
 
         # 标记图片路径
         marker_image_layout = QHBoxLayout()
         marker_image_path = self.config.get('marker_image_path', '') if self.config else ''
         self.marker_image_input = QLineEdit(marker_image_path)
-        self.marker_image_input.setPlaceholderText("选择图片文件 (JPG/PNG/GIF/WebP)")
+        self.marker_image_input.setPlaceholderText(self.i18n.tr("config.choose_image_file"))
         marker_image_layout.addWidget(self.marker_image_input)
 
-        marker_image_btn = QPushButton("📁 浏览")
+        marker_image_btn = QPushButton(tr("appearance.browse"))
         marker_image_btn.clicked.connect(self.choose_marker_image)
         marker_image_btn.setFixedSize(70, 36)
         marker_image_btn.setStyleSheet("QPushButton { padding: 8px 12px; font-size: 12px; }")
         marker_image_layout.addWidget(marker_image_btn)
 
-        color_layout.addRow("标记图片:", marker_image_layout)
+        color_layout.addRow(tr("appearance.marker_image") + ":", marker_image_layout)
 
         # 标记图片大小 - 预设档位 + 自定义
         marker_size_container = QWidget()
@@ -1747,13 +1789,14 @@ class ConfigManager(QMainWindow):
 
         # 预设大小选项 - 3个档位
         self.marker_size_presets = [
-            ("小", 25),
-            ("中", 35),
-            ("大", 50)
+            ("config.presets.size_small", 25),
+            ("config.presets.size_medium", 35),
+            ("config.presets.size_large", 50)
         ]
 
         self.marker_size_preset_buttons = []
-        for name, size in self.marker_size_presets:
+        for name_key, size in self.marker_size_presets:
+            name = self.i18n.tr(name_key)
             btn = QPushButton(f"{name} ({size}px)")
             btn.setCheckable(True)
             btn.setMaximumWidth(80)
@@ -1765,7 +1808,7 @@ class ConfigManager(QMainWindow):
         marker_size_layout.addWidget(self.marker_size_preset_group)
 
         # 自定义大小输入
-        custom_size_label = QLabel("自定义:")
+        custom_size_label = QLabel(self.i18n.tr("config.custom_label"))
         marker_size_layout.addWidget(custom_size_label)
 
         self.marker_size_spin = QSpinBox()
@@ -1780,7 +1823,7 @@ class ConfigManager(QMainWindow):
 
         marker_size_layout.addStretch()
 
-        color_layout.addRow("标记图片大小:", marker_size_container)
+        color_layout.addRow(tr("appearance.marker_size") + ":", marker_size_container)
 
         # 延迟更新按钮状态
         # 将在 _load_config_and_tasks 中更新
@@ -1792,13 +1835,13 @@ class ConfigManager(QMainWindow):
         self.marker_x_offset_spin.setValue(self.config.get('marker_x_offset', 0))
         self.marker_x_offset_spin.setSuffix(" px")
         self.marker_x_offset_spin.setMaximumWidth(100)
-        x_offset_hint = QLabel("(正值向右,负值向左)")
+        x_offset_hint = QLabel(tr("appearance.marker_x_offset_note"))
         x_offset_hint.setStyleSheet("color: #888888; font-size: 9pt;")
         x_offset_layout = QHBoxLayout()
         x_offset_layout.addWidget(self.marker_x_offset_spin)
         x_offset_layout.addWidget(x_offset_hint)
         x_offset_layout.addStretch()
-        color_layout.addRow("标记图片 X 偏移:", x_offset_layout)
+        color_layout.addRow(self.i18n.tr("config.labels.marker_x_offset") + ":", x_offset_layout)
 
         # 标记图片 Y 轴偏移
         self.marker_y_offset_spin = QSpinBox()
@@ -1807,13 +1850,13 @@ class ConfigManager(QMainWindow):
         self.marker_y_offset_spin.setValue(self.config.get('marker_y_offset', 0))
         self.marker_y_offset_spin.setSuffix(" px")
         self.marker_y_offset_spin.setMaximumWidth(100)
-        y_offset_hint = QLabel("(正值向上,负值向下)")
+        y_offset_hint = QLabel(tr("appearance.marker_y_offset_note"))
         y_offset_hint.setStyleSheet("color: #888888; font-size: 9pt;")
         y_offset_layout = QHBoxLayout()
         y_offset_layout.addWidget(self.marker_y_offset_spin)
         y_offset_layout.addWidget(y_offset_hint)
         y_offset_layout.addStretch()
-        color_layout.addRow("标记图片 Y 偏移:", y_offset_layout)
+        color_layout.addRow(self.i18n.tr("config.labels.marker_y_offset") + ":", y_offset_layout)
 
         # 标记动画播放速度
         self.marker_speed_spin = QSpinBox()
@@ -1823,13 +1866,13 @@ class ConfigManager(QMainWindow):
         self.marker_speed_spin.setSuffix(" %")
         self.marker_speed_spin.setSingleStep(10)
         self.marker_speed_spin.setMaximumWidth(100)
-        speed_hint = QLabel("(100%=原速, 200%=2倍速)")
+        speed_hint = QLabel(tr("appearance.marker_speed_note"))
         speed_hint.setStyleSheet("color: #888888; font-size: 9pt;")
         speed_layout = QHBoxLayout()
         speed_layout.addWidget(self.marker_speed_spin)
         speed_layout.addWidget(speed_hint)
         speed_layout.addStretch()
-        color_layout.addRow("动画播放速度:", speed_layout)
+        color_layout.addRow(self.i18n.tr("config.labels.animation_speed") + ":", speed_layout)
 
         color_group.setLayout(color_layout)
         layout.addWidget(color_group)
@@ -1838,14 +1881,14 @@ class ConfigManager(QMainWindow):
         self.on_marker_type_changed(self.marker_type_combo.currentText())
 
         # 效果设置组
-        effect_group = QGroupBox("✨ 视觉效果")
+        effect_group = QGroupBox(tr("appearance.visual_effects"))
         effect_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
         effect_layout = QFormLayout()
         effect_layout.setVerticalSpacing(12)
         effect_layout.setHorizontalSpacing(10)
 
         # 启用阴影
-        self.shadow_check = QCheckBox("启用阴影效果")
+        self.shadow_check = QCheckBox(tr("appearance.enable_shadow"))
         self.shadow_check.setChecked(self.config.get('enable_shadow', True))
         effect_layout.addRow(self.shadow_check)
 
@@ -1854,8 +1897,8 @@ class ConfigManager(QMainWindow):
         self.radius_spin.setStyleSheet(StyleManager.input_number())
         self.radius_spin.setRange(0, 20)
         self.radius_spin.setValue(self.config.get('corner_radius', 0))
-        self.radius_spin.setSuffix(" 像素")
-        effect_layout.addRow("圆角半径:", self.radius_spin)
+        self.radius_spin.setSuffix(" " + tr("appearance.pixels"))
+        effect_layout.addRow(tr("appearance.corner_radius") + ":", self.radius_spin)
 
         effect_group.setLayout(effect_layout)
         layout.addWidget(effect_group)
@@ -1881,24 +1924,24 @@ class ConfigManager(QMainWindow):
         top_layout = QVBoxLayout()
 
         # AI任务规划区域
-        ai_group = QGroupBox("🤖 AI智能规划")
+        ai_group = QGroupBox("🤖 " + self.i18n.tr("tasks.sections.ai_planning"))
         ai_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
         ai_layout = QVBoxLayout()
 
         # 说明标签
-        ai_hint = QLabel("💡 用自然语言描述您的计划,AI将自动生成任务时间表")
+        ai_hint = QLabel(self.i18n.tr("tasks.hints.ai_description"))
         ai_hint.setStyleSheet("color: #FF9800; font-style: italic; padding: 3px;")
         ai_layout.addWidget(ai_hint)
 
         # AI输入框
         input_container = QHBoxLayout()
-        input_label = QLabel("描述您的计划:")
+        input_label = QLabel(self.i18n.tr("tasks.labels.describe_plan"))
         input_label.setStyleSheet(StyleManager.label_subtitle())
         input_container.addWidget(input_label)
 
         self.ai_input = QLineEdit()
         self.ai_input.setStyleSheet(StyleManager.input_text())
-        self.ai_input.setPlaceholderText("例如: 明天9点开会1小时,然后写代码到下午5点,中午12点休息1小时,晚上6点健身...")
+        self.ai_input.setPlaceholderText(self.i18n.tr("general.text_5947"))
         self.ai_input.setMinimumHeight(35)
         self.ai_input.returnPressed.connect(self.on_ai_generate_clicked)  # 支持回车键
         input_container.addWidget(self.ai_input)
@@ -1909,7 +1952,7 @@ class ConfigManager(QMainWindow):
         ai_button_layout = QHBoxLayout()
 
         # AI生成按钮
-        self.generate_btn = QPushButton("✨ 智能生成任务")
+        self.generate_btn = QPushButton(self.i18n.tr("account.ui.ai_smart_generate"))
         self.generate_btn.clicked.connect(self.on_ai_generate_clicked)
         self.generate_btn.setFixedHeight(36)
         self.generate_btn.setStyleSheet("""
@@ -1932,12 +1975,12 @@ class ConfigManager(QMainWindow):
         ai_button_layout.addWidget(self.generate_btn)
 
         # 配额状态标签
-        self.quota_label = QLabel("配额状态: 加载中...")
+        self.quota_label = QLabel(self.i18n.tr("tasks.labels.quota_status_loading"))
         self.quota_label.setStyleSheet("color: #333333; padding: 5px;")
         ai_button_layout.addWidget(self.quota_label)
 
         # 刷新配额按钮
-        refresh_quota_btn = QPushButton("🔄 刷新配额")
+        refresh_quota_btn = QPushButton(self.i18n.tr("tasks.buttons.refresh_quota"))
         refresh_quota_btn.clicked.connect(self.refresh_quota_status)
         refresh_quota_btn.setFixedHeight(36)
         refresh_quota_btn.setStyleSheet("""
@@ -1964,22 +2007,22 @@ class ConfigManager(QMainWindow):
 
         # 立即显示初始状态（不需要等待）
         if hasattr(self, 'quota_label'):
-            self.quota_label.setText("⏳ 正在连接云服务（可能需要10-15秒）...")
+            self.quota_label.setText(self.i18n.tr("general.text_3841"))
             self.quota_label.setStyleSheet("color: #ff9800; padding: 5px; font-weight: bold;")
         if hasattr(self, 'generate_btn'):
             self.generate_btn.setEnabled(False)
 
         # 说明标签
-        info_label = QLabel("双击表格单元格可以编辑任务内容")
+        info_label = QLabel(self.i18n.tr("tasks.hints.double_click_edit"))
         info_label.setStyleSheet("color: #333333; font-style: italic;")
         top_layout.addWidget(info_label)
 
         # 预设主题选择区域
-        theme_group = QGroupBox("🎨 预设主题配色")
+        theme_group = QGroupBox("🎨 " + self.i18n.tr("tasks.sections.preset_themes"))
         theme_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
         theme_layout = QHBoxLayout()
 
-        theme_label = QLabel("选择主题:")
+        theme_label = QLabel(self.i18n.tr("tasks.labels.select_theme"))
         theme_layout.addWidget(theme_label)
 
         # 创建主题下拉框
@@ -1994,7 +2037,7 @@ class ConfigManager(QMainWindow):
         theme_layout.addWidget(self.theme_combo)
 
         # 主题配色预览区域
-        preview_label = QLabel("配色预览:")
+        preview_label = QLabel(self.i18n.tr("tasks.labels.color_preview"))
         preview_label.setStyleSheet("color: #333333; margin-left: 10px;")
         theme_layout.addWidget(preview_label)
 
@@ -2009,41 +2052,57 @@ class ConfigManager(QMainWindow):
         top_layout.addWidget(theme_group)
 
         # 模板加载区域 - 单行显示所有模板
-        self.template_group = QGroupBox("📋 预设模板")
+        self.template_group = QGroupBox("📋 " + self.i18n.tr("tasks.sections.preset_templates"))
         self.template_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
-        self.template_layout = QHBoxLayout()
 
-        template_label = QLabel("快速加载:")
-        self.template_layout.addWidget(template_label)
+        # Use VBoxLayout to contain label and grid layout for wrapping
+        template_container = QVBoxLayout()
+
+        # Quick load label in its own row
+        template_label_layout = QHBoxLayout()
+        template_label = QLabel(self.i18n.tr("tasks.labels.quick_load"))
+        template_label_layout.addWidget(template_label)
+        template_label_layout.addStretch()
+        template_container.addLayout(template_label_layout)
+
+        # Grid layout for template buttons (supports wrapping)
+        from PySide6.QtWidgets import QGridLayout
+        self.template_layout = QGridLayout()
+        self.template_layout.setSpacing(8)
 
         # 动态生成所有模板按钮（从templates_config.json，只显示预设模板）
         if hasattr(self, 'template_manager') and self.template_manager:
             templates = self.template_manager.get_all_templates(include_custom=False)
-            for template in templates:
-                btn = QPushButton(template['name'])
+            max_columns = 6  # Maximum buttons per row
+            for idx, template in enumerate(templates):
+                # Use i18n translation for template name if available
+                template_name = self.i18n.tr(f"templates.names.{template['id']}", fallback=template['name'])
+                btn = QPushButton(template_name)
                 # 使用 partial 避免 Lambda 循环引用
                 btn.clicked.connect(partial(self.load_template, template['filename']))
-                btn.setStyleSheet(f"QPushButton {{ background-color: white; color: {template['button_color']}; border: 2px solid {template['button_color']}; border-radius: 6px; padding: 6px; }}")
+                btn.setStyleSheet(f"QPushButton {{ background-color: white; color: {template['button_color']}; border: 2px solid {template['button_color']}; border-radius: 6px; padding: 6px; min-width: 80px; }}")
                 btn.setToolTip(template.get('description', ''))
-                self.template_layout.addWidget(btn)
+                row = idx // max_columns
+                col = idx % max_columns
+                self.template_layout.addWidget(btn, row, col)
         else:
             # 备用：如果template_manager未初始化，显示提示
-            fallback_label = QLabel("模板加载中...")
+            fallback_label = QLabel(self.i18n.tr("tasks.labels.template_loading"))
             fallback_label.setStyleSheet("color: #333333; font-style: italic;")
-            self.template_layout.addWidget(fallback_label)
+            self.template_layout.addWidget(fallback_label, 0, 0)
             # 延迟重新创建模板按钮
             QTimer.singleShot(500, self._reload_template_buttons)
 
-        self.template_layout.addStretch()
-        self.template_group.setLayout(self.template_layout)
+        template_container.addLayout(self.template_layout)
+        self.template_group.setLayout(template_container)
         top_layout.addWidget(self.template_group)
 
         # 我的模板区域 - 下拉框选择样式
-        self.custom_template_group = QGroupBox("💾 我的模板")
+        self.custom_template_group = QGroupBox("💾 " + self.i18n.tr("tasks.sections.my_templates"))
         self.custom_template_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
         self.custom_template_layout = QHBoxLayout()
 
-        custom_label = QLabel("选择模板:")
+        custom_label = QLabel(self.i18n.tr("templates.auto_apply.select_template"))
         self.custom_template_layout.addWidget(custom_label)
 
         # 创建自定义模板下拉框
@@ -2053,16 +2112,16 @@ class ConfigManager(QMainWindow):
         self.custom_template_layout.addWidget(self.custom_template_combo)
 
         # 加载按钮
-        load_custom_btn = QPushButton("📂 加载")
-        load_custom_btn.setToolTip("加载选中的自定义模板")
+        load_custom_btn = QPushButton(self.i18n.tr("tasks.buttons.load"))
+        load_custom_btn.setToolTip(self.i18n.tr("config.tooltips.load_custom_template"))
         load_custom_btn.setFixedHeight(36)
         load_custom_btn.setStyleSheet("QPushButton { padding: 8px 12px; border-radius: 4px; }")
         load_custom_btn.clicked.connect(self._load_selected_custom_template)
         self.custom_template_layout.addWidget(load_custom_btn)
 
         # 删除按钮
-        delete_custom_btn = QPushButton("🗑️ 删除")
-        delete_custom_btn.setToolTip("删除选中的自定义模板")
+        delete_custom_btn = QPushButton(self.i18n.tr("general.text_1284"))
+        delete_custom_btn.setToolTip(self.i18n.tr("config.tooltips.delete_custom_template"))
         delete_custom_btn.setFixedHeight(36)
         delete_custom_btn.setStyleSheet("QPushButton { padding: 8px 12px; border-radius: 4px; }")
         delete_custom_btn.clicked.connect(self._delete_selected_custom_template)
@@ -2078,11 +2137,11 @@ class ConfigManager(QMainWindow):
         layout.addLayout(top_layout)
 
         # 可视化时间轴编辑器（延迟创建，避免初始化时阻塞）
-        timeline_group = QGroupBox("🎨 可视化时间轴编辑器")
+        timeline_group = QGroupBox("🎨 " + self.i18n.tr("tasks.sections.visual_timeline"))
         timeline_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
         timeline_layout = QVBoxLayout()
 
-        timeline_hint = QLabel("💡 提示：拖动色块边缘可调整任务时长")
+        timeline_hint = QLabel(self.i18n.tr("tasks.hints.drag_to_adjust"))
         timeline_hint.setStyleSheet("color: #666666; font-style: italic; padding: 5px;")
         timeline_layout.addWidget(timeline_hint)
 
@@ -2104,7 +2163,7 @@ class ConfigManager(QMainWindow):
         self.tasks_table = QTableWidget()
         self.tasks_table.setStyleSheet(StyleManager.table())
         self.tasks_table.setColumnCount(6)
-        self.tasks_table.setHorizontalHeaderLabels(["开始时间", "结束时间", "任务名称", "背景颜色", "文字颜色", "操作"])
+        self.tasks_table.setHorizontalHeaderLabels([self.i18n.tr("config.table.start_time"), self.i18n.tr("config.table.end_time"), self.i18n.tr("config.table.task_name"), self.i18n.tr("config.table.bg_color"), self.i18n.tr("config.table.text_color"), self.i18n.tr("config.table.actions")])
         self.tasks_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
         self.tasks_table.setMinimumHeight(300)
 
@@ -2119,22 +2178,22 @@ class ConfigManager(QMainWindow):
         # 按钮组
         button_layout = QHBoxLayout()
 
-        add_btn = QPushButton("➕ 添加任务")
+        add_btn = QPushButton(self.i18n.tr("tasks.buttons.add_task"))
         add_btn.clicked.connect(self.add_task)
         add_btn.setFixedHeight(36)
         add_btn.setStyleSheet(StyleManager.button_minimal())
 
-        save_template_btn = QPushButton("💾 保存为模板")
+        save_template_btn = QPushButton(self.i18n.tr("account.other.save_as_template"))
         save_template_btn.clicked.connect(self.save_as_template)
         save_template_btn.setFixedHeight(36)
         save_template_btn.setStyleSheet(StyleManager.button_minimal())
 
-        load_custom_btn = QPushButton("📂 加载自定义模板")
+        load_custom_btn = QPushButton(self.i18n.tr("tasks.buttons.load_custom_template"))
         load_custom_btn.clicked.connect(self.load_custom_template)
         load_custom_btn.setFixedHeight(36)
         load_custom_btn.setStyleSheet(StyleManager.button_minimal())
 
-        clear_btn = QPushButton("🗑️ 清空所有任务")
+        clear_btn = QPushButton(self.i18n.tr("tasks.buttons.clear_all_tasks"))
         clear_btn.clicked.connect(self.clear_all_tasks)
         clear_btn.setFixedHeight(36)
         clear_btn.setStyleSheet(StyleManager.button_danger())
@@ -2148,12 +2207,12 @@ class ConfigManager(QMainWindow):
         layout.addLayout(button_layout)
 
         # ========== 模板自动应用管理（放在最底部） ==========
-        schedule_panel = QGroupBox("📅 模板自动应用管理")
+        schedule_panel = QGroupBox("📅 " + self.i18n.tr("tasks.sections.auto_apply_management"))
         schedule_panel.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
         schedule_layout = QVBoxLayout()
 
         # 说明文字
-        schedule_hint = QLabel("💡 为每个模板设置自动应用的日期规则，到了指定时间会自动加载对应模板")
+        schedule_hint = QLabel(self.i18n.tr("config.settings_9"))
         schedule_hint.setStyleSheet("color: #333333; font-style: italic; padding: 5px;")
         schedule_layout.addWidget(schedule_hint)
 
@@ -2162,7 +2221,10 @@ class ConfigManager(QMainWindow):
         self.schedule_table.setStyleSheet(StyleManager.table())
         self.schedule_table.setColumnCount(4)
         self.schedule_table.setHorizontalHeaderLabels([
-            "模板名称", "应用时间", "状态", "操作"
+            self.i18n.tr("config.template.template_name"),
+            self.i18n.tr("config.template.apply_time"),
+            self.i18n.tr("config.template.status"),
+            self.i18n.tr("config.table.actions")
         ])
         self.schedule_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self.schedule_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
@@ -2181,14 +2243,14 @@ class ConfigManager(QMainWindow):
         # 操作按钮行
         button_row = QHBoxLayout()
 
-        add_schedule_btn = QPushButton("➕ 添加规则")
+        add_schedule_btn = QPushButton(self.i18n.tr("tasks.buttons.add_rule"))
         add_schedule_btn.setFixedHeight(36)
         add_schedule_btn.setStyleSheet(StyleManager.button_primary())
         add_schedule_btn.clicked.connect(self._add_schedule_dialog)
         button_row.addWidget(add_schedule_btn)
 
-        test_date_btn = QPushButton("🔍 测试日期")
-        test_date_btn.setToolTip("测试指定日期会匹配到哪个模板")
+        test_date_btn = QPushButton(self.i18n.tr("tasks.buttons.test_date"))
+        test_date_btn.setToolTip(self.i18n.tr("config.tooltips.test_date_match"))
         test_date_btn.setFixedHeight(36)
         test_date_btn.setStyleSheet("QPushButton { padding: 8px 16px; border-radius: 4px; }")
         test_date_btn.clicked.connect(self._test_date_matching)
@@ -2255,7 +2317,7 @@ class ConfigManager(QMainWindow):
     def apply_selected_theme(self):
         """应用选中的主题（显示提示）"""
         if not self.theme_manager:
-            QMessageBox.warning(self, "错误", "主题管理器未初始化，请稍后再试")
+            QMessageBox.warning(self, self.i18n.tr("membership.payment.error"), "主题管理器未初始化，请稍后再试")
             return
         
         # 从下拉框获取当前选中的主题ID
@@ -2267,28 +2329,28 @@ class ConfigManager(QMainWindow):
                     self.selected_theme_id = theme_id
         
         if not self.selected_theme_id:
-            QMessageBox.warning(self, "提示", "请先选择一个主题")
+            QMessageBox.warning(self, self.i18n.tr("message.info"), "请先选择一个主题")
             return
 
         # 应用预设主题
         success = self.theme_manager.apply_preset_theme(self.selected_theme_id)
         if success:
-            QMessageBox.information(self, "成功", f"已应用主题: {self.theme_manager.get_current_theme().get('name', 'Unknown')}")
+            QMessageBox.information(self, "成功", self.i18n.tr("config.dialogs.theme_applied", theme_name=self.theme_manager.get_current_theme().get('name', 'Unknown')))
             # 更新配置中的主题模式
             self.config.setdefault('theme', {})['mode'] = 'preset'
             self.config.setdefault('theme', {})['current_theme_id'] = self.selected_theme_id
         else:
-            QMessageBox.warning(self, "错误", "应用主题失败")
+            QMessageBox.warning(self, self.i18n.tr("membership.payment.error"), "应用主题失败")
 
     def apply_theme_colors_to_tasks(self):
         """应用主题配色到任务"""
         if not self.theme_manager:
-            QMessageBox.warning(self, "错误", "主题管理器未初始化，请稍后再试")
+            QMessageBox.warning(self, self.i18n.tr("membership.payment.error"), "主题管理器未初始化，请稍后再试")
             return
         
         theme = self.theme_manager.get_current_theme()
         if not theme:
-            QMessageBox.warning(self, "提示", "请先选择一个主题")
+            QMessageBox.warning(self, self.i18n.tr("message.info"), "请先选择一个主题")
             return
 
         # 确认对话框
@@ -2316,7 +2378,7 @@ class ConfigManager(QMainWindow):
             if hasattr(self, 'timeline_editor') and self.timeline_editor:
                 QTimer.singleShot(50, lambda: self.timeline_editor.set_tasks(self.tasks) if self.timeline_editor else None)
             
-            QMessageBox.information(self, "成功", "已应用主题配色到任务")
+            QMessageBox.information(self, self.i18n.tr("message.success"), "已应用主题配色到任务")
 
     def _load_preset_themes(self):
         """加载预设主题列表到下拉框"""
@@ -2403,18 +2465,18 @@ class ConfigManager(QMainWindow):
         layout = QVBoxLayout(widget)
 
         # 说明标签
-        info_label = QLabel("配置场景效果,让进度条更具个性化")
+        info_label = QLabel(self.i18n.tr("config.config_4"))
         info_label.setStyleSheet("color: #333333; font-style: italic; padding: 5px;")
         layout.addWidget(info_label)
 
         # 基础设置组
-        basic_group = QGroupBox("⚙️ 基础设置")
+        basic_group = QGroupBox("⚙️ " + self.i18n.tr("config.scene.basic_settings"))
         basic_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
         basic_layout = QFormLayout()
         basic_layout.setVerticalSpacing(12)
 
         # 启用场景系统
-        self.scene_enabled_check = QCheckBox("启用场景系统")
+        self.scene_enabled_check = QCheckBox(self.i18n.tr("general.text_9791"))
         scene_config = self.config.get('scene', {})
         self.scene_enabled_check.setChecked(scene_config.get('enabled', False))
         self.scene_enabled_check.setMinimumHeight(36)
@@ -2422,24 +2484,24 @@ class ConfigManager(QMainWindow):
         basic_layout.addRow(self.scene_enabled_check)
 
         # 依然展示进度条
-        self.show_progress_in_scene_check = QCheckBox("依然展示进度条")
+        self.show_progress_in_scene_check = QCheckBox(self.i18n.tr("general.text_889"))
         self.show_progress_in_scene_check.setChecked(scene_config.get('show_progress_bar', False))
         self.show_progress_in_scene_check.setMinimumHeight(36)
-        self.show_progress_in_scene_check.setToolTip("场景模式下在场景上方叠加显示进度条")
+        self.show_progress_in_scene_check.setToolTip(self.i18n.tr("general.display_1"))
         basic_layout.addRow(self.show_progress_in_scene_check)
 
         basic_group.setLayout(basic_layout)
         layout.addWidget(basic_group)
 
         # 场景选择组
-        scene_select_group = QGroupBox("🎬 场景选择")
+        scene_select_group = QGroupBox("🎬 " + self.i18n.tr("config.scene.scene_selection"))
         scene_select_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
         scene_select_layout = QVBoxLayout()
         scene_select_layout.setSpacing(10)
 
         # 场景选择下拉框
         scene_combo_layout = QHBoxLayout()
-        scene_label = QLabel("当前场景:")
+        scene_label = QLabel(self.i18n.tr("general.text_5026"))
         scene_label.setStyleSheet("font-weight: bold;")
         scene_combo_layout.addWidget(scene_label)
 
@@ -2466,7 +2528,7 @@ class ConfigManager(QMainWindow):
             scene_list = scene_manager.get_scene_list()
 
             # 添加"无场景"选项
-            self.scene_combo.addItem("无场景", None)
+            self.scene_combo.addItem(self.i18n.tr("general.text_6942"), None)
 
             # 添加所有可用场景
             for scene_name in scene_list:
@@ -2482,7 +2544,7 @@ class ConfigManager(QMainWindow):
                 if index >= 0:
                     self.scene_combo.setCurrentIndex(index)
         else:
-            self.scene_combo.addItem("无可用场景", None)
+            self.scene_combo.addItem(self.i18n.tr("general.text_1681"), None)
             self.scene_combo.setEnabled(False)
 
         # 连接场景切换事件
@@ -2491,7 +2553,7 @@ class ConfigManager(QMainWindow):
         scene_combo_layout.addWidget(self.scene_combo)
 
         # 添加刷新按钮
-        refresh_button = QPushButton("🔄 刷新场景")
+        refresh_button = QPushButton(self.i18n.tr("menu.refresh_scene"))
         refresh_button.setMinimumHeight(36)
         refresh_button.setStyleSheet("""
             QPushButton {
@@ -2511,14 +2573,14 @@ class ConfigManager(QMainWindow):
             }
         """)
         refresh_button.clicked.connect(self._refresh_scene_list)
-        refresh_button.setToolTip("重新扫描scenes目录，加载新导出的场景")
+        refresh_button.setToolTip(self.i18n.tr("general.text_7449"))
         scene_combo_layout.addWidget(refresh_button)
 
         scene_combo_layout.addStretch()
         scene_select_layout.addLayout(scene_combo_layout)
 
         # 场景描述
-        self.scene_description_label = QLabel("请选择一个场景")
+        self.scene_description_label = QLabel(self.i18n.tr("dialog.text_7655"))
         self.scene_description_label.setStyleSheet("color: #666666; padding: 5px; font-style: italic;")
         self.scene_description_label.setWordWrap(True)
         scene_select_layout.addWidget(self.scene_description_label)
@@ -2530,14 +2592,14 @@ class ConfigManager(QMainWindow):
         layout.addWidget(scene_select_group)
 
         # 高级功能组
-        advanced_group = QGroupBox("🛠️ 高级功能")
+        advanced_group = QGroupBox("🛠️ " + self.i18n.tr("config.scene.advanced_features"))
         advanced_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
         advanced_layout = QVBoxLayout()
         advanced_layout.setSpacing(10)
 
         # 打开场景编辑器按钮
         editor_btn_layout = QHBoxLayout()
-        self.open_scene_editor_btn = QPushButton("🎨 打开场景编辑器")
+        self.open_scene_editor_btn = QPushButton(self.i18n.tr("general.text_1288"))
         self.open_scene_editor_btn.setMinimumHeight(40)
         self.open_scene_editor_btn.setStyleSheet("""
             QPushButton {
@@ -2561,7 +2623,7 @@ class ConfigManager(QMainWindow):
         advanced_layout.addLayout(editor_btn_layout)
 
         # 编辑器说明
-        editor_hint = QLabel("场景编辑器可以创建和编辑自定义场景效果")
+        editor_hint = QLabel(self.i18n.tr("general.text_3998"))
         editor_hint.setStyleSheet("color: #888888; padding: 5px; font-size: 9pt;")
         advanced_layout.addWidget(editor_hint)
 
@@ -2589,7 +2651,7 @@ class ConfigManager(QMainWindow):
         scene_name = self.scene_combo.itemData(index)
 
         if not scene_name:
-            self.scene_description_label.setText("未选择场景,将显示默认进度条样式")
+            self.scene_description_label.setText(self.i18n.tr("dialog.display"))
             return
 
         # 获取场景元数据
@@ -2605,9 +2667,9 @@ class ConfigManager(QMainWindow):
                 desc_text = f"描述: {description}\n版本: {version}  作者: {author}"
                 self.scene_description_label.setText(desc_text)
             else:
-                self.scene_description_label.setText("无法加载场景信息")
+                self.scene_description_label.setText(self.i18n.tr("general.text_8358"))
         else:
-            self.scene_description_label.setText("场景管理器未初始化")
+            self.scene_description_label.setText(self.i18n.tr("general.text_7526"))
 
     def open_scene_editor(self):
         """打开场景编辑器"""
@@ -2670,7 +2732,7 @@ class ConfigManager(QMainWindow):
                 scene_list = scene_manager.get_scene_list()
 
                 # 添加"无场景"选项
-                self.scene_combo.addItem("无场景", None)
+                self.scene_combo.addItem(self.i18n.tr("general.text_6942"), None)
 
                 # 添加所有可用场景
                 for scene_name in scene_list:
@@ -2704,17 +2766,17 @@ class ConfigManager(QMainWindow):
         layout = QVBoxLayout(widget)
 
         # 说明标签
-        info_label = QLabel("配置任务提醒通知,让您不会错过任何重要时刻")
+        info_label = QLabel(self.i18n.tr("config.config_5"))
         info_label.setStyleSheet("color: #333333; font-style: italic; padding: 5px;")
         layout.addWidget(info_label)
 
         # 基础设置组
-        basic_group = QGroupBox("⚙️ 基础设置")
+        basic_group = QGroupBox("⚙️ " + self.i18n.tr("config.notifications.basic_settings"))
         basic_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
         basic_layout = QFormLayout()
 
         # 启用通知
-        self.notify_enabled_check = QCheckBox("启用任务提醒通知")
+        self.notify_enabled_check = QCheckBox(self.i18n.tr("notification.enable_notifications"))
         notification_config = self.config.get('notification', {})
         self.notify_enabled_check.setChecked(notification_config.get('enabled', True))
         self.notify_enabled_check.setMinimumHeight(36)
@@ -2722,7 +2784,7 @@ class ConfigManager(QMainWindow):
         basic_layout.addRow(self.notify_enabled_check)
 
         # 启用声音
-        self.notify_sound_check = QCheckBox("播放提示音")
+        self.notify_sound_check = QCheckBox(self.i18n.tr("message.text_1045"))
         self.notify_sound_check.setChecked(notification_config.get('sound_enabled', True))
         self.notify_sound_check.setMinimumHeight(36)
         basic_layout.addRow(self.notify_sound_check)
@@ -2731,13 +2793,13 @@ class ConfigManager(QMainWindow):
         layout.addWidget(basic_group)
 
         # 提醒时机设置组
-        timing_group = QGroupBox("⏰ 提醒时机")
+        timing_group = QGroupBox("⏰ " + self.i18n.tr("config.notifications.timing"))
         timing_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
         timing_layout = QVBoxLayout()
         timing_layout.setSpacing(15)  # 设置子元素之间的间距
 
         # 任务开始前提醒
-        before_start_group = QGroupBox("🔔 任务开始前提醒")
+        before_start_group = QGroupBox("🔔 " + self.i18n.tr("config.notifications.before_start"))
         before_start_group.setStyleSheet("""
             QGroupBox {
                 margin-bottom: 10px;
@@ -2755,14 +2817,14 @@ class ConfigManager(QMainWindow):
 
         # 标题行布局：提示文本 + "任务开始时提醒"复选框
         before_start_title_row = QHBoxLayout()
-        before_start_hint = QLabel("选择在任务开始前多久提醒(可多选):")
+        before_start_hint = QLabel(self.i18n.tr("notification.before_start_hint"))
         before_start_hint.setStyleSheet("color: #888888; font-size: 9pt;")
         before_start_title_row.addWidget(before_start_hint)
 
         before_start_title_row.addStretch()
 
         # "任务开始时提醒"复选框放在右侧
-        self.notify_on_start_check = QCheckBox("任务开始时提醒")
+        self.notify_on_start_check = QCheckBox(self.i18n.tr("notification.notify_at_start"))
         self.notify_on_start_check.setChecked(notification_config.get('on_start', True))
         self.notify_on_start_check.setMinimumHeight(36)
         before_start_title_row.addWidget(self.notify_on_start_check)
@@ -2776,7 +2838,7 @@ class ConfigManager(QMainWindow):
         self.notify_before_start_checks = {}
 
         for minutes in [30, 15, 10, 5]:
-            checkbox = QCheckBox(f"提前 {minutes} 分钟")
+            checkbox = QCheckBox(self.i18n.tr("general.text_9462", minutes=minutes))
             checkbox.setChecked(minutes in before_start_minutes)
             checkbox.setMinimumHeight(36)
             self.notify_before_start_checks[minutes] = checkbox
@@ -2789,7 +2851,7 @@ class ConfigManager(QMainWindow):
         timing_layout.addWidget(before_start_group)
 
         # 任务结束前提醒
-        before_end_group = QGroupBox("🔕 任务结束前提醒")
+        before_end_group = QGroupBox("🔕 " + self.i18n.tr("config.notifications.before_end"))
         before_end_group.setStyleSheet("""
             QGroupBox {
                 margin-bottom: 10px;
@@ -2807,14 +2869,14 @@ class ConfigManager(QMainWindow):
 
         # 标题行布局：提示文本 + "任务结束时提醒"复选框
         before_end_title_row = QHBoxLayout()
-        before_end_hint = QLabel("选择在任务结束前多久提醒(可多选):")
+        before_end_hint = QLabel(self.i18n.tr("notification.before_end_hint"))
         before_end_hint.setStyleSheet("color: #888888; font-size: 9pt;")
         before_end_title_row.addWidget(before_end_hint)
 
         before_end_title_row.addStretch()
 
         # "任务结束时提醒"复选框放在右侧
-        self.notify_on_end_check = QCheckBox("任务结束时提醒")
+        self.notify_on_end_check = QCheckBox(self.i18n.tr("notification.notify_at_end"))
         self.notify_on_end_check.setChecked(notification_config.get('on_end', False))
         self.notify_on_end_check.setMinimumHeight(36)
         before_end_title_row.addWidget(self.notify_on_end_check)
@@ -2827,7 +2889,7 @@ class ConfigManager(QMainWindow):
         self.notify_before_end_checks = {}
 
         for minutes in [10, 5, 3]:
-            checkbox = QCheckBox(f"提前 {minutes} 分钟")
+            checkbox = QCheckBox(self.i18n.tr("general.text_9462", minutes=minutes))
             checkbox.setChecked(minutes in before_end_minutes)
             checkbox.setMinimumHeight(36)
             self.notify_before_end_checks[minutes] = checkbox
@@ -2843,14 +2905,14 @@ class ConfigManager(QMainWindow):
         layout.addWidget(timing_group)
 
         # 免打扰时段设置组
-        quiet_group = QGroupBox("🌙 免打扰时段")
+        quiet_group = QGroupBox("🌙 " + self.i18n.tr("config.notifications.dnd_title"))
         quiet_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
         quiet_layout = QFormLayout()
 
         quiet_hours = notification_config.get('quiet_hours', {})
 
         # 启用免打扰
-        self.quiet_enabled_check = QCheckBox("启用免打扰时段")
+        self.quiet_enabled_check = QCheckBox(self.i18n.tr("general.text_1681_1"))
         self.quiet_enabled_check.setChecked(quiet_hours.get('enabled', False))
         self.quiet_enabled_check.setMinimumHeight(36)
         quiet_layout.addRow(self.quiet_enabled_check)
@@ -2864,11 +2926,11 @@ class ConfigManager(QMainWindow):
         start_time_str = quiet_hours.get('start', '22:00')
         self.quiet_start_time.setTime(QTime.fromString(start_time_str, "HH:mm"))
         quiet_start_layout.addWidget(self.quiet_start_time)
-        quiet_start_hint = QLabel("(在此时间后不发送通知)")
+        quiet_start_hint = QLabel(self.i18n.tr("notification.after_time_hint"))
         quiet_start_hint.setStyleSheet("color: #888888; font-size: 9pt;")
         quiet_start_layout.addWidget(quiet_start_hint)
         quiet_start_layout.addStretch()
-        quiet_layout.addRow("开始时间:", quiet_start_layout)
+        quiet_layout.addRow(self.i18n.tr("config.notifications.dnd_start") + ":", quiet_start_layout)
 
         # 免打扰结束时间
         quiet_end_layout = QHBoxLayout()
@@ -2879,13 +2941,13 @@ class ConfigManager(QMainWindow):
         end_time_str = quiet_hours.get('end', '08:00')
         self.quiet_end_time.setTime(QTime.fromString(end_time_str, "HH:mm"))
         quiet_end_layout.addWidget(self.quiet_end_time)
-        quiet_end_hint = QLabel("(在此时间前不发送通知)")
+        quiet_end_hint = QLabel(self.i18n.tr("notification.before_time_hint"))
         quiet_end_hint.setStyleSheet("color: #888888; font-size: 9pt;")
         quiet_end_layout.addWidget(quiet_end_hint)
         quiet_end_layout.addStretch()
-        quiet_layout.addRow("结束时间:", quiet_end_layout)
+        quiet_layout.addRow(self.i18n.tr("config.notifications.dnd_end") + ":", quiet_end_layout)
 
-        quiet_example = QLabel("示例: 22:00 - 08:00 表示晚上10点到早上8点不打扰")
+        quiet_example = QLabel(self.i18n.tr("general.text_1040"))
         quiet_example.setStyleSheet("color: #888888; font-size: 8pt; font-style: italic;")
         quiet_layout.addRow(quiet_example)
 
@@ -2911,7 +2973,7 @@ class ConfigManager(QMainWindow):
         # 创建横向布局的头部（标题 + 用户信息）
         header_layout = QHBoxLayout()
 
-        title_label = QLabel("个人中心")
+        title_label = QLabel(tr("account.title"))
         title_label.setStyleSheet("font-size: 20px; font-weight: bold; color: #333333;")
         header_layout.addWidget(title_label)
 
@@ -2926,15 +2988,14 @@ class ConfigManager(QMainWindow):
             header_layout.addStretch()
 
             # 合并邮箱和会员等级到一行，右对齐显示
-            tier_names = {"free": "免费用户", "pro": "高级版", "lifetime": "会员合伙人"}
-            tier_name = tier_names.get(user_tier, user_tier)
-            info_label = QLabel(f"邮箱：{email}  |  会员等级：{tier_name}")
+            tier_name = self.i18n.tr(f"account.tiers.{user_tier}", fallback=user_tier)
+            info_label = QLabel(self.i18n.tr("account.text_7480", email=email, tier_name=tier_name))
             info_label.setStyleSheet("color: #333333; font-size: 14px;")
             header_layout.addWidget(info_label)
 
             # 添加退出登录按钮
             header_layout.addSpacing(15)
-            logout_btn = QPushButton("退出登录")
+            logout_btn = QPushButton(self.i18n.tr("button.logout"))
             logout_btn.setFixedSize(100, 28)  # 增加宽度以防止文字被截断
             logout_btn.setStyleSheet(StyleManager.button_minimal())
             logout_btn.clicked.connect(self._on_logout_clicked)
@@ -2946,7 +3007,7 @@ class ConfigManager(QMainWindow):
 
         if email != "未登录":
             if user_tier == "free":
-                tip_label = QLabel("会员套餐对比")
+                tip_label = QLabel(self.i18n.tr("account.membership_comparison"))
                 tip_label.setStyleSheet("color: #333333; font-size: 18px; font-weight: bold; margin-bottom: 15px;")
                 tip_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
                 layout.addWidget(tip_label)
@@ -2959,36 +3020,36 @@ class ConfigManager(QMainWindow):
                 plans = [
                     {
                         "id": "pro_monthly",
-                        "name": "Pro 月度",
+                        "name": self.i18n.tr("account.plan_monthly_name"),
                         "price": "¥29",
-                        "period": "/月",
-                        "validity": "有效期30天",
-                        "renewal": "到期后不会自动扣费",
+                        "period": self.i18n.tr("account.plan_period_month"),
+                        "validity": self.i18n.tr("account.plan_validity_30days"),
+                        "renewal": self.i18n.tr("account.plan_no_auto_renewal"),
                         "type": "monthly",
-                        "features": ["所有免费功能 +", "20次/天 AI智能规划", "统计报告分析", "去除进度条水印", "番茄时钟", "数据云同步", "场景系统", "抢先体验新功能", "加入VIP会员群"]
+                        "features": [tr("account.feature.all_free_features_plus"), tr("account.feature.ai_quota_20_per_day"), tr("account.feature.statistics_reports"), tr("account.feature.no_watermark"), tr("account.feature.pomodoro_timer"), tr("account.feature.cloud_sync"), tr("account.feature.scene_system"), tr("account.feature.early_access"), tr("account.feature.vip_group")]
                     },
                     {
                         "id": "pro_yearly",
-                        "name": "Pro 年度",
+                        "name": self.i18n.tr("account.plan_yearly_name"),
                         "price": "¥199",
-                        "period": "/年",
+                        "period": self.i18n.tr("account.plan_period_year"),
                         "monthly_price": "¥16.6",
                         "original_price": "¥348",
-                        "discount_badge": "节省 40%",
-                        "validity": "有效期365天",
-                        "renewal": "到期后不会自动扣费",
+                        "discount_badge": self.i18n.tr("account.plan_save_40_percent"),
+                        "validity": self.i18n.tr("account.plan_validity_365days"),
+                        "renewal": self.i18n.tr("account.plan_no_auto_renewal"),
                         "type": "yearly",
-                        "features": ["所有免费功能 +", "20次/天 AI智能规划", "统计报告分析", "去除进度条水印", "番茄时钟", "数据云同步", "场景系统", "抢先体验新功能", "加入VIP会员群"]
+                        "features": [tr("account.feature.all_free_features_plus"), tr("account.feature.ai_quota_20_per_day"), tr("account.feature.statistics_reports"), tr("account.feature.no_watermark"), tr("account.feature.pomodoro_timer"), tr("account.feature.cloud_sync"), tr("account.feature.scene_system"), tr("account.feature.early_access"), tr("account.feature.vip_group")]
                     },
                     {
                         "id": "lifetime",
-                        "name": "会员合伙人",
+                        "name": self.i18n.tr("account.plan_lifetime_name"),
                         "price": "¥599",
                         "period": "",
-                        "validity": "永久有效",
-                        "renewal": "一次购买,终身可用",
+                        "validity": self.i18n.tr("account.plan_validity_lifetime"),
+                        "renewal": self.i18n.tr("account.plan_one_time_payment"),
                         "type": "lifetime",
-                        "features": ["所有免费功能 +", "50次/天 AI智能规划", "统计报告分析", "去除进度条水印", "番茄时钟", "数据云同步", "场景系统", "33%引荐返现比例", "专属合伙人社群", "优先体验所有新功能", "专属1v1咨询服务", "共同成长,分享价值"]
+                        "features": [tr("account.feature.all_free_features_plus"), tr("account.feature.ai_quota_50_per_day"), tr("account.feature.statistics_reports"), tr("account.feature.no_watermark"), tr("account.feature.pomodoro_timer"), tr("account.feature.cloud_sync"), tr("account.feature.scene_system"), tr("account.feature.referral_cashback"), tr("account.feature.partner_community"), tr("account.feature.priority_updates"), tr("account.feature.one_on_one_consulting"), tr("account.feature.grow_together")]
                     },
                 ]
 
@@ -3032,7 +3093,7 @@ class ConfigManager(QMainWindow):
                 # payment_layout.setContentsMargins(60, 20, 60, 20)
                 # payment_layout.setSpacing(12)
 
-                # payment_title = QLabel("选择支付方式")
+                # payment_title = QLabel(self.i18n.tr("account.select_payment_method"))
                 # payment_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
                 # payment_title.setStyleSheet("""
                 #     QLabel {
@@ -3050,7 +3111,7 @@ class ConfigManager(QMainWindow):
 
                 # self.payment_method_group = QButtonGroup()
 
-                # alipay_radio = QRadioButton("支付宝")
+                # alipay_radio = QRadioButton(self.i18n.tr("account.payment_alipay"))
                 # alipay_radio.setProperty("pay_type", "alipay")
                 # alipay_radio.setChecked(True)
 
@@ -3101,7 +3162,7 @@ class ConfigManager(QMainWindow):
                 # # 增加两个单选按钮之间的间距
                 # payment_options_layout.addSpacing(20)
 
-                # wxpay_radio = QRadioButton("微信支付")
+                # wxpay_radio = QRadioButton(self.i18n.tr("account.payment_wechat"))
                 # wxpay_radio.setProperty("pay_type", "wxpay")
 
                 # # ⚠️ 关键修复：禁用焦点策略，防止Windows绘制焦点框
@@ -3124,7 +3185,7 @@ class ConfigManager(QMainWindow):
 
                 # "前往付费"按钮已移除 - 现在每个套餐卡片都有直接付费按钮
             else:
-                info_label = QLabel("感谢您的支持！")
+                info_label = QLabel(self.i18n.tr("account.thank_you"))
                 info_label.setStyleSheet("color: #333333; font-size: 14px;")
                 layout.addWidget(info_label)
         else:
@@ -3132,18 +3193,18 @@ class ConfigManager(QMainWindow):
             from gaiya.ui.auth_ui import AuthDialog
 
             # 创建说明文字
-            welcome_label = QLabel("👋 欢迎使用 GaiYa 每日进度条")
+            welcome_label = QLabel(self.i18n.tr("account.welcome_message"))
             welcome_label.setStyleSheet("font-size: 18px; font-weight: bold; color: #333333; margin-bottom: 10px;")
             welcome_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             layout.addWidget(welcome_label)
 
-            tip_label = QLabel("登录后即可使用 AI智能规划、数据云同步等高级功能")
+            tip_label = QLabel(self.i18n.tr("account.text_789"))
             tip_label.setStyleSheet("color: #AAAAAA; font-size: 14px; margin-bottom: 20px;")
             tip_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             layout.addWidget(tip_label)
 
             # 创建登录按钮
-            login_button = QPushButton("🔑 点击登录 / 注册")
+            login_button = QPushButton(self.i18n.tr("account.text_9039"))
             login_button.setFixedSize(300, 50)
             login_button.setStyleSheet("""
                 QPushButton {
@@ -3173,7 +3234,7 @@ class ConfigManager(QMainWindow):
             layout.addSpacing(30)
 
             # 功能介绍
-            features_label = QLabel("🎁 登录后享受的权益：")
+            features_label = QLabel(self.i18n.tr("account.text_8733"))
             features_label.setStyleSheet("color: #333333; font-size: 16px; font-weight: bold; margin-bottom: 15px;")
             layout.addWidget(features_label)
 
@@ -3227,7 +3288,7 @@ class ConfigManager(QMainWindow):
         QMessageBox.information(
             self,
             "登录成功",
-            f"欢迎回来，{user_info.get('email', '用户')}！\n\n"
+            self.i18n.tr("config.membership.welcome_back", user_email=user_info.get('email', 'User')) + "\n"
             f"{tier_message}"
         )
 
@@ -3300,7 +3361,7 @@ class ConfigManager(QMainWindow):
             f"💡 {feature_name}需要登录后才能使用。\n\n"
             f"登录后您将享有：\n"
             f"• 免费用户：3次/天 AI智能规划\n"
-            f"• Pro会员：20次/天 AI智能规划\n"
+            f"• {tr('account.membership.pro')}: {tr('account.feature.ai_quota_20_per_day')}\n"
             f"• 更多高级功能和服务\n\n"
             f"是否前往个人中心登录？",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
@@ -3481,7 +3542,7 @@ class ConfigManager(QMainWindow):
             price_row_layout.addWidget(monthly_price_label)
 
             # "/月" - 与价格在同一行，对齐到价格底部
-            monthly_period_label = QLabel("/月")
+            monthly_period_label = QLabel(self.i18n.tr("account.per_month"))
             monthly_period_label.setStyleSheet("font-size: 14px; color: #888888; background: transparent;")
             monthly_period_label.setAlignment(Qt.AlignmentFlag.AlignBottom)
             price_row_layout.addWidget(monthly_period_label)
@@ -3514,7 +3575,7 @@ class ConfigManager(QMainWindow):
         layout.addSpacing(15)  # 从 10 增加到 15
 
         # 按钮（突出显示）
-        button = QPushButton("升级会员")
+        button = QPushButton(self.i18n.tr("button.upgrade"))
         button.setFixedHeight(40)
         button.setStyleSheet("""
             QPushButton {
@@ -3631,7 +3692,7 @@ class ConfigManager(QMainWindow):
         layout.addSpacing(15)  # 从 10 增加到 15
 
         # 按钮
-        button = QPushButton("升级会员")
+        button = QPushButton(self.i18n.tr("button.upgrade"))
         button.setFixedHeight(36)
         button.setStyleSheet("""
             QPushButton {
@@ -3733,7 +3794,7 @@ class ConfigManager(QMainWindow):
         title_row.addSpacing(10)
 
         # 限量标签（深金色背景）
-        limited_badge = QLabel("限量1000名")
+        limited_badge = QLabel(self.i18n.tr("membership.ui.limited_offer"))
         limited_badge.setStyleSheet("""
             QLabel {
                 background-color: #B8860B;
@@ -3766,13 +3827,13 @@ class ConfigManager(QMainWindow):
         layout.addLayout(price_layout)
 
         # 一次付费说明
-        onetime_label = QLabel("一次付费")
+        onetime_label = QLabel(self.i18n.tr("membership.ui.one_time_payment"))
         onetime_label.setStyleSheet("font-size: 12px; color: #888888; background: transparent;")
         onetime_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(onetime_label)
 
         # 终身可用强调
-        lifetime_label = QLabel("终身可用")
+        lifetime_label = QLabel(self.i18n.tr("membership.ui.lifetime_access"))
         lifetime_label.setStyleSheet("font-size: 13px; font-weight: 600; color: #FFD700; background: transparent;")
         lifetime_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(lifetime_label)
@@ -3780,7 +3841,7 @@ class ConfigManager(QMainWindow):
         layout.addSpacing(15)
 
         # 邀请函链接
-        invitation_link = QLabel('<a href="#" style="color: #666666; text-decoration: none;">📜 阅读合伙人邀请函</a>')
+        invitation_link = QLabel(f'<a href="#" style="color: #666666; text-decoration: none;">{self.i18n.tr("config.membership.read_partner_invitation")}</a>')
         invitation_link.setStyleSheet("font-size: 12px; background: transparent;")
         invitation_link.setAlignment(Qt.AlignmentFlag.AlignCenter)
         invitation_link.setOpenExternalLinks(False)
@@ -3791,7 +3852,7 @@ class ConfigManager(QMainWindow):
         layout.addSpacing(8)
 
         # 按钮（渐变样式）
-        button = QPushButton("成为合伙人")
+        button = QPushButton(self.i18n.tr("membership.ui.become_partner"))
         button.setFixedHeight(36)
         button.setStyleSheet("""
             QPushButton {
@@ -3867,7 +3928,7 @@ class ConfigManager(QMainWindow):
         from PySide6.QtWidgets import QDialog, QTextEdit, QScrollArea
 
         dialog = QDialog(self)
-        dialog.setWindowTitle("GaiYa每日进度条")
+        dialog.setWindowTitle(self.i18n.tr("app.name"))
         dialog.setFixedSize(700, 600)
         dialog.setStyleSheet("""
             QDialog {
@@ -3880,7 +3941,7 @@ class ConfigManager(QMainWindow):
         layout.setSpacing(20)
 
         # 标题
-        title_label = QLabel("致 GaiYa 会员合伙人的一封信")
+        title_label = QLabel(self.i18n.tr("about.letter_title"))
         title_label.setStyleSheet("""
             font-size: 22px;
             font-weight: bold;
@@ -3891,7 +3952,7 @@ class ConfigManager(QMainWindow):
         layout.addWidget(title_label)
 
         # 副标题
-        subtitle_label = QLabel("邀请您共同成长，共享价值")
+        subtitle_label = QLabel(self.i18n.tr("about.letter_subtitle"))
         subtitle_label.setStyleSheet("""
             font-size: 14px;
             color: #8B7355;
@@ -4021,7 +4082,7 @@ class ConfigManager(QMainWindow):
         layout.addWidget(scroll_area)
 
         # 底部按钮
-        button = QPushButton("我愿意成为会员合伙人")
+        button = QPushButton(self.i18n.tr("membership.buttons.become_partner"))
         button.setFixedHeight(44)
         button.setStyleSheet("""
             QPushButton {
@@ -4109,14 +4170,12 @@ class ConfigManager(QMainWindow):
         layout.setSpacing(10)
 
         # 标题
-        title_label = QLabel("💡 会员提示")
+        title_label = QLabel(self.i18n.tr("membership.ui.member_tips"))
         title_label.setStyleSheet("font-size: 14px; font-weight: bold; color: #333333; background: transparent;")
         layout.addWidget(title_label)
 
         # 说明文字
-        tips_text = """GaiYa 致力于做优秀的时间管理工具，始终坚持无广告、无打扰、无冗余，简单而纯粹，我们将继续提供更加令人愉悦的用户体验。
-
-与此同时，我们深知，一个产品能够长久持续地运营下去，也需要有稳定的发展模式。如果你有意支持我们，可以开通会员，享受更丰富的 AI 功能，非常感谢你的支持！"""
+        tips_text = self.i18n.tr("account.member_tips_text")
 
         tips_label = QLabel(tips_text)
         tips_label.setStyleSheet("""
@@ -4163,7 +4222,7 @@ class ConfigManager(QMainWindow):
         layout.addWidget(separator)
 
         # 添加标题
-        title_label = QLabel("💎 会员方案详细对比")
+        title_label = QLabel(self.i18n.tr("membership.ui.comparison_title"))
         title_label.setStyleSheet("color: #333333; font-size: 18px; font-weight: bold; margin: 10px 0px;")
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(title_label)
@@ -4172,7 +4231,13 @@ class ConfigManager(QMainWindow):
         table = QTableWidget()
         table.setStyleSheet(StyleManager.table())
         table.setColumnCount(5)  # 功能名称 + 4个等级
-        table.setHorizontalHeaderLabels(["功能特性", "免费版", "Pro 月度", "Pro 年度", "会员合伙人"])
+        table.setHorizontalHeaderLabels([
+            self.i18n.tr("account.comparison_table_features"),
+            self.i18n.tr("account.comparison_table_free"),
+            self.i18n.tr("account.comparison_table_monthly"),
+            self.i18n.tr("account.comparison_table_yearly"),
+            self.i18n.tr("account.comparison_table_lifetime")
+        ])
 
         # 设置表格样式
         table.setStyleSheet("""
@@ -4211,30 +4276,30 @@ class ConfigManager(QMainWindow):
             # 【核心功能】分组标题
             {
                 "type": "group",
-                "name": "【核心功能】",
+                "name": self.i18n.tr("account.features_group_core"),
             },
             # 每日进度条
             {
                 "type": "feature",
-                "name": "每日进度条显示",
-                "free": "✓ 带水印",
-                "monthly": "✓ 无水印",
-                "yearly": "✓ 无水印",
-                "lifetime": "✓ 无水印",
+                "name": self.i18n.tr("account.feature_progress_bar"),
+                "free": self.i18n.tr("account.feature_progress_bar_free"),
+                "monthly": self.i18n.tr("account.feature_progress_bar_paid"),
+                "yearly": self.i18n.tr("account.feature_progress_bar_paid"),
+                "lifetime": self.i18n.tr("account.feature_progress_bar_paid"),
             },
             # AI任务规划
             {
                 "type": "feature",
-                "name": "AI 智能任务规划",
-                "free": "3次/天",
-                "monthly": "20次/天",
-                "yearly": "20次/天",
-                "lifetime": "50次/天",
+                "name": self.i18n.tr("account.feature_ai_planning"),
+                "free": self.i18n.tr("account.feature_ai_planning_free"),
+                "monthly": self.i18n.tr("account.feature_ai_planning_monthly"),
+                "yearly": self.i18n.tr("account.feature_ai_planning_yearly"),
+                "lifetime": self.i18n.tr("account.feature_ai_planning_lifetime"),
             },
             # 统计报告分析
             {
                 "type": "feature",
-                "name": "统计报告分析",
+                "name": tr("account.feature.statistics_reports"),
                 "free": "✗",
                 "monthly": "✓",
                 "yearly": "✓",
@@ -4243,12 +4308,12 @@ class ConfigManager(QMainWindow):
             # 【高级功能】分组标题
             {
                 "type": "group",
-                "name": "【高级功能】",
+                "name": self.i18n.tr("account.features_group_advanced"),
             },
             # 主题自定义
             {
                 "type": "feature",
-                "name": "主题自定义",
+                "name": self.i18n.tr("account.feature_theme_custom"),
                 "free": "✓",
                 "monthly": "✓",
                 "yearly": "✓",
@@ -4257,7 +4322,7 @@ class ConfigManager(QMainWindow):
             # 番茄时钟
             {
                 "type": "feature",
-                "name": "番茄时钟",
+                "name": tr("account.feature.pomodoro_timer"),
                 "free": "✓",
                 "monthly": "✓",
                 "yearly": "✓",
@@ -4266,7 +4331,7 @@ class ConfigManager(QMainWindow):
             # 数据云同步
             {
                 "type": "feature",
-                "name": "数据云同步",
+                "name": tr("account.feature.cloud_sync"),
                 "free": "✗",
                 "monthly": "✓",
                 "yearly": "✓",
@@ -4275,7 +4340,7 @@ class ConfigManager(QMainWindow):
             # 场景系统
             {
                 "type": "feature",
-                "name": "场景系统",
+                "name": tr("account.feature.scene_system"),
                 "free": "✗",
                 "monthly": "✓",
                 "yearly": "✓",
@@ -4284,7 +4349,7 @@ class ConfigManager(QMainWindow):
             # 抢先体验新功能
             {
                 "type": "feature",
-                "name": "抢先体验新功能",
+                "name": tr("account.feature.early_access"),
                 "free": "✗",
                 "monthly": "✓",
                 "yearly": "✓",
@@ -4293,7 +4358,7 @@ class ConfigManager(QMainWindow):
             # 加入VIP会员群
             {
                 "type": "feature",
-                "name": "加入VIP会员群",
+                "name": tr("account.feature.vip_group"),
                 "free": "✗",
                 "monthly": "✓",
                 "yearly": "✓",
@@ -4302,21 +4367,21 @@ class ConfigManager(QMainWindow):
             # 【会员权益】分组标题
             {
                 "type": "group",
-                "name": "【会员权益】",
+                "name": self.i18n.tr("account.features_group_benefits"),
             },
             # 有效期
             {
                 "type": "feature",
-                "name": "有效期",
-                "free": "-",
-                "monthly": "30天",
-                "yearly": "365天",
-                "lifetime": "永久",
+                "name": self.i18n.tr("account.feature_validity"),
+                "free": self.i18n.tr("account.feature_validity_free"),
+                "monthly": self.i18n.tr("account.feature_validity_monthly"),
+                "yearly": self.i18n.tr("account.feature_validity_yearly"),
+                "lifetime": self.i18n.tr("account.feature_validity_lifetime"),
             },
             # 引荐返现比例（会员合伙人独有）
             {
                 "type": "feature",
-                "name": "引荐返现比例",
+                "name": self.i18n.tr("account.feature_referral_rate"),
                 "free": "✗",
                 "monthly": "✗",
                 "yearly": "✗",
@@ -4325,7 +4390,7 @@ class ConfigManager(QMainWindow):
             # 专属合伙人社群（会员合伙人独有）
             {
                 "type": "feature",
-                "name": "专属合伙人社群",
+                "name": tr("account.feature.partner_community"),
                 "free": "✗",
                 "monthly": "✗",
                 "yearly": "✗",
@@ -4488,7 +4553,7 @@ class ConfigManager(QMainWindow):
 
         # 创建对话框
         dialog = QDialog(self)
-        dialog.setWindowTitle("选择支付方式")
+        dialog.setWindowTitle(self.i18n.tr("account.select_payment_method"))
         dialog.setFixedWidth(420)
         dialog.setStyleSheet("""
             QDialog {
@@ -4501,7 +4566,7 @@ class ConfigManager(QMainWindow):
         layout.setContentsMargins(30, 30, 30, 30)
 
         # 标题
-        title_label = QLabel(f"您选择的套餐：{plan['name']} - {plan['price_cny']}{plan['period']}")
+        title_label = QLabel(self.i18n.tr("config.membership.selected_plan", plan_name=plan['name'], plan_price=plan['price_cny'], plan_period=plan['period']))
         title_label.setStyleSheet("""
             QLabel {
                 font-size: 16px;
@@ -4520,7 +4585,7 @@ class ConfigManager(QMainWindow):
         layout.addWidget(separator)
 
         # 提示文字
-        hint_label = QLabel("请选择支付方式：")
+        hint_label = QLabel(self.i18n.tr("membership.payment.select_prompt"))
         hint_label.setStyleSheet("""
             QLabel {
                 font-size: 14px;
@@ -4566,7 +4631,7 @@ class ConfigManager(QMainWindow):
         button_layout = QHBoxLayout()
         button_layout.setSpacing(15)
 
-        cancel_button = QPushButton("取消")
+        cancel_button = QPushButton(self.i18n.tr("button.cancel"))
         cancel_button.setFixedHeight(40)
         cancel_button.setStyleSheet("""
             QPushButton {
@@ -4587,7 +4652,7 @@ class ConfigManager(QMainWindow):
         cancel_button.clicked.connect(dialog.reject)
         button_layout.addWidget(cancel_button)
 
-        confirm_button = QPushButton("确认支付")
+        confirm_button = QPushButton(self.i18n.tr("membership.payment.confirm_payment"))
         confirm_button.setFixedHeight(40)
         confirm_button.setStyleSheet("""
             QPushButton {
@@ -4753,7 +4818,7 @@ class ConfigManager(QMainWindow):
 
             # 显示等待支付对话框
             self.payment_polling_dialog = QMessageBox(self)
-            self.payment_polling_dialog.setWindowTitle("等待支付")
+            self.payment_polling_dialog.setWindowTitle(self.i18n.tr("account.payment.waiting_payment"))
             self.payment_polling_dialog.setText(
                 "正在等待支付完成...\n\n"
                 "请在打开的浏览器页面中完成支付。\n"
@@ -4793,7 +4858,7 @@ class ConfigManager(QMainWindow):
                 )
                 logging.error(f"[PAYMENT] Create order failed - plan_type: {plan_id}, error: {error_msg}")
 
-            QMessageBox.critical(self, "创建订单失败", detailed_msg)
+            QMessageBox.critical(self, self.i18n.tr("membership.payment.create_order_failed"), detailed_msg)
 
     def _on_stripe_selected(self, plan_id: str):
         """处理Stripe国际支付"""
@@ -4821,7 +4886,7 @@ class ConfigManager(QMainWindow):
                 error_msg = "用户信息不完整，请重新登录"
                 logging.error(f"[STRIPE] {error_msg}")
                 print(f"[STRIPE ERROR] {error_msg}")
-                QMessageBox.critical(self, "错误", error_msg)
+                QMessageBox.critical(self, self.i18n.tr("membership.payment.error"), error_msg)
                 return
 
             # 调用Stripe创建Checkout Session
@@ -4866,7 +4931,7 @@ class ConfigManager(QMainWindow):
                 )
                 logging.error(f"[STRIPE] Create checkout session failed: {error_msg}")
                 print(f"[STRIPE ERROR] 创建会话失败: {error_msg}")
-                QMessageBox.critical(self, "创建支付会话失败", detailed_msg)
+                QMessageBox.critical(self, self.i18n.tr("membership.payment.create_session_failed"), detailed_msg)
 
         except Exception as e:
             error_msg = f"Stripe支付异常: {str(e)}"
@@ -4902,7 +4967,7 @@ class ConfigManager(QMainWindow):
         # 获取选中的支付方式（已屏蔽）
         # selected_button = self.payment_method_group.checkedButton()
         # if not selected_button:
-        #     QMessageBox.warning(self, "提示", "请选择支付方式")
+        #     QMessageBox.warning(self, self.i18n.tr("message.info"), "请选择支付方式")
         #     return
         # pay_type = selected_button.property("pay_type")
 
@@ -4939,7 +5004,7 @@ class ConfigManager(QMainWindow):
 
             # 显示等待支付对话框（非阻塞）
             self.payment_polling_dialog = QMessageBox(self)
-            self.payment_polling_dialog.setWindowTitle("等待支付")
+            self.payment_polling_dialog.setWindowTitle(self.i18n.tr("account.payment.waiting_payment"))
             self.payment_polling_dialog.setText(
                 "正在等待支付完成...\n\n"
                 "请在打开的浏览器页面中完成支付。\n"
@@ -4987,7 +5052,7 @@ class ConfigManager(QMainWindow):
                 )
                 logging.error(f"[PAYMENT] Create order failed - plan_type: {self.selected_plan_id}, error: {error_msg}")
 
-            QMessageBox.critical(self, "创建订单失败", detailed_msg)
+            QMessageBox.critical(self, self.i18n.tr("membership.payment.create_order_failed"), detailed_msg)
 
     def _check_payment_status(self, out_trade_no: str, auth_client):
         """检查支付状态"""
@@ -5005,7 +5070,7 @@ class ConfigManager(QMainWindow):
                 QMessageBox.information(
                     self,
                     "支付成功",
-                    "支付已完成！\n您的会员权益已激活。\n\n请重新启动应用以生效。"
+                    self.i18n.tr("config.membership.payment_success_restart")
                 )
 
                 # 重新加载个人中心tab以刷新会员状态
@@ -5167,7 +5232,7 @@ class ConfigManager(QMainWindow):
             color_input.setMaximumWidth(80)
             color_input.setFixedHeight(36)
 
-            color_btn = QPushButton("选色")
+            color_btn = QPushButton(self.i18n.tr("general.text_2586"))
             color_btn.setFixedSize(50, 36)
             color_btn.setStyleSheet("QPushButton { padding: 8px; font-size: 12px; }")
             # 使用 partial 避免 Lambda 循环引用
@@ -5209,7 +5274,7 @@ class ConfigManager(QMainWindow):
             text_color_input.setMaximumWidth(80)
             text_color_input.setFixedHeight(36)
 
-            text_color_btn = QPushButton("选色")
+            text_color_btn = QPushButton(self.i18n.tr("general.text_2586"))
             text_color_btn.setFixedSize(50, 36)
             text_color_btn.setStyleSheet("QPushButton { padding: 8px; font-size: 12px; }")
             # 使用 partial 避免 Lambda 循环引用
@@ -5242,7 +5307,7 @@ class ConfigManager(QMainWindow):
             self.tasks_table.setCellWidget(row, 4, text_color_widget)
 
             # 删除按钮
-            delete_btn = QPushButton("🗑️ 删除")
+            delete_btn = QPushButton(self.i18n.tr("general.text_1284"))
             # 使用 partial 避免 Lambda 循环引用
             delete_btn.clicked.connect(partial(self.delete_task, row))
             delete_btn.setFixedHeight(36)
@@ -5317,7 +5382,7 @@ class ConfigManager(QMainWindow):
         color_input.setMaximumWidth(80)
         color_input.setFixedHeight(36)
 
-        color_btn = QPushButton("选色")
+        color_btn = QPushButton(self.i18n.tr("general.text_2586"))
         color_btn.setFixedSize(50, 36)
         color_btn.setStyleSheet("QPushButton { padding: 8px; font-size: 12px; }")
         # 使用 partial 避免 Lambda 循环引用
@@ -5344,7 +5409,7 @@ class ConfigManager(QMainWindow):
         text_color_input.setMaximumWidth(80)
         text_color_input.setFixedHeight(36)
 
-        text_color_btn = QPushButton("选色")
+        text_color_btn = QPushButton(self.i18n.tr("general.text_2586"))
         text_color_btn.setFixedSize(50, 36)
         text_color_btn.setStyleSheet("QPushButton { padding: 8px; font-size: 12px; }")
         # 使用 partial 避免 Lambda 循环引用
@@ -5363,7 +5428,7 @@ class ConfigManager(QMainWindow):
         self.tasks_table.setCellWidget(row, 4, text_color_widget)
 
         # 删除按钮
-        delete_btn = QPushButton("🗑️ 删除")
+        delete_btn = QPushButton(self.i18n.tr("general.text_1284"))
         # 使用 partial 避免 Lambda 循环引用
         delete_btn.clicked.connect(partial(self.delete_task, row))
         delete_btn.setFixedHeight(36)
@@ -5407,7 +5472,7 @@ class ConfigManager(QMainWindow):
             # 刷新时间轴（延迟执行）
             if hasattr(self, 'timeline_editor') and self.timeline_editor:
                 QTimer.singleShot(50, lambda: self.timeline_editor.set_tasks([]) if self.timeline_editor else None)
-            QMessageBox.information(self, "提示", "所有任务已清空\n\n记得点击【保存所有设置】按钮来保存更改")
+            QMessageBox.information(self, self.i18n.tr("message.info"), "所有任务已清空\n\n记得点击【保存所有设置】按钮来保存更改")
 
     def load_default_template(self):
         """在初始化时默认加载24小时模板(静默加载,不弹窗)"""
@@ -5426,7 +5491,7 @@ class ConfigManager(QMainWindow):
     def save_as_template(self):
         """将当前任务保存为自定义模板"""
         if self.tasks_table.rowCount() == 0:
-            QMessageBox.warning(self, "无法保存", "当前没有任何任务,无法保存为模板!")
+            QMessageBox.warning(self, self.i18n.tr("account.message.cannot_save_empty"), "当前没有任何任务,无法保存为模板!")
             return
 
         # 获取现有模板列表
@@ -5512,14 +5577,14 @@ class ConfigManager(QMainWindow):
             # 保存元数据
             self._save_custom_templates_meta(meta_data)
 
-            # 刷新"我的模板"UI
+            # 刷新self.i18n.tr("config.templates.custom_label")UI
             self._reload_custom_template_combo()
 
             # 根据是新建还是更新显示不同的提示
             if is_update:
-                success_msg = f"模板已更新:\n{template_filename}\n\n包含 {len(tasks)} 个任务。"
+                success_msg = self.i18n.tr("config.messages.template_updated", template_filename=template_filename, task_count=len(tasks))
             else:
-                success_msg = f"模板已创建:\n{template_filename}\n\n已添加到【我的模板】列表中,包含 {len(tasks)} 个任务。"
+                success_msg = self.i18n.tr("config.messages.template_created", template_filename=template_filename, task_count=len(tasks))
 
             QMessageBox.information(
                 self,
@@ -5527,7 +5592,7 @@ class ConfigManager(QMainWindow):
                 success_msg
             )
         except Exception as e:
-            QMessageBox.critical(self, "保存失败", f"无法保存模板:\n{str(e)}")
+            QMessageBox.critical(self, "保存失败", self.i18n.tr("config.errors.template_save_failed", error=str(e)))
 
     def load_custom_template(self):
         """加载用户自定义模板"""
@@ -5571,7 +5636,7 @@ class ConfigManager(QMainWindow):
             reply = QMessageBox.question(
                 self,
                 '确认加载模板',
-                f'即将加载自定义模板: {template_name}\n\n包含 {len(template_tasks)} 个任务\n\n当前表格中的任务将被替换,是否继续?',
+                self.i18n.tr("config.prompts.confirm_load_template", template_name=template_name, task_count=len(template_tasks)),
                 QMessageBox.Yes | QMessageBox.No
             )
 
@@ -5594,9 +5659,9 @@ class ConfigManager(QMainWindow):
                 )
 
         except json.JSONDecodeError as e:
-            QMessageBox.critical(self, "错误", f"模板文件格式错误:\n{str(e)}")
+            QMessageBox.critical(self, "错误", self.i18n.tr("config.errors.template_format_error", error=str(e)))
         except Exception as e:
-            QMessageBox.critical(self, "错误", f"加载模板失败:\n{str(e)}")
+            QMessageBox.critical(self, "错误", self.i18n.tr("config.errors.template_load_failed", error=str(e)))
 
 
     def _reload_template_buttons(self):
@@ -5620,22 +5685,20 @@ class ConfigManager(QMainWindow):
                 if item.widget():
                     item.widget().deleteLater()
 
-            # 重新添加"快速加载:"标签
-            template_label = QLabel("快速加载:")
-            self.template_layout.addWidget(template_label)
-
-            # 重新添加所有模板按钮（只显示预设模板）
+            # 重新添加所有模板按钮（使用网格布局）
             templates = self.template_manager.get_all_templates(include_custom=False)
-            for template in templates:
-                btn = QPushButton(template['name'])
+            max_columns = 6  # Maximum buttons per row
+            for idx, template in enumerate(templates):
+                # Use i18n translation for template name if available
+                template_name = self.i18n.tr(f"templates.names.{template['id']}", fallback=template['name'])
+                btn = QPushButton(template_name)
                 # 使用 partial 避免 Lambda 循环引用
                 btn.clicked.connect(partial(self.load_template, template['filename']))
-                btn.setStyleSheet(f"QPushButton {{ background-color: white; color: {template['button_color']}; border: 2px solid {template['button_color']}; border-radius: 6px; padding: 6px; }}")
+                btn.setStyleSheet(f"QPushButton {{ background-color: white; color: {template['button_color']}; border: 2px solid {template['button_color']}; border-radius: 6px; padding: 6px; min-width: 80px; }}")
                 btn.setToolTip(template.get('description', ''))
-                self.template_layout.addWidget(btn)
-
-            # 添加弹性空间
-            self.template_layout.addStretch()
+                row = idx // max_columns
+                col = idx % max_columns
+                self.template_layout.addWidget(btn, row, col)
 
             logging.info(f"成功加载 {len(templates)} 个模板按钮")
 
@@ -5687,7 +5750,7 @@ class ConfigManager(QMainWindow):
 
             if not templates:
                 # 没有自定义模板时显示提示
-                self.custom_template_combo.addItem("(暂无自定义模板)", None)
+                self.custom_template_combo.addItem(self.i18n.tr("account.message.no_custom_templates_placeholder"), None)
             else:
                 # 添加自定义模板到下拉框
                 for template in templates:
@@ -5711,7 +5774,7 @@ class ConfigManager(QMainWindow):
 
         template = self.custom_template_combo.itemData(index)
         if not template:
-            QMessageBox.information(self, "提示", "请先创建自定义模板")
+            QMessageBox.information(self, self.i18n.tr("message.info"), "请先创建自定义模板")
             return
 
         filename = template['filename']
@@ -5729,7 +5792,7 @@ class ConfigManager(QMainWindow):
 
         template = self.custom_template_combo.itemData(index)
         if not template:
-            QMessageBox.information(self, "提示", "请先创建自定义模板")
+            QMessageBox.information(self, self.i18n.tr("message.info"), "请先创建自定义模板")
             return
 
         self._delete_custom_template(template)
@@ -5740,7 +5803,7 @@ class ConfigManager(QMainWindow):
         template_path = self.app_dir / filename
 
         if not template_path.exists():
-            QMessageBox.warning(self, "错误", f"模板文件不存在:\n{filename}")
+            QMessageBox.warning(self, self.i18n.tr("membership.payment.error"), f"模板文件不存在:\n{filename}")
             return
 
         try:
@@ -5774,9 +5837,9 @@ class ConfigManager(QMainWindow):
                 )
 
         except json.JSONDecodeError as e:
-            QMessageBox.critical(self, "错误", f"模板文件格式错误:\n{str(e)}")
+            QMessageBox.critical(self, self.i18n.tr("membership.payment.error"), f"模板文件格式错误:\n{str(e)}")
         except Exception as e:
-            QMessageBox.critical(self, "错误", f"加载模板失败:\n{str(e)}")
+            QMessageBox.critical(self, self.i18n.tr("membership.payment.error"), f"加载模板失败:\n{str(e)}")
 
 
     def _delete_custom_template(self, template):
@@ -5786,7 +5849,7 @@ class ConfigManager(QMainWindow):
             reply = QMessageBox.question(
                 self,
                 '确认删除',
-                f'确定要删除模板 "{template["name"]}" 吗?\n\n此操作不可撤销!',
+                self.i18n.tr("config.dialogs.confirm_delete_template", template_name=template["name"]),
                 QMessageBox.Yes | QMessageBox.No
             )
 
@@ -5806,10 +5869,10 @@ class ConfigManager(QMainWindow):
             # 刷新UI
             self._reload_custom_template_combo()
 
-            QMessageBox.information(self, "删除成功", f"模板 \"{template['name']}\" 已删除")
+            QMessageBox.information(self, "删除成功", self.i18n.tr("config.dialogs.template_deleted", template_name=template['name']))
 
         except Exception as e:
-            QMessageBox.critical(self, "删除失败", f"无法删除模板:\n{str(e)}")
+            QMessageBox.critical(self, self.i18n.tr("account.message.delete_failed"), f"无法删除模板:\n{str(e)}")
 
 
     def _load_template_auto_apply_settings(self):
@@ -5867,7 +5930,7 @@ class ConfigManager(QMainWindow):
         """保存表格中的自动应用设置到templates_config.json"""
         try:
             if not hasattr(self, 'template_manager') or not self.template_manager:
-                QMessageBox.warning(self, "警告", "模板管理器未初始化")
+                QMessageBox.warning(self, self.i18n.tr("message.warning"), "模板管理器未初始化")
                 return
 
             # 模板自动应用只针对预设模板（自定义模板使用时间表规则）
@@ -5918,11 +5981,11 @@ class ConfigManager(QMainWindow):
                 )
                 logging.info(f"已保存 {updated_count} 个模板的自动应用设置")
             else:
-                QMessageBox.warning(self, "警告", "没有设置被保存")
+                QMessageBox.warning(self, self.i18n.tr("message.warning"), "没有设置被保存")
 
         except Exception as e:
             logging.error(f"保存模板自动应用设置失败: {e}")
-            QMessageBox.critical(self, "错误", f"保存失败:\n{str(e)}")
+            QMessageBox.critical(self, self.i18n.tr("membership.payment.error"), f"保存失败:\n{str(e)}")
 
     def _test_template_matching(self):
         """测试日期匹配功能"""
@@ -5931,19 +5994,19 @@ class ConfigManager(QMainWindow):
             from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QDateEdit, QPushButton, QTextEdit
 
             if not hasattr(self, 'template_manager') or not self.template_manager:
-                QMessageBox.warning(self, "警告", "模板管理器未初始化")
+                QMessageBox.warning(self, self.i18n.tr("message.warning"), "模板管理器未初始化")
                 return
 
             # 创建测试对话框
             dialog = QDialog(self)
-            dialog.setWindowTitle("测试模板匹配")
+            dialog.setWindowTitle(self.i18n.tr("tasks.messages.test_template_match"))
             dialog.setMinimumWidth(500)
             dialog.setMinimumHeight(350)
 
             layout = QVBoxLayout()
 
             # 说明
-            hint_label = QLabel("选择一个日期，查看该日期会匹配到哪个模板：")
+            hint_label = QLabel(self.i18n.tr("templates.auto_apply.test_instruction"))
             hint_label.setStyleSheet("font-weight: bold; margin-bottom: 10px;")
             layout.addWidget(hint_label)
 
@@ -6001,13 +6064,13 @@ class ConfigManager(QMainWindow):
                 result_text.setText("\n".join(result_lines))
 
             # 测试按钮
-            test_btn = QPushButton("🔍 执行测试")
+            test_btn = QPushButton(self.i18n.tr("general.text_8461"))
             test_btn.setStyleSheet(StyleManager.button_minimal())
             test_btn.clicked.connect(perform_test)
             layout.addWidget(test_btn)
 
             # 关闭按钮
-            close_btn = QPushButton("关闭")
+            close_btn = QPushButton(self.i18n.tr("button.close"))
             close_btn.clicked.connect(dialog.accept)
             layout.addWidget(close_btn)
 
@@ -6020,7 +6083,7 @@ class ConfigManager(QMainWindow):
 
         except Exception as e:
             logging.error(f"测试模板匹配失败: {e}")
-            QMessageBox.critical(self, "错误", f"测试失败:\n{str(e)}")
+            QMessageBox.critical(self, self.i18n.tr("membership.payment.error"), f"测试失败:\n{str(e)}")
 
     def load_template(self, template_filename):
         """加载预设模板"""
@@ -6066,9 +6129,9 @@ class ConfigManager(QMainWindow):
                 )
 
         except json.JSONDecodeError as e:
-            QMessageBox.critical(self, "错误", f"模板文件格式错误:\n{str(e)}")
+            QMessageBox.critical(self, self.i18n.tr("membership.payment.error"), f"模板文件格式错误:\n{str(e)}")
         except Exception as e:
-            QMessageBox.critical(self, "错误", f"加载模板失败:\n{str(e)}")
+            QMessageBox.critical(self, self.i18n.tr("membership.payment.error"), f"加载模板失败:\n{str(e)}")
 
     def set_height_preset(self, height):
         """设置预设高度"""
@@ -6121,10 +6184,10 @@ class ConfigManager(QMainWindow):
             return
 
         if self.autostart_check.isChecked():
-            self.autostart_status_label.setText("(将在开机时自动启动)")
+            self.autostart_status_label.setText(self.i18n.tr("account.message.autostart_enabled"))
             self.autostart_status_label.setStyleSheet("color: #4CAF50; font-size: 11px;")
         else:
-            self.autostart_status_label.setText("(未启用)")
+            self.autostart_status_label.setText(self.i18n.tr("account.message.autostart_disabled"))
             self.autostart_status_label.setStyleSheet("color: #888888; font-size: 11px;")
 
     def on_marker_type_changed(self, marker_type):
@@ -6454,11 +6517,11 @@ class ConfigManager(QMainWindow):
             with open(self.tasks_file, 'w', encoding='utf-8') as f:
                 json.dump(tasks, f, indent=4, ensure_ascii=False)
 
-            QMessageBox.information(self, "成功", "配置和任务已保存!\n\n如果 Gaiya 正在运行,更改会自动生效。")
+            QMessageBox.information(self, self.i18n.tr("message.success"), "配置和任务已保存!\n\n如果 Gaiya 正在运行,更改会自动生效。")
             self.config_saved.emit()
 
         except Exception as e:
-            QMessageBox.critical(self, "错误", f"保存失败:\n{str(e)}")
+            QMessageBox.critical(self, self.i18n.tr("membership.payment.error"), f"保存失败:\n{str(e)}")
 
     def _on_tab_changed_for_ai_status(self, index):
         """标签页切换时，控制AI状态定时器"""
@@ -6473,7 +6536,7 @@ class ConfigManager(QMainWindow):
         # 检查AI客户端是否已初始化
         if not self.ai_client:
             if hasattr(self, 'quota_label'):
-                self.quota_label.setText("⏳ 正在连接云服务...")
+                self.quota_label.setText(self.i18n.tr("account.ui.connecting_cloud"))
                 self.quota_label.setStyleSheet("color: #ff9800; padding: 5px; font-weight: bold;")
             if hasattr(self, 'generate_btn'):
                 self.generate_btn.setEnabled(False)
@@ -6537,12 +6600,12 @@ class ConfigManager(QMainWindow):
             daily_plan_remaining = remaining.get('daily_plan', 0)
 
             if daily_plan_remaining > 0:
-                self.quota_label.setText(f"✓ 今日剩余: {daily_plan_remaining} 次规划")
+                self.quota_label.setText(self.i18n.tr("account.message.quota_remaining", daily_plan_remaining=daily_plan_remaining))
                 self.quota_label.setStyleSheet("color: #4CAF50; padding: 5px; font-weight: bold;")
                 if hasattr(self, 'generate_btn'):
                     self.generate_btn.setEnabled(True)
             else:
-                self.quota_label.setText("⚠️ 今日配额已用完")
+                self.quota_label.setText(self.i18n.tr("account.message.quota_exhausted"))
                 self.quota_label.setStyleSheet("color: #FF9800; padding: 5px; font-weight: bold;")
                 if hasattr(self, 'generate_btn'):
                     self.generate_btn.setEnabled(False)
@@ -6554,7 +6617,7 @@ class ConfigManager(QMainWindow):
                     logging.info("AI状态定时器已停止（配额检查成功）")
         else:
             # 配额检查失败，可能是云服务冷启动或网络问题
-            self.quota_label.setText("⚠️ 无法连接云服务（请点击刷新重试）")
+            self.quota_label.setText(self.i18n.tr("account.ui.cannot_connect_cloud"))
             self.quota_label.setStyleSheet("color: #f44336; padding: 5px; font-weight: bold;")
             if hasattr(self, 'generate_btn'):
                 self.generate_btn.setEnabled(True)  # 仍然允许尝试
@@ -6567,7 +6630,7 @@ class ConfigManager(QMainWindow):
     def on_ai_generate_clicked(self):
         """处理AI生成按钮点击"""
         # 首先检查是否已登录
-        if not self._check_login_and_guide("AI智能规划"):
+        if not self._check_login_and_guide(self.i18n.tr("config.ai.title")):
             return
 
         # 检查AI配额
@@ -6609,7 +6672,7 @@ class ConfigManager(QMainWindow):
 
         # 禁用按钮并显示加载状态
         self.generate_btn.setEnabled(False)
-        self.generate_btn.setText("⏳ AI正在生成...")
+        self.generate_btn.setText(self.i18n.tr("ai.text_3863"))
 
         # 创建并启动工作线程
         self.ai_worker = AIWorker(self.ai_client, user_input)
@@ -6700,7 +6763,7 @@ class ConfigManager(QMainWindow):
         finally:
             # 恢复按钮状态
             self.generate_btn.setEnabled(True)
-            self.generate_btn.setText("✨ 智能生成任务")
+            self.generate_btn.setText(self.i18n.tr("account.ui.ai_smart_generate"))
 
     def on_ai_generation_error(self, error_msg):
         """AI生成失败的回调"""
@@ -6713,7 +6776,7 @@ class ConfigManager(QMainWindow):
         finally:
             # 恢复按钮状态
             self.generate_btn.setEnabled(True)
-            self.generate_btn.setText("✨ 智能生成任务")
+            self.generate_btn.setText(self.i18n.tr("account.ui.ai_smart_generate"))
 
     def create_about_tab(self):
         """创建关于标签页"""
@@ -6769,7 +6832,7 @@ class ConfigManager(QMainWindow):
         layout.addWidget(app_name_label)
 
         # Slogan
-        slogan_label = QLabel(__slogan__)
+        slogan_label = QLabel(self.i18n.tr("app.tagline"))
         slogan_label.setStyleSheet("""
             QLabel {
                 font-size: 16px;
@@ -6781,7 +6844,7 @@ class ConfigManager(QMainWindow):
         layout.addWidget(slogan_label)
 
         # 版本号
-        version_label = QLabel(f"版本 v{__version__}")
+        version_label = QLabel(self.i18n.tr("general.text_7718", __version__=__version__))
         version_label.setStyleSheet("""
             QLabel {
                 font-size: 14px;
@@ -6795,7 +6858,7 @@ class ConfigManager(QMainWindow):
         layout.addSpacing(30)
 
         # 检查更新按钮
-        self.check_update_btn = QPushButton("检查更新")
+        self.check_update_btn = QPushButton(self.i18n.tr("general.text_5645"))
         self.check_update_btn.setFixedSize(200, 40)
         self.check_update_btn.setStyleSheet("""
             QPushButton {
@@ -6825,7 +6888,7 @@ class ConfigManager(QMainWindow):
         layout.addSpacing(20)
 
         # 反馈链接
-        feedback_link = QLabel('<a href="#" style="color: #2196F3; text-decoration: none;">直接向创始人反馈问题</a>')
+        feedback_link = QLabel(f'<a href="#" style="color: #2196F3; text-decoration: none;">{self.i18n.tr("config.feedback.report_to_founder")}</a>')
         feedback_link.setStyleSheet("""
             QLabel {
                 font-size: 13px;
@@ -6840,7 +6903,7 @@ class ConfigManager(QMainWindow):
         layout.addStretch()
 
         # 底部版权信息
-        copyright_label = QLabel(f"© 2025 {APP_METADATA['author']}")
+        copyright_label = QLabel(self.i18n.tr("about.copyright"))
         copyright_label.setStyleSheet("""
             QLabel {
                 font-size: 11px;
@@ -6939,7 +7002,7 @@ class ConfigManager(QMainWindow):
 
         # 创建进度对话框
         progress = QProgressDialog("正在下载更新...", "取消", 0, 100, self)
-        progress.setWindowTitle("自动更新")
+        progress.setWindowTitle(self.i18n.tr("general.text_9339"))
         progress.setWindowModality(Qt.WindowModality.WindowModal)
         progress.setMinimumDuration(0)
         progress.setValue(0)
@@ -7027,7 +7090,7 @@ class ConfigManager(QMainWindow):
 
         def on_cancel():
             worker.cancel()
-            QMessageBox.information(self, "已取消", "更新已取消")
+            QMessageBox.information(self, self.i18n.tr("dialog.text_6870"), "更新已取消")
 
         worker.progress_update.connect(on_progress)
         worker.finished_signal.connect(on_finished)
@@ -7125,7 +7188,7 @@ del /f /q "%~f0"
 
         # 更新按钮状态
         self.check_update_btn.setEnabled(False)
-        self.check_update_btn.setText("检查中...")
+        self.check_update_btn.setText(self.i18n.tr("general.text_2760"))
 
         try:
             # 调用GitHub API获取最新版本
@@ -7142,7 +7205,7 @@ del /f /q "%~f0"
             # 比较版本号
             if self._compare_versions(latest_version, current_version) > 0:
                 # 有新版本
-                self.check_update_btn.setText(f"v{latest_version} 可更新")
+                self.check_update_btn.setText(self.i18n.tr("general.text_8527"))
                 self.check_update_btn.setStyleSheet("""
                     QPushButton {
                         background-color: #FF5722;
@@ -7166,14 +7229,14 @@ del /f /q "%~f0"
 
                 msg = QMessageBox(self)
                 msg.setIcon(QMessageBox.Icon.Information)
-                msg.setWindowTitle("发现新版本")
-                msg.setText(f"发现新版本 v{latest_version}")
+                msg.setWindowTitle(self.i18n.tr("general.text_377"))
+                msg.setText(self.i18n.tr("general.text_1975"))
                 msg.setInformativeText(f"当前版本: v{current_version}\n\n核心更新:\n{changelog_highlights}")
                 msg.setStandardButtons(QMessageBox.StandardButton.Cancel)
 
                 # 添加两个按钮：立即更新 和 前往下载
-                auto_update_btn = msg.addButton("立即更新", QMessageBox.ButtonRole.AcceptRole)
-                manual_download_btn = msg.addButton("前往下载", QMessageBox.ButtonRole.ActionRole)
+                auto_update_btn = msg.addButton(self.i18n.tr("general.text_2613"), QMessageBox.ButtonRole.AcceptRole)
+                manual_download_btn = msg.addButton(self.i18n.tr("general.text_7203"), QMessageBox.ButtonRole.ActionRole)
                 msg.exec()
 
                 if msg.clickedButton() == auto_update_btn:
@@ -7191,11 +7254,11 @@ del /f /q "%~f0"
                     "已是最新版本",
                     f"当前版本 v{current_version} 已是最新版本！"
                 )
-                self.check_update_btn.setText("检查更新")
+                self.check_update_btn.setText(self.i18n.tr("general.text_5645"))
 
         except requests.exceptions.Timeout:
-            QMessageBox.warning(self, "检查更新失败", "网络请求超时，请检查网络连接")
-            self.check_update_btn.setText("检查更新")
+            QMessageBox.warning(self, self.i18n.tr("message.text_8308"), "网络请求超时，请检查网络连接")
+            self.check_update_btn.setText(self.i18n.tr("general.text_5645"))
         except requests.exceptions.HTTPError as e:
             # 特殊处理 404：表示仓库还没有发布任何 Release
             if e.response.status_code == 404:
@@ -7205,16 +7268,16 @@ del /f /q "%~f0"
                     f"当前版本: v{__version__}\n\n项目仓库暂未发布正式版本，敬请期待！\n\n您可以访问 GitHub 仓库查看最新开发进展：\n{APP_METADATA['repository']}"
                 )
             else:
-                QMessageBox.warning(self, "检查更新失败", f"无法连接到更新服务器\n\n{str(e)}")
-            self.check_update_btn.setText("检查更新")
+                QMessageBox.warning(self, self.i18n.tr("message.text_8308"), f"无法连接到更新服务器\n\n{str(e)}")
+            self.check_update_btn.setText(self.i18n.tr("general.text_5645"))
         except requests.exceptions.RequestException as e:
-            QMessageBox.warning(self, "检查更新失败", f"无法连接到更新服务器\n\n{str(e)}")
-            self.check_update_btn.setText("检查更新")
+            QMessageBox.warning(self, self.i18n.tr("message.text_8308"), f"无法连接到更新服务器\n\n{str(e)}")
+            self.check_update_btn.setText(self.i18n.tr("general.text_5645"))
         except Exception as e:
             import logging
             logging.error(f"检查更新失败: {e}")
-            QMessageBox.warning(self, "检查更新失败", f"发生未知错误\n\n{str(e)}")
-            self.check_update_btn.setText("检查更新")
+            QMessageBox.warning(self, self.i18n.tr("message.text_8308"), f"发生未知错误\n\n{str(e)}")
+            self.check_update_btn.setText(self.i18n.tr("general.text_5645"))
         finally:
             self.check_update_btn.setEnabled(True)
 
@@ -7252,14 +7315,14 @@ del /f /q "%~f0"
 
         # 创建对话框
         dialog = QDialog(self)
-        dialog.setWindowTitle("添加创始人微信")
+        dialog.setWindowTitle(self.i18n.tr("general.text_6717"))
         dialog.setFixedSize(550, 750)
 
         layout = QVBoxLayout(dialog)
         layout.setContentsMargins(30, 30, 30, 30)
 
         # 标题
-        title_label = QLabel("扫描二维码，直接反馈问题")
+        title_label = QLabel(self.i18n.tr("about.labels.scan_qr_feedback"))
         title_label.setStyleSheet("""
             QLabel {
                 font-size: 18px;
@@ -7294,18 +7357,18 @@ del /f /q "%~f0"
                 qrcode_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
                 layout.addWidget(qrcode_label)
             else:
-                error_label = QLabel("无法加载二维码图片")
+                error_label = QLabel(self.i18n.tr("general.image_2"))
                 error_label.setStyleSheet("color: red; padding: 20px;")
                 error_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
                 layout.addWidget(error_label)
         else:
-            error_label = QLabel(f"二维码图片不存在\n路径: {qrcode_path}")
+            error_label = QLabel(self.i18n.tr("general.image_3"))
             error_label.setStyleSheet("color: red; padding: 20px;")
             error_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             layout.addWidget(error_label)
 
         # 提示文字
-        hint_label = QLabel("扫一扫上面的二维码图案，加我为朋友。")
+        hint_label = QLabel(self.i18n.tr("about.labels.scan_add_friend"))
         hint_label.setStyleSheet("""
             QLabel {
                 font-size: 13px;
@@ -7318,6 +7381,139 @@ del /f /q "%~f0"
 
         # 显示对话框
         dialog.exec()
+
+    def on_language_changed(self, index):
+        """处理语言切换"""
+        if not self.config:
+            return
+
+        new_lang = self.language_combo.currentData()
+        old_lang = self.config.get('language', 'zh_CN')
+
+        if new_lang == old_lang:
+            return
+
+        # 更新配置
+        self.config['language'] = new_lang
+
+        # 保存配置
+        try:
+            import json
+            # 使用构造函数中已设置的self.app_dir,确保保存位置和加载位置一致
+            config_path = self.app_dir / 'config.json'
+            with open(config_path, 'w', encoding='utf-8') as f:
+                json.dump(self.config, f, ensure_ascii=False, indent=4)
+
+            # Get language display name
+            language_names = {
+                'zh_CN': '简体中文',
+                'en_US': 'English'
+            }
+            language_name = language_names.get(new_lang, new_lang)
+
+            # Show confirmation dialog with Apply Now / Later options
+            self._show_language_change_dialog(language_name)
+
+        except Exception as e:
+            logging.error(f"Failed to save language setting: {e}")
+
+    def _show_language_change_dialog(self, language_name):
+        """Show language change confirmation dialog with Apply Now / Later options"""
+        from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle(self.i18n.tr("config.language_changed_title", fallback="Language Changed"))
+        dialog.setMinimumWidth(350)
+
+        layout = QVBoxLayout(dialog)
+        layout.setSpacing(15)
+        layout.setContentsMargins(20, 20, 20, 20)
+
+        # Message label
+        message = self.i18n.tr("config.language_changed_message", language_name=language_name, fallback=f"Language has been changed to {language_name}")
+        message_label = QLabel(message)
+        message_label.setStyleSheet("font-size: 14px; font-weight: bold;")
+        layout.addWidget(message_label)
+
+        # Hint label
+        hint = self.i18n.tr("config.language_change_hint", fallback="Click \"Apply Now\" to reload the configuration window with the new language.")
+        hint_label = QLabel(hint)
+        hint_label.setWordWrap(True)
+        hint_label.setStyleSheet("color: #666; font-size: 12px;")
+        layout.addWidget(hint_label)
+
+        # Buttons
+        button_layout = QHBoxLayout()
+        button_layout.setSpacing(10)
+
+        apply_now_btn = QPushButton(self.i18n.tr("config.apply_now", fallback="Apply Now"))
+        apply_now_btn.setFixedHeight(36)
+        apply_now_btn.setStyleSheet(StyleManager.button_primary())
+
+        apply_later_btn = QPushButton(self.i18n.tr("config.apply_later", fallback="Later"))
+        apply_later_btn.setFixedHeight(36)
+
+        button_layout.addStretch()
+        button_layout.addWidget(apply_now_btn)
+        button_layout.addWidget(apply_later_btn)
+
+        layout.addLayout(button_layout)
+
+        # Connect signals
+        apply_now_btn.clicked.connect(lambda: self._apply_language_now(dialog))
+        apply_later_btn.clicked.connect(dialog.accept)
+
+        dialog.exec()
+
+    def _apply_language_now(self, dialog):
+        """Apply language change immediately by recreating the window"""
+        dialog.accept()
+
+        # Save current tab index for restoration
+        current_tab_index = self.tabs.currentIndex() if hasattr(self, 'tabs') else 0
+
+        # Reload the i18n translator with new language
+        try:
+            from i18n.translator import _translator
+            new_lang = self.config.get('language', 'zh_CN')
+            _translator.set_language(new_lang)
+            logging.info(f"Language switched to: {new_lang}")
+        except Exception as e:
+            logging.error(f"Failed to reload i18n translator: {e}")
+
+        # Recreate the window
+        self._recreate_config_window(current_tab_index)
+
+    def _recreate_config_window(self, restore_tab_index=0):
+        """Recreate the configuration window with new language"""
+        # Get reference to main window before closing
+        main_window = self.main_window
+
+        def create_new_window():
+            """Create new window after current one is closed"""
+            try:
+                new_window = ConfigManager(main_window=main_window)
+                new_window.show()
+
+                # Restore tab index after a short delay (wait for lazy loading)
+                QTimer.singleShot(100, lambda: new_window.tabs.setCurrentIndex(restore_tab_index))
+
+                # Update main window's reference if needed
+                if main_window and hasattr(main_window, 'config_window'):
+                    main_window.config_window = new_window
+
+                logging.info(f"Config window recreated, restored to tab {restore_tab_index}")
+            except Exception as e:
+                logging.error(f"Failed to recreate config window: {e}")
+                import traceback
+                traceback.print_exc()
+
+        # Schedule new window creation BEFORE closing current window
+        # Use QTimer to ensure the new window is created after event loop processes the close
+        QTimer.singleShot(100, create_new_window)
+
+        # Now close current window
+        self.close()
 
     def closeEvent(self, event):
         """窗口关闭事件，清理所有资源"""

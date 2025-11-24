@@ -1,0 +1,328 @@
+# Example Patch: Internationalize config_gui.py Key Elements
+# This shows what changes to make for i18n
+
+# =============================================================================
+# Example 1: SaveTemplateDialog class (lines 58-100)
+# =============================================================================
+
+## BEFORE:
+```python
+class SaveTemplateDialog(QDialog):
+    """保存模板对话框 - 智能适应有无历史模板的情况"""
+
+    def init_ui(self):
+        """初始化UI"""
+        self.setWindowTitle("保存为模板")
+        self.setMinimumWidth(400)
+
+        layout = QVBoxLayout()
+
+        # 提示文本
+        if self.existing_templates:
+            hint_label = QLabel("选择要覆盖的模板或输入新的模板名称:")
+        else:
+            hint_label = QLabel("请输入模板名称:")
+
+        layout.addWidget(hint_label)
+        # ... rest of code
+```
+
+## AFTER:
+```python
+class SaveTemplateDialog(QDialog):
+    """保存模板对话框 - 智能适应有无历史模板的情况"""
+    # Docstring can stay in Chinese (internal documentation)
+
+    def init_ui(self):
+        """初始化UI"""
+        self.setWindowTitle(tr('dialog.save_template'))  # ✅ Changed
+        self.setMinimumWidth(400)
+
+        layout = QVBoxLayout()
+
+        # 提示文本
+        if self.existing_templates:
+            hint_label = QLabel(tr('dialog.select_or_new_template'))  # ✅ Changed
+        else:
+            hint_label = QLabel(tr('dialog.template_name'))  # ✅ Changed
+
+        layout.addWidget(hint_label)
+        # ... rest of code
+```
+
+## NEW TRANSLATION KEYS NEEDED:
+Add to i18n/zh_CN.json:
+```json
+{
+  "dialog": {
+    "save_template": "保存为模板",
+    "select_or_new_template": "选择要覆盖的模板或输入新的模板名称:",
+    "template_name": "请输入模板名称:"
+  }
+}
+```
+
+Add to i18n/en_US.json:
+```json
+{
+  "dialog": {
+    "save_template": "Save as Template",
+    "select_or_new_template": "Select a template to overwrite or enter a new name:",
+    "template_name": "Enter template name:"
+  }
+}
+```
+
+# =============================================================================
+# Example 2: Button text with placeholders
+# =============================================================================
+
+## BEFORE:
+```python
+display_text = f"{template_name} ({task_count}个任务)"
+```
+
+## AFTER:
+```python
+display_text = f"{template_name} ({tr('tasks.task_count', count=task_count)})"
+```
+
+## TRANSLATION:
+```json
+// zh_CN.json - Already exists!
+{
+  "tasks": {
+    "task_count": "{count}个任务"
+  }
+}
+
+// en_US.json
+{
+  "tasks": {
+    "task_count": "{count} tasks"
+  }
+}
+```
+
+# =============================================================================
+# Example 3: QMessageBox (very common pattern)
+# =============================================================================
+
+## BEFORE:
+```python
+QMessageBox.information(self, "提示", "保存成功")
+QMessageBox.warning(self, "警告", "模板名称不能为空")
+QMessageBox.critical(self, "错误", "保存失败")
+```
+
+## AFTER:
+```python
+QMessageBox.information(self, tr('message.info'), tr('message.save_success'))
+QMessageBox.warning(self, tr('message.warning'), tr('message.template_name_empty'))
+QMessageBox.critical(self, tr('message.error'), tr('message.save_failed'))
+```
+
+## NEW KEY NEEDED:
+```json
+// zh_CN.json
+{
+  "message": {
+    "template_name_empty": "模板名称不能为空"
+  }
+}
+
+// en_US.json
+{
+  "message": {
+    "template_name_empty": "Template name cannot be empty"
+  }
+}
+```
+
+# =============================================================================
+# Example 4: Tab widget (high impact!)
+# =============================================================================
+
+## BEFORE (somewhere around line 1500+):
+```python
+tabs = QTabWidget()
+tabs.addTab(self.create_appearance_tab(), "外观设置")
+tabs.addTab(self.create_tasks_tab(), "任务管理")
+tabs.addTab(self.create_ai_tab(), "AI功能")
+tabs.addTab(self.create_account_tab(), "账号管理")
+tabs.addTab(self.create_scene_tab(), "场景设置")
+tabs.addTab(self.create_about_tab(), "关于")
+```
+
+## AFTER:
+```python
+tabs = QTabWidget()
+tabs.addTab(self.create_appearance_tab(), tr('config.appearance'))
+tabs.addTab(self.create_tasks_tab(), tr('config.tasks'))
+tabs.addTab(self.create_ai_tab(), tr('config.ai'))
+tabs.addTab(self.create_account_tab(), tr('config.account'))
+tabs.addTab(self.create_scene_tab(), tr('config.scene'))
+tabs.addTab(self.create_about_tab(), tr('config.about'))
+```
+
+## TRANSLATION (Already exists!):
+All these keys are already in the translation files!
+
+# =============================================================================
+# Example 5: Button group (common pattern)
+# =============================================================================
+
+## BEFORE:
+```python
+save_btn = QPushButton("保存")
+cancel_btn = QPushButton("取消")
+apply_btn = QPushButton("应用")
+reset_btn = QPushButton("重置")
+```
+
+## AFTER:
+```python
+save_btn = QPushButton(tr('button.save'))
+cancel_btn = QPushButton(tr('button.cancel'))
+apply_btn = QPushButton(tr('button.apply'))
+reset_btn = QPushButton(tr('button.reset'))
+```
+
+## TRANSLATION (Already exists!):
+All button.* keys are already available!
+
+# =============================================================================
+# Example 6: Form labels with colon
+# =============================================================================
+
+## BEFORE:
+```python
+form_layout = QFormLayout()
+form_layout.addRow("语言:", language_combo)
+form_layout.addRow("进度条高度:", height_spin)
+form_layout.addRow("透明度:", transparency_slider)
+```
+
+## AFTER:
+```python
+form_layout = QFormLayout()
+form_layout.addRow(tr('config.language') + ":", language_combo)
+form_layout.addRow(tr('config.bar_height') + ":", height_spin)
+form_layout.addRow(tr('config.transparency') + ":", transparency_slider)
+```
+
+Note: The + ":" is needed because different languages may use different punctuation.
+In English: "Language:"
+In Chinese: "语言:"
+
+# =============================================================================
+# Example 7: Status messages and tooltips
+# =============================================================================
+
+## BEFORE:
+```python
+self.status_label.setText("正在加载...")
+widget.setToolTip("点击选择颜色")
+```
+
+## AFTER:
+```python
+self.status_label.setText(tr('message.loading'))
+widget.setToolTip(tr('tooltip.click_to_select_color'))
+```
+
+## NEW KEY NEEDED:
+```json
+// zh_CN.json
+{
+  "tooltip": {
+    "click_to_select_color": "点击选择颜色"
+  }
+}
+
+// en_US.json
+{
+  "tooltip": {
+    "click_to_select_color": "Click to select color"
+  }
+}
+```
+
+# =============================================================================
+# PRIORITY CHANGES (Do these first!)
+# =============================================================================
+
+1. Window/Dialog titles (setWindowTitle)
+   - Highest visibility
+   - Easy to change
+   - ~10-15 occurrences
+
+2. Tab names (addTab)
+   - Very visible
+   - Only 6 main tabs
+   - Keys already exist!
+
+3. All buttons (QPushButton)
+   - Very visible
+   - Keys already exist!
+   - ~40-50 occurrences
+
+4. QMessageBox (information, warning, critical)
+   - User-facing
+   - Most keys already exist
+   - ~20-30 occurrences
+
+5. Form labels (addRow)
+   - Visible but less critical
+   - Most keys already exist
+   - ~50-100 occurrences
+
+# =============================================================================
+# SEARCH & REPLACE PATTERNS (Use with caution!)
+# =============================================================================
+
+## Pattern 1: QPushButton text
+Find:    QPushButton\("保存"\)
+Replace: QPushButton(tr('button.save'))
+
+## Pattern 2: QMessageBox.information
+Find:    QMessageBox\.information\(self,\s*"提示",\s*"([^"]+)"\)
+Replace: QMessageBox.information(self, tr('message.info'), tr('message.$1'))
+(Then manually fix the $1 to proper key)
+
+## Pattern 3: setWindowTitle
+Find:    setWindowTitle\("([^"]+)"\)
+Replace: setWindowTitle(tr('config.$1'))
+(Then manually fix the key)
+
+# =============================================================================
+# TESTING CHECKLIST
+# =============================================================================
+
+After making changes:
+
+[ ] File still runs without errors
+[ ] All modified UI elements visible
+[ ] Switch to English (language: "en_US")
+[ ] Restart application
+[ ] Check if elements show English
+[ ] Check console for missing key warnings: [i18n] Missing translation: xxx
+[ ] Switch back to Chinese
+[ ] Verify Chinese still works
+
+# =============================================================================
+# ESTIMATED EFFORT
+# =============================================================================
+
+High-priority changes only (recommended first pass):
+- Window titles: 5 minutes
+- Tab names: 2 minutes
+- All buttons: 15 minutes
+- QMessageBox: 20 minutes
+- TOTAL: ~45 minutes
+
+This gives you ~60-70% visual internationalization with minimal effort!
+
+# =============================================================================
+# END OF EXAMPLE PATCH
+# =============================================================================

@@ -1,0 +1,1993 @@
+{
+  "summary": {
+    "total_chinese_strings": 276,
+    "completely_missing": 134,
+    "has_key_but_no_en": 27
+  },
+  "categorized_missing": {
+    "其他/通用": [
+      {
+        "text": "保存模板对话框 - 智能适应有无历史模板的情况",
+        "lines": [
+          44
+        ]
+      },
+      {
+        "text": "模板名",
+        "lines": [
+          51
+        ]
+      },
+      {
+        "text": "初始化UI",
+        "lines": [
+          60
+        ]
+      },
+      {
+        "text": "确定按钮点击",
+        "lines": [
+          119
+        ]
+      },
+      {
+        "text": "配置管理主窗口",
+        "lines": [
+          157
+        ]
+      },
+      {
+        "text": "延迟加载配置和任务（不阻塞UI显示）",
+        "lines": [
+          220
+        ]
+      },
+      {
+        "text": "从配置更新UI控件值",
+        "lines": [
+          241
+        ]
+      },
+      {
+        "text": "延迟初始化时间轴编辑器",
+        "lines": [
+          310
+        ]
+      },
+      {
+        "text": "时间轴编辑器初始化完成",
+        "lines": [
+          339
+        ]
+      },
+      {
+        "text": "初始化时间轴编辑器失败: {e}",
+        "lines": [
+          341
+        ]
+      },
+      {
+        "text": "延迟初始化主题管理器(在后台运行,不阻塞UI)",
+        "lines": [
+          344
+        ]
+      },
+      {
+        "text": "主题管理器初始化完成",
+        "lines": [
+          348
+        ]
+      },
+      {
+        "text": "初始化主题管理器失败: {e}",
+        "lines": [
+          350
+        ]
+      },
+      {
+        "text": "延迟初始化模板管理器(在后台运行,不阻塞UI)",
+        "lines": [
+          353
+        ]
+      },
+      {
+        "text": "模板管理器初始化完成",
+        "lines": [
+          357
+        ]
+      },
+      {
+        "text": "初始化模板管理器失败: {e}",
+        "lines": [
+          363
+        ]
+      },
+      {
+        "text": "延迟初始化时间表管理器",
+        "lines": [
+          368
+        ]
+      },
+      {
+        "text": "时间表管理器初始化完成",
+        "lines": [
+          372
+        ]
+      },
+      {
+        "text": "初始化时间表管理器失败: {e}",
+        "lines": [
+          378
+        ]
+      },
+      {
+        "text": "加载时间表规则到表格",
+        "lines": [
+          381
+        ]
+      },
+      {
+        "text": "已加载 {len(schedules)} 条时间表规则",
+        "lines": [
+          457
+        ]
+      },
+      {
+        "text": "加载时间表规则失败: {e}",
+        "lines": [
+          460
+        ]
+      },
+      {
+        "text": "打开添加时间表规则对话框",
+        "lines": [
+          463
+        ]
+      },
+      {
+        "text": "添加时间表规则失败: {e}",
+        "lines": [
+          717
+        ]
+      },
+      {
+        "text": "编辑时间表规则",
+        "lines": [
+          721
+        ]
+      },
+      {
+        "text": "编辑时间表规则失败: {e}",
+        "lines": [
+          1019
+        ]
+      },
+      {
+        "text": "切换时间表规则的启用状态",
+        "lines": [
+          1023
+        ]
+      },
+      {
+        "text": "测试指定日期会匹配到哪个模板",
+        "lines": [
+          1062,
+          2307
+        ]
+      },
+      {
+        "text": "延迟初始化AI相关组件(在后台运行,不阻塞UI)",
+        "lines": [
+          1164
+        ]
+      },
+      {
+        "text": "如果需要，启动AI状态定时器（仅在任务管理标签页可见时）",
+        "lines": [
+          1211
+        ]
+      },
+      {
+        "text": "异步更新AI服务状态显示（不阻塞UI）",
+        "lines": [
+          1227
+        ]
+      },
+      {
+        "text": "异步检查后端服务器健康状态",
+        "lines": [
+          1244
+        ]
+      },
+      {
+        "text": "后端健康检查完成回调",
+        "lines": [
+          1276
+        ]
+      },
+      {
+        "text": "显示AI服务错误状态",
+        "lines": [
+          1300
+        ]
+      },
+      {
+        "text": "获取资源文件路径(使用统一的path_utils)",
+        "lines": [
+          1309
+        ]
+      },
+      {
+        "text": "初始化界面",
+        "lines": [
+          1313
+        ]
+      },
+      {
+        "text": "标签页切换时的处理(实现懒加载)",
+        "lines": [
+          1483
+        ]
+      },
+      {
+        "text": "加载场景设置标签页",
+        "lines": [
+          1508
+        ]
+      },
+      {
+        "text": "加载通知设置标签页",
+        "lines": [
+          1533
+        ]
+      },
+      {
+        "text": "加载个人中心标签页",
+        "lines": [
+          1559
+        ]
+      },
+      {
+        "text": "加载关于标签页",
+        "lines": [
+          1584
+        ]
+      },
+      {
+        "text": "[警告] 应用浅色主题失败: {e}，使用默认样式",
+        "lines": [
+          7505
+        ]
+      }
+    ],
+    "外观配置": [
+      {
+        "text": "创建外观配置标签页",
+        "lines": [
+          1612
+        ]
+      }
+    ],
+    "任务管理": [
+      {
+        "text": "创建任务管理标签页",
+        "lines": [
+          1985
+        ]
+      },
+      {
+        "text": "加载选中的自定义模板",
+        "lines": [
+          2173,
+          5819
+        ]
+      },
+      {
+        "text": "删除选中的自定义模板",
+        "lines": [
+          2181,
+          5837
+        ]
+      },
+      {
+        "text": "静默应用选中的主题（不显示提示框）",
+        "lines": [
+          2350
+        ]
+      },
+      {
+        "text": "保存主题配置失败: {e}",
+        "lines": [
+          2369
+        ]
+      },
+      {
+        "text": "应用选中的主题（显示提示）",
+        "lines": [
+          2372
+        ]
+      },
+      {
+        "text": "应用主题配色到任务",
+        "lines": [
+          2400
+        ]
+      },
+      {
+        "text": "加载预设主题列表到下拉框",
+        "lines": [
+          2438
+        ]
+      },
+      {
+        "text": "预设主题切换时的处理（带实时预览）",
+        "lines": [
+          2476
+        ]
+      }
+    ],
+    "场景设置": [
+      {
+        "text": "创建场景设置选项卡",
+        "lines": [
+          2517
+        ]
+      },
+      {
+        "text": "场景选择改变时的处理",
+        "lines": [
+          2693
+        ]
+      },
+      {
+        "text": "更新场景描述信息",
+        "lines": [
+          2697
+        ]
+      },
+      {
+        "text": "场景编辑器窗口关闭时的处理",
+        "lines": [
+          2760
+        ]
+      }
+    ],
+    "通知设置": [
+      {
+        "text": "创建通知设置选项卡",
+        "lines": [
+          2818
+        ]
+      }
+    ],
+    "个人中心": [
+      {
+        "text": "创建个人中心标签页",
+        "lines": [
+          3016
+        ]
+      },
+      {
+        "text": "处理登录成功",
+        "lines": [
+          3328
+        ]
+      },
+      {
+        "text": "欢迎回来，{user_info.get(",
+        "lines": [
+          3346
+        ]
+      },
+      {
+        "text": "处理退出登录按钮点击",
+        "lines": [
+          3355
+        ]
+      },
+      {
+        "text": "配额用尽对话框中用户请求升级会员",
+        "lines": [
+          3464
+        ]
+      },
+      {
+        "text": "绑定卡片点击事件，使用weakref避免循环引用",
+        "lines": [
+          3469
+        ]
+      },
+      {
+        "text": "创建简单的套餐卡片",
+        "lines": [
+          3481
+        ]
+      },
+      {
+        "text": "创建年度卡片（中间，突出显示）",
+        "lines": [
+          3534
+        ]
+      },
+      {
+        "text": "创建月度卡片（普通样式）",
+        "lines": [
+          3701
+        ]
+      },
+      {
+        "text": "创建会员合伙人卡片（右侧，特殊样式）",
+        "lines": [
+          3818
+        ]
+      },
+      {
+        "text": "显示会员合伙人邀请函弹窗",
+        "lines": [
+          3984
+        ]
+      },
+      {
+        "text": ")那一刻，终于能心安理得地关电脑了。",
+        "lines": [
+          4064
+        ]
+      },
+      {
+        "text": ">当你看见那条进度条一点点推进，看见今天已经过去了63%，看见tr(",
+        "lines": [
+          4074
+        ]
+      },
+      {
+        "text": ">此次会员合伙人招募，<b style=",
+        "lines": [
+          4110
+        ]
+      },
+      {
+        "text": "进度条让我第一次感受到",
+        "lines": [
+          4115
+        ]
+      },
+      {
+        "text": "的踏实感。",
+        "lines": [
+          4115
+        ]
+      },
+      {
+        "text": "工作配色和休息配色的切换，让我学会了按时下班。",
+        "lines": [
+          4118
+        ]
+      },
+      {
+        "text": "点击邀请函底部按钮后的处理",
+        "lines": [
+          4173
+        ]
+      },
+      {
+        "text": "创建会员提示区域",
+        "lines": [
+          4212
+        ]
+      },
+      {
+        "text": "创建会员方案详细对比表",
+        "lines": [
+          4254
+        ]
+      },
+      {
+        "text": "处理套餐卡片点击",
+        "lines": [
+          4546
+        ]
+      },
+      {
+        "text": "显示支付方式选择对话框",
+        "lines": [
+          4594
+        ]
+      },
+      {
+        "text": "创建支付选项卡片",
+        "lines": [
+          4747
+        ]
+      },
+      {
+        "text": "处理微信支付",
+        "lines": [
+          4839
+        ]
+      },
+      {
+        "text": "处理Stripe国际支付",
+        "lines": [
+          4917
+        ]
+      },
+      {
+        "text": "[STRIPE] 开始创建Stripe支付会话 - 套餐: {plan_id}",
+        "lines": [
+          4929
+        ]
+      },
+      {
+        "text": "处理套餐按钮点击 - 显示支付方式选择对话框",
+        "lines": [
+          5000
+        ]
+      },
+      {
+        "text": "处理前往付费按钮点击 - 使用真实支付流程",
+        "lines": [
+          5009
+        ]
+      },
+      {
+        "text": "时间轴任务时间改变时更新表格",
+        "lines": [
+          5139
+        ]
+      },
+      {
+        "text": "表格项改变时的处理(任务名称修改)",
+        "lines": [
+          5186
+        ]
+      },
+      {
+        "text": "加载任务到表格（优化性能，分批创建UI组件）",
+        "lines": [
+          5234
+        ]
+      },
+      {
+        "text": "添加新任务,自动接续上一个任务的结束时间",
+        "lines": [
+          5381
+        ]
+      },
+      {
+        "text": "在初始化时默认加载24小时模板(静默加载,不弹窗)",
+        "lines": [
+          5528
+        ]
+      },
+      {
+        "text": "将当前任务保存为自定义模板",
+        "lines": [
+          5542
+        ]
+      },
+      {
+        "text": "加载用户自定义模板",
+        "lines": [
+          5648
+        ]
+      },
+      {
+        "text": "重新加载模板按钮（当template_manager延迟初始化完成后调用）",
+        "lines": [
+          5718
+        ]
+      },
+      {
+        "text": "template_layout未找到，无法重新加载模板按钮",
+        "lines": [
+          5727
+        ]
+      },
+      {
+        "text": "TemplateManager已初始化，重新构建模板按钮",
+        "lines": [
+          5730
+        ]
+      },
+      {
+        "text": "重新加载模板按钮失败: {e}",
+        "lines": [
+          5758
+        ]
+      },
+      {
+        "text": "获取自定义模板元数据",
+        "lines": [
+          5762
+        ]
+      },
+      {
+        "text": "加载自定义模板元数据失败: {e}",
+        "lines": [
+          5772
+        ]
+      },
+      {
+        "text": "保存自定义模板元数据",
+        "lines": [
+          5777
+        ]
+      },
+      {
+        "text": "保存自定义模板元数据失败: {e}",
+        "lines": [
+          5785
+        ]
+      },
+      {
+        "text": "重新加载自定义模板下拉框",
+        "lines": [
+          5790
+        ]
+      },
+      {
+        "text": "成功加载 {len(templates)} 个自定义模板到下拉框",
+        "lines": [
+          5812
+        ]
+      },
+      {
+        "text": "重新加载自定义模板下拉框失败: {e}",
+        "lines": [
+          5815
+        ]
+      },
+      {
+        "text": "通过文件名加载自定义模板",
+        "lines": [
+          5854
+        ]
+      },
+      {
+        "text": "删除自定义模板",
+        "lines": [
+          5898
+        ]
+      },
+      {
+        "text": "加载模板自动应用设置到表格",
+        "lines": [
+          5931
+        ]
+      },
+      {
+        "text": "保存表格中的自动应用设置到templates_config.json",
+        "lines": [
+          5982
+        ]
+      },
+      {
+        "text": "测试日期匹配功能",
+        "lines": [
+          6043
+        ]
+      },
+      {
+        "text": "测试模板匹配失败: {e}",
+        "lines": [
+          6137
+        ]
+      },
+      {
+        "text": "加载预设模板",
+        "lines": [
+          6141
+        ]
+      },
+      {
+        "text": "高度值改变时更新按钮状态",
+        "lines": [
+          6194
+        ]
+      },
+      {
+        "text": "更新预设高度按钮的选中状态",
+        "lines": [
+          6198
+        ]
+      },
+      {
+        "text": "更新自启动状态标签",
+        "lines": [
+          6234
+        ]
+      },
+      {
+        "text": "时间标记类型改变时的处理",
+        "lines": [
+          6246
+        ]
+      },
+      {
+        "text": "标记大小改变时更新按钮状态",
+        "lines": [
+          6274
+        ]
+      },
+      {
+        "text": "更新预设标记大小按钮的选中状态",
+        "lines": [
+          6278
+        ]
+      },
+      {
+        "text": "任务文件JSON解析错误: {e}",
+        "lines": [
+          6373
+        ]
+      },
+      {
+        "text": "加载任务文件失败: {e}",
+        "lines": [
+          6375
+        ]
+      },
+      {
+        "text": ")}成功",
+        "lines": [
+          6437
+        ]
+      },
+      {
+        "text": ")}失败",
+        "lines": [
+          6439
+        ]
+      },
+      {
+        "text": "标签页切换时，控制AI状态定时器",
+        "lines": [
+          6580
+        ]
+      },
+      {
+        "text": "刷新配额状态（同步版本，用于按钮点击）",
+        "lines": [
+          6584
+        ]
+      },
+      {
+        "text": "异步刷新配额状态（不阻塞UI）",
+        "lines": [
+          6588
+        ]
+      },
+      {
+        "text": "配额状态检查完成回调",
+        "lines": [
+          6647
+        ]
+      },
+      {
+        "text": "处理AI生成按钮点击",
+        "lines": [
+          6684
+        ]
+      },
+      {
+        "text": "AI生成完成的回调",
+        "lines": [
+          6757
+        ]
+      },
+      {
+        "text": "AI生成失败的回调",
+        "lines": [
+          6822
+        ]
+      }
+    ],
+    "关于": [
+      {
+        "text": "创建关于标签页",
+        "lines": [
+          6835
+        ]
+      },
+      {
+        "text": "自动下载并安装更新",
+        "lines": [
+          7029
+        ]
+      },
+      {
+        "text": "下载文件的工作线程",
+        "lines": [
+          7067
+        ]
+      },
+      {
+        "text": "安装更新并重启程序",
+        "lines": [
+          7156
+        ]
+      },
+      {
+        "text": "显示微信二维码弹窗",
+        "lines": [
+          7362
+        ]
+      },
+      {
+        "text": "窗口关闭事件，清理所有资源",
+        "lines": [
+          7439
+        ]
+      },
+      {
+        "text": "主程序入口",
+        "lines": [
+          7498
+        ]
+      }
+    ]
+  },
+  "has_key_but_no_en": [
+    {
+      "text": "[支付调试] 微信支付 - plan_type: {plan_id}, pay_type: {pay_type}",
+      "key": "general.text_3594",
+      "en_value": "[Payment调试] 微信Payment - plan_type: {plan_id}, pay_type: {pay_type}",
+      "lines": [
+        4849
+      ]
+    },
+    {
+      "text": "[支付调试] 订单创建结果: {result}",
+      "key": "general.text_868",
+      "en_value": "[Payment调试] 订单创建结果: {result}",
+      "lines": [
+        4856,
+        5037
+      ]
+    },
+    {
+      "text": "[STRIPE] 创建Stripe Checkout Session - plan_type: {plan_id}",
+      "key": "general.text_4042",
+      "en_value": "[STRIPE] 创建Stripe Checkout Session - plan_type: {plan_id}",
+      "lines": [
+        4928
+      ]
+    },
+    {
+      "text": "[STRIPE] Checkout Session创建结果: {result}",
+      "key": "general.text_2044",
+      "en_value": "[STRIPE] Checkout Session创建结果: {result}",
+      "lines": [
+        4953
+      ]
+    },
+    {
+      "text": "[STRIPE] API返回结果: {result}",
+      "key": "general.text_15",
+      "en_value": "[STRIPE] API返回结果: {result}",
+      "lines": [
+        4954
+      ]
+    },
+    {
+      "text": "[STRIPE ERROR] 创建会话失败: {error_msg}",
+      "key": "message.text_9939",
+      "en_value": "[STRIPE ERROR] 创建会话Failed: {error_msg}",
+      "lines": [
+        4985
+      ]
+    },
+    {
+      "text": "Stripe支付异常: {str(e)}",
+      "key": "general.text_48",
+      "en_value": "StripePayment异常: {str(e)}",
+      "lines": [
+        4989
+      ]
+    },
+    {
+      "text": "[支付调试] 准备创建订单 - plan_type: {self.selected_plan_id}, pay_type: {pay_type}",
+      "key": "general.text_3553",
+      "en_value": "[Payment调试] 准备创建订单 - plan_type: {self.selected_plan_id}, pay_type: {pay_type}",
+      "lines": [
+        5030
+      ]
+    },
+    {
+      "text": "TemplateManager尚未初始化，延迟500ms后重试",
+      "key": "general.text_3780",
+      "en_value": "TemplateManager尚未Initialization，延迟500ms后重试",
+      "lines": [
+        5721
+      ]
+    },
+    {
+      "text": "TemplateManager未初始化，延迟加载自动应用设置",
+      "key": "config.text_941",
+      "en_value": "TemplateManager未Initialization，延迟Load自动ApplySettings",
+      "lines": [
+        5934
+      ]
+    },
+    {
+      "text": "加载模板自动应用设置失败: {e}",
+      "key": "config.settings_12",
+      "en_value": "LoadTemplate自动ApplySettingsFailed: {e}",
+      "lines": [
+        5979
+      ]
+    },
+    {
+      "text": "保存模板自动应用设置失败: {e}",
+      "key": "config.settings_14",
+      "en_value": "SaveTemplate自动ApplySettingsFailed: {e}",
+      "lines": [
+        6039
+      ]
+    },
+    {
+      "text": "]} (优先级: {priority}, 条件: {",
+      "key": "general.text_6118",
+      "en_value": "]} (优先级: {priority}, 条件: {",
+      "lines": [
+        6105
+      ]
+    },
+    {
+      "text": "配置文件JSON解析错误: {e}",
+      "key": "config.config_6",
+      "en_value": "Configuration文件JSON解析Error: {e}",
+      "lines": [
+        6361
+      ]
+    },
+    {
+      "text": "加载配置文件失败: {e}",
+      "key": "config.config_7",
+      "en_value": "LoadConfiguration文件Failed: {e}",
+      "lines": [
+        6363
+      ]
+    },
+    {
+      "text": "配额查询返回错误状态码: {response.status_code}",
+      "key": "message.text_656",
+      "en_value": "Quota查询返回Error状态码: {response.status_code}",
+      "lines": [
+        6622
+      ]
+    },
+    {
+      "text": "配额查询失败: {str(e)}",
+      "key": "message.text_234",
+      "en_value": "Quota查询Failed: {str(e)}",
+      "lines": [
+        6625
+      ]
+    },
+    {
+      "text": "AI状态定时器已停止（配额检查成功）",
+      "key": "ai.text_3280",
+      "en_value": "AI状态定时器已停止（Quota检查Success）",
+      "lines": [
+        6670
+      ]
+    },
+    {
+      "text": "配额查询失败，可能是云服务冷启动或网络问题，5秒后重试...",
+      "key": "message.text_6445",
+      "en_value": "Quota查询Failed，可能是云服务冷启动或网络问题，5秒后重试...",
+      "lines": [
+        6680
+      ]
+    },
+    {
+      "text": "无更新说明",
+      "key": "general.text_4539",
+      "en_value": "无Update说明",
+      "lines": [
+        6980,
+        7026
+      ]
+    },
+    {
+      "text": "未找到可执行文件，请手动前往 GitHub 下载",
+      "key": "general.text_2727",
+      "en_value": "未找到可执行文件，请手动前往 GitHub Download",
+      "lines": [
+        7049
+      ]
+    },
+    {
+      "text": "程序将关闭并自动完成更新，请稍候...",
+      "key": "general.text_6484",
+      "en_value": "程序将Close并自动完成Update，Please wait...",
+      "lines": [
+        7222
+      ]
+    },
+    {
+      "text": "v{latest_version} 可更新",
+      "key": "general.text_8527",
+      "en_value": "v{latest_version} 可Update",
+      "lines": [
+        7261
+      ]
+    },
+    {
+      "text": "发现新版本 v{latest_version}",
+      "key": "general.text_1975",
+      "en_value": "发现新版本 v{latest_version}",
+      "lines": [
+        7286
+      ]
+    },
+    {
+      "text": "检查更新失败: {e}",
+      "key": "message.text_6486",
+      "en_value": "检查UpdateFailed: {e}",
+      "lines": [
+        7331
+      ]
+    },
+    {
+      "text": "断开AI worker信号时出错: {e}",
+      "key": "ai.text_3235",
+      "en_value": "断开AI worker信号时出错: {e}",
+      "lines": [
+        7456
+      ]
+    },
+    {
+      "text": "配置管理器已关闭，资源已清理",
+      "key": "config.config_9",
+      "en_value": "Configuration管理器已Close，资源已清理",
+      "lines": [
+        7494
+      ]
+    }
+  ],
+  "all_missing": [
+    {
+      "text": "保存模板对话框 - 智能适应有无历史模板的情况",
+      "lines": [
+        44
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "模板名",
+      "lines": [
+        51
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "初始化UI",
+      "lines": [
+        60
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "确定按钮点击",
+      "lines": [
+        119
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "配置管理主窗口",
+      "lines": [
+        157
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "延迟加载配置和任务（不阻塞UI显示）",
+      "lines": [
+        220
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "从配置更新UI控件值",
+      "lines": [
+        241
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "延迟初始化时间轴编辑器",
+      "lines": [
+        310
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "时间轴编辑器初始化完成",
+      "lines": [
+        339
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "初始化时间轴编辑器失败: {e}",
+      "lines": [
+        341
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "延迟初始化主题管理器(在后台运行,不阻塞UI)",
+      "lines": [
+        344
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "主题管理器初始化完成",
+      "lines": [
+        348
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "初始化主题管理器失败: {e}",
+      "lines": [
+        350
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "延迟初始化模板管理器(在后台运行,不阻塞UI)",
+      "lines": [
+        353
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "模板管理器初始化完成",
+      "lines": [
+        357
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "初始化模板管理器失败: {e}",
+      "lines": [
+        363
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "延迟初始化时间表管理器",
+      "lines": [
+        368
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "时间表管理器初始化完成",
+      "lines": [
+        372
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "初始化时间表管理器失败: {e}",
+      "lines": [
+        378
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "加载时间表规则到表格",
+      "lines": [
+        381
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "已加载 {len(schedules)} 条时间表规则",
+      "lines": [
+        457
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "加载时间表规则失败: {e}",
+      "lines": [
+        460
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "打开添加时间表规则对话框",
+      "lines": [
+        463
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "添加时间表规则失败: {e}",
+      "lines": [
+        717
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "编辑时间表规则",
+      "lines": [
+        721
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "编辑时间表规则失败: {e}",
+      "lines": [
+        1019
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "切换时间表规则的启用状态",
+      "lines": [
+        1023
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "测试指定日期会匹配到哪个模板",
+      "lines": [
+        1062,
+        2307
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "延迟初始化AI相关组件(在后台运行,不阻塞UI)",
+      "lines": [
+        1164
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "如果需要，启动AI状态定时器（仅在任务管理标签页可见时）",
+      "lines": [
+        1211
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "异步更新AI服务状态显示（不阻塞UI）",
+      "lines": [
+        1227
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "异步检查后端服务器健康状态",
+      "lines": [
+        1244
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "后端健康检查完成回调",
+      "lines": [
+        1276
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "显示AI服务错误状态",
+      "lines": [
+        1300
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "获取资源文件路径(使用统一的path_utils)",
+      "lines": [
+        1309
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "初始化界面",
+      "lines": [
+        1313
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "标签页切换时的处理(实现懒加载)",
+      "lines": [
+        1483
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "加载场景设置标签页",
+      "lines": [
+        1508
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "加载通知设置标签页",
+      "lines": [
+        1533
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "加载个人中心标签页",
+      "lines": [
+        1559
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "加载关于标签页",
+      "lines": [
+        1584
+      ],
+      "category": "其他/通用"
+    },
+    {
+      "text": "创建外观配置标签页",
+      "lines": [
+        1612
+      ],
+      "category": "外观配置"
+    },
+    {
+      "text": "创建任务管理标签页",
+      "lines": [
+        1985
+      ],
+      "category": "任务管理"
+    },
+    {
+      "text": "加载选中的自定义模板",
+      "lines": [
+        2173,
+        5819
+      ],
+      "category": "任务管理"
+    },
+    {
+      "text": "删除选中的自定义模板",
+      "lines": [
+        2181,
+        5837
+      ],
+      "category": "任务管理"
+    },
+    {
+      "text": "静默应用选中的主题（不显示提示框）",
+      "lines": [
+        2350
+      ],
+      "category": "任务管理"
+    },
+    {
+      "text": "保存主题配置失败: {e}",
+      "lines": [
+        2369
+      ],
+      "category": "任务管理"
+    },
+    {
+      "text": "应用选中的主题（显示提示）",
+      "lines": [
+        2372
+      ],
+      "category": "任务管理"
+    },
+    {
+      "text": "应用主题配色到任务",
+      "lines": [
+        2400
+      ],
+      "category": "任务管理"
+    },
+    {
+      "text": "加载预设主题列表到下拉框",
+      "lines": [
+        2438
+      ],
+      "category": "任务管理"
+    },
+    {
+      "text": "预设主题切换时的处理（带实时预览）",
+      "lines": [
+        2476
+      ],
+      "category": "任务管理"
+    },
+    {
+      "text": "创建场景设置选项卡",
+      "lines": [
+        2517
+      ],
+      "category": "场景设置"
+    },
+    {
+      "text": "场景选择改变时的处理",
+      "lines": [
+        2693
+      ],
+      "category": "场景设置"
+    },
+    {
+      "text": "更新场景描述信息",
+      "lines": [
+        2697
+      ],
+      "category": "场景设置"
+    },
+    {
+      "text": "场景编辑器窗口关闭时的处理",
+      "lines": [
+        2760
+      ],
+      "category": "场景设置"
+    },
+    {
+      "text": "创建通知设置选项卡",
+      "lines": [
+        2818
+      ],
+      "category": "通知设置"
+    },
+    {
+      "text": "创建个人中心标签页",
+      "lines": [
+        3016
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "处理登录成功",
+      "lines": [
+        3328
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "欢迎回来，{user_info.get(",
+      "lines": [
+        3346
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "处理退出登录按钮点击",
+      "lines": [
+        3355
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "配额用尽对话框中用户请求升级会员",
+      "lines": [
+        3464
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "绑定卡片点击事件，使用weakref避免循环引用",
+      "lines": [
+        3469
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "创建简单的套餐卡片",
+      "lines": [
+        3481
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "创建年度卡片（中间，突出显示）",
+      "lines": [
+        3534
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "创建月度卡片（普通样式）",
+      "lines": [
+        3701
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "创建会员合伙人卡片（右侧，特殊样式）",
+      "lines": [
+        3818
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "显示会员合伙人邀请函弹窗",
+      "lines": [
+        3984
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": ")那一刻，终于能心安理得地关电脑了。",
+      "lines": [
+        4064
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": ">当你看见那条进度条一点点推进，看见今天已经过去了63%，看见tr(",
+      "lines": [
+        4074
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": ">此次会员合伙人招募，<b style=",
+      "lines": [
+        4110
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "进度条让我第一次感受到",
+      "lines": [
+        4115
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "的踏实感。",
+      "lines": [
+        4115
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "工作配色和休息配色的切换，让我学会了按时下班。",
+      "lines": [
+        4118
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "点击邀请函底部按钮后的处理",
+      "lines": [
+        4173
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "创建会员提示区域",
+      "lines": [
+        4212
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "创建会员方案详细对比表",
+      "lines": [
+        4254
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "处理套餐卡片点击",
+      "lines": [
+        4546
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "显示支付方式选择对话框",
+      "lines": [
+        4594
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "创建支付选项卡片",
+      "lines": [
+        4747
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "处理微信支付",
+      "lines": [
+        4839
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "处理Stripe国际支付",
+      "lines": [
+        4917
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "[STRIPE] 开始创建Stripe支付会话 - 套餐: {plan_id}",
+      "lines": [
+        4929
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "处理套餐按钮点击 - 显示支付方式选择对话框",
+      "lines": [
+        5000
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "处理前往付费按钮点击 - 使用真实支付流程",
+      "lines": [
+        5009
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "时间轴任务时间改变时更新表格",
+      "lines": [
+        5139
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "表格项改变时的处理(任务名称修改)",
+      "lines": [
+        5186
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "加载任务到表格（优化性能，分批创建UI组件）",
+      "lines": [
+        5234
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "添加新任务,自动接续上一个任务的结束时间",
+      "lines": [
+        5381
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "在初始化时默认加载24小时模板(静默加载,不弹窗)",
+      "lines": [
+        5528
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "将当前任务保存为自定义模板",
+      "lines": [
+        5542
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "加载用户自定义模板",
+      "lines": [
+        5648
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "重新加载模板按钮（当template_manager延迟初始化完成后调用）",
+      "lines": [
+        5718
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "template_layout未找到，无法重新加载模板按钮",
+      "lines": [
+        5727
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "TemplateManager已初始化，重新构建模板按钮",
+      "lines": [
+        5730
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "重新加载模板按钮失败: {e}",
+      "lines": [
+        5758
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "获取自定义模板元数据",
+      "lines": [
+        5762
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "加载自定义模板元数据失败: {e}",
+      "lines": [
+        5772
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "保存自定义模板元数据",
+      "lines": [
+        5777
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "保存自定义模板元数据失败: {e}",
+      "lines": [
+        5785
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "重新加载自定义模板下拉框",
+      "lines": [
+        5790
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "成功加载 {len(templates)} 个自定义模板到下拉框",
+      "lines": [
+        5812
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "重新加载自定义模板下拉框失败: {e}",
+      "lines": [
+        5815
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "通过文件名加载自定义模板",
+      "lines": [
+        5854
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "删除自定义模板",
+      "lines": [
+        5898
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "加载模板自动应用设置到表格",
+      "lines": [
+        5931
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "保存表格中的自动应用设置到templates_config.json",
+      "lines": [
+        5982
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "测试日期匹配功能",
+      "lines": [
+        6043
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "测试模板匹配失败: {e}",
+      "lines": [
+        6137
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "加载预设模板",
+      "lines": [
+        6141
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "高度值改变时更新按钮状态",
+      "lines": [
+        6194
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "更新预设高度按钮的选中状态",
+      "lines": [
+        6198
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "更新自启动状态标签",
+      "lines": [
+        6234
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "时间标记类型改变时的处理",
+      "lines": [
+        6246
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "标记大小改变时更新按钮状态",
+      "lines": [
+        6274
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "更新预设标记大小按钮的选中状态",
+      "lines": [
+        6278
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "任务文件JSON解析错误: {e}",
+      "lines": [
+        6373
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "加载任务文件失败: {e}",
+      "lines": [
+        6375
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": ")}成功",
+      "lines": [
+        6437
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": ")}失败",
+      "lines": [
+        6439
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "标签页切换时，控制AI状态定时器",
+      "lines": [
+        6580
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "刷新配额状态（同步版本，用于按钮点击）",
+      "lines": [
+        6584
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "异步刷新配额状态（不阻塞UI）",
+      "lines": [
+        6588
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "配额状态检查完成回调",
+      "lines": [
+        6647
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "处理AI生成按钮点击",
+      "lines": [
+        6684
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "AI生成完成的回调",
+      "lines": [
+        6757
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "AI生成失败的回调",
+      "lines": [
+        6822
+      ],
+      "category": "个人中心"
+    },
+    {
+      "text": "创建关于标签页",
+      "lines": [
+        6835
+      ],
+      "category": "关于"
+    },
+    {
+      "text": "自动下载并安装更新",
+      "lines": [
+        7029
+      ],
+      "category": "关于"
+    },
+    {
+      "text": "下载文件的工作线程",
+      "lines": [
+        7067
+      ],
+      "category": "关于"
+    },
+    {
+      "text": "安装更新并重启程序",
+      "lines": [
+        7156
+      ],
+      "category": "关于"
+    },
+    {
+      "text": "显示微信二维码弹窗",
+      "lines": [
+        7362
+      ],
+      "category": "关于"
+    },
+    {
+      "text": "窗口关闭事件，清理所有资源",
+      "lines": [
+        7439
+      ],
+      "category": "关于"
+    },
+    {
+      "text": "主程序入口",
+      "lines": [
+        7498
+      ],
+      "category": "关于"
+    },
+    {
+      "text": "[警告] 应用浅色主题失败: {e}，使用默认样式",
+      "lines": [
+        7505
+      ],
+      "category": "其他/通用"
+    }
+  ]
+}

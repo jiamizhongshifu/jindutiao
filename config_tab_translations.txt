@@ -1,0 +1,7 @@
+Tab translations:
+
+appearance: 外观设置 / Appearance
+tasks: 任务管理 / Tasks
+scene: 场景设置 / Scene
+about: 关于 / About
+account: 账号管理 / Account

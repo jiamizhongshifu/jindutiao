@@ -6,6 +6,12 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
 
+import sys
+import os
+# 添加父目录到路径以导入i18n模块
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from i18n.translator import tr
+
 
 class QuotaExhaustedDialog(QDialog):
     """配额用尽对话框
@@ -24,7 +30,7 @@ class QuotaExhaustedDialog(QDialog):
     def setup_ui(self):
         """设置UI界面"""
         # 窗口基本设置
-        self.setWindowTitle("AI配额已用完")
+        self.setWindowTitle(tr("quota_dialog.title.window"))
         self.setFixedSize(400, 280)
         self.setModal(True)
 
@@ -34,7 +40,7 @@ class QuotaExhaustedDialog(QDialog):
         layout.setContentsMargins(30, 30, 30, 30)
 
         # 图标和标题
-        title = QLabel("🤖 今日AI配额已用完")
+        title = QLabel(tr("quota_dialog.title.dialog"))
         title_font = QFont()
         title_font.setPointSize(14)
         title_font.setBold(True)
@@ -43,11 +49,7 @@ class QuotaExhaustedDialog(QDialog):
         layout.addWidget(title)
 
         # 说明文字
-        info = QLabel(
-            "免费用户每天有 3 次AI任务规划配额。\n"
-            "你今天的配额已经用完了。\n\n"
-            "升级会员即可享受："
-        )
+        info = QLabel(tr("quota_dialog.info.message"))
         info.setWordWrap(True)
         info.setAlignment(Qt.AlignmentFlag.AlignCenter)
         info.setStyleSheet("color: #666666; line-height: 1.5;")
@@ -55,10 +57,10 @@ class QuotaExhaustedDialog(QDialog):
 
         # 会员权益
         benefits = [
-            "✅ 无限AI任务生成配额",
-            "✅ 去除进度条水印",
-            "✅ 完整数据统计报告",
-            "✅ 更多高级功能..."
+            tr("quota_dialog.benefits.unlimited_ai"),
+            tr("quota_dialog.benefits.remove_watermark"),
+            tr("quota_dialog.benefits.full_statistics"),
+            tr("quota_dialog.benefits.more_features")
         ]
 
         for benefit in benefits:
@@ -69,7 +71,7 @@ class QuotaExhaustedDialog(QDialog):
         layout.addSpacing(10)
 
         # 价格提示
-        price_label = QLabel("💰 月度会员仅需 ¥29/月，年度会员 ¥199/年")
+        price_label = QLabel(tr("quota_dialog.price.pricing"))
         price_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         price_label.setStyleSheet("color: #2196F3; font-weight: bold;")
         layout.addWidget(price_label)
@@ -81,13 +83,13 @@ class QuotaExhaustedDialog(QDialog):
         button_layout.setSpacing(10)
 
         # 明天再说按钮
-        later_btn = QPushButton("明天再说")
+        later_btn = QPushButton(tr("quota_dialog.button.later"))
         later_btn.setFixedHeight(36)
         later_btn.clicked.connect(self.reject)
         button_layout.addWidget(later_btn)
 
         # 升级会员按钮
-        upgrade_btn = QPushButton("升级会员")
+        upgrade_btn = QPushButton(tr("quota_dialog.button.upgrade"))
         upgrade_btn.setFixedHeight(36)
         upgrade_btn.setStyleSheet("""
             QPushButton {

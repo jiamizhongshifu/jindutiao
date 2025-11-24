@@ -1,0 +1,42 @@
+{
+  "summary": {
+    "total": 6,
+    "errors": 3,
+    "messages": 2,
+    "test_results": 1
+  },
+  "items": [
+    {
+      "line": 5555,
+      "text": "无法保存模板:\\n{str(e)}",
+      "code": "QMessageBox.critical(self, \"保存失败\", f\"无法保存模板:\\n{str(e)}\")"
+    },
+    {
+      "line": 5622,
+      "text": "模板文件格式错误:\\n{str(e)}",
+      "code": "QMessageBox.critical(self, \"错误\", f\"模板文件格式错误:\\n{str(e)}\")"
+    },
+    {
+      "line": 5624,
+      "text": "加载模板失败:\\n{str(e)}",
+      "code": "QMessageBox.critical(self, \"错误\", f\"加载模板失败:\\n{str(e)}\")"
+    },
+    {
+      "line": 5545,
+      "text": "模板已更新:\\n{template_filename}\\n\\n包含 {len(tasks)} 个任务。",
+      "code": "success_msg = f\"模板已更新:\\n{template_filename}\\n\\n包含 {len(tasks)} 个任务。\""
+    },
+    {
+      "line": 5547,
+      "text": "模板已创建:\\n{template_filename}\\n\\n已添加到【我的模板】列表中,包含 {len(tasks)} 个任务。",
+      "code": "success_msg = f\"模板已创建:\\n{template_filename}\\n\\n已添加到【我的模板】列表中,包含 {len(tasks)} 个任务。\""
+    },
+    {
+      "line": 1095,
+      "text": "测试日期: {selected_date.strftime(",
+      "code": "result_lines.append(f\"测试日期: {selected_date.strftime('%Y-%m-%d %A')}\")"
+    }
+  ],
+  "docstrings": 69,
+  "logging": 14
+}

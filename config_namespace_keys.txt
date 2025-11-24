@@ -1,0 +1,363 @@
+Total keys in config namespace: 90
+================================================================================
+
+about:
+  ZH: 关于
+  EN: About
+
+account:
+  ZH: 账号管理
+  EN: Account
+
+advanced_settings:
+  ZH: 高级设置
+  EN: Advanced Settings
+
+ai:
+  ZH: AI功能
+  EN: AI Features
+
+appearance:
+  ZH: 外观设置
+  EN: Appearance
+
+auto_start:
+  ZH: 开机自启动
+  EN: Launch at Startup
+
+background_color:
+  ZH: 背景颜色
+  EN: Background Color
+
+bar_height:
+  ZH: 进度条高度
+  EN: Bar Height
+
+bar_position:
+  ZH: 进度条位置
+  EN: Bar Position
+
+basic_settings:
+  ZH: 基础设置
+  EN: Basic Settings
+
+color:
+  ZH: 选择颜色
+  EN: SelectColor
+
+color_1:
+  ZH: 背景颜色:
+  EN: 背景Color:
+
+color_2:
+  ZH: 时间标记颜色:
+  EN: Time标记Color:
+
+color_3:
+  ZH: 文字颜色
+  EN: 文字Color
+
+config:
+  ZH: 配置和任务加载完成
+  EN: Configuration和TaskLoad完成
+
+config_1:
+  ZH: 加载配置和任务失败: {e}
+  EN: LoadConfiguration和TaskFailed: {e}
+
+config_2:
+  ZH: {VERSION_STRING_ZH} - 配置管理器
+  EN: {VERSION_STRING_ZH} - Configuration Manager
+
+config_3:
+  ZH: 🎨 外观配置
+  EN: 🎨 AppearanceConfiguration
+
+config_4:
+  ZH: 配置场景效果,让进度条更具个性化
+  EN: ConfigurationScene效果,让进度条更具个性化
+
+config_5:
+  ZH: 配置任务提醒通知,让您不会错过任何重要时刻
+  EN: ConfigurationTask提醒Notifications,让您不会错过任何重要时刻
+
+config_6:
+  ZH: 配置文件JSON解析错误: {e}
+  EN: Configuration文件JSON解析Error: {e}
+
+config_7:
+  ZH: 加载配置文件失败: {e}
+  EN: LoadConfiguration文件Failed: {e}
+
+config_8:
+  ZH: 配置和任务已保存!\n\n如果 Gaiya 正在运行,更改会自动生效。
+  EN: Configuration和Task已Save!\n\n如果 Gaiya 正在运行,更改会自动生效。
+
+config_9:
+  ZH: 配置管理器已关闭，资源已清理
+  EN: Configuration管理器已Close，资源已清理
+
+corner_radius:
+  ZH: 圆角大小
+  EN: Corner Radius
+
+language:
+  ZH: 语言
+  EN: Language
+
+language_auto:
+  ZH: 跟随系统
+  EN: Follow System
+
+language_en_us:
+  ZH: English
+  EN: English
+
+language_setting:
+  ZH: 语言设置
+  EN: Language Setting
+
+language_zh_cn:
+  ZH: 简体中文
+  EN: 简体中文
+
+marker_gif:
+  ZH: GIF动画
+  EN: GIF Animation
+
+marker_image:
+  ZH: 图片
+  EN: Image
+
+marker_line:
+  ZH: 线条
+  EN: Line
+
+marker_offset:
+  ZH: 标记偏移
+  EN: Marker Offset
+
+marker_settings:
+  ZH: 时间标记设置
+  EN: Time Marker Settings
+
+marker_size:
+  ZH: 标记大小
+  EN: Marker Size
+
+marker_speed:
+  ZH: 动画速度
+  EN: Animation Speed
+
+marker_style:
+  ZH: 时间标记样式
+  EN: Time Marker Style
+
+marker_type:
+  ZH: 标记类型
+  EN: Marker Type
+
+milliseconds:
+  ZH: 毫秒
+  EN: milliseconds
+
+monitor:
+  ZH: 显示器
+  EN: Monitor
+
+notification_settings:
+  ZH: 通知设置
+  EN: Notification Settings
+
+percent:
+  ZH: 百分比
+  EN: percent
+
+pixels:
+  ZH: 像素
+  EN: pixels
+
+position_bottom:
+  ZH: 底部
+  EN: Bottom
+
+position_top:
+  ZH: 顶部
+  EN: Top
+
+scene:
+  ZH: 场景设置
+  EN: Scene
+
+settings:
+  ZH: 🎬 场景设置
+  EN: 🎬 SceneSettings
+
+settings_1:
+  ZH: 🔔 通知设置
+  EN: 🔔 NotificationsSettings
+
+settings_10:
+  ZH: ⚙️ 基础设置
+  EN: ⚙ ️ 基础Settings
+
+settings_11:
+  ZH: 所有任务已清空\n\n记得点击【保存所有设置】按钮来保存更改
+  EN: 所有Task已Clear\n\n记得点击【Save所有Settings】按钮来Save更改
+
+settings_12:
+  ZH: 加载模板自动应用设置失败: {e}
+  EN: LoadTemplate自动ApplySettingsFailed: {e}
+
+settings_13:
+  ZH: 没有设置被保存
+  EN: 没有Settings被Save
+
+settings_14:
+  ZH: 保存模板自动应用设置失败: {e}
+  EN: SaveTemplate自动ApplySettingsFailed: {e}
+
+settings_15:
+  ZH: 自启动设置{'启用' if autostart_enabled else '禁用'}成功
+  EN: 自启动Settings{'启用' if autostart_enabled else '禁用'}Success
+
+settings_16:
+  ZH: 自启动设置{'启用' if autostart_enabled else '禁用'}失败
+  EN: 自启动Settings{'启用' if autostart_enabled else '禁用'}Failed
+
+settings_17:
+  ZH: 开机自启动设置失败\n\n可能需要管理员权限或系统限制
+  EN: 开机自启动SettingsFailed\n\n可能需要管理员权限或系统限制
+
+settings_18:
+  ZH: 记得点击【保存所有设置】按钮来保存更改
+  EN: 记得点击【Save所有Settings】按钮来Save更改
+
+settings_2:
+  ZH: 保存所有设置
+  EN: Save所有Settings
+
+settings_3:
+  ZH: 加载场景设置标签页失败: {e}
+  EN: LoadSceneSettings标签页Failed: {e}
+
+settings_4:
+  ZH: 加载场景设置失败: {e}
+  EN: LoadSceneSettingsFailed: {e}
+
+settings_5:
+  ZH: 加载通知设置标签页失败: {e}
+  EN: LoadNotificationsSettings标签页Failed: {e}
+
+settings_6:
+  ZH: 加载通知设置失败: {e}
+  EN: LoadNotificationsSettingsFailed: {e}
+
+settings_7:
+  ZH: 🔧 基本设置
+  EN: 🔧 基本Settings
+
+settings_8:
+  ZH: 🎨 颜色设置
+  EN: 🎨 ColorSettings
+
+settings_9:
+  ZH: 💡 为每个模板设置自动应用的日期规则，到了指定时间会自动加载对应模板
+  EN: 💡 为每个TemplateSettings自动Apply的Date规则，到了指定Time会自动Load对应Template
+
+shadow:
+  ZH: 阴影效果
+  EN: Shadow Effect
+
+task:
+  ZH: 确定要将当前主题的配色应用到所有任务吗？\n这将覆盖现有的任务颜色。
+  EN: Are you sure you want to 将当前theme的color schemeapply到所有task？\n这将覆盖现有的taskcolor。?
+
+task_1:
+  ZH: 确定要清空所有任务吗?\n\n这将删除表格中的所有任务(不会立即保存,需要点击【保存所有设置】)
+  EN: Are you sure you want to clear所有task\n\n这将delete表格中的所有task(不会立即save,需要点击【save所有settings】)?
+
+tasks:
+  ZH: 任务管理
+  EN: Tasks
+
+template:
+  ZH: 当前没有找到任何自定义模板。\n\n您可以先配置任务,然后点击【保存为模板】按钮创建模板。
+  EN: 当前没有找到任何自定义Template。\n\n您可以先ConfigurationTask,然后点击【Save为Template】按钮创建Template。
+
+template_1:
+  ZH: 已加载 {len(templates)} 个模板的自动应用设置
+  EN: 已Load {len(templates)} 个Template的自动ApplySettings
+
+template_2:
+  ZH: 已保存 {updated_count} 个模板的自动应用设置
+  EN: 已Save {updated_count} 个Template的自动ApplySettings
+
+text_1866:
+  ZH: 启用阴影效果
+  EN: 启用Shadow效果
+
+text_5481:
+  ZH: 进度条高度:
+  EN: 进度条Height:
+
+text_5748:
+  ZH: 新版本已下载完成，是否立即安装并重启应用？\n\n下载位置：{file_path}
+  EN: 新版本已Download完成，Do you want to立即Install并重启Apply？\n\nDownloadPosition：{file_path}
+
+text_5991:
+  ZH: 背景透明度:
+  EN: 背景Opacity:
+
+text_7611:
+  ZH: 圆角半径:
+  EN: Corner Radius半径:
+
+text_8030:
+  ZH: 已加载 {len(template_tasks)} 个任务\n\n记得点击【保存所有设置】按钮来应用更改
+  EN: 已Load {len(template_tasks)} 个Task\n\n记得点击【Save所有Settings】按钮来Apply更改
+
+text_941:
+  ZH: TemplateManager未初始化，延迟加载自动应用设置
+  EN: TemplateManager未Initialization，延迟Load自动ApplySettings
+
+theme_dark:
+  ZH: 深色主题
+  EN: Dark Theme
+
+theme_light:
+  ZH: 浅色主题
+  EN: Light Theme
+
+theme_settings:
+  ZH: 主题设置
+  EN: Theme Settings
+
+time:
+  ZH: 时间标记宽度:
+  EN: Time标记Width:
+
+title:
+  ZH: 配置
+  EN: Settings
+
+transparency:
+  ZH: 透明度
+  EN: Transparency
+
+update_interval:
+  ZH: 更新间隔
+  EN: Update Interval
+
+window_title:
+  ZH: 配置
+  EN: Settings
+
+x_offset:
+  ZH: X轴偏移
+  EN: X Offset
+
+y_offset:
+  ZH: Y轴偏移
+  EN: Y Offset
+

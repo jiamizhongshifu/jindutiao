@@ -1,0 +1,572 @@
+[
+  {
+    "key": "general.text_4364",
+    "chinese": "简体中文",
+    "auto_translation": "[REVIEW] 简体中文"
+  },
+  {
+    "key": "general.text_2945_1",
+    "chinese": "禁用",
+    "auto_translation": "[REVIEW] 禁用"
+  },
+  {
+    "key": "general.text_5680_1",
+    "chinese": "启用",
+    "auto_translation": "[REVIEW] 启用"
+  },
+  {
+    "key": "general.text_7707",
+    "chinese": "规则类型",
+    "auto_translation": "[REVIEW] 规则类型"
+  },
+  {
+    "key": "general.text_615",
+    "chinese": "周一",
+    "auto_translation": "[REVIEW] 周一"
+  },
+  {
+    "key": "general.text_9226",
+    "chinese": "周二",
+    "auto_translation": "[REVIEW] 周二"
+  },
+  {
+    "key": "general.text_4896",
+    "chinese": "周三",
+    "auto_translation": "[REVIEW] 周三"
+  },
+  {
+    "key": "general.text_3255",
+    "chinese": "周四",
+    "auto_translation": "[REVIEW] 周四"
+  },
+  {
+    "key": "general.text_2962",
+    "chinese": "周五",
+    "auto_translation": "[REVIEW] 周五"
+  },
+  {
+    "key": "general.text_5012",
+    "chinese": "周六",
+    "auto_translation": "[REVIEW] 周六"
+  },
+  {
+    "key": "general.text_5821",
+    "chinese": "周日",
+    "auto_translation": "[REVIEW] 周日"
+  },
+  {
+    "key": "general.text_5397",
+    "chinese": "冲突",
+    "auto_translation": "[REVIEW] 冲突"
+  },
+  {
+    "key": "general.text_4396",
+    "chinese": "该规则与现有规则冲突，请检查",
+    "auto_translation": "[REVIEW] 该规则与现有规则冲突，请检查"
+  },
+  {
+    "key": "general.text_5661",
+    "chinese": "无效的规则索引",
+    "auto_translation": "[REVIEW] 无效的规则索引"
+  },
+  {
+    "key": "general.text_535",
+    "chinese": "极细",
+    "auto_translation": "[REVIEW] 极细"
+  },
+  {
+    "key": "general.text_5145",
+    "chinese": "细",
+    "auto_translation": "[REVIEW] 细"
+  },
+  {
+    "key": "general.text_1413",
+    "chinese": "标准",
+    "auto_translation": "[REVIEW] 标准"
+  },
+  {
+    "key": "general.text_3042",
+    "chinese": "粗",
+    "auto_translation": "[REVIEW] 粗"
+  },
+  {
+    "key": "general.text_8120",
+    "chinese": " 毫秒",
+    "auto_translation": "[REVIEW] 毫秒"
+  },
+  {
+    "key": "general.text_8014",
+    "chinese": "开机自动启动",
+    "auto_translation": "[REVIEW] 开机自动启动"
+  },
+  {
+    "key": "general.text_546",
+    "chinese": " 像素",
+    "auto_translation": "[REVIEW] 像素"
+  },
+  {
+    "key": "general.image",
+    "chinese": "(line=线条, image=图片, gif=动画)",
+    "auto_translation": "[REVIEW] (line=线条, image=图片, gif=动画)"
+  },
+  {
+    "key": "general.text_4516",
+    "chinese": "小",
+    "auto_translation": "[REVIEW] 小"
+  },
+  {
+    "key": "general.text_8778",
+    "chinese": "中",
+    "auto_translation": "[REVIEW] 中"
+  },
+  {
+    "key": "general.text_4022",
+    "chinese": "大",
+    "auto_translation": "[REVIEW] 大"
+  },
+  {
+    "key": "general.text_3166",
+    "chinese": "(正值向右,负值向左)",
+    "auto_translation": "[REVIEW] (正值向右,负值向左)"
+  },
+  {
+    "key": "general.text_8424",
+    "chinese": "(正值向上,负值向下)",
+    "auto_translation": "[REVIEW] (正值向上,负值向下)"
+  },
+  {
+    "key": "general.text_9595",
+    "chinese": "(100%=原速, 200%=2倍速)",
+    "auto_translation": "[REVIEW] (100%=原速, 200%=2倍速)"
+  },
+  {
+    "key": "general.text_5947",
+    "chinese": "例如: 明天9点开会1小时,然后写代码到下午5点,中午12点休息1小时,晚上6点健身...",
+    "auto_translation": "[REVIEW] 例如: 明天9点开会1小时,然后写代码到下午5点,中午12点休息1小时,晚上6点健身..."
+  },
+  {
+    "key": "general.text_3841",
+    "chinese": "⏳ 正在连接云服务（可能需要10-15秒）...",
+    "auto_translation": "[REVIEW] ⏳ 正在连接云服务（可能需要10-15秒）..."
+  },
+  {
+    "key": "general.text_3307",
+    "chinese": "操作",
+    "auto_translation": "[REVIEW] 操作"
+  },
+  {
+    "key": "general.text_5578",
+    "chinese": "状态",
+    "auto_translation": "[REVIEW] 状态"
+  },
+  {
+    "key": "general.text_3896",
+    "chinese": "确认",
+    "auto_translation": "[REVIEW] 确认"
+  },
+  {
+    "key": "general.text_889",
+    "chinese": "依然展示进度条",
+    "auto_translation": "[REVIEW] 依然展示进度条"
+  },
+  {
+    "key": "general.text_7472",
+    "chinese": "无描述",
+    "auto_translation": "[REVIEW] 无描述"
+  },
+  {
+    "key": "general.text_5229",
+    "chinese": "未知",
+    "auto_translation": "[REVIEW] 未知"
+  },
+  {
+    "key": "general.text_8275",
+    "chinese": "⏰ 提醒时机",
+    "auto_translation": "[REVIEW] ⏰ 提醒时机"
+  },
+  {
+    "key": "general.text_1681_1",
+    "chinese": "启用免打扰时段",
+    "auto_translation": "[REVIEW] 启用免打扰时段"
+  },
+  {
+    "key": "general.text_1040",
+    "chinese": "示例: 22:00 - 08:00 表示晚上10点到早上8点不打扰",
+    "auto_translation": "[REVIEW] 示例: 22:00 - 08:00 表示晚上10点到早上8点不打扰"
+  },
+  {
+    "key": "general.text_8429_1",
+    "chinese": "个人中心",
+    "auto_translation": "[REVIEW] 个人中心"
+  },
+  {
+    "key": "general.text_9492",
+    "chinese": "高级版",
+    "auto_translation": "[REVIEW] 高级版"
+  },
+  {
+    "key": "general.text_8521",
+    "chinese": "/月",
+    "auto_translation": "[REVIEW] /月"
+  },
+  {
+    "key": "general.text_8162",
+    "chinese": "有效期30天",
+    "auto_translation": "[REVIEW] 有效期30天"
+  },
+  {
+    "key": "general.text_9982",
+    "chinese": "到期后不会自动扣费",
+    "auto_translation": "[REVIEW] 到期后不会自动扣费"
+  },
+  {
+    "key": "general.text_1225",
+    "chinese": "所有免费功能 +",
+    "auto_translation": "[REVIEW] 所有免费功能 +"
+  },
+  {
+    "key": "general.text_1259",
+    "chinese": "统计报告分析",
+    "auto_translation": "[REVIEW] 统计报告分析"
+  },
+  {
+    "key": "general.text_9216",
+    "chinese": "去除进度条水印",
+    "auto_translation": "[REVIEW] 去除进度条水印"
+  },
+  {
+    "key": "general.text_2898",
+    "chinese": "番茄时钟",
+    "auto_translation": "[REVIEW] 番茄时钟"
+  },
+  {
+    "key": "general.text_6202",
+    "chinese": "数据云同步",
+    "auto_translation": "[REVIEW] 数据云同步"
+  },
+  {
+    "key": "general.text_6335",
+    "chinese": "抢先体验新功能",
+    "auto_translation": "[REVIEW] 抢先体验新功能"
+  },
+  {
+    "key": "general.text_7856",
+    "chinese": "/年",
+    "auto_translation": "[REVIEW] /年"
+  },
+  {
+    "key": "general.text_4494",
+    "chinese": "节省 40%",
+    "auto_translation": "[REVIEW] 节省 40%"
+  },
+  {
+    "key": "general.text_831",
+    "chinese": "有效期365天",
+    "auto_translation": "[REVIEW] 有效期365天"
+  },
+  {
+    "key": "general.text_4301",
+    "chinese": "永久有效",
+    "auto_translation": "[REVIEW] 永久有效"
+  },
+  {
+    "key": "general.text_3315",
+    "chinese": "一次购买,终身可用",
+    "auto_translation": "[REVIEW] 一次购买,终身可用"
+  },
+  {
+    "key": "general.text_1438",
+    "chinese": "33%引荐返现比例",
+    "auto_translation": "[REVIEW] 33%引荐返现比例"
+  },
+  {
+    "key": "general.text_3982",
+    "chinese": "专属合伙人社群",
+    "auto_translation": "[REVIEW] 专属合伙人社群"
+  },
+  {
+    "key": "general.text_4064",
+    "chinese": "优先体验所有新功能",
+    "auto_translation": "[REVIEW] 优先体验所有新功能"
+  },
+  {
+    "key": "general.text_9901",
+    "chinese": "专属1v1咨询服务",
+    "auto_translation": "[REVIEW] 专属1v1咨询服务"
+  },
+  {
+    "key": "general.text_8160",
+    "chinese": "共同成长,分享价值",
+    "auto_translation": "[REVIEW] 共同成长,分享价值"
+  },
+  {
+    "key": "general.text_237",
+    "chinese": "感谢您的支持！",
+    "auto_translation": "[REVIEW] 感谢您的支持！"
+  },
+  {
+    "key": "general.text_6070",
+    "chinese": "您是高级版用户，可以使用所有功能。",
+    "auto_translation": "[REVIEW] 您是高级版用户，可以使用所有功能。"
+  },
+  {
+    "key": "general.text_9254",
+    "chinese": "用户",
+    "auto_translation": "[REVIEW] 用户"
+  },
+  {
+    "key": "general.text_2943",
+    "chinese": "确认退出",
+    "auto_translation": "[REVIEW] 确认退出"
+  },
+  {
+    "key": "general.text_894",
+    "chinese": "此功能",
+    "auto_translation": "[REVIEW] 此功能"
+  },
+  {
+    "key": "general.text_1955",
+    "chinese": "限量1000名",
+    "auto_translation": "[REVIEW] 限量1000名"
+  },
+  {
+    "key": "general.text_7372",
+    "chinese": "一次付费",
+    "auto_translation": "[REVIEW] 一次付费"
+  },
+  {
+    "key": "general.text_4449",
+    "chinese": "终身可用",
+    "auto_translation": "[REVIEW] 终身可用"
+  },
+  {
+    "key": "general.text_1349",
+    "chinese": "<a href=\"#\" style=\"color: #666666; text-decoration: none;\">📜 阅读合伙人邀请函</a>",
+    "auto_translation": "[REVIEW] <a href=\"#\" style=\"color: #666666; text-decoration: none;\">📜 阅读合伙人邀请函</a>"
+  },
+  {
+    "key": "general.text_2050",
+    "chinese": "成为合伙人",
+    "auto_translation": "[REVIEW] 成为合伙人"
+  },
+  {
+    "key": "general.text_304",
+    "chinese": "邀请您共同成长，共享价值",
+    "auto_translation": "[REVIEW] 邀请您共同成长，共享价值"
+  },
+  {
+    "key": "general.text_192",
+    "chinese": "下班",
+    "auto_translation": "[REVIEW] 下班"
+  },
+  {
+    "key": "general.text_6435",
+    "chinese": ">当你看见那条进度条一点点推进，看见今天已经过去了63%，看见",
+    "auto_translation": "[REVIEW] >当你看见那条进度条一点点推进，看见今天已经过去了63%，看见"
+  },
+  {
+    "key": "general.text_5531",
+    "chinese": ">599元换算下来，相当于<b>年费199元使用3年</b>——而我承诺的是<b style=",
+    "auto_translation": "[REVIEW] >599元换算下来，相当于<b>年费199元使用3年</b>——而我承诺的是<b style="
+  },
+  {
+    "key": "general.text_5871",
+    "chinese": "功能特性",
+    "auto_translation": "[REVIEW] 功能特性"
+  },
+  {
+    "key": "general.text_253",
+    "chinese": "【核心功能】",
+    "auto_translation": "[REVIEW] 【核心功能】"
+  },
+  {
+    "key": "general.text_7925_1",
+    "chinese": "【高级功能】",
+    "auto_translation": "[REVIEW] 【高级功能】"
+  },
+  {
+    "key": "general.text_9982_1",
+    "chinese": "有效期",
+    "auto_translation": "[REVIEW] 有效期"
+  },
+  {
+    "key": "general.text_6050",
+    "chinese": "30天",
+    "auto_translation": "[REVIEW] 30天"
+  },
+  {
+    "key": "general.text_1894",
+    "chinese": "365天",
+    "auto_translation": "[REVIEW] 365天"
+  },
+  {
+    "key": "general.text_7796",
+    "chinese": "永久",
+    "auto_translation": "[REVIEW] 永久"
+  },
+  {
+    "key": "general.text_5194",
+    "chinese": "引荐返现比例",
+    "auto_translation": "[REVIEW] 引荐返现比例"
+  },
+  {
+    "key": "general.text_2448",
+    "chinese": "1v1咨询服务",
+    "auto_translation": "[REVIEW] 1v1咨询服务"
+  },
+  {
+    "key": "general.text_8587",
+    "chinese": "支持 Visa/Mastercard/Amex",
+    "auto_translation": "[REVIEW] 支持 Visa/Mastercard/Amex"
+  },
+  {
+    "key": "general.text_9284",
+    "chinese": "渠道",
+    "auto_translation": "[REVIEW] 渠道"
+  },
+  {
+    "key": "general.text_3397",
+    "chinese": "可能的原因：\\n",
+    "auto_translation": "[REVIEW] 可能的原因：\\n"
+  },
+  {
+    "key": "general.text_8428",
+    "chinese": "建议操作：\\n",
+    "auto_translation": "[REVIEW] 建议操作：\\n"
+  },
+  {
+    "key": "general.text_4295",
+    "chinese": "1. 稍后重试（5-10分钟后）\\n",
+    "auto_translation": "[REVIEW] 1. 稍后重试（5-10分钟后）\\n"
+  },
+  {
+    "key": "general.text_2017",
+    "chinese": "调试信息：\\n",
+    "auto_translation": "[REVIEW] 调试信息：\\n"
+  },
+  {
+    "key": "general.text_8078",
+    "chinese": "[STRIPE] 调用API: /api/stripe-create-checkout",
+    "auto_translation": "[REVIEW] [STRIPE] 调用API: /api/stripe-create-checkout"
+  },
+  {
+    "key": "general.text_2586",
+    "chinese": "选色",
+    "auto_translation": "[REVIEW] 选色"
+  },
+  {
+    "key": "general.text_954",
+    "chinese": "custom_template_combo未找到",
+    "auto_translation": "[REVIEW] custom_template_combo未找到"
+  },
+  {
+    "key": "general.text_4093",
+    "chinese": "  - weekday: 工作日",
+    "auto_translation": "[REVIEW] - weekday: 工作日"
+  },
+  {
+    "key": "general.text_4325",
+    "chinese": "  - weekend: 周末",
+    "auto_translation": "[REVIEW] - weekend: 周末"
+  },
+  {
+    "key": "general.text_3273",
+    "chinese": "  - holiday: 节假日",
+    "auto_translation": "[REVIEW] - holiday: 节假日"
+  },
+  {
+    "key": "general.text_3631",
+    "chinese": "任意",
+    "auto_translation": "[REVIEW] 任意"
+  },
+  {
+    "key": "general.text_5835",
+    "chinese": "(将在开机时自动启动)",
+    "auto_translation": "[REVIEW] (将在开机时自动启动)"
+  },
+  {
+    "key": "general.text_4936",
+    "chinese": "(未启用)",
+    "auto_translation": "[REVIEW] (未启用)"
+  },
+  {
+    "key": "general.image_1",
+    "chinese": "图片文件 (*.jpg *.jpeg *.png *.gif *.webp)",
+    "auto_translation": "[REVIEW] 图片文件 (*.jpg *.jpeg *.png *.gif *.webp)"
+  },
+  {
+    "key": "general.text_7882",
+    "chinese": "⏳ 正在连接云服务...",
+    "auto_translation": "[REVIEW] ⏳ 正在连接云服务..."
+  },
+  {
+    "key": "general.text_142",
+    "chinese": "输入为空",
+    "auto_translation": "[REVIEW] 输入为空"
+  },
+  {
+    "key": "general.text_9625",
+    "chinese": "请先描述您的计划!\\n\\n例如: 明天9点开会1小时,然后写代码到下午5点",
+    "auto_translation": "[REVIEW] 请先描述您的计划!\\n\\n例如: 明天9点开会1小时,然后写代码到下午5点"
+  },
+  {
+    "key": "general.text_5713",
+    "chinese": "确认替换",
+    "auto_translation": "[REVIEW] 确认替换"
+  },
+  {
+    "key": "general.text_8848",
+    "chinese": "<a href=\"#\" style=\"color: #2196F3; text-decoration: none;\">直接向创始人反馈问题</a>",
+    "auto_translation": "[REVIEW] <a href=\"#\" style=\"color: #2196F3; text-decoration: none;\">直接向创始人反馈问题</a>"
+  },
+  {
+    "key": "general.text_2095",
+    "chinese": "\\n详细内容请访问 GitHub Release 页面查看...",
+    "auto_translation": "[REVIEW] \\n详细内容请访问 GitHub Release 页面查看..."
+  },
+  {
+    "key": "general.text_337_1",
+    "chinese": "当前以源码方式运行，无法自动替换程序。\\n请手动替换可执行文件。",
+    "auto_translation": "[REVIEW] 当前以源码方式运行，无法自动替换程序。\\n请手动替换可执行文件。"
+  },
+  {
+    "key": "general.text_2760",
+    "chinese": "检查中...",
+    "auto_translation": "[REVIEW] 检查中..."
+  },
+  {
+    "key": "general.text_377",
+    "chinese": "发现新版本",
+    "auto_translation": "[REVIEW] 发现新版本"
+  },
+  {
+    "key": "general.text_2128",
+    "chinese": "已是最新版本",
+    "auto_translation": "[REVIEW] 已是最新版本"
+  },
+  {
+    "key": "general.text_3254",
+    "chinese": "网络请求超时，请检查网络连接",
+    "auto_translation": "[REVIEW] 网络请求超时，请检查网络连接"
+  },
+  {
+    "key": "general.text_6306",
+    "chinese": "暂无发布版本",
+    "auto_translation": "[REVIEW] 暂无发布版本"
+  },
+  {
+    "key": "general.text_6717",
+    "chinese": "添加创始人微信",
+    "auto_translation": "[REVIEW] 添加创始人微信"
+  },
+  {
+    "key": "general.text_1302",
+    "chinese": "扫描二维码，直接反馈问题",
+    "auto_translation": "[REVIEW] 扫描二维码，直接反馈问题"
+  },
+  {
+    "key": "general.text_2502",
+    "chinese": "扫一扫上面的二维码图案，加我为朋友。",
+    "auto_translation": "[REVIEW] 扫一扫上面的二维码图案，加我为朋友。"
+  }
+]

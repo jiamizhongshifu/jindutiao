@@ -23,6 +23,7 @@ except ImportError:
 # 添加父目录到路径以导入core模块
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from gaiya.core.auth_client import AuthClient
+from i18n.translator import tr
 from gaiya.core.async_worker import AsyncNetworkWorker
 from gaiya.ui.email_verification_dialog import EmailVerificationDialog
 
@@ -46,7 +47,7 @@ class AuthDialog(QDialog):
 
     def init_ui(self):
         """初始化UI"""
-        self.setWindowTitle("GaiYa - 账户登录")
+        self.setWindowTitle(tr("auth.window_title"))
         self.setMinimumWidth(400)
         self.setMinimumHeight(350)
 
@@ -56,7 +57,7 @@ class AuthDialog(QDialog):
         main_layout.setContentsMargins(30, 30, 30, 30)
 
         # 标题
-        title_label = QLabel("欢迎使用 GaiYa")
+        title_label = QLabel(tr("auth.welcome"))
         title_font = QFont()
         title_font.setPointSize(18)
         title_font.setBold(True)
@@ -65,7 +66,7 @@ class AuthDialog(QDialog):
         main_layout.addWidget(title_label)
 
         # 副标题
-        subtitle_label = QLabel("每日进度条 - 让时间可视化")
+        subtitle_label = QLabel(tr("auth.subtitle"))
         subtitle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         subtitle_label.setStyleSheet("color: #666; font-size: 12px;")
         main_layout.addWidget(subtitle_label)
@@ -89,7 +90,7 @@ class AuthDialog(QDialog):
         main_layout.addWidget(self.stacked_widget)
 
         # 底部说明
-        info_label = QLabel("注册即表示同意服务条款和隐私政策")
+        info_label = QLabel(tr("auth.terms_notice"))
         info_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         info_label.setStyleSheet("color: #999; font-size: 10px;")
         main_layout.addWidget(info_label)
@@ -103,24 +104,24 @@ class AuthDialog(QDialog):
         layout.setSpacing(15)
 
         # 邮箱输入
-        email_label = QLabel("邮箱地址")
+        email_label = QLabel(tr("auth.email_label"))
         self.signin_email_input = QLineEdit()
-        self.signin_email_input.setPlaceholderText("请输入邮箱")
+        self.signin_email_input.setPlaceholderText(tr("auth.email_placeholder"))
         self.signin_email_input.setMinimumHeight(35)
 
         # 密码输入
-        password_label = QLabel("密码")
+        password_label = QLabel(tr("auth.password_label"))
         self.signin_password_input = QLineEdit()
-        self.signin_password_input.setPlaceholderText("请输入密码")
+        self.signin_password_input.setPlaceholderText(tr("auth.password_placeholder"))
         self.signin_password_input.setEchoMode(QLineEdit.EchoMode.Password)
         self.signin_password_input.setMinimumHeight(35)
 
         # 记住登录
-        self.remember_checkbox = QCheckBox("记住登录状态")
+        self.remember_checkbox = QCheckBox(tr("auth.signin.remember_me"))
         self.remember_checkbox.setChecked(True)
 
         # 登录按钮
-        signin_button = QPushButton("登录")
+        signin_button = QPushButton(tr("auth.signin.btn_login"))
         signin_button.setMinimumHeight(40)
         signin_button.setStyleSheet("""
             QPushButton {
@@ -144,13 +145,13 @@ class AuthDialog(QDialog):
         signin_button.clicked.connect(self._on_signin_clicked)
 
         # 忘记密码链接
-        forgot_button = QPushButton("忘记密码？")
+        forgot_button = QPushButton(tr("auth.signin.forgot_password"))
         forgot_button.setFlat(True)
         forgot_button.setStyleSheet("color: #4CAF50; text-decoration: underline;")
         forgot_button.clicked.connect(self._on_forgot_password)
 
         # Ghost button - 注册账号
-        signup_ghost_button = QPushButton("注册账号 >")
+        signup_ghost_button = QPushButton(tr("auth.signup.link_to_register"))
         signup_ghost_button.setMinimumHeight(40)
         signup_ghost_button.setStyleSheet("""
             QPushButton {
@@ -193,27 +194,27 @@ class AuthDialog(QDialog):
         layout.setSpacing(15)
 
         # 邮箱输入
-        email_label = QLabel("邮箱地址")
+        email_label = QLabel(tr("auth.email_label"))
         self.signup_email_input = QLineEdit()
-        self.signup_email_input.setPlaceholderText("请输入邮箱")
+        self.signup_email_input.setPlaceholderText(tr("auth.email_placeholder"))
         self.signup_email_input.setMinimumHeight(35)
 
         # 密码输入
-        password_label = QLabel("密码")
+        password_label = QLabel(tr("auth.password_label"))
         self.signup_password_input = QLineEdit()
-        self.signup_password_input.setPlaceholderText("至少6个字符")
+        self.signup_password_input.setPlaceholderText(tr("auth.password_hint"))
         self.signup_password_input.setEchoMode(QLineEdit.EchoMode.Password)
         self.signup_password_input.setMinimumHeight(35)
 
         # 确认密码
-        confirm_password_label = QLabel("确认密码")
+        confirm_password_label = QLabel(tr("auth.confirm_password_label"))
         self.signup_confirm_password_input = QLineEdit()
-        self.signup_confirm_password_input.setPlaceholderText("请再次输入密码")
+        self.signup_confirm_password_input.setPlaceholderText(tr("auth.confirm_password_placeholder"))
         self.signup_confirm_password_input.setEchoMode(QLineEdit.EchoMode.Password)
         self.signup_confirm_password_input.setMinimumHeight(35)
 
         # 注册按钮
-        signup_button = QPushButton("注册")
+        signup_button = QPushButton(tr("auth.signup.btn_register"))
         signup_button.setMinimumHeight(40)
         signup_button.setStyleSheet("""
             QPushButton {
@@ -237,7 +238,7 @@ class AuthDialog(QDialog):
         signup_button.clicked.connect(self._on_signup_clicked)
 
         # Ghost button - 返回登录
-        signin_ghost_button = QPushButton("< 返回登录")
+        signin_ghost_button = QPushButton(tr("auth.signup.back_to_login"))
         signin_ghost_button.setMinimumHeight(40)
         signin_ghost_button.setStyleSheet("""
             QPushButton {
@@ -280,25 +281,25 @@ class AuthDialog(QDialog):
 
         # 验证输入
         if not email or not password:
-            QMessageBox.warning(self, "输入错误", "请输入邮箱和密码")
+            QMessageBox.warning(self, tr("auth.error.input_error"), tr("auth.error.empty_fields"))
             return
 
         # 简单的邮箱格式验证
         if "@" not in email:
-            QMessageBox.warning(self, "输入错误", "邮箱格式不正确")
+            QMessageBox.warning(self, tr("auth.error.input_error"), tr("auth.error.invalid_email"))
             return
 
         # 禁用登录按钮，防止重复点击
         signin_button = self.sender()
         signin_button.setEnabled(False)
-        signin_button.setText("登录中...")
+        signin_button.setText(tr("auth.signin.logging_in"))
 
         # 调用登录API
         result = self.auth_client.signin(email, password)
 
         # 恢复按钮状态
         signin_button.setEnabled(True)
-        signin_button.setText("登录")
+        signin_button.setText(tr("auth.signin.btn_login"))
 
         if result.get("success"):
             # 登录成功
@@ -315,26 +316,26 @@ class AuthDialog(QDialog):
             self.accept()
         else:
             # 登录失败
-            error_msg = result.get("error", "登录失败")
+            error_msg = result.get("error", tr("auth.error.login_failed_title"))
 
             # 检查是否是SSL错误
-            if "SSL" in error_msg or "ssl" in error_msg or "连接失败" in error_msg:
+            if "SSL" in error_msg or "ssl" in error_msg or tr("auth.error.connection_failed") in error_msg:
                 # SSL连接失败，提供详细的排查建议
                 QMessageBox.critical(
                     self,
-                    "连接失败",
-                    f"客户端无法连接到服务器（SSL问题）\n\n"
-                    f"技术详情：{error_msg}\n\n"
-                    f"可能的解决方案：\n"
-                    f"1. 检查网络连接是否正常\n"
-                    f"2. 确认没有使用代理或VPN\n"
-                    f"3. 暂时关闭防火墙/安全软件重试\n"
-                    f"4. 更新Windows系统到最新版本\n\n"
-                    f"如果问题持续，请联系技术支持。"
+                    tr("auth.error.connection_failed"),
+                    tr("auth.error.ssl_error_intro") +
+                    tr("auth.error.technical_details", error_msg=error_msg) +
+                    tr("auth.error.solutions_intro") +
+                    tr("auth.error.solution_check_network") +
+                    tr("auth.error.solution_no_proxy") +
+                    tr("auth.error.solution_disable_firewall") +
+                    tr("auth.error.solution_update_windows") +
+                    tr("auth.error.contact_support")
                 )
             else:
                 # 其他错误，直接显示
-                QMessageBox.critical(self, "登录失败", f"登录失败：{error_msg}")
+                QMessageBox.critical(self, tr("auth.error.login_failed_title"), tr("auth.error.login_failed", error_msg=error_msg))
 
     def _on_signup_clicked(self):
         """处理注册按钮点击"""
@@ -344,25 +345,25 @@ class AuthDialog(QDialog):
 
         # 验证输入
         if not email or not password:
-            QMessageBox.warning(self, "输入错误", "请输入邮箱和密码")
+            QMessageBox.warning(self, tr("auth.error.input_error"), tr("auth.error.empty_fields"))
             return
 
         if "@" not in email:
-            QMessageBox.warning(self, "输入错误", "邮箱格式不正确")
+            QMessageBox.warning(self, tr("auth.error.input_error"), tr("auth.error.invalid_email"))
             return
 
         if len(password) < 6:
-            QMessageBox.warning(self, "输入错误", "密码至少需要6个字符")
+            QMessageBox.warning(self, tr("auth.error.input_error"), tr("auth.error.password_too_short"))
             return
 
         if password != confirm_password:
-            QMessageBox.warning(self, "输入错误", "两次输入的密码不一致")
+            QMessageBox.warning(self, tr("auth.error.input_error"), tr("auth.error.passwords_mismatch"))
             return
 
         # 禁用注册按钮
         signup_button = self.sender()
         signup_button.setEnabled(False)
-        signup_button.setText("注册中...")
+        signup_button.setText(tr("auth.signup.registering"))
 
         # 保存按钮引用供回调使用
         self._signup_button = signup_button
@@ -383,7 +384,7 @@ class AuthDialog(QDialog):
         """注册成功回调"""
         # 恢复按钮状态
         self._signup_button.setEnabled(True)
-        self._signup_button.setText("注册")
+        self._signup_button.setText(tr("auth.signup.btn_register"))
 
         if result.get("success"):
             # 使用Supabase内置邮箱验证
@@ -408,27 +409,25 @@ class AuthDialog(QDialog):
                 # 用户取消验证，提示可以稍后登录
                 QMessageBox.information(
                     self,
-                    "注册成功",
-                    "您的账号已创建，验证邮件已发送。\n\n"
-                    "请验证邮箱后登录。如果没有收到邮件，请检查垃圾邮件文件夹。"
+                    tr("auth.signup.success_title"),
+                    tr("auth.signup.success_message")
                 )
 
     def _on_signup_error(self, error_msg: str):
         """注册失败回调"""
         # 恢复按钮状态
         self._signup_button.setEnabled(True)
-        self._signup_button.setText("注册")
+        self._signup_button.setText(tr("auth.signup.btn_register"))
 
         # 检查是否是SSL错误
-        if "SSL" in error_msg or "ssl" in error_msg or "连接失败" in error_msg:
+        if "SSL" in error_msg or "ssl" in error_msg or tr("auth.error.connection_failed") in error_msg:
             # 提供浏览器注册的选项
             reply = QMessageBox.question(
                 self,
-                "连接失败",
-                f"客户端无法连接到服务器（SSL问题）\n\n"
-                f"技术详情：{error_msg}\n\n"
-                f"是否使用浏览器完成注册？\n"
-                f"（注册成功后，您可以返回客户端登录）",
+                tr("auth.error.connection_failed"),
+                tr("auth.error.ssl_error_intro") +
+                tr("auth.error.technical_details", error_msg=error_msg) +
+                tr("auth.error.browser_fallback_prompt"),
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.Yes
             )
@@ -442,13 +441,12 @@ class AuthDialog(QDialog):
                 # 提示用户
                 QMessageBox.information(
                     self,
-                    "浏览器注册",
-                    "已在浏览器中打开注册页面。\n\n"
-                    "请完成注册后，返回客户端使用\"登录\"标签页登录。"
+                    tr("auth.signup.browser_register_title"),
+                    tr("auth.signup.browser_register_message")
                 )
         else:
             # 其他错误，直接显示
-            QMessageBox.critical(self, "注册失败", f"注册失败：{error_msg}")
+            QMessageBox.critical(self, tr("auth.error.register_failed_title"), tr("auth.error.register_failed", error_msg=error_msg))
 
     def _on_email_verified(self, user_info: dict):
         """邮箱验证成功的回调"""
@@ -463,15 +461,15 @@ class AuthDialog(QDialog):
     def _on_forgot_password(self):
         """处理忘记密码"""
         email, ok = self._show_input_dialog(
-            "重置密码",
-            "请输入您的注册邮箱，我们将发送重置密码的邮件："
+            tr("auth.reset.title"),
+            tr("auth.reset.prompt")
         )
 
         if not ok or not email:
             return
 
         if "@" not in email:
-            QMessageBox.warning(self, "输入错误", "邮箱格式不正确")
+            QMessageBox.warning(self, tr("auth.error.input_error"), tr("auth.error.invalid_email"))
             return
 
         # 调用重置密码API
@@ -480,12 +478,12 @@ class AuthDialog(QDialog):
         if result.get("success"):
             QMessageBox.information(
                 self,
-                "邮件已发送",
-                f"重置密码的邮件已发送到 {email}，请查收。"
+                tr("auth.reset.email_sent_title"),
+                tr("auth.reset.email_sent_message", email=email)
             )
         else:
-            error_msg = result.get("error", "发送失败")
-            QMessageBox.critical(self, "发送失败", f"发送失败：{error_msg}")
+            error_msg = result.get("error", tr("auth.error.send_failed"))
+            QMessageBox.critical(self, tr("auth.error.send_failed"), tr("auth.error.send_failed_with_msg", error_msg=error_msg))
 
     def _show_input_dialog(self, title: str, label: str) -> tuple:
         """显示输入对话框（简易实现）"""
@@ -503,12 +501,12 @@ class AuthDialog(QDialog):
         # 检查 WebEngine 是否可用
         if not HAS_WEBENGINE:
             # WebEngine 不可用，显示提示信息
-            tip_label = QLabel("微信登录功能不可用")
+            tip_label = QLabel(tr("auth.wechat.unavailable"))
             tip_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             tip_label.setStyleSheet("font-size: 16px; font-weight: bold; color: #f44336;")
             layout.addWidget(tip_label)
 
-            info_label = QLabel("当前版本未包含 WebEngine 模块\n请使用邮箱登录")
+            info_label = QLabel(tr("auth.wechat.no_webengine"))
             info_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             info_label.setStyleSheet("color: #666; font-size: 14px;")
             layout.addWidget(info_label)
@@ -516,7 +514,7 @@ class AuthDialog(QDialog):
             layout.addSpacing(20)
 
             # 切换到邮箱登录按钮
-            switch_button = QPushButton("使用邮箱登录 >")
+            switch_button = QPushButton(tr("auth.switch_to_email"))
             switch_button.setStyleSheet("""
                 QPushButton {
                     background-color: #4CAF50;
@@ -539,7 +537,7 @@ class AuthDialog(QDialog):
 
         # WebEngine 可用，正常创建微信登录界面
         # 提示文字
-        tip_label = QLabel("请使用微信扫码登录")
+        tip_label = QLabel(tr("auth.wechat.scan_prompt"))
         tip_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         tip_label.setStyleSheet("font-size: 16px; font-weight: bold; color: #333;")
         layout.addWidget(tip_label)
@@ -571,7 +569,7 @@ class AuthDialog(QDialog):
         layout.addWidget(qr_container)
 
         # 状态标签
-        self.status_label = QLabel("等待扫码...")
+        self.status_label = QLabel(tr("auth.wechat.waiting_scan"))
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.status_label.setStyleSheet("color: #666; font-size: 14px;")
         layout.addWidget(self.status_label)
@@ -586,7 +584,7 @@ class AuthDialog(QDialog):
         layout.addWidget(separator)
 
         # 切换到邮箱登录按钮
-        switch_button = QPushButton("使用邮箱登录 >")
+        switch_button = QPushButton(tr("auth.switch_to_email"))
         switch_button.setFlat(True)
         switch_button.setStyleSheet("""
             QPushButton {
@@ -620,11 +618,11 @@ class AuthDialog(QDialog):
         # 使用StackedWidget替代TabWidget（页面0=登录, 页面1=注册）
         self.auth_pages = QStackedWidget()
 
-        # 页面0: 登录页面（带ghost button"注册账号 >"）
+        # 页面0: 登录页面（带ghost buttontr("auth.signup.link_to_register")）
         self.signin_widget = self._create_signin_page()
         self.auth_pages.addWidget(self.signin_widget)
 
-        # 页面1: 注册页面（带ghost button"< 返回登录"）
+        # 页面1: 注册页面（带ghost buttontr("auth.signup.back_to_login")）
         self.signup_widget = self._create_signup_page()
         self.auth_pages.addWidget(self.signup_widget)
 
@@ -658,10 +656,8 @@ class AuthDialog(QDialog):
             print("[AUTH-UI] WebEngine 不可用，自动切换到邮箱登录")
             QMessageBox.warning(
                 self,
-                "功能不可用",
-                "微信登录功能需要 WebEngine 模块支持。\n\n"
-                "当前版本为了减小体积已移除该模块。\n"
-                "请使用邮箱登录方式。"
+                tr("auth.wechat.feature_unavailable"),
+                tr("auth.wechat.webengine_required")
             )
             self._switch_to_email_login()
             return
@@ -684,7 +680,7 @@ class AuthDialog(QDialog):
         """启动微信登录流程（获取二维码URL）"""
         try:
             # 更新状态
-            self.status_label.setText("正在生成二维码...")
+            self.status_label.setText(tr("auth.wechat.generating_qr"))
 
             # 调用AuthClient获取微信二维码URL
             result = self.auth_client.wechat_get_qr_code()
@@ -698,7 +694,7 @@ class AuthDialog(QDialog):
                 self.qr_code_view.setUrl(QUrl(qr_url))
 
                 # 更新状态
-                self.status_label.setText("等待扫码...")
+                self.status_label.setText(tr("auth.wechat.waiting_scan"))
 
                 # 启动轮询定时器（每2秒检查一次）
                 if self.polling_timer is None:
@@ -708,8 +704,8 @@ class AuthDialog(QDialog):
                 self.polling_timer.start(2000)  # 2秒轮询一次
             else:
                 # 获取二维码失败
-                error_msg = result.get("error", "无法生成二维码")
-                self.status_label.setText(f"错误: {error_msg}")
+                error_msg = result.get("error", tr("auth.error.qr_code_failed"))
+                self.status_label.setText(tr("auth.error.generic_error", error_msg=error_msg))
                 self.qr_code_view.setHtml(f"""
                     <html>
                     <body style="display: flex; align-items: center; justify-content: center;
@@ -723,7 +719,7 @@ class AuthDialog(QDialog):
                 """)
         except Exception as e:
             # 异常处理
-            self.status_label.setText(f"错误: {str(e)}")
+            self.status_label.setText(tr("auth.error.exception_error", e=str(e)))
             self.qr_code_view.setHtml(f"""
                 <html>
                 <body style="display: flex; align-items: center; justify-content: center;
@@ -749,13 +745,13 @@ class AuthDialog(QDialog):
 
             if status == "pending":
                 # 仍在等待扫码
-                self.status_label.setText("等待扫码...")
+                self.status_label.setText(tr("auth.wechat.waiting_scan"))
             elif status == "scanned":
                 # 已扫码，等待确认
-                self.status_label.setText("扫码成功，请在手机上确认...")
+                self.status_label.setText(tr("auth.wechat.confirm_on_phone"))
             elif status == "success":
                 # 登录成功
-                self.status_label.setText("登录成功！")
+                self.status_label.setText(tr("auth.signin.success"))
 
                 # 停止轮询
                 if self.polling_timer:
@@ -771,20 +767,20 @@ class AuthDialog(QDialog):
                 self.accept()
             elif status == "expired":
                 # 二维码过期
-                self.status_label.setText("二维码已过期，正在刷新...")
+                self.status_label.setText(tr("auth.wechat.qr_expired"))
                 if self.polling_timer:
                     self.polling_timer.stop()
                 # 重新生成二维码
                 QTimer.singleShot(1000, self._start_wechat_login)
             elif status == "error":
                 # 登录失败
-                error_msg = result.get("error", "登录失败")
-                self.status_label.setText(f"错误: {error_msg}")
+                error_msg = result.get("error", tr("auth.error.login_failed_title"))
+                self.status_label.setText(tr("auth.error.generic_error", error_msg=error_msg))
                 if self.polling_timer:
                     self.polling_timer.stop()
         except Exception as e:
             # 异常处理
-            self.status_label.setText(f"检查状态失败: {str(e)}")
+            self.status_label.setText(tr("auth.error.status_check_failed", e=str(e)))
 
 
 if __name__ == "__main__":

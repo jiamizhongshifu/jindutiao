@@ -1,0 +1,46 @@
+=== Scene Tab Internationalization Application Log ===
+
+Total replacements attempted: 26
+Successful: 24
+Skipped: 2
+
+=== Detailed Log ===
+✓ Line 2460: Basic settings group title
+✓ Line 2484: Scene selection group title
+✓ Line 2582: Advanced features group title
+✓ Line 2455: Info label
+✓ Line 2491: Current scene label
+✓ Line 2466: Enable scene system checkbox
+✓ Line 2474: Show progress bar checkbox
+✓ Line 2477: Progress bar tooltip
+✓ Line 2563: Refresh button tooltip
+✓ Line 2613: Editor hint label
+✗ Line 2517: No scene option 1 - SKIPPED (string not found)
+✓ Line 2518: No scene option 2
+✓ Line 2534: No available scenes option
+✗ Line 2721: No scene option 3 - SKIPPED (string not found)
+✓ Line 2722: No scene option 4
+✓ Line 2543: Refresh scenes button
+✓ Line 2589: Open editor button
+✓ Line 2570: Please select scene label
+✓ Line 2641: No scene selected message
+✓ Line 2657: Cannot load info message
+✓ Line 2659: Manager not initialized message
+✓ Line 2682: Editor opened log
+✓ Line 2685: Error open editor log
+✓ Line 2695: Editor closed log
+✓ Line 2742: Error refresh scenes log
+✓ Line 2688: Error dialog title
+
+=== Skipped Items (Manual Fix Required) ===
+Line 2517: No scene option 1 - String not found in line
+Line 2721: No scene option 3 - String not found in line
+
+=== Manual Fixes Required ===
+Line 2650: Replace metadata.get("description", "无描述") with metadata.get("description", tr("scene.no_description"))
+Line 2652: Replace metadata.get("author", "未知") with metadata.get("author", tr("scene.unknown_author"))
+Line 2654: Replace f"描述: {description}\n版本: {version}  作者: {author}" with tr("scene.scene_info_format", ...)
+Line 2689: Replace multi-line error message with tr("message.error_open_editor_detail", e=str(e))
+Line 2740: Replace f"场景列表已刷新,共 {len(scene_list)} 个场景" with tr("message.scene_list_refreshed", count=len(scene_list))
+Line 2746: Replace "刷新失败" with tr("dialog.refresh_failed")
+Line 2747: Replace f"刷新场景列表时出错:\n{e}" with tr("message.error_refresh_detail", e=str(e))

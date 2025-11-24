@@ -89,26 +89,32 @@
 <body>
     <div class="container">
         <div class="success-icon"></div>
-        <h1>支付成功！</h1>
-        <p>感谢您升级GaiYa会员，您的会员权益已激活。</p>
+        <h1 data-i18n="payment.success_title">支付成功！</h1>
+        <p data-i18n="payment.success_desc">感谢您升级GaiYa会员，您的会员权益已激活。</p>
 
-        <div class="session-info" id="sessionInfo">
+        <div class="session-info" id="sessionInfo" data-i18n="payment.processing">
             正在处理订单...
         </div>
 
-        <a href="gaiya://open" class="btn">打开GaiYa应用</a>
+        <a href="gaiya://open" class="btn" data-i18n="payment.open_app">打开GaiYa应用</a>
     </div>
 
+    <script src="js/i18n.js"></script>
     <script>
         // 从URL获取session_id
         const urlParams = new URLSearchParams(window.location.search);
         const sessionId = urlParams.get('session_id');
 
         if (sessionId) {
-            document.getElementById('sessionInfo').innerHTML = `
-                <strong>订单ID：</strong><br>
-                <code style="font-size: 12px; word-break: break-all;">${sessionId}</code>
-            `;
+            // Wait for i18n to load
+            document.addEventListener('DOMContentLoaded', async () => {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                const orderIdLabel = window.i18n ? window.i18n.t('payment.order_id') : '订单ID：';
+                document.getElementById('sessionInfo').innerHTML = `
+                    <strong>${orderIdLabel}</strong><br>
+                    <code style="font-size: 12px; word-break: break-all;">${sessionId}</code>
+                `;
+            });
         }
 
         // 5秒后自动尝试打开应用

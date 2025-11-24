@@ -1,0 +1,7 @@
+[
+  {
+    "line": 5857,
+    "chinese": " 已删除",
+    "context": "QMessageBox.information(self, \"删除成功\", f\"模板 \\\"{template['name']}\\\" 已删除\")"
+  }
+]

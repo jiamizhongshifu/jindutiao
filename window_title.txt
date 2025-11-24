@@ -1,0 +1,2 @@
+ZH: {VERSION_STRING_ZH} - 配置管理器
+EN: {VERSION_STRING_ZH} - Configuration管理器

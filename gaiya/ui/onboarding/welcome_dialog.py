@@ -7,6 +7,12 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
+import sys
+import os
+# 添加父目录到路径以导入i18n模块
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from i18n.translator import tr
+
 
 class WelcomeDialog(QDialog):
     """欢迎对话框
@@ -22,7 +28,7 @@ class WelcomeDialog(QDialog):
     def setup_ui(self):
         """设置UI界面"""
         # 窗口基本设置
-        self.setWindowTitle("欢迎使用 GaiYa")
+        self.setWindowTitle(tr("welcome_dialog.window.title"))
         self.setFixedSize(450, 580)  # 增加高度 420→580，确保所有功能列表完整显示
         self.setModal(True)
 
@@ -32,7 +38,7 @@ class WelcomeDialog(QDialog):
         layout.setContentsMargins(30, 30, 30, 30)
 
         # 标题
-        title = QLabel("让每一天都清晰可见 ⏱️")
+        title = QLabel(tr("welcome_dialog.title.main"))
         title_font = QFont()
         title_font.setPointSize(18)  # 增加字号 16→18
         title_font.setBold(True)
@@ -41,7 +47,7 @@ class WelcomeDialog(QDialog):
         layout.addWidget(title)
 
         # 副标题
-        subtitle = QLabel("GaiYa 时间进度条助手")
+        subtitle = QLabel(tr("welcome_dialog.title.subtitle"))
         subtitle_font = QFont()
         subtitle_font.setPointSize(14)  # 增加字号 12→14
         subtitle.setFont(subtitle_font)
@@ -53,10 +59,10 @@ class WelcomeDialog(QDialog):
 
         # 核心功能介绍
         features = [
-            "🎯 一眼掌握全天任务进度",
-            "⏰ 智能提醒永不错过重要时刻",
-            "🎨 丰富主题个性化你的界面",
-            "🤖 AI智能规划优化时间管理"
+            tr("welcome_dialog.features.task_progress"),
+            tr("welcome_dialog.features.smart_reminder"),
+            tr("welcome_dialog.features.rich_themes"),
+            tr("welcome_dialog.features.ai_planning")
         ]
 
         for feature in features:
@@ -70,7 +76,7 @@ class WelcomeDialog(QDialog):
         layout.addSpacing(10)
 
         # 说明文字
-        info = QLabel("接下来将通过简单的2步配置，帮助你快速开始使用。")
+        info = QLabel(tr("welcome_dialog.info.message"))
         info.setWordWrap(True)
         info.setStyleSheet("color: #888888; font-size: 12px;")  # 增加字号 11px→12px
         layout.addWidget(info)
@@ -78,7 +84,7 @@ class WelcomeDialog(QDialog):
         layout.addStretch()
 
         # 确认复选框
-        self.confirm_checkbox = QCheckBox("我已了解，开始配置")
+        self.confirm_checkbox = QCheckBox(tr("welcome_dialog.checkbox.confirm"))
         checkbox_font = QFont()
         checkbox_font.setPointSize(13)  # 设置复选框字号为13pt
         self.confirm_checkbox.setFont(checkbox_font)
@@ -90,13 +96,13 @@ class WelcomeDialog(QDialog):
         button_layout.setSpacing(10)
 
         # 跳过按钮
-        skip_btn = QPushButton("暂时跳过")
+        skip_btn = QPushButton(tr("welcome_dialog.buttons.skip"))
         skip_btn.setFixedHeight(40)  # 增加按钮高度 36→40
         skip_btn.clicked.connect(self.reject)
         button_layout.addWidget(skip_btn)
 
         # 开始配置按钮
-        self.start_btn = QPushButton("开始配置")
+        self.start_btn = QPushButton(tr("welcome_dialog.buttons.start"))
         self.start_btn.setFixedHeight(40)  # 增加按钮高度 36→40
         self.start_btn.setEnabled(False)  # 初始禁用
         self.start_btn.clicked.connect(self.accept)

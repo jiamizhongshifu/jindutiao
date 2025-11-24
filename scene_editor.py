@@ -33,6 +33,9 @@ from PySide6.QtGui import (
     QUndoStack, QUndoCommand
 )
 
+# 添加i18n支持
+from i18n.translator import tr
+
 
 # ============================================================================
 # 事件配置数据类
@@ -69,7 +72,7 @@ class AddItemCommand(QUndoCommand):
     """添加元素命令"""
 
     def __init__(self, canvas, item: 'SceneItemGraphics'):
-        super().__init__("添加元素")
+        super().__init__(tr("scene_editor.commands.add_item"))
         self.canvas = canvas
         self.item = item
 
@@ -94,7 +97,7 @@ class MoveItemCommand(QUndoCommand):
     """移动元素命令"""
 
     def __init__(self, item: 'SceneItemGraphics', old_pos: QPointF, new_pos: QPointF):
-        super().__init__("移动元素")
+        super().__init__(tr("scene_editor.commands.move_item"))
         self.item = item
         self.old_pos = old_pos
         self.new_pos = new_pos
@@ -122,7 +125,7 @@ class MoveMultipleItemsCommand(QUndoCommand):
         Args:
             items_moves: 列表，每个元素是(item, old_pos, new_pos)的元组
         """
-        super().__init__(f"移动 {len(items_moves)} 个元素")
+        super().__init__(tr("scene_editor.commands.move_multiple", count=len(items_moves)))
         self.items_moves = items_moves
 
     def redo(self):
@@ -144,7 +147,7 @@ class ScaleItemCommand(QUndoCommand):
     """缩放元素命令"""
 
     def __init__(self, item: 'SceneItemGraphics', old_scale: float, new_scale: float):
-        super().__init__("缩放元素")
+        super().__init__(tr("scene_editor.commands.scale_item"))
         self.item = item
         self.old_scale = old_scale
         self.new_scale = new_scale
@@ -170,78 +173,78 @@ class EventConfigDialog(QDialog):
     def __init__(self, parent=None, event_config: Optional[EventConfig] = None):
         super().__init__(parent)
 
-        self.setWindowTitle("配置事件")
+        self.setWindowTitle(tr("scene_editor.events.dialog.title"))
         self.setModal(True)
         self.setMinimumWidth(500)
 
         layout = QVBoxLayout(self)
 
         # 触发器选择
-        trigger_group = QGroupBox("触发器")
+        trigger_group = QGroupBox(tr("scene_editor.events.dialog.trigger_group"))
         trigger_layout = QFormLayout(trigger_group)
 
         self.trigger_combo = QComboBox()
         self.trigger_combo.addItems([
-            "on_hover - 鼠标悬停",
-            "on_click - 鼠标点击",
-            "on_time_reach - 时间到达",
-            "on_progress_range - 进度范围",
-            "on_task_start - 任务开始",
-            "on_task_end - 任务结束"
+            tr("scene_editor.events.triggers.on_hover"),
+            tr("scene_editor.events.triggers.on_click"),
+            tr("scene_editor.events.triggers.on_time_reach"),
+            tr("scene_editor.events.triggers.on_progress_range"),
+            tr("scene_editor.events.triggers.on_task_start"),
+            tr("scene_editor.events.triggers.on_task_end")
         ])
-        trigger_layout.addRow("触发类型:", self.trigger_combo)
+        trigger_layout.addRow(tr("scene_editor.events.triggers.label"), self.trigger_combo)
 
         layout.addWidget(trigger_group)
 
         # 动作配置
-        action_group = QGroupBox("动作")
+        action_group = QGroupBox(tr("scene_editor.events.dialog.action_group"))
         action_layout = QFormLayout(action_group)
 
         self.action_type_combo = QComboBox()
         self.action_type_combo.addItems([
-            "show_tooltip - 显示提示",
-            "show_dialog - 显示对话框",
-            "open_url - 打开链接"
+            tr("scene_editor.events.actions.show_tooltip"),
+            tr("scene_editor.events.actions.show_dialog"),
+            tr("scene_editor.events.actions.open_url")
         ])
         self.action_type_combo.currentIndexChanged.connect(self._on_action_type_changed)
-        action_layout.addRow("动作类型:", self.action_type_combo)
+        action_layout.addRow(tr("scene_editor.events.actions.label"), self.action_type_combo)
 
         # 参数编辑（根据动作类型动态变化）
-        self.params_group = QGroupBox("参数")
+        self.params_group = QGroupBox(tr("scene_editor.events.dialog.params_group"))
         self.params_layout = QFormLayout(self.params_group)
 
         # 提示文本（用于show_tooltip和show_dialog）
         self.text_input = QTextEdit()
         self.text_input.setMaximumHeight(100)
-        self.params_layout.addRow("文本内容:", self.text_input)
+        self.params_layout.addRow(tr("scene_editor.events.params.text_content"), self.text_input)
 
         # URL（用于open_url）
         self.url_input = QLineEdit()
-        self.url_input.setPlaceholderText("https://example.com")
-        self.params_layout.addRow("URL地址:", self.url_input)
+        self.url_input.setPlaceholderText(tr("scene_editor.events.params.url_placeholder"))
+        self.params_layout.addRow(tr("scene_editor.events.params.url_address"), self.url_input)
         self.url_input.setVisible(False)
 
         # 时间参数（用于on_time_reach）
         self.time_input = QLineEdit()
-        self.time_input.setPlaceholderText("例如: 09:00 或 50%")
-        self.params_layout.addRow("时间:", self.time_input)
+        self.time_input.setPlaceholderText(tr("scene_editor.events.params.time_placeholder"))
+        self.params_layout.addRow(tr("scene_editor.events.params.time"), self.time_input)
         self.time_input.setVisible(False)
 
         # 进度范围参数（用于on_progress_range）
         self.range_start_input = QLineEdit()
-        self.range_start_input.setPlaceholderText("例如: 0 (表示0%)")
-        self.params_layout.addRow("起始百分比:", self.range_start_input)
+        self.range_start_input.setPlaceholderText(tr("scene_editor.events.params.start_percent_placeholder"))
+        self.params_layout.addRow(tr("scene_editor.events.params.start_percent"), self.range_start_input)
         self.range_start_input.setVisible(False)
 
         self.range_end_input = QLineEdit()
-        self.range_end_input.setPlaceholderText("例如: 50 (表示50%)")
-        self.params_layout.addRow("结束百分比:", self.range_end_input)
+        self.range_end_input.setPlaceholderText(tr("scene_editor.events.params.end_percent_placeholder"))
+        self.params_layout.addRow(tr("scene_editor.events.params.end_percent"), self.range_end_input)
         self.range_end_input.setVisible(False)
 
         # 任务索引参数（用于on_task_start和on_task_end）
         self.task_index_input = QLineEdit()
-        self.task_index_input.setPlaceholderText("例如: 0 (表示第一个任务)")
-        self.params_layout.addRow("任务索引:", self.task_index_input)
+        self.task_index_input.setPlaceholderText(tr("scene_editor.events.params.task_index_placeholder"))
+        self.params_layout.addRow(tr("scene_editor.events.params.task_index"), self.task_index_input)
         self.task_index_input.setVisible(False)
 
         action_layout.addRow(self.params_group)
@@ -1405,38 +1408,38 @@ class AssetLibraryPanel(QWidget):
         layout = QVBoxLayout(self)
 
         # 标题
-        title = QLabel("素材库")
+        title = QLabel(tr("scene_editor.asset_library.title"))
         title.setStyleSheet("font-size: 14px; font-weight: bold;")
         layout.addWidget(title)
 
         # 道路层分组
-        road_group = QGroupBox("道路层")
+        road_group = QGroupBox(tr("scene_editor.asset_library.road_group"))
         road_layout = QVBoxLayout(road_group)
         self.road_list = QListWidget()
         self.road_list.setIconSize(QSize(48, 48))  # 缩小缩略图尺寸，节省空间
         road_layout.addWidget(self.road_list)
         # 道路层上传按钮
-        road_upload_btn = QPushButton("+ 上传道路图片")
+        road_upload_btn = QPushButton(tr("scene_editor.asset_library.road_upload"))
         road_upload_btn.clicked.connect(self.import_road_asset)
         road_layout.addWidget(road_upload_btn)
         # 道路层加载按钮
-        road_load_btn = QPushButton("设为道路")
+        road_load_btn = QPushButton(tr("scene_editor.asset_library.road_load"))
         road_load_btn.clicked.connect(self.load_selected_road)
         road_layout.addWidget(road_load_btn)
         layout.addWidget(road_group)
 
         # 场景层分组
-        scene_group = QGroupBox("场景层")
+        scene_group = QGroupBox(tr("scene_editor.asset_library.scene_group"))
         scene_layout = QVBoxLayout(scene_group)
         self.scene_list = QListWidget()
         self.scene_list.setIconSize(QSize(48, 48))  # 缩小缩略图尺寸，节省空间
         scene_layout.addWidget(self.scene_list)
         # 场景层上传按钮
-        scene_upload_btn = QPushButton("+ 上传场景图片")
+        scene_upload_btn = QPushButton(tr("scene_editor.asset_library.scene_upload"))
         scene_upload_btn.clicked.connect(self.import_scene_asset)
         scene_layout.addWidget(scene_upload_btn)
         # 场景层加载按钮
-        scene_load_btn = QPushButton("加载到画布")
+        scene_load_btn = QPushButton(tr("scene_editor.asset_library.scene_load"))
         scene_load_btn.clicked.connect(self.load_selected_scene)
         scene_layout.addWidget(scene_load_btn)
         layout.addWidget(scene_group)
@@ -1501,9 +1504,9 @@ class AssetLibraryPanel(QWidget):
         """导入道路层素材"""
         file_paths, _ = QFileDialog.getOpenFileNames(
             self,
-            "选择道路图片",
+            tr("scene_editor.asset_library.select_road_dialog"),
             "",
-            "PNG图片 (*.png)"
+            tr("scene_editor.asset_library.file_filter_png")
         )
 
         for file_path in file_paths:
@@ -1513,9 +1516,9 @@ class AssetLibraryPanel(QWidget):
         """导入场景层素材"""
         file_paths, _ = QFileDialog.getOpenFileNames(
             self,
-            "选择场景图片",
+            tr("scene_editor.asset_library.select_scene_dialog"),
             "",
-            "PNG图片 (*.png)"
+            tr("scene_editor.asset_library.file_filter_png")
         )
 
         for file_path in file_paths:
@@ -1547,7 +1550,7 @@ class AssetLibraryPanel(QWidget):
         """将选中的道路图片设为道路层背景"""
         current_item = self.road_list.currentItem()
         if not current_item:
-            QMessageBox.warning(self, "提示", "请先选择一个道路图片")
+            QMessageBox.warning(self, tr("scene_editor.asset_library.warning_title"), tr("scene_editor.asset_library.warning_select_road"))
             return
 
         file_path = current_item.data(Qt.UserRole)
@@ -1560,7 +1563,7 @@ class AssetLibraryPanel(QWidget):
         """将选中的场景图片加载到画布中央"""
         current_item = self.scene_list.currentItem()
         if not current_item:
-            QMessageBox.warning(self, "提示", "请先选择一个场景图片")
+            QMessageBox.warning(self, tr("scene_editor.asset_library.warning_title"), tr("scene_editor.asset_library.warning_select_scene"))
             return
 
         file_path = current_item.data(Qt.UserRole)
@@ -1628,40 +1631,40 @@ class PropertyPanel(QWidget):
         layout = QVBoxLayout(self)
 
         # 标题
-        title = QLabel("属性面板")
+        title = QLabel(tr("scene_editor.property_panel.title"))
         title.setStyleSheet("font-size: 14px; font-weight: bold;")
         layout.addWidget(title)
 
         # 基本信息分组
-        basic_group = QGroupBox("基本信息")
+        basic_group = QGroupBox(tr("scene_editor.property_panel.basic_group"))
         basic_layout = QFormLayout(basic_group)
 
         self.scene_name_input = QLineEdit()
-        self.scene_name_input.setPlaceholderText("例如: 像素森林")
-        basic_layout.addRow("场景名称:", self.scene_name_input)
+        self.scene_name_input.setPlaceholderText(tr("scene_editor.property_panel.scene_name_placeholder"))
+        basic_layout.addRow(tr("scene_editor.property_panel.scene_name_label"), self.scene_name_input)
 
         self.canvas_height_input = QSpinBox()
         self.canvas_height_input.setRange(100, 300)
         self.canvas_height_input.setValue(150)
         self.canvas_height_input.setSuffix(" px")
-        basic_layout.addRow("画布高度:", self.canvas_height_input)
+        basic_layout.addRow(tr("scene_editor.property_panel.canvas_height_label"), self.canvas_height_input)
 
         layout.addWidget(basic_group)
 
         # 道路层分组
-        self.road_group = QGroupBox("道路层")
+        self.road_group = QGroupBox(tr("scene_editor.property_panel.road_group"))
         self.road_group.setVisible(False)  # 默认隐藏
         road_layout = QVBoxLayout(self.road_group)
 
         # 道路图片预览
-        self.road_preview = QLabel("未选择道路图片")
+        self.road_preview = QLabel(tr("scene_editor.property_panel.no_road_selected"))
         self.road_preview.setAlignment(Qt.AlignCenter)
         self.road_preview.setStyleSheet("border: 1px solid #ccc; padding: 10px; background: white;")
         self.road_preview.setMinimumHeight(80)
         road_layout.addWidget(self.road_preview)
 
         # 道路文件名显示
-        self.road_filename_label = QLabel("文件: 无")
+        self.road_filename_label = QLabel(tr("scene_editor.property_panel.file_none"))
         self.road_filename_label.setStyleSheet("font-size: 11px; color: #666;")
         road_layout.addWidget(self.road_filename_label)
 
@@ -1674,7 +1677,7 @@ class PropertyPanel(QWidget):
         self.road_x_input.setSuffix(" px")
         self.road_x_input.valueChanged.connect(self._on_road_x_changed)
         self.road_x_input.setEnabled(False)
-        road_position_layout.addRow("X偏移:", self.road_x_input)
+        road_position_layout.addRow(tr("scene_editor.property_panel.x_offset_label"), self.road_x_input)
 
         self.road_y_input = QSpinBox()
         self.road_y_input.setRange(-300, 300)
@@ -1682,7 +1685,7 @@ class PropertyPanel(QWidget):
         self.road_y_input.setSuffix(" px")
         self.road_y_input.valueChanged.connect(self._on_road_y_changed)
         self.road_y_input.setEnabled(False)
-        road_position_layout.addRow("Y偏移:", self.road_y_input)
+        road_position_layout.addRow(tr("scene_editor.property_panel.y_offset_label"), self.road_y_input)
 
         # 道路缩放控制（滑块 + 数值输入框）
         road_scale_container = QWidget()
@@ -1709,7 +1712,7 @@ class PropertyPanel(QWidget):
         road_scale_layout.addWidget(self.road_scale_slider)
         road_scale_layout.addWidget(self.road_scale_spinbox)
 
-        road_position_layout.addRow("缩放:", road_scale_container)
+        road_position_layout.addRow(tr("scene_editor.property_panel.scale_label"), road_scale_container)
 
         # 道路层级控制
         self.road_z_input = QSpinBox()
@@ -1717,17 +1720,17 @@ class PropertyPanel(QWidget):
         self.road_z_input.setValue(50)
         self.road_z_input.setEnabled(False)
         self.road_z_input.valueChanged.connect(self._on_road_z_changed)
-        road_position_layout.addRow("层级:", self.road_z_input)
+        road_position_layout.addRow(tr("scene_editor.property_panel.z_index_label"), self.road_z_input)
 
         road_layout.addLayout(road_position_layout)
 
         # 道路操作按钮
         road_button_layout = QHBoxLayout()
-        self.select_road_button = QPushButton("选择道路图片")
+        self.select_road_button = QPushButton(tr("scene_editor.property_panel.select_road_btn"))
         self.select_road_button.clicked.connect(self._on_select_road)
         road_button_layout.addWidget(self.select_road_button)
 
-        self.clear_road_button = QPushButton("清除道路")
+        self.clear_road_button = QPushButton(tr("scene_editor.property_panel.clear_road_btn"))
         self.clear_road_button.clicked.connect(self._on_clear_road)
         self.clear_road_button.setEnabled(False)
         road_button_layout.addWidget(self.clear_road_button)
@@ -1736,24 +1739,24 @@ class PropertyPanel(QWidget):
         layout.addWidget(self.road_group)
 
         # 选中元素分组
-        self.element_group = QGroupBox("选中元素")
+        self.element_group = QGroupBox(tr("scene_editor.property_panel.element_group"))
         self.element_group.setVisible(False)  # 默认隐藏
         element_layout = QFormLayout(self.element_group)
 
-        self.element_id_label = QLabel("未选中")
-        element_layout.addRow("ID:", self.element_id_label)
+        self.element_id_label = QLabel(tr("scene_editor.property_panel.no_selection"))
+        element_layout.addRow(tr("scene_editor.property_panel.id_label"), self.element_id_label)
 
         self.element_x_input = QSpinBox()
         self.element_x_input.setRange(-1000, 2000)  # 像素范围，支持超出画布
         self.element_x_input.setSuffix(" px")
         self.element_x_input.valueChanged.connect(self._on_x_changed)
-        element_layout.addRow("X位置:", self.element_x_input)
+        element_layout.addRow(tr("scene_editor.property_panel.x_position_label"), self.element_x_input)
 
         self.element_y_input = QSpinBox()
         self.element_y_input.setRange(-1000, 1000)  # 支持负值
         self.element_y_input.setSuffix(" px")
         self.element_y_input.valueChanged.connect(self._on_y_changed)
-        element_layout.addRow("Y位置:", self.element_y_input)
+        element_layout.addRow(tr("scene_editor.property_panel.y_position_label"), self.element_y_input)
 
         # 场景元素缩放控制（滑块 + 数值输入框）
         element_scale_container = QWidget()
@@ -1778,15 +1781,15 @@ class PropertyPanel(QWidget):
         element_scale_layout.addWidget(self.element_scale_slider)
         element_scale_layout.addWidget(self.element_scale_spinbox)
 
-        element_layout.addRow("缩放:", element_scale_container)
+        element_layout.addRow(tr("scene_editor.property_panel.scale_label"), element_scale_container)
 
         self.element_z_input = QSpinBox()
         self.element_z_input.setRange(0, 100)
         self.element_z_input.valueChanged.connect(self._on_z_changed)
-        element_layout.addRow("层级:", self.element_z_input)
+        element_layout.addRow(tr("scene_editor.property_panel.z_index_label"), self.element_z_input)
 
         # 事件配置部分
-        events_label = QLabel("事件配置")
+        events_label = QLabel(tr("scene_editor.property_panel.events_config"))
         events_label.setStyleSheet("font-weight: bold; margin-top: 10px;")
         element_layout.addRow(events_label)
 
@@ -1798,16 +1801,16 @@ class PropertyPanel(QWidget):
         # 事件操作按钮
         events_button_layout = QHBoxLayout()
 
-        self.add_event_button = QPushButton("添加事件")
+        self.add_event_button = QPushButton(tr("scene_editor.property_panel.add_event_btn"))
         self.add_event_button.clicked.connect(self._on_add_event)
         events_button_layout.addWidget(self.add_event_button)
 
-        self.edit_event_button = QPushButton("编辑")
+        self.edit_event_button = QPushButton(tr("scene_editor.property_panel.edit_btn"))
         self.edit_event_button.clicked.connect(self._on_edit_event)
         self.edit_event_button.setEnabled(False)
         events_button_layout.addWidget(self.edit_event_button)
 
-        self.delete_event_button = QPushButton("删除")
+        self.delete_event_button = QPushButton(tr("scene_editor.property_panel.delete_btn"))
         self.delete_event_button.clicked.connect(self._on_delete_event)
         self.delete_event_button.setEnabled(False)
         events_button_layout.addWidget(self.delete_event_button)
@@ -1879,11 +1882,11 @@ class PropertyPanel(QWidget):
                 )
                 self.road_preview.setPixmap(scaled_pixmap)
             else:
-                self.road_preview.setText("图片加载失败")
+                self.road_preview.setText(tr("scene_editor.property_panel.image_load_failed"))
 
             # 更新文件名显示
             filename = os.path.basename(self.canvas.road_image_path)
-            self.road_filename_label.setText(f"文件: {filename}")
+            self.road_filename_label.setText(tr("scene_editor.property_panel.file_label", filename=filename))
 
             # 更新位置和缩放
             self.road_x_input.setValue(self.canvas.road_offset_x)
@@ -1907,8 +1910,8 @@ class PropertyPanel(QWidget):
         else:
             # 未选择道路图片时的状态
             self.road_preview.clear()
-            self.road_preview.setText("未选择道路图片")
-            self.road_filename_label.setText("文件: 无")
+            self.road_preview.setText(tr("scene_editor.property_panel.no_road_selected"))
+            self.road_filename_label.setText(tr("scene_editor.property_panel.file_none"))
 
             self.road_x_input.setEnabled(False)
             self.road_y_input.setEnabled(False)
@@ -1994,9 +1997,9 @@ class PropertyPanel(QWidget):
 
         file_path, _ = QFileDialog.getOpenFileName(
             self,
-            "选择道路图片",
+            tr("scene_editor.property_panel.select_road_dialog_title"),
             "",
-            "图片文件 (*.png *.jpg *.jpeg)"
+            tr("scene_editor.property_panel.file_filter_images")
         )
 
         if file_path and self.canvas:
@@ -2013,7 +2016,7 @@ class PropertyPanel(QWidget):
                 # 更新文件名显示
                 import os
                 filename = os.path.basename(file_path)
-                self.road_filename_label.setText(f"文件: {filename}")
+                self.road_filename_label.setText(tr("scene_editor.property_panel.file_label", filename=filename))
 
                 # 启用清除按钮和位置调整控件
                 self.clear_road_button.setEnabled(True)
@@ -2039,8 +2042,8 @@ class PropertyPanel(QWidget):
 
             # 重置预览
             self.road_preview.clear()
-            self.road_preview.setText("未选择道路图片")
-            self.road_filename_label.setText("文件: 无")
+            self.road_preview.setText(tr("scene_editor.property_panel.no_road_selected"))
+            self.road_filename_label.setText(tr("scene_editor.property_panel.file_none"))
 
             # 禁用控件并重置数值
             self.clear_road_button.setEnabled(False)
@@ -2124,18 +2127,18 @@ class PropertyPanel(QWidget):
         for event in self.current_item.events:
             # 格式化显示事件
             trigger_text = {
-                "on_hover": "悬停",
-                "on_click": "点击",
-                "on_time_reach": "时间到达",
-                "on_progress_range": "进度范围",
-                "on_task_start": "任务开始",
-                "on_task_end": "任务结束"
+                "on_hover": tr("scene_editor.property_panel.event_display.triggers.on_hover"),
+                "on_click": tr("scene_editor.property_panel.event_display.triggers.on_click"),
+                "on_time_reach": tr("scene_editor.property_panel.event_display.triggers.on_time_reach"),
+                "on_progress_range": tr("scene_editor.property_panel.event_display.triggers.on_progress_range"),
+                "on_task_start": tr("scene_editor.property_panel.event_display.triggers.on_task_start"),
+                "on_task_end": tr("scene_editor.property_panel.event_display.triggers.on_task_end")
             }.get(event.trigger, event.trigger)
 
             action_text = {
-                "show_tooltip": "显示提示",
-                "show_dialog": "显示对话框",
-                "open_url": "打开链接"
+                "show_tooltip": tr("scene_editor.property_panel.event_display.actions.show_tooltip"),
+                "show_dialog": tr("scene_editor.property_panel.event_display.actions.show_dialog"),
+                "open_url": tr("scene_editor.property_panel.event_display.actions.open_url")
             }.get(event.action.type, event.action.type)
 
             item_text = f"{trigger_text} → {action_text}"
@@ -2236,14 +2239,14 @@ class LayerPanel(QWidget):
 
         # 标题
         title_layout = QHBoxLayout()
-        title_label = QLabel("图层管理")
+        title_label = QLabel(tr("scene_editor.layer_panel.title"))
         title_label.setStyleSheet("font-weight: bold; font-size: 12pt;")
         title_layout.addWidget(title_label)
 
         # 刷新按钮
         refresh_btn = QPushButton("🔄")
         refresh_btn.setMaximumWidth(30)
-        refresh_btn.setToolTip("刷新图层列表")
+        refresh_btn.setToolTip(tr("scene_editor.layer_panel.refresh_tooltip"))
         refresh_btn.clicked.connect(self.refresh_layers)
         title_layout.addWidget(refresh_btn)
 
@@ -2257,7 +2260,7 @@ class LayerPanel(QWidget):
         layout.addWidget(self.layers_list)
 
         # 说明文字
-        help_label = QLabel("💡 提示: 拖拽调整图层顺序 (上方优先显示)")
+        help_label = QLabel(tr("scene_editor.layer_panel.help_text"))
         help_label.setStyleSheet("color: #666; font-size: 9pt;")
         layout.addWidget(help_label)
 
@@ -2281,7 +2284,7 @@ class LayerPanel(QWidget):
             road_item = self.canvas.road_item
             layers.append({
                 'id': 'road_layer',
-                'name': '🛣 道路层',
+                'name': tr("scene_editor.layer_panel.road_layer_name"),
                 'z_index': road_item.zValue(),
                 'visible': road_item.isVisible(),
                 'locked': not (road_item.flags() & QGraphicsItem.ItemIsMovable),
@@ -2354,7 +2357,7 @@ class LayerPanel(QWidget):
             # 可见性复选框
             visibility_cb = QCheckBox()
             visibility_cb.setChecked(layer_data['visible'])
-            visibility_cb.setToolTip("切换可见性")
+            visibility_cb.setToolTip(tr("scene_editor.layer_panel.toggle_visibility"))
             visibility_cb.toggled.connect(
                 lambda checked, lid=layer_data['id']: self._on_visibility_changed(lid, checked)
             )
@@ -2364,7 +2367,7 @@ class LayerPanel(QWidget):
             lock_cb = QCheckBox()
             lock_cb.setText("🔒" if layer_data['locked'] else "🔓")
             lock_cb.setChecked(layer_data['locked'])
-            lock_cb.setToolTip("切换锁定状态")
+            lock_cb.setToolTip(tr("scene_editor.layer_panel.toggle_lock"))
             lock_cb.toggled.connect(
                 lambda checked, lid=layer_data['id']: self._on_lock_changed(lid, checked)
             )
@@ -2536,7 +2539,7 @@ class SceneEditorWindow(QMainWindow):
         # 初始化日志记录器
         self.logger = logging.getLogger(__name__)
 
-        self.setWindowTitle("GaiYa 场景编辑器 v2.0.0")
+        self.setWindowTitle(tr("scene_editor.main_window.title"))
         self.setGeometry(100, 100, 1400, 800)
 
         # 确定场景保存目录：使用用户目录（可编辑）
@@ -2590,7 +2593,7 @@ class SceneEditorWindow(QMainWindow):
         zoom_layout = QHBoxLayout(zoom_toolbar)
         zoom_layout.setContentsMargins(5, 5, 5, 5)
 
-        zoom_layout.addWidget(QLabel("缩放:"))
+        zoom_layout.addWidget(QLabel(tr("scene_editor.main_window.zoom.label")))
 
         # 缩放百分比下拉菜单
         self.zoom_combo = QComboBox()
@@ -2605,27 +2608,27 @@ class SceneEditorWindow(QMainWindow):
         zoom_out_btn = QPushButton("−")
         zoom_out_btn.clicked.connect(self.zoom_out)
         zoom_out_btn.setMaximumWidth(30)
-        zoom_out_btn.setToolTip("缩小 (Ctrl+滚轮向下)")
+        zoom_out_btn.setToolTip(tr("scene_editor.main_window.zoom.zoom_out_tooltip"))
         zoom_layout.addWidget(zoom_out_btn)
 
         # 放大按钮
         zoom_in_btn = QPushButton("+")
         zoom_in_btn.clicked.connect(self.zoom_in)
         zoom_in_btn.setMaximumWidth(30)
-        zoom_in_btn.setToolTip("放大 (Ctrl+滚轮向上)")
+        zoom_in_btn.setToolTip(tr("scene_editor.main_window.zoom.zoom_in_tooltip"))
         zoom_layout.addWidget(zoom_in_btn)
 
         # 适应窗口按钮
-        zoom_fit_btn = QPushButton("适应窗口")
+        zoom_fit_btn = QPushButton(tr("scene_editor.main_window.zoom.fit_btn"))
         zoom_fit_btn.clicked.connect(self.zoom_fit)
         zoom_fit_btn.setMaximumWidth(80)
-        zoom_fit_btn.setToolTip("缩放到适合窗口大小并居中")
+        zoom_fit_btn.setToolTip(tr("scene_editor.main_window.zoom.fit_tooltip"))
         zoom_layout.addWidget(zoom_fit_btn)
 
         zoom_layout.addStretch()
 
         # 提示文字
-        hint_label = QLabel("💡 Ctrl+滚轮缩放 | 空格键拖动视图")
+        hint_label = QLabel(tr("scene_editor.main_window.zoom.hint"))
         hint_label.setStyleSheet("color: #888; font-size: 9pt;")
         zoom_layout.addWidget(hint_label)
 
@@ -2644,19 +2647,19 @@ class SceneEditorWindow(QMainWindow):
         progress_layout.setContentsMargins(5, 5, 5, 5)
 
         # 播放/暂停按钮
-        self.play_button = QPushButton("▶ 播放")
+        self.play_button = QPushButton(tr("scene_editor.main_window.progress.play"))
         self.play_button.clicked.connect(self.toggle_play)
         self.play_button.setMaximumWidth(70)
         progress_layout.addWidget(self.play_button)
 
         # 重置按钮
-        reset_button = QPushButton("⏮ 重置")
+        reset_button = QPushButton(tr("scene_editor.main_window.progress.reset"))
         reset_button.clicked.connect(self.reset_progress)
         reset_button.setMaximumWidth(70)
         progress_layout.addWidget(reset_button)
 
         # 进度滑块
-        progress_layout.addWidget(QLabel("进度:"))
+        progress_layout.addWidget(QLabel(tr("scene_editor.main_window.progress.label")))
         self.progress_slider = QSlider(Qt.Horizontal)
         self.progress_slider.setRange(0, 100)
         self.progress_slider.setValue(0)
@@ -2668,7 +2671,7 @@ class SceneEditorWindow(QMainWindow):
         progress_layout.addWidget(self.progress_label)
 
         # 播放速度
-        progress_layout.addWidget(QLabel("速度:"))
+        progress_layout.addWidget(QLabel(tr("scene_editor.main_window.progress.speed_label")))
         self.speed_combo = QComboBox()
         self.speed_combo.addItems(["0.5x", "1x", "2x", "5x"])
         self.speed_combo.setCurrentIndex(1)  # 默认1x
@@ -2691,16 +2694,16 @@ class SceneEditorWindow(QMainWindow):
 
         # Tab 1: 属性面板（传递canvas引用）
         self.property_panel = PropertyPanel(canvas=self.canvas)
-        self.right_panel_tabs.addTab(self.property_panel, "⚙ 属性编辑")
+        self.right_panel_tabs.addTab(self.property_panel, tr("scene_editor.main_window.tabs.properties"))
 
         # Tab 2: 图层管理面板
         self.layer_panel = LayerPanel(canvas=self.canvas)
-        self.right_panel_tabs.addTab(self.layer_panel, "📚 图层管理")
+        self.right_panel_tabs.addTab(self.layer_panel, tr("scene_editor.main_window.tabs.layers"))
 
         right_panel_layout.addWidget(self.right_panel_tabs)
 
         # 小地图（在Tab下方）
-        minimap_label = QLabel("🗺️ 小地图")
+        minimap_label = QLabel(tr("scene_editor.main_window.minimap.title"))
         minimap_label.setStyleSheet("font-weight: bold; padding: 5px;")
         right_panel_layout.addWidget(minimap_label)
 
@@ -2727,24 +2730,24 @@ class SceneEditorWindow(QMainWindow):
         status_layout = QHBoxLayout()
 
         # 网格控制
-        self.grid_checkbox = QCheckBox("显示网格")
+        self.grid_checkbox = QCheckBox(tr("scene_editor.main_window.status.show_grid"))
         self.grid_checkbox.setChecked(True)
         self.grid_checkbox.toggled.connect(self.toggle_grid)
         status_layout.addWidget(self.grid_checkbox)
 
-        self.snap_checkbox = QCheckBox("吸附网格")
+        self.snap_checkbox = QCheckBox(tr("scene_editor.main_window.status.snap_grid"))
         self.snap_checkbox.setChecked(True)
         self.snap_checkbox.toggled.connect(self.toggle_snap)
         status_layout.addWidget(self.snap_checkbox)
 
         # 对齐辅助线控制
-        self.alignment_checkbox = QCheckBox("对齐辅助线")
+        self.alignment_checkbox = QCheckBox(tr("scene_editor.main_window.status.alignment_guides"))
         self.alignment_checkbox.setChecked(True)
         self.alignment_checkbox.toggled.connect(self.toggle_alignment_guides)
         status_layout.addWidget(self.alignment_checkbox)
 
         # 安全区域蒙版控制
-        self.safe_mask_checkbox = QCheckBox("安全区域蒙版")
+        self.safe_mask_checkbox = QCheckBox(tr("scene_editor.main_window.status.safe_area_mask"))
         self.safe_mask_checkbox.setChecked(True)
         self.safe_mask_checkbox.toggled.connect(self.toggle_safe_mask)
         status_layout.addWidget(self.safe_mask_checkbox)
@@ -2752,9 +2755,14 @@ class SceneEditorWindow(QMainWindow):
         status_layout.addStretch()
 
         # 画布宽度选择
-        status_layout.addWidget(QLabel("画布宽度:"))
+        status_layout.addWidget(QLabel(tr("scene_editor.main_window.status.canvas_width")))
         self.canvas_width_combo = QComboBox()
-        self.canvas_width_combo.addItems(["1200px", "1600px", "1800px (推荐)", "2400px"])
+        self.canvas_width_combo.addItems([
+            tr("scene_editor.main_window.status.width_1200"),
+            tr("scene_editor.main_window.status.width_1600"),
+            tr("scene_editor.main_window.status.width_1800"),
+            tr("scene_editor.main_window.status.width_2400")
+        ])
         # 根据当前画布宽度设置默认值
         if self.canvas.canvas_width == 1200:
             self.canvas_width_combo.setCurrentIndex(0)
@@ -2771,15 +2779,15 @@ class SceneEditorWindow(QMainWindow):
         status_layout.addWidget(self.canvas_width_combo)
 
         # 导入场景按钮
-        import_btn = QPushButton("📂 导入场景")
+        import_btn = QPushButton(tr("scene_editor.main_window.buttons.import"))
         import_btn.clicked.connect(self.import_config)
-        import_btn.setToolTip("从config.json导入场景进行编辑")
+        import_btn.setToolTip(tr("scene_editor.main_window.buttons.import_tooltip"))
         status_layout.addWidget(import_btn)
 
         # 导出场景按钮
-        export_btn = QPushButton("💾 导出场景配置")
+        export_btn = QPushButton(tr("scene_editor.main_window.buttons.export"))
         export_btn.clicked.connect(self.export_config)
-        export_btn.setToolTip("导出当前场景为config.json文件")
+        export_btn.setToolTip(tr("scene_editor.main_window.buttons.export_tooltip"))
         status_layout.addWidget(export_btn)
 
         main_layout.addLayout(status_layout)
@@ -2854,18 +2862,18 @@ class SceneEditorWindow(QMainWindow):
 
     def create_toolbar(self):
         """创建工具栏"""
-        toolbar = QToolBar("主工具栏")
+        toolbar = QToolBar(tr("scene_editor.main_window.toolbar.title"))
         toolbar.setMovable(False)
         self.addToolBar(toolbar)
 
         # 撤销动作
-        undo_action = self.undo_stack.createUndoAction(self, "撤销")
+        undo_action = self.undo_stack.createUndoAction(self, tr("scene_editor.main_window.toolbar.undo"))
         undo_action.setShortcut(QKeySequence.Undo)
         undo_action.setIcon(QIcon())  # 可以添加图标
         toolbar.addAction(undo_action)
 
         # 重做动作
-        redo_action = self.undo_stack.createRedoAction(self, "重做")
+        redo_action = self.undo_stack.createRedoAction(self, tr("scene_editor.main_window.toolbar.redo"))
         redo_action.setShortcut(QKeySequence.Redo)
         redo_action.setIcon(QIcon())  # 可以添加图标
         toolbar.addAction(redo_action)
@@ -2873,24 +2881,24 @@ class SceneEditorWindow(QMainWindow):
         toolbar.addSeparator()
 
         # 复制动作（快捷键通过QShortcut单独设置，避免冲突）
-        copy_action = QAction("复制 (Ctrl+C)", self)
+        copy_action = QAction(tr("scene_editor.main_window.toolbar.copy"), self)
         copy_action.triggered.connect(self._handle_copy)
         toolbar.addAction(copy_action)
 
         # 粘贴动作
-        paste_action = QAction("粘贴 (Ctrl+V)", self)
+        paste_action = QAction(tr("scene_editor.main_window.toolbar.paste"), self)
         paste_action.triggered.connect(self._handle_paste)
         toolbar.addAction(paste_action)
 
         # 删除动作
-        delete_action = QAction("删除 (Del)", self)
+        delete_action = QAction(tr("scene_editor.main_window.toolbar.delete"), self)
         delete_action.triggered.connect(self._handle_delete)
         toolbar.addAction(delete_action)
 
         toolbar.addSeparator()
 
         # 全选动作
-        select_all_action = QAction("全选 (Ctrl+A)", self)
+        select_all_action = QAction(tr("scene_editor.main_window.toolbar.select_all"), self)
         select_all_action.triggered.connect(self.select_all_items)
         toolbar.addAction(select_all_action)
 
@@ -2956,15 +2964,15 @@ class SceneEditorWindow(QMainWindow):
         """切换播放/暂停"""
         if self.canvas.is_playing:
             self.canvas.pause_preview()
-            self.play_button.setText("▶ 播放")
+            self.play_button.setText(tr("scene_editor.main_window.progress.play"))
         else:
             self.canvas.play_preview()
-            self.play_button.setText("⏸ 暂停")
+            self.play_button.setText(tr("scene_editor.main_window.progress.pause"))
 
     def reset_progress(self):
         """重置进度到0"""
         self.canvas.reset_preview()
-        self.play_button.setText("▶ 播放")
+        self.play_button.setText(tr("scene_editor.main_window.progress.play"))
         self.progress_slider.setValue(0)
 
     def on_progress_changed(self, value):
@@ -3094,7 +3102,7 @@ class SceneEditorWindow(QMainWindow):
         logger.debug(f"场景名称: '{scene_name}'")
         if not scene_name:
             logger.error("场景名称为空！")
-            QMessageBox.warning(self, "导出失败", "请先设置场景名称！")
+            QMessageBox.warning(self, tr("scene_editor.dialogs.export.error_no_name_title"), tr("scene_editor.dialogs.export.error_no_name_msg"))
             return
 
         # 规范化场景名称（去除非法字符）
@@ -3102,7 +3110,7 @@ class SceneEditorWindow(QMainWindow):
         logger.debug(f"规范化后的场景名称: '{scene_name}'")
         if not scene_name:
             logger.error("场景名称格式不正确！")
-            QMessageBox.warning(self, "导出失败", "场景名称格式不正确！请使用字母、数字、下划线或横线。")
+            QMessageBox.warning(self, tr("scene_editor.dialogs.export.error_invalid_name_title"), tr("scene_editor.dialogs.export.error_invalid_name_msg"))
             return
 
         # 检查目录冲突（使用实例的 scenes_dir）
@@ -3119,8 +3127,8 @@ class SceneEditorWindow(QMainWindow):
             logger.info(f"场景目录已存在，询问用户是否覆盖")
             reply = QMessageBox.question(
                 self,
-                "场景已存在",
-                f"场景 '{scene_name}' 已存在，是否覆盖？\n\n路径: {scene_dir}",
+                tr("scene_editor.dialogs.export.exists_title"),
+                tr("scene_editor.dialogs.export.exists_msg", scene_name=scene_name, path=str(scene_dir)),
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.No
             )
@@ -3181,7 +3189,7 @@ class SceneEditorWindow(QMainWindow):
                 if cleanup_count > 0:
                     logger.info(f"已清理 {cleanup_count} 个临时备份文件")
 
-                QMessageBox.critical(self, "删除失败", f"无法删除旧场景:\n{e}")
+                QMessageBox.critical(self, tr("scene_editor.dialogs.export.delete_error_title"), tr("scene_editor.dialogs.export.delete_error_msg", error=str(e)))
                 return
 
         # 创建目录结构
@@ -3218,7 +3226,7 @@ class SceneEditorWindow(QMainWindow):
             if cleanup_count > 0:
                 logger.info(f"已清理 {cleanup_count} 个临时备份文件")
 
-            QMessageBox.critical(self, "创建目录失败", f"无法创建场景目录:\n{e}")
+            QMessageBox.critical(self, tr("scene_editor.dialogs.export.create_dir_error_title"), tr("scene_editor.dialogs.export.create_dir_error_msg", error=str(e)))
             return
 
         # 统计复制的文件
@@ -3278,12 +3286,12 @@ class SceneEditorWindow(QMainWindow):
                     logger.warning(f"道路层源文件不存在: {road_src}")
                     QMessageBox.warning(
                         self,
-                        "警告",
-                        f"道路层源文件不存在:\n{road_src}\n\n将跳过道路层导出。"
+                        tr("scene_editor.dialogs.export.warning_title"),
+                        tr("scene_editor.dialogs.export.road_missing_msg", path=str(road_src))
                     )
             except Exception as e:
                 logger.error(f"复制道路层失败: {e}", exc_info=True)
-                QMessageBox.warning(self, "警告", f"道路层复制失败，将继续导出其他内容:\n{e}")
+                QMessageBox.warning(self, tr("scene_editor.dialogs.export.warning_title"), tr("scene_editor.dialogs.export.road_copy_error_msg", error=str(e)))
                 # 清理临时备份文件
                 if road_backup_path and Path(road_backup_path).exists():
                     try:
@@ -3380,7 +3388,7 @@ class SceneEditorWindow(QMainWindow):
             if cleanup_count > 0:
                 logger.info(f"已清理 {cleanup_count} 个临时备份文件")
 
-            QMessageBox.critical(self, "保存失败", f"无法保存配置文件:\n{e}")
+            QMessageBox.critical(self, tr("scene_editor.dialogs.export.save_error_title"), tr("scene_editor.dialogs.export.save_error_msg", error=str(e)))
             return
 
         # 成功提示
@@ -3388,17 +3396,13 @@ class SceneEditorWindow(QMainWindow):
         logger.info(f"导出完成！共复制 {file_count} 个文件")
         logger.info("=" * 50)
 
-        message = f"场景已成功导出到:\n{scene_dir.absolute()}\n\n"
-        message += f"包含:\n- config.json\n- {file_count} 个图片文件\n\n"
-        message += "⚠️ 重要提示:\n"
-        message += "新导出的场景需要【重启主程序】后才能在场景列表中显示。\n"
-        message += "或者在主程序的场景设置中点击【刷新场景】按钮。"
+        message = tr("scene_editor.dialogs.export.success_msg", path=str(scene_dir.absolute()), count=file_count)
 
         # 询问是否打开文件夹
         reply = QMessageBox.question(
             self,
-            "导出成功",
-            message + "\n\n是否打开文件夹？",
+            tr("scene_editor.dialogs.export.success_title"),
+            message + tr("scene_editor.dialogs.export.open_folder_prompt"),
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.Yes
         )
@@ -3415,7 +3419,7 @@ class SceneEditorWindow(QMainWindow):
                 else:  # Linux
                     subprocess.run(["xdg-open", str(scene_dir)])
             except Exception as e:
-                QMessageBox.warning(self, "打开失败", f"无法打开文件夹:\n{e}")
+                QMessageBox.warning(self, tr("scene_editor.dialogs.export.open_error_title"), tr("scene_editor.dialogs.export.open_error_msg", error=str(e)))
 
         # 清理临时备份文件
         cleanup_count = 0
@@ -3490,8 +3494,8 @@ class SceneEditorWindow(QMainWindow):
             self._clear_scene()
 
             # 加载场景名称（作为模板的提示）
-            scene_name = config.get("name", "未命名场景")
-            template_name = f"{scene_name}（模板）"
+            scene_name = config.get("name", tr("scene_editor.dialogs.import.default_name"))
+            template_name = f"{scene_name}{tr('scene_editor.dialogs.import.template_suffix')}"
             self.property_panel.scene_name_input.setText(template_name)
 
             # 加载画布配置
@@ -3558,9 +3562,9 @@ class SceneEditorWindow(QMainWindow):
         # 选择文件
         file_path, _ = QFileDialog.getOpenFileName(
             self,
-            "导入场景配置",
+            tr("scene_editor.dialogs.import.title"),
             "",
-            "JSON文件 (*.json)"
+            tr("scene_editor.dialogs.import.filter")
         )
 
         if not file_path:
@@ -3575,7 +3579,7 @@ class SceneEditorWindow(QMainWindow):
             self._clear_scene()
 
             # 加载场景名称
-            scene_name = config.get("name", "未命名场景")
+            scene_name = config.get("name", tr("scene_editor.dialogs.import.default_name"))
             self.property_panel.scene_name_input.setText(scene_name)
 
             # 加载画布配置
@@ -3620,15 +3624,15 @@ class SceneEditorWindow(QMainWindow):
 
             QMessageBox.information(
                 self,
-                "导入成功",
-                f"场景配置已导入:\n{scene_name}\n\n包含 {len(items)} 个场景元素"
+                tr("scene_editor.dialogs.import.success_title"),
+                tr("scene_editor.dialogs.import.success_msg", name=scene_name, count=len(items))
             )
 
         except Exception as e:
             QMessageBox.critical(
                 self,
-                "导入失败",
-                f"导入场景配置时出错:\n{str(e)}"
+                tr("scene_editor.dialogs.import.error_title"),
+                tr("scene_editor.dialogs.import.error_msg", error=str(e))
             )
 
     def _clear_scene(self):
@@ -3679,8 +3683,8 @@ class SceneEditorWindow(QMainWindow):
         if not road_image_path:
             QMessageBox.warning(
                 self,
-                "道路图片未找到",
-                f"无法找到道路图片:\n{road_image_file}\n\n请确保图片在config.json同目录或assets子目录中"
+                tr("scene_editor.dialogs.road_not_found.title"),
+                tr("scene_editor.dialogs.road_not_found.msg", path=road_image_file)
             )
             return
 

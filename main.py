@@ -34,6 +34,14 @@ from gaiya.ui.pomodoro_panel import PomodoroPanel, PomodoroSettingsDialog
 from gaiya.utils import time_utils, path_utils, data_loader, task_calculator
 from gaiya.scene import SceneLoader, SceneRenderer, SceneEventManager, ResourceCache, SceneManager
 
+# i18n support
+try:
+    from i18n import tr
+except ImportError:
+    # Fallback if i18n not available
+    def tr(key, fallback=None, **kwargs):
+        return fallback or key
+
 # Qt-Material主题支持（已移除，改用自定义浅色主题）
 # try:
 #     from qt_material import apply_stylesheet
@@ -54,10 +62,11 @@ class TimeProgressBar(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.app_dir = path_utils.get_app_dir()  # 获取应用目录
-        self.setup_logging()  # 设置日志
-        self.config = data_loader.load_config(self.app_dir, self.logger)  # 加载配置
-        self.tasks = data_loader.load_tasks(self.app_dir, self.logger)  # 加载任务数据
+        self.app_dir = path_utils.get_app_dir()  # Get app directory
+        self.setup_logging()  # Setup logging
+        self.config = data_loader.load_config(self.app_dir, self.logger)  # Load config
+        data_loader.init_i18n(self.config, self.logger)  # Initialize i18n
+        self.tasks = data_loader.load_tasks(self.app_dir, self.logger)  # Load task data
         self.calculate_time_range()  # 计算任务的时间范围
         self.current_time_percentage = 0.0  # 初始化时间百分比
         self.hovered_task_index = -1  # 当前悬停的任务索引(-1表示没有悬停)
@@ -689,7 +698,7 @@ class TimeProgressBar(QWidget):
                 self.style().StandardPixmap.SP_ComputerIcon
             )
         self.tray_icon.setIcon(icon)
-        self.tray_icon.setToolTip('GaiYa每日进度条 - 让每一天都清晰可见')
+        self.tray_icon.setToolTip(tr('tray.tooltip'))
 
         # 创建右键菜单
         tray_menu = QMenu()
@@ -716,56 +725,56 @@ class TimeProgressBar(QWidget):
             }
         """)
 
-        # 编辑任务时间动作（动态文字）
-        self.edit_mode_action = QAction('✏️ 编辑任务时间', self)
+        # Edit task time action (dynamic text)
+        self.edit_mode_action = QAction(tr('menu.edit_task_time'), self)
         self.edit_mode_action.triggered.connect(self.toggle_edit_mode)
         tray_menu.addAction(self.edit_mode_action)
 
-        # 保存/取消动作（仅在编辑模式下可见）
-        self.save_edit_action = QAction('💾 保存修改', self)
+        # Save/Cancel actions (only visible in edit mode)
+        self.save_edit_action = QAction(tr('menu.save_changes'), self)
         self.save_edit_action.triggered.connect(self.save_edit_changes)
         self.save_edit_action.setVisible(False)
         tray_menu.addAction(self.save_edit_action)
 
-        self.cancel_edit_action = QAction('❌ 取消编辑', self)
+        self.cancel_edit_action = QAction(tr('menu.cancel_edit'), self)
         self.cancel_edit_action.triggered.connect(self.cancel_edit)
         self.cancel_edit_action.setVisible(False)
         tray_menu.addAction(self.cancel_edit_action)
 
         tray_menu.addSeparator()
 
-        # 打开配置界面动作
-        config_action = QAction('⚙️ 打开配置', self)
+        # Open config action
+        config_action = QAction(tr('menu.config'), self)
         config_action.triggered.connect(self.open_config_gui)
         tray_menu.addAction(config_action)
 
-        # 番茄钟动作
-        pomodoro_action = QAction('🍅 启动番茄钟', self)
+        # Pomodoro action
+        pomodoro_action = QAction(tr('menu.pomodoro'), self)
         pomodoro_action.triggered.connect(self.start_pomodoro)
         tray_menu.addAction(pomodoro_action)
 
-        # 统计报告
-        statistics_action = QAction('📊 统计报告', self)
+        # Statistics report
+        statistics_action = QAction(tr('menu.statistics'), self)
         statistics_action.triggered.connect(self.show_statistics)
         tray_menu.addAction(statistics_action)
 
-        # 场景编辑器
-        scene_editor_action = QAction('🎨 场景编辑器', self)
+        # Scene editor
+        scene_editor_action = QAction(tr('menu.scene_editor'), self)
         scene_editor_action.triggered.connect(self.open_scene_editor)
         tray_menu.addAction(scene_editor_action)
 
         tray_menu.addSeparator()
 
-        # 通知功能子菜单
-        notification_menu = QMenu('🔔 通知功能', self)
+        # Notification submenu
+        notification_menu = QMenu(tr('menu.notification'), self)
 
-        # 发送测试通知
-        test_notify_action = QAction('📢 发送测试通知', self)
+        # Send test notification
+        test_notify_action = QAction(tr('menu.test_notification'), self)
         test_notify_action.triggered.connect(self.send_test_notification)
         notification_menu.addAction(test_notify_action)
 
-        # 查看通知历史
-        history_action = QAction('📜 查看通知历史', self)
+        # View notification history
+        history_action = QAction(tr('menu.notification_history'), self)
         history_action.triggered.connect(self.show_notification_history)
         notification_menu.addAction(history_action)
 
@@ -773,15 +782,15 @@ class TimeProgressBar(QWidget):
 
         tray_menu.addSeparator()
 
-        # 重载配置动作
-        reload_action = QAction('🔄 重载配置', self)
+        # Reload config action
+        reload_action = QAction(tr('menu.reload_config'), self)
         reload_action.triggered.connect(self.reload_all)
         tray_menu.addAction(reload_action)
 
         tray_menu.addSeparator()
 
-        # 退出动作
-        quit_action = QAction('❌ 退出', self)
+        # Quit action
+        quit_action = QAction(tr('menu.quit'), self)
         quit_action.triggered.connect(QApplication.quit)
         tray_menu.addAction(quit_action)
 
@@ -1217,7 +1226,7 @@ class TimeProgressBar(QWidget):
         self.temp_tasks = copy.deepcopy(self.tasks)
 
         # 更新菜单文字
-        self.edit_mode_action.setText('🔒 退出编辑模式')
+        self.edit_mode_action.setText(tr('menu.exit_edit_mode'))
         self.save_edit_action.setVisible(True)
         self.cancel_edit_action.setVisible(True)
 
@@ -1302,8 +1311,8 @@ class TimeProgressBar(QWidget):
         self.drag_edge = None
         self.hover_edge = None
 
-        # 恢复菜单文字
-        self.edit_mode_action.setText('✏️ 编辑任务时间')
+        # Restore menu text
+        self.edit_mode_action.setText(tr('menu.edit_task_time'))
         self.save_edit_action.setVisible(False)
         self.cancel_edit_action.setVisible(False)
 

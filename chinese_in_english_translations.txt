@@ -1,0 +1,44 @@
+Found 14 keys with Chinese characters:
+
+Key: config.language_zh_cn
+Value: 简体中文
+
+Key: general.text_3267
+Value: >从2023年初的深夜构想到今天，GaiYa 已陪伴了<b>几百位早期用户</b>度过他们的每一个工作日。有人用它管理番茄钟，有人用它切换工作与生活，还有人说:
+
+Key: general.text_6435
+Value: >当你看见那条进度条一点点推进，看见今day已经过去了63%，看见
+
+Key: general.text_5531
+Value: >599元换算下来，相当于<b>年费199元使用3年</b>——而我承诺的Yes<b style=
+
+Key: general.text_3594
+Value: [Payment调试] 微信Payment - plan_type: {plan_id}, pay_type: {pay_type}
+
+Key: general.text_868
+Value: [Payment调试] 订单创建结果: {result}
+
+Key: general.text_4042
+Value: [STRIPE] 创建Stripe Checkout Session - plan_type: {plan_id}
+
+Key: general.text_2044
+Value: [STRIPE] Checkout Session创建结果: {result}
+
+Key: general.text_15
+Value: [STRIPE] API返回结果: {result}
+
+Key: general.text_3553
+Value: [Payment调试] 准备创建订单 - plan_type: {self.selected_plan_id}, pay_type: {pay_type}
+
+Key: general.text_6890
+Value: {i}. {tmpl['name']} (优先级: {priority}, 条件: {', '.join(conditions) if conditions else '任意'})
+
+Key: general.text_6118
+Value: ]} (优先级: {priority}, 条件: {
+
+Key: ui.language.zh_cn
+Value: 简体中文
+
+Key: appearance.language_zh_cn
+Value: 简体中文
+

@@ -1,0 +1,831 @@
+{
+  "total_strings": 1938,
+  "stats_by_file": {
+    "main.py": 362,
+    "config_gui.py": 1033,
+    "timeline_editor.py": 15,
+    "statistics_gui.py": 69,
+    "gaiya/ui/membership_ui.py": 82,
+    "gaiya/ui/auth_ui.py": 142,
+    "gaiya/ui/pomodoro_panel.py": 63,
+    "gaiya/ui/onboarding/setup_wizard.py": 43,
+    "gaiya/ui/onboarding/quota_exhausted_dialog.py": 17,
+    "gaiya/ui/otp_dialog.py": 43,
+    "gaiya/ui/email_verification_dialog.py": 69
+  },
+  "stats_by_category": {
+    "tasks": 373,
+    "general": 749,
+    "ai": 80,
+    "config": 187,
+    "scene": 69,
+    "notification": 12,
+    "statistics": 42,
+    "pomodoro": 25,
+    "dialog": 130,
+    "membership": 135,
+    "account": 136
+  },
+  "strings": [
+    {
+      "file": "main.py",
+      "line": 61,
+      "chinese": "时间进度条主窗口",
+      "full_line": "\"\"\"时间进度条主窗口\"\"\"",
+      "context": "class TimeProgressBar(QWidget):",
+      "category": "tasks"
+    },
+    {
+      "file": "main.py",
+      "line": 153,
+      "chinese": "检查是否首次运行，显示新手引导",
+      "full_line": "\"\"\"检查是否首次运行，显示新手引导\"\"\"",
+      "context": "def check_first_run(self):",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 158,
+      "chinese": "检测到首次运行，显示新手引导",
+      "full_line": "self.logger.info(\"检测到首次运行，显示新手引导\")",
+      "context": "def check_first_run(self):",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 162,
+      "chinese": "显示新手引导流程",
+      "full_line": "\"\"\"显示新手引导流程\"\"\"",
+      "context": "def show_onboarding(self):",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 178,
+      "chinese": "新手引导完成，选择模板: {template_id}",
+      "full_line": "self.logger.info(f\"新手引导完成，选择模板: {template_id}\")",
+      "context": "",
+      "category": "tasks"
+    },
+    {
+      "file": "main.py",
+      "line": 178,
+      "chinese": "新手引导完成，选择模板: {template_id}",
+      "full_line": "self.logger.info(f\"新手引导完成，选择模板: {template_id}\")",
+      "context": "",
+      "category": "tasks"
+    },
+    {
+      "file": "main.py",
+      "line": 188,
+      "chinese": "用户跳过新手引导",
+      "full_line": "self.logger.info(\"用户跳过新手引导\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 194,
+      "chinese": "新手引导中用户请求AI生成",
+      "full_line": "\"\"\"新手引导中用户请求AI生成\"\"\"",
+      "context": "def on_onboarding_ai_requested(self):",
+      "category": "ai"
+    },
+    {
+      "file": "main.py",
+      "line": 195,
+      "chinese": "新手引导：用户请求AI生成任务",
+      "full_line": "self.logger.info(\"新手引导：用户请求AI生成任务\")",
+      "context": "def on_onboarding_ai_requested(self):",
+      "category": "tasks"
+    },
+    {
+      "file": "main.py",
+      "line": 224,
+      "chinese": "成功应用模板: {template_id}",
+      "full_line": "self.logger.info(f\"成功应用模板: {template_id}\")",
+      "context": "",
+      "category": "tasks"
+    },
+    {
+      "file": "main.py",
+      "line": 224,
+      "chinese": "成功应用模板: {template_id}",
+      "full_line": "self.logger.info(f\"成功应用模板: {template_id}\")",
+      "context": "",
+      "category": "tasks"
+    },
+    {
+      "file": "main.py",
+      "line": 226,
+      "chinese": "模板不存在: {template_id}",
+      "full_line": "self.logger.warning(f\"模板不存在: {template_id}\")",
+      "context": "",
+      "category": "tasks"
+    },
+    {
+      "file": "main.py",
+      "line": 226,
+      "chinese": "模板不存在: {template_id}",
+      "full_line": "self.logger.warning(f\"模板不存在: {template_id}\")",
+      "context": "",
+      "category": "tasks"
+    },
+    {
+      "file": "main.py",
+      "line": 228,
+      "chinese": "应用模板失败: {e}",
+      "full_line": "self.logger.error(f\"应用模板失败: {e}\", exc_info=True)",
+      "context": "",
+      "category": "tasks"
+    },
+    {
+      "file": "main.py",
+      "line": 228,
+      "chinese": "应用模板失败: {e}",
+      "full_line": "self.logger.error(f\"应用模板失败: {e}\", exc_info=True)",
+      "context": "",
+      "category": "tasks"
+    },
+    {
+      "file": "main.py",
+      "line": 231,
+      "chinese": "初始化用户界面",
+      "full_line": "\"\"\"初始化用户界面\"\"\"",
+      "context": "def init_ui(self):",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 258,
+      "chinese": "窗口显示事件",
+      "full_line": "\"\"\"窗口显示事件\"\"\"",
+      "context": "def showEvent(self, event):",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 262,
+      "chinese": "窗口显示事件触发",
+      "full_line": "self.logger.info(f\"窗口显示事件触发\")",
+      "context": "def showEvent(self, event):",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 262,
+      "chinese": "窗口显示事件触发",
+      "full_line": "self.logger.info(f\"窗口显示事件触发\")",
+      "context": "def showEvent(self, event):",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 263,
+      "chinese": "[窗口验证] 实际窗口位置: x={actual_geometry.x()}, y={actual_geometry.y()}, w={actual_geometry.width()}, h={actual_geometry.height()}",
+      "full_line": "self.logger.info(f\"[窗口验证] 实际窗口位置: x={actual_geometry.x()}, y={actual_geometry.y()}, w={actual_geometry.width()}, h={actual_geometry.height()}\")",
+      "context": "def showEvent(self, event):",
+      "category": "config"
+    },
+    {
+      "file": "main.py",
+      "line": 263,
+      "chinese": "[窗口验证] 实际窗口位置: x={actual_geometry.x()}, y={actual_geometry.y()}, w={actual_geometry.width()}, h={actual_geometry.height()}",
+      "full_line": "self.logger.info(f\"[窗口验证] 实际窗口位置: x={actual_geometry.x()}, y={actual_geometry.y()}, w={actual_geometry.width()}, h={actual_geometry.height()}\")",
+      "context": "def showEvent(self, event):",
+      "category": "config"
+    },
+    {
+      "file": "main.py",
+      "line": 266,
+      "chinese": "窗口隐藏事件",
+      "full_line": "\"\"\"窗口隐藏事件\"\"\"",
+      "context": "def hideEvent(self, event):",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 268,
+      "chinese": "窗口隐藏事件触发! 这不应该发生",
+      "full_line": "self.logger.warning(\"窗口隐藏事件触发! 这不应该发生\")",
+      "context": "def hideEvent(self, event):",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 271,
+      "chinese": "窗口状态变化事件",
+      "full_line": "\"\"\"窗口状态变化事件\"\"\"",
+      "context": "def changeEvent(self, event):",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 274,
+      "chinese": "窗口状态变化: {self.windowState()}",
+      "full_line": "self.logger.info(f\"窗口状态变化: {self.windowState()}\")",
+      "context": "def changeEvent(self, event):",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 274,
+      "chinese": "窗口状态变化: {self.windowState()}",
+      "full_line": "self.logger.info(f\"窗口状态变化: {self.windowState()}\")",
+      "context": "def changeEvent(self, event):",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 277,
+      "chinese": "事件过滤器:防止窗口被意外隐藏",
+      "full_line": "\"\"\"事件过滤器:防止窗口被意外隐藏\"\"\"",
+      "context": "def eventFilter(self, obj, event):",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 282,
+      "chinese": "检测到窗口隐藏事件,阻止并强制显示",
+      "full_line": "self.logger.warning(\"检测到窗口隐藏事件,阻止并强制显示\")",
+      "context": "def eventFilter(self, obj, event):",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 293,
+      "chinese": "强制显示窗口",
+      "full_line": "\"\"\"强制显示窗口\"\"\"",
+      "context": "def force_show(self):",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 303,
+      "chinese": "强制显示窗口",
+      "full_line": "self.logger.info(\"强制显示窗口\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 306,
+      "chinese": "Windows 特定:设置窗口始终置顶,在任务栏之上",
+      "full_line": "\"\"\"Windows 特定:设置窗口始终置顶,在任务栏之上\"\"\"",
+      "context": "def set_windows_topmost(self):",
+      "category": "config"
+    },
+    {
+      "file": "main.py",
+      "line": 338,
+      "chinese": "已设置 Windows TOPMOST 属性",
+      "full_line": "self.logger.info(\"已设置 Windows TOPMOST 属性\")",
+      "context": "",
+      "category": "config"
+    },
+    {
+      "file": "main.py",
+      "line": 340,
+      "chinese": "设置 Windows TOPMOST 失败: {e}",
+      "full_line": "self.logger.error(f\"设置 Windows TOPMOST 失败: {e}\")",
+      "context": "",
+      "category": "config"
+    },
+    {
+      "file": "main.py",
+      "line": 340,
+      "chinese": "设置 Windows TOPMOST 失败: {e}",
+      "full_line": "self.logger.error(f\"设置 Windows TOPMOST 失败: {e}\")",
+      "context": "",
+      "category": "config"
+    },
+    {
+      "file": "main.py",
+      "line": 343,
+      "chinese": "设置窗口几何属性(位置和大小)",
+      "full_line": "\"\"\"设置窗口几何属性(位置和大小)\"\"\"",
+      "context": "def setup_geometry(self):",
+      "category": "config"
+    },
+    {
+      "file": "main.py",
+      "line": 374,
+      "chinese": "[场景几何] 场景已启用: {scene_config.name}, 画布高度: {scene_config.canvas.height}, 额外空间: {scene_extra_space}",
+      "full_line": "self.logger.info(f\"[场景几何] 场景已启用: {scene_config.name}, 画布高度: {scene_config.canvas.height}, 额外空间: {scene_extra_space}\")",
+      "context": "",
+      "category": "config"
+    },
+    {
+      "file": "main.py",
+      "line": 374,
+      "chinese": "[场景几何] 场景已启用: {scene_config.name}, 画布高度: {scene_config.canvas.height}, 额外空间: {scene_extra_space}",
+      "full_line": "self.logger.info(f\"[场景几何] 场景已启用: {scene_config.name}, 画布高度: {scene_config.canvas.height}, 额外空间: {scene_extra_space}\")",
+      "context": "",
+      "category": "config"
+    },
+    {
+      "file": "main.py",
+      "line": 376,
+      "chinese": "[场景几何] 场景已启用但配置无效: scene_config={scene_config}",
+      "full_line": "self.logger.warning(f\"[场景几何] 场景已启用但配置无效: scene_config={scene_config}\")",
+      "context": "",
+      "category": "config"
+    },
+    {
+      "file": "main.py",
+      "line": 376,
+      "chinese": "[场景几何] 场景已启用但配置无效: scene_config={scene_config}",
+      "full_line": "self.logger.warning(f\"[场景几何] 场景已启用但配置无效: scene_config={scene_config}\")",
+      "context": "",
+      "category": "config"
+    },
+    {
+      "file": "main.py",
+      "line": 378,
+      "chinese": "[场景几何] 场景未启用",
+      "full_line": "self.logger.debug(f\"[场景几何] 场景未启用\")",
+      "context": "",
+      "category": "scene"
+    },
+    {
+      "file": "main.py",
+      "line": 378,
+      "chinese": "[场景几何] 场景未启用",
+      "full_line": "self.logger.debug(f\"[场景几何] 场景未启用\")",
+      "context": "",
+      "category": "scene"
+    },
+    {
+      "file": "main.py",
+      "line": 382,
+      "chinese": "[场景几何] 悬停空间: {hover_extra_space} (悬停50, 标记{marker_extra_space}, 场景{scene_extra_space})",
+      "full_line": "self.logger.info(f\"[场景几何] 悬停空间: {hover_extra_space} (悬停50, 标记{marker_extra_space}, 场景{scene_extra_space})\")",
+      "context": "",
+      "category": "scene"
+    },
+    {
+      "file": "main.py",
+      "line": 382,
+      "chinese": "[场景几何] 悬停空间: {hover_extra_space} (悬停50, 标记{marker_extra_space}, 场景{scene_extra_space})",
+      "full_line": "self.logger.info(f\"[场景几何] 悬停空间: {hover_extra_space} (悬停50, 标记{marker_extra_space}, 场景{scene_extra_space})\")",
+      "context": "",
+      "category": "scene"
+    },
+    {
+      "file": "main.py",
+      "line": 389,
+      "chinese": "[场景几何] 可用区域: x={available_geometry.x()}, y={available_geometry.y()}, w={available_geometry.width()}, h={available_geometry.height()}",
+      "full_line": "self.logger.info(f\"[场景几何] 可用区域: x={available_geometry.x()}, y={available_geometry.y()}, w={available_geometry.width()}, h={available_geometry.height()}\")",
+      "context": "",
+      "category": "scene"
+    },
+    {
+      "file": "main.py",
+      "line": 389,
+      "chinese": "[场景几何] 可用区域: x={available_geometry.x()}, y={available_geometry.y()}, w={available_geometry.width()}, h={available_geometry.height()}",
+      "full_line": "self.logger.info(f\"[场景几何] 可用区域: x={available_geometry.x()}, y={available_geometry.y()}, w={available_geometry.width()}, h={available_geometry.height()}\")",
+      "context": "",
+      "category": "scene"
+    },
+    {
+      "file": "main.py",
+      "line": 396,
+      "chinese": "[场景几何] 底部定位计算: y_pos = {available_geometry.y()} + {available_geometry.height()} - {total_height} = {y_pos}",
+      "full_line": "self.logger.info(f\"[场景几何] 底部定位计算: y_pos = {available_geometry.y()} + {available_geometry.height()} - {total_height} = {y_pos}\")",
+      "context": "",
+      "category": "scene"
+    },
+    {
+      "file": "main.py",
+      "line": 396,
+      "chinese": "[场景几何] 底部定位计算: y_pos = {available_geometry.y()} + {available_geometry.height()} - {total_height} = {y_pos}",
+      "full_line": "self.logger.info(f\"[场景几何] 底部定位计算: y_pos = {available_geometry.y()} + {available_geometry.height()} - {total_height} = {y_pos}\")",
+      "context": "",
+      "category": "scene"
+    },
+    {
+      "file": "main.py",
+      "line": 402,
+      "chinese": "[场景几何] 顶部定位: y_pos = {y_pos}",
+      "full_line": "self.logger.info(f\"[场景几何] 顶部定位: y_pos = {y_pos}\")",
+      "context": "",
+      "category": "scene"
+    },
+    {
+      "file": "main.py",
+      "line": 402,
+      "chinese": "[场景几何] 顶部定位: y_pos = {y_pos}",
+      "full_line": "self.logger.info(f\"[场景几何] 顶部定位: y_pos = {y_pos}\")",
+      "context": "",
+      "category": "scene"
+    },
+    {
+      "file": "main.py",
+      "line": 413,
+      "chinese": "[场景几何] ✓ 窗口位置设置: x={available_geometry.x()}, y={y_pos}, w={bar_width}, h={total_height} (bar_h={bar_height}), position={self.config['position']}",
+      "full_line": "self.logger.info(f\"[场景几何] ✓ 窗口位置设置: x={available_geometry.x()}, y={y_pos}, w={bar_width}, h={total_height} (bar_h={bar_height}), position={self.config['position']}\")",
+      "context": "",
+      "category": "config"
+    },
+    {
+      "file": "main.py",
+      "line": 413,
+      "chinese": "[场景几何] ✓ 窗口位置设置: x={available_geometry.x()}, y={y_pos}, w={bar_width}, h={total_height} (bar_h={bar_height}), position={self.config['position']}",
+      "full_line": "self.logger.info(f\"[场景几何] ✓ 窗口位置设置: x={available_geometry.x()}, y={y_pos}, w={bar_width}, h={total_height} (bar_h={bar_height}), position={self.config['position']}\")",
+      "context": "",
+      "category": "config"
+    },
+    {
+      "file": "main.py",
+      "line": 416,
+      "chinese": "设置日志系统",
+      "full_line": "\"\"\"设置日志系统\"\"\"",
+      "context": "def setup_logging(self):",
+      "category": "config"
+    },
+    {
+      "file": "main.py",
+      "line": 432,
+      "chinese": "{VERSION_STRING_ZH} 启动",
+      "full_line": "self.logger.info(f\"{VERSION_STRING_ZH} 启动\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 432,
+      "chinese": "{VERSION_STRING_ZH} 启动",
+      "full_line": "self.logger.info(f\"{VERSION_STRING_ZH} 启动\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 433,
+      "chinese": "版本: {version_info['version']}",
+      "full_line": "self.logger.info(f\"版本: {version_info['version']}\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 433,
+      "chinese": "版本: {version_info['version']}",
+      "full_line": "self.logger.info(f\"版本: {version_info['version']}\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 434,
+      "chinese": "发布日期: {version_info['release_date']}",
+      "full_line": "self.logger.info(f\"发布日期: {version_info['release_date']}\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 434,
+      "chinese": "发布日期: {version_info['release_date']}",
+      "full_line": "self.logger.info(f\"发布日期: {version_info['release_date']}\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 435,
+      "chinese": "构建类型: {version_info['build_type']}",
+      "full_line": "self.logger.info(f\"构建类型: {version_info['build_type']}\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 435,
+      "chinese": "构建类型: {version_info['build_type']}",
+      "full_line": "self.logger.info(f\"构建类型: {version_info['build_type']}\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 436,
+      "chinese": "可执行文件: {version_info['exe_name']}",
+      "full_line": "self.logger.info(f\"可执行文件: {version_info['exe_name']}\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 436,
+      "chinese": "可执行文件: {version_info['exe_name']}",
+      "full_line": "self.logger.info(f\"可执行文件: {version_info['exe_name']}\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 438,
+      "chinese": "系统: {platform.system()} {platform.release()}",
+      "full_line": "self.logger.info(f\"系统: {platform.system()} {platform.release()}\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 438,
+      "chinese": "系统: {platform.system()} {platform.release()}",
+      "full_line": "self.logger.info(f\"系统: {platform.system()} {platform.release()}\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 443,
+      "chinese": "初始化时间标记图片",
+      "full_line": "\"\"\"初始化时间标记图片\"\"\"",
+      "context": "def init_marker_image(self):",
+      "category": "tasks"
+    },
+    {
+      "file": "main.py",
+      "line": 457,
+      "chinese": "断开标记动画信号时出错: {e}",
+      "full_line": "self.logger.debug(f\"断开标记动画信号时出错: {e}\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 457,
+      "chinese": "断开标记动画信号时出错: {e}",
+      "full_line": "self.logger.debug(f\"断开标记动画信号时出错: {e}\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 477,
+      "chinese": "未配置时间标记图片,使用线条模式",
+      "full_line": "self.logger.info(\"未配置时间标记图片,使用线条模式\")",
+      "context": "",
+      "category": "config"
+    },
+    {
+      "file": "main.py",
+      "line": 489,
+      "chinese": "[路径诊断] 原始路径: {image_path}",
+      "full_line": "self.logger.info(f\"[路径诊断] 原始路径: {image_path}\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 489,
+      "chinese": "[路径诊断] 原始路径: {image_path}",
+      "full_line": "self.logger.info(f\"[路径诊断] 原始路径: {image_path}\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 490,
+      "chinese": "[路径诊断] app_dir: {self.app_dir}",
+      "full_line": "self.logger.info(f\"[路径诊断] app_dir: {self.app_dir}\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 490,
+      "chinese": "[路径诊断] app_dir: {self.app_dir}",
+      "full_line": "self.logger.info(f\"[路径诊断] app_dir: {self.app_dir}\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 491,
+      "chinese": "[路径诊断] sys.frozen: {getattr(sys, 'frozen', False)}",
+      "full_line": "self.logger.info(f\"[路径诊断] sys.frozen: {getattr(sys, 'frozen', False)}\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 491,
+      "chinese": "[路径诊断] sys.frozen: {getattr(sys, 'frozen', False)}",
+      "full_line": "self.logger.info(f\"[路径诊断] sys.frozen: {getattr(sys, 'frozen', False)}\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 493,
+      "chinese": "[路径诊断] _MEIPASS: {getattr(sys, '_MEIPASS', 'N/A')}",
+      "full_line": "self.logger.info(f\"[路径诊断] _MEIPASS: {getattr(sys, '_MEIPASS', 'N/A')}\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 493,
+      "chinese": "[路径诊断] _MEIPASS: {getattr(sys, '_MEIPASS', 'N/A')}",
+      "full_line": "self.logger.info(f\"[路径诊断] _MEIPASS: {getattr(sys, '_MEIPASS', 'N/A')}\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 494,
+      "chinese": "[路径诊断] app_dir路径: {app_dir_path} (存在: {app_dir_path.exists()})",
+      "full_line": "self.logger.info(f\"[路径诊断] app_dir路径: {app_dir_path} (存在: {app_dir_path.exists()})\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 494,
+      "chinese": "[路径诊断] app_dir路径: {app_dir_path} (存在: {app_dir_path.exists()})",
+      "full_line": "self.logger.info(f\"[路径诊断] app_dir路径: {app_dir_path} (存在: {app_dir_path.exists()})\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 495,
+      "chinese": "[路径诊断] resource路径: {resource_path} (存在: {resource_path.exists()})",
+      "full_line": "self.logger.info(f\"[路径诊断] resource路径: {resource_path} (存在: {resource_path.exists()})\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 495,
+      "chinese": "[路径诊断] resource路径: {resource_path} (存在: {resource_path.exists()})",
+      "full_line": "self.logger.info(f\"[路径诊断] resource路径: {resource_path} (存在: {resource_path.exists()})\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 499,
+      "chinese": "[路径诊断] 使用app_dir路径",
+      "full_line": "self.logger.info(f\"[路径诊断] 使用app_dir路径\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 499,
+      "chinese": "[路径诊断] 使用app_dir路径",
+      "full_line": "self.logger.info(f\"[路径诊断] 使用app_dir路径\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 502,
+      "chinese": "[路径诊断] 使用resource路径",
+      "full_line": "self.logger.info(f\"[路径诊断] 使用resource路径\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 502,
+      "chinese": "[路径诊断] 使用resource路径",
+      "full_line": "self.logger.info(f\"[路径诊断] 使用resource路径\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 507,
+      "chinese": "时间标记图片不存在: {image_file}",
+      "full_line": "self.logger.error(f\"时间标记图片不存在: {image_file}\")",
+      "context": "",
+      "category": "tasks"
+    },
+    {
+      "file": "main.py",
+      "line": 507,
+      "chinese": "时间标记图片不存在: {image_file}",
+      "full_line": "self.logger.error(f\"时间标记图片不存在: {image_file}\")",
+      "context": "",
+      "category": "tasks"
+    },
+    {
+      "file": "main.py",
+      "line": 508,
+      "chinese": "[路径诊断] 请检查PyInstaller spec文件中是否包含: ('kun.webp', '.')",
+      "full_line": "self.logger.error(f\"[路径诊断] 请检查PyInstaller spec文件中是否包含: ('kun.webp', '.')\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 508,
+      "chinese": "[路径诊断] 请检查PyInstaller spec文件中是否包含: ('kun.webp', '.')",
+      "full_line": "self.logger.error(f\"[路径诊断] 请检查PyInstaller spec文件中是否包含: ('kun.webp', '.')\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 518,
+      "chinese": "[QMovie诊断] 开始加载动画文件: {image_file}",
+      "full_line": "self.logger.info(f\"[QMovie诊断] 开始加载动画文件: {image_file}\")",
+      "context": "",
+      "category": "tasks"
+    },
+    {
+      "file": "main.py",
+      "line": 518,
+      "chinese": "[QMovie诊断] 开始加载动画文件: {image_file}",
+      "full_line": "self.logger.info(f\"[QMovie诊断] 开始加载动画文件: {image_file}\")",
+      "context": "",
+      "category": "tasks"
+    },
+    {
+      "file": "main.py",
+      "line": 523,
+      "chinese": "[QMovie诊断] isValid(): {is_valid}",
+      "full_line": "self.logger.info(f\"[QMovie诊断] isValid(): {is_valid}\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 523,
+      "chinese": "[QMovie诊断] isValid(): {is_valid}",
+      "full_line": "self.logger.info(f\"[QMovie诊断] isValid(): {is_valid}\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 525,
+      "chinese": "[QMovie诊断] frameCount(): {self.marker_movie.frameCount()}",
+      "full_line": "self.logger.info(f\"[QMovie诊断] frameCount(): {self.marker_movie.frameCount()}\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 525,
+      "chinese": "[QMovie诊断] frameCount(): {self.marker_movie.frameCount()}",
+      "full_line": "self.logger.info(f\"[QMovie诊断] frameCount(): {self.marker_movie.frameCount()}\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 526,
+      "chinese": "[QMovie诊断] loopCount(): {self.marker_movie.loopCount()}",
+      "full_line": "self.logger.info(f\"[QMovie诊断] loopCount(): {self.marker_movie.loopCount()}\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 526,
+      "chinese": "[QMovie诊断] loopCount(): {self.marker_movie.loopCount()}",
+      "full_line": "self.logger.info(f\"[QMovie诊断] loopCount(): {self.marker_movie.loopCount()}\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 530,
+      "chinese": "[QMovie诊断] 第一帧尺寸: {first_frame.width()}x{first_frame.height()}",
+      "full_line": "self.logger.info(f\"[QMovie诊断] 第一帧尺寸: {first_frame.width()}x{first_frame.height()}\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 530,
+      "chinese": "[QMovie诊断] 第一帧尺寸: {first_frame.width()}x{first_frame.height()}",
+      "full_line": "self.logger.info(f\"[QMovie诊断] 第一帧尺寸: {first_frame.width()}x{first_frame.height()}\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 531,
+      "chinese": "[QMovie诊断] 第一帧是否为空: {first_frame.isNull()}",
+      "full_line": "self.logger.info(f\"[QMovie诊断] 第一帧是否为空: {first_frame.isNull()}\")",
+      "context": "",
+      "category": "general"
+    },
+    {
+      "file": "main.py",
+      "line": 531,
+      "chinese": "[QMovie诊断] 第一帧是否为空: {first_frame.isNull()}",
+      "full_line": "self.logger.info(f\"[QMovie诊断] 第一帧是否为空: {first_frame.isNull()}\")",
+      "context": "",
+      "category": "general"
+    }
+  ]
+}

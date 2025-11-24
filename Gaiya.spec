@@ -9,9 +9,11 @@ from version import get_exe_name
 
 a = Analysis(
     ['main.py'],
-    pathex=[],
+    pathex=['.'],
     binaries=[],
     datas=[
+        # i18n internationalization files
+        ('i18n/', 'i18n/'),
         # UI主题系统（浅色主题）
         ('gaiya/ui/', 'gaiya/ui/'),
         # 场景系统资源（打包默认场景到exe内部）
@@ -52,12 +54,18 @@ a = Analysis(
     hiddenimports=[
         'config_gui',
         'scene_editor',  # 场景编辑器（集成到主应用）
-        'theme_manager',
+        'gaiya.core.theme_manager',  # 修正路径
         'timeline_editor',
         'statistics_manager',
         'statistics_gui',
         'ai_client',  # AI客户端（调用Vercel云服务）
         'autostart_manager',  # 开机自启动管理器
+        'gaiya.core',  # 添加gaiya.core包
+        'gaiya.ui',  # 添加gaiya.ui包
+        'gaiya.core.auth_client',  # 添加auth_client
+        'gaiya.ui.auth_ui',  # 添加auth_ui
+        'gaiya.ui.membership_ui',  # 添加membership_ui
+        'i18n.translator',  # 添加translator
         'requests',  # HTTP请求库
         'httpx',  # HTTP请求库（OpenSSL后端，解决schannel SSL兼容性问题）
         'httpcore',  # httpx依赖
@@ -72,7 +80,7 @@ a = Analysis(
         'PySide6.QtCore',
         'PySide6.QtGui',
     ],
-    hookspath=[],
+    hookspath=['.'],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[

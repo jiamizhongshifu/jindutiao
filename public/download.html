@@ -371,16 +371,21 @@
                 <span style="font-weight: 700; color: var(--text-primary); margin-left: 8px;">GaiYa每日进度条</span>
             </a>
             <ul class="navbar-menu">
-                <li><a href="index.html#features">功能</a></li>
-                <li><a href="index.html#pricing">定价</a></li>
-                <li><a href="index.html#testimonials">评价</a></li>
-                <li><a href="index.html#faq">帮助</a></li>
-                <li><a href="index.html#about">关于</a></li>
-                <li><a href="index.html#download">下载</a></li>
+                <li><a href="index.html#features" data-i18n="nav.features">功能</a></li>
+                <li><a href="index.html#pricing" data-i18n="nav.pricing">定价</a></li>
+                <li><a href="index.html#testimonials" data-i18n="nav.testimonials">评价</a></li>
+                <li><a href="index.html#faq" data-i18n="nav.help">帮助</a></li>
+                <li><a href="index.html#about" data-i18n="nav.about">关于</a></li>
+                <li><a href="index.html#download" data-i18n="nav.download">下载</a></li>
             </ul>
             <div class="navbar-actions">
+                <!-- Language Switcher -->
+                <div class="language-switcher">
+                    <button class="lang-btn" data-lang-switch="zh_CN" onclick="switchLanguage('zh_CN')">中</button>
+                    <button class="lang-btn" data-lang-switch="en_US" onclick="switchLanguage('en_US')">EN</button>
+                </div>
                 <a href="https://github.com/jiamizhongshifu/jindutiao" target="_blank" class="btn btn-secondary btn-small">GitHub</a>
-                <a href="#download-section" class="btn btn-primary btn-small">立即下载</a>
+                <a href="#download-section" class="btn btn-primary btn-small" data-i18n="hero.download_btn">立即下载</a>
             </div>
         </div>
     </nav>
@@ -388,8 +393,8 @@
     <!-- Hero 下载区域 -->
     <section class="download-hero">
         <div class="download-hero-icon">💻</div>
-        <h1>下载 GaiYa</h1>
-        <div class="version-badge">
+        <h1 data-i18n="download.hero_title">下载 GaiYa</h1>
+        <div class="version-badge" data-i18n="download.version_badge">
             ⭐ 最新版本 v1.6.3 | 完全免费 | 开源 MIT License
         </div>
     </section>
@@ -405,8 +410,8 @@
                     <div class="download-btn-left">
                         <div class="download-btn-icon">🚀</div>
                         <div class="download-btn-text">
-                            <h3>从 GitHub 下载</h3>
-                            <p>推荐 · 最新版本 · 安全可靠</p>
+                            <h3 data-i18n="download.github_download">从 GitHub 下载</h3>
+                            <p data-i18n="download.github_download_desc">推荐 · 最新版本 · 安全可靠</p>
                         </div>
                     </div>
                     <div class="download-btn-right">→</div>
@@ -419,8 +424,8 @@
                     <div class="download-btn-left">
                         <div class="download-btn-icon">📦</div>
                         <div class="download-btn-text">
-                            <h3>历史版本下载</h3>
-                            <p>查看所有版本和更新日志</p>
+                            <h3 data-i18n="download.history_versions">历史版本下载</h3>
+                            <p data-i18n="download.history_versions_desc">查看所有版本和更新日志</p>
                         </div>
                     </div>
                     <div class="download-btn-right">→</div>
@@ -430,30 +435,30 @@
             <div class="download-info">
                 <div class="download-info-grid">
                     <div class="download-info-item">
-                        <span class="download-info-label">版本号</span>
+                        <span class="download-info-label" data-i18n="download.version">版本号</span>
                         <span class="download-info-value">v1.6.3</span>
                     </div>
                     <div class="download-info-item">
-                        <span class="download-info-label">文件大小</span>
-                        <span class="download-info-value">约 82 MB</span>
+                        <span class="download-info-label" data-i18n="download.file_size">文件大小</span>
+                        <span class="download-info-value" data-i18n="download.file_size_value">约 82 MB</span>
                     </div>
                     <div class="download-info-item">
-                        <span class="download-info-label">支持平台</span>
-                        <span class="download-info-value">Windows 10/11</span>
+                        <span class="download-info-label" data-i18n="download.platform">支持平台</span>
+                        <span class="download-info-value" data-i18n="download.platform_value">Windows 10/11</span>
                     </div>
                     <div class="download-info-item">
-                        <span class="download-info-label">更新日期</span>
-                        <span class="download-info-value">2025-01-20</span>
+                        <span class="download-info-label" data-i18n="download.update_date">更新日期</span>
+                        <span class="download-info-value" data-i18n="download.update_date_value">2025-01-20</span>
                     </div>
                 </div>
             </div>
 
             <div class="alert-box">
-                <h4>🛡️ 安全提示</h4>
+                <h4 data-i18n="download.security_alert_title">🛡️ 安全提示</h4>
                 <p>
-                    部分杀毒软件可能会误报。这是因为软件使用了 PyInstaller 打包，且涉及系统窗口置顶等功能。
+                    <span data-i18n="download.security_alert_content">部分杀毒软件可能会误报。这是因为软件使用了 PyInstaller 打包，且涉及系统窗口置顶等功能。</span>
                     <br><br>
-                    <strong>我们保证：</strong>GaiYa 是完全开源的软件，不包含任何恶意代码。您可以在 GitHub 查看完整源代码。
+                    <strong data-i18n="download.security_guarantee">我们保证：</strong><span data-i18n="download.security_guarantee_desc">GaiYa 是完全开源的软件，不包含任何恶意代码。您可以在 GitHub 查看完整源代码。</span>
                 </p>
             </div>
         </div>
@@ -462,8 +467,8 @@
     <!-- 系统要求 -->
     <section class="section bg-light">
         <div class="container">
-            <h2 class="section-title">💻 系统要求</h2>
-            <p class="section-subtitle">确保您的设备满足以下最低配置要求</p>
+            <h2 class="section-title" data-i18n="download.system_requirements">💻 系统要求</h2>
+            <p class="section-subtitle" data-i18n="download.system_requirements_desc">确保您的设备满足以下最低配置要求</p>
 
             <div class="requirements-grid">
                 <div class="requirement-card">
@@ -511,8 +516,8 @@
     <!-- 安装指南 -->
     <section class="section">
         <div class="container">
-            <h2 class="section-title">📖 安装指南</h2>
-            <p class="section-subtitle">简单 4 步，快速开始使用</p>
+            <h2 class="section-title" data-i18n="download.install_guide">📖 安装指南</h2>
+            <p class="section-subtitle" data-i18n="download.install_guide_desc">简单 4 步，快速开始使用</p>
 
             <div class="install-steps">
                 <div class="install-step">
@@ -541,7 +546,7 @@
     <!-- 常见问题 -->
     <section class="section bg-light">
         <div class="container">
-            <h2 class="section-title">常见问题</h2>
+            <h2 class="section-title" data-i18n="download.faq_title">常见问题</h2>
 
             <div style="max-width: 800px; margin: 0 auto;">
                 <div class="faq-item">
@@ -685,5 +690,8 @@
             </div>
         </div>
     </footer>
+
+    <!-- i18n Internationalization -->
+    <script src="js/i18n.js"></script>
 </body>
 </html>

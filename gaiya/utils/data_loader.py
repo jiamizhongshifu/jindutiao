@@ -1,10 +1,39 @@
 """
-配置和任务数据加载工具
+Config and task data loading utilities
 """
 import json
 from pathlib import Path
 from . import time_utils, path_utils
 from ..core.template_manager import TemplateManager
+
+
+def init_i18n(config, logger):
+    """
+    Initialize i18n module based on config
+
+    Args:
+        config: Config dictionary
+        logger: Logger instance
+    """
+    try:
+        from i18n import set_language, get_system_locale
+
+        language = config.get('language', 'auto')
+
+        if language == 'auto':
+            # Auto-detect system language
+            actual_locale = get_system_locale()
+            set_language(actual_locale)
+            logger.info(f"i18n initialized with system locale: {actual_locale}")
+        else:
+            # Use specified language
+            set_language(language)
+            logger.info(f"i18n initialized with configured language: {language}")
+
+    except ImportError as e:
+        logger.warning(f"i18n module not available: {e}")
+    except Exception as e:
+        logger.error(f"Failed to initialize i18n: {e}")
 
 
 def load_config(app_dir, logger):
@@ -19,8 +48,9 @@ def load_config(app_dir, logger):
     """
     config_file = app_dir / 'config.json'
 
-    # 默认配置
+    # Default config
     default_config = {
+        "language": "auto",  # "auto", "zh_CN", "en_US"
         "bar_height": 10,
         "position": "bottom",
         "background_color": "#505050",
@@ -28,11 +58,11 @@ def load_config(app_dir, logger):
         "marker_color": "#FF0000",
         "marker_width": 2,
         "marker_type": "gif",  # "line", "image", "gif"
-        "marker_image_path": "kun.webp",  # 默认使用kun.webp
-        "marker_size": 100,  # 标记图片大小(像素)
-        "marker_speed": 100,  # 动画播放速度(百分比, 100=标准速度)
-        "marker_x_offset": 0,  # 标记图片 X 轴偏移(像素,正值向右,负值向左)
-        "marker_y_offset": -28,  # 标记图片 Y 轴偏移(像素,正值向上,负值向下)
+        "marker_image_path": "kun.webp",  # Default to kun.webp
+        "marker_size": 100,  # Marker image size (pixels)
+        "marker_speed": 100,  # Animation speed (percentage, 100=normal)
+        "marker_x_offset": 0,  # Marker X offset (pixels, positive=right)
+        "marker_y_offset": -28,  # Marker Y offset (pixels, positive=up)
         "screen_index": 0,
         "update_interval": 1000,
         "enable_shadow": True,

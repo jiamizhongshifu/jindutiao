@@ -12,6 +12,8 @@ from datetime import datetime
 from typing import Dict, List, Optional, Any
 from PySide6.QtCore import QObject, Signal
 
+from i18n.translator import tr
+
 
 class ThemeManager(QObject):
     """
@@ -498,10 +500,12 @@ class ThemeManager(QObject):
         try:
             if self.themes_file.exists():
                 current_mtime = self.themes_file.stat().st_mtime
-                if (self._themes_cache is not None and 
+                if (self._themes_cache is not None and
                     self._themes_cache_timestamp is not None and
                     self._themes_cache_timestamp == current_mtime):
-                    # 缓存有效，直接返回
+                    # 缓存有效，应用翻译后返回
+                    if "preset_themes" in self._themes_cache:
+                        self._translate_preset_themes(self._themes_cache["preset_themes"])
                     return self._themes_cache
         except Exception as e:
             self.logger.debug(f"检查缓存时出错: {e}")
@@ -511,6 +515,10 @@ class ThemeManager(QObject):
             with open(self.themes_file, 'r', encoding='utf-8') as f:
                 themes_data = json.load(f)
             
+            # Apply translations to preset themes
+            if "preset_themes" in themes_data:
+                self._translate_preset_themes(themes_data["preset_themes"])
+
             # 更新缓存
             try:
                 if self.themes_file.exists():
@@ -519,17 +527,34 @@ class ThemeManager(QObject):
                     self._themes_cache_timestamp = None
             except Exception:
                 self._themes_cache_timestamp = None
-            
+
             self._themes_cache = themes_data
             return themes_data
         except Exception as e:
             self.logger.error(f"加载所有主题失败: {e}")
-            return {
+            themes_data = {
                 "preset_themes": self.DEFAULT_PRESET_THEMES.copy(),
                 "custom_themes": {},
                 "ai_generated_themes": {}
             }
-    
+            # Apply translations to preset themes
+            self._translate_preset_themes(themes_data["preset_themes"])
+            return themes_data
+
+    def _translate_preset_themes(self, preset_themes: dict):
+        """
+        Translate name and description fields for preset themes
+
+        Args:
+        - preset_themes: Dictionary of preset themes to translate (modified in-place)
+        """
+        for theme_id, theme_data in preset_themes.items():
+            if theme_data.get("type") == "preset":
+                # Translate name
+                theme_data["name"] = tr(f"themes.{theme_id}.name")
+                # Translate description
+                theme_data["description"] = tr(f"themes.{theme_id}.description")
+
     def register_ui_component(self, component, apply_immediately=True):
         """
         注册UI组件，主题变更时自动通知

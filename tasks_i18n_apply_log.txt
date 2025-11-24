@@ -1,0 +1,86 @@
+[OK] Line 1932
+[OK] Line 2026
+[SKIP] Line 2060: Content mismatch
+  Expected:         preset_group = QGroupBox("📋 预设模板")
+  Found:            self.template_group = QGroupBox("📋 预设模板")
+
+[SKIP] Line 2090: Content mismatch
+  Expected:         custom_group = QGroupBox("💾 我的模板")
+  Found:            self.custom_template_group = QGroupBox("💾 我的模板")
+
+[OK] Line 2129
+[SKIP] Line 2199: Content mismatch
+  Expected:         schedule_group = QGroupBox("📅 模板自动应用管理")
+  Found:            schedule_panel = QGroupBox("📅 模板自动应用管理")
+
+[SKIP] Line 2238: Content mismatch
+  Expected:         test_group = QGroupBox("🔍 测试日期")
+  Found:            test_date_btn = QPushButton("🔍 测试日期")
+
+[OK] Line 1937
+[SKIP] Line 2021: Content mismatch
+  Expected:         table_hint = QLabel("双击表格单元格可以编辑任务内容")
+  Found:            info_label = QLabel("双击表格单元格可以编辑任务内容")
+
+[OK] Line 2133
+[OK] Line 2204
+[SKIP] Line 2239: Content mismatch
+  Expected:         test_hint = QLabel("测试指定日期会匹配到哪个模板")
+  Found:            test_date_btn.setToolTip("测试指定日期会匹配到哪个模板")
+
+[OK] Line 1943
+[OK] Line 2030
+[OK] Line 2045
+[SKIP] Line 2064: Content mismatch
+  Expected:         quick_label = QLabel("快速加载:")
+  Found:            template_label = QLabel("快速加载:")
+
+[OK] Line 2094
+[OK] Line 1983
+[SKIP] Line 2079: Content mismatch
+  Expected:         self.template_status_label.setText("模板加载中...")
+  Found:                fallback_label = QLabel("模板加载中...")
+
+[OK] Line 1949
+[OK] Line 1960
+[SKIP] Line 1988: Content mismatch
+  Expected:         refresh_btn = QPushButton("🔄 刷新配额")
+  Found:            refresh_quota_btn = QPushButton("🔄 刷新配额")
+
+[SKIP] Line 2104: Content mismatch
+  Expected:         load_btn = QPushButton("📂 加载")
+  Found:            load_custom_btn = QPushButton("📂 加载")
+
+[SKIP] Line 2112: Content mismatch
+  Expected:         delete_btn = QPushButton("🗑️ 删除")
+  Found:            delete_custom_btn = QPushButton("🗑️ 删除")
+
+[SKIP] Line 2170: Content mismatch
+  Expected:         add_task_btn = QPushButton("➕ 添加任务")
+  Found:            add_btn = QPushButton("➕ 添加任务")
+
+[OK] Line 2175
+[SKIP] Line 2180: Content mismatch
+  Expected:         load_template_btn = QPushButton("📂 加载自定义模板")
+  Found:            load_custom_btn = QPushButton("📂 加载自定义模板")
+
+[OK] Line 2185
+[SKIP] Line 2232: Content mismatch
+  Expected:         add_rule_btn = QPushButton("➕ 添加规则")
+  Found:            add_schedule_btn = QPushButton("➕ 添加规则")
+
+[SKIP] Line 2105: Content mismatch
+  Expected:         load_btn.setToolTip("加载选中的自定义模板")
+  Found:            load_custom_btn.setToolTip("加载选中的自定义模板")
+
+[SKIP] Line 2113: Content mismatch
+  Expected:         delete_btn.setToolTip("删除选中的自定义模板")
+  Found:            delete_custom_btn.setToolTip("删除选中的自定义模板")
+
+[SKIP] Line 2015: Content mismatch
+  Expected:         self.quota_label.setText("⏳ 正在连接云服务（可能需要10-15秒）...")
+  Found:                self.quota_label.setText("⏳ 正在连接云服务（可能需要10-15秒）...")
+
+[OK] Line 2155
+
+[SUCCESS] Made 16 changes

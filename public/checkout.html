@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>结账 - GaiYa盖亚</title>
+    <title data-i18n-page-title="page_title.checkout">结账 - GaiYa每日进度条</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
@@ -132,19 +132,24 @@
         <div class="navbar-container">
             <a href="index.html" class="navbar-logo">
                 <img src="images/logo.png" alt="GaiYa Logo" style="height: 36px; width: 36px; border-radius: 8px;">
-                <span style="font-weight: 700; color: var(--text-primary); margin-left: 8px;">GaiYa每日进度条</span>
+                <span style="font-weight: 700; color: var(--text-primary); margin-left: 8px;" data-i18n="brand.name">GaiYa每日进度条</span>
             </a>
             <ul class="navbar-menu">
-                <li><a href="index.html#features">功能</a></li>
-                <li><a href="index.html#pricing">定价</a></li>
-                <li><a href="index.html#testimonials">评价</a></li>
-                <li><a href="index.html#faq">帮助</a></li>
-                <li><a href="index.html#about">关于</a></li>
-                <li><a href="index.html#download">下载</a></li>
+                <li><a href="index.html#features" data-i18n="nav.features">功能</a></li>
+                <li><a href="index.html#pricing" data-i18n="nav.pricing">定价</a></li>
+                <li><a href="index.html#testimonials" data-i18n="nav.testimonials">评价</a></li>
+                <li><a href="index.html#faq" data-i18n="nav.help">帮助</a></li>
+                <li><a href="index.html#about" data-i18n="nav.about">关于</a></li>
+                <li><a href="index.html#download" data-i18n="nav.download">下载</a></li>
             </ul>
             <div class="navbar-actions">
-                <a href="#" class="btn btn-secondary btn-small">登录</a>
-                <a href="download.html" class="btn btn-primary btn-small">下载</a>
+                <!-- Language Switcher -->
+                <div class="language-switcher">
+                    <button class="lang-btn" data-lang-switch="zh_CN" onclick="switchLanguage('zh_CN')">中</button>
+                    <button class="lang-btn" data-lang-switch="en_US" onclick="switchLanguage('en_US')">EN</button>
+                </div>
+                <a href="https://github.com/jiamizhongshifu/jindutiao" target="_blank" class="btn btn-secondary btn-small">GitHub</a>
+                <a href="index.html#download" class="btn btn-primary btn-small" data-i18n="hero.download_btn">立即下载</a>
             </div>
         </div>
     </nav>
@@ -154,15 +159,15 @@
         <div class="checkout-steps">
             <div class="checkout-step completed">
                 <div class="step-circle">1</div>
-                <div>选择套餐</div>
+                <div data-i18n="checkout.step_select_plan">选择套餐</div>
             </div>
             <div class="checkout-step active">
                 <div class="step-circle">2</div>
-                <div>登录账户</div>
+                <div data-i18n="checkout.step_login">登录账户</div>
             </div>
             <div class="checkout-step">
                 <div class="step-circle">3</div>
-                <div>支付</div>
+                <div data-i18n="checkout.step_payment">支付</div>
             </div>
         </div>
 
@@ -170,44 +175,44 @@
             <!-- 左侧：登录表单 -->
             <div>
                 <div class="checkout-card">
-                    <h2 style="margin-bottom: 24px;">登录或注册</h2>
+                    <h2 style="margin-bottom: 24px;" data-i18n="checkout.login_or_register">登录或注册</h2>
 
                     <div class="form-group">
-                        <label for="email">邮箱地址 *</label>
-                        <input type="email" id="email" placeholder="请输入邮箱地址" required>
+                        <label for="email" data-i18n="checkout.email_label">邮箱地址 *</label>
+                        <input type="email" id="email" data-i18n-placeholder="checkout.email_placeholder" placeholder="请输入邮箱地址" required>
                     </div>
 
                     <div class="form-group">
-                        <label for="password">密码 *</label>
-                        <input type="password" id="password" placeholder="请输入密码（新用户将自动注册）" required>
+                        <label for="password" data-i18n="checkout.password_label">密码 *</label>
+                        <input type="password" id="password" data-i18n-placeholder="checkout.password_placeholder" placeholder="请输入密码（新用户将自动注册）" required>
                     </div>
 
                     <div class="form-group" style="display: flex; align-items: center; gap: 8px;">
                         <input type="checkbox" id="agree-terms" required style="width: auto; margin: 0;">
                         <label for="agree-terms" style="margin: 0; font-weight: normal; font-size: 14px;">
-                            我已阅读并同意 <a href="#" style="color: var(--primary-color);">《用户协议》</a> 和 <a href="#" style="color: var(--primary-color);">《隐私政策》</a>
+                            <span data-i18n="checkout.agree_terms_prefix">我已阅读并同意</span> <a href="#" style="color: var(--primary-color);" data-i18n="checkout.terms_of_service">《用户协议》</a> <span data-i18n="checkout.and">和</span> <a href="#" style="color: var(--primary-color);" data-i18n="checkout.privacy_policy">《隐私政策》</a>
                         </label>
                     </div>
 
-                    <p style="font-size: 12px; color: #999; margin-bottom: 16px;">
+                    <p style="font-size: 12px; color: #999; margin-bottom: 16px;" data-i18n="checkout.email_verification_notice">
                         💡 新用户注册后需验证邮箱，验证链接将发送至您的邮箱
                     </p>
 
-                    <button class="btn btn-primary" style="width: 100%;" onclick="alert('此功能需要后端API支持，请使用GaiYa桌面应用登录')">
+                    <button class="btn btn-primary" style="width: 100%;" onclick="alert('此功能需要后端API支持，请使用GaiYa桌面应用登录')" data-i18n="checkout.login_button">
                         登录/注册并继续支付
                     </button>
                 </div>
 
                 <!-- 支付方式 -->
                 <div class="checkout-card" style="margin-top: 24px;">
-                    <h2 style="margin-bottom: 24px;">选择支付方式</h2>
+                    <h2 style="margin-bottom: 24px;" data-i18n="checkout.choose_payment_method">选择支付方式</h2>
 
                     <div class="payment-option selected">
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <input type="radio" name="payment" value="wechat" checked>
                             <div style="flex: 1;">
-                                <h3 style="margin: 0; font-size: 16px;">💚 微信支付（推荐）</h3>
-                                <p style="margin: 4px 0 0; font-size: 12px; color: #666;">扫码支付，安全便捷</p>
+                                <h3 style="margin: 0; font-size: 16px;" data-i18n="checkout.wechat_pay">💚 微信支付（推荐）</h3>
+                                <p style="margin: 4px 0 0; font-size: 12px; color: #666;" data-i18n="checkout.wechat_pay_desc">扫码支付，安全便捷</p>
                             </div>
                         </div>
                     </div>
@@ -216,14 +221,14 @@
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <input type="radio" name="payment" value="stripe" disabled>
                             <div style="flex: 1;">
-                                <h3 style="margin: 0; font-size: 16px;">💳 Stripe 国际支付</h3>
-                                <p style="margin: 4px 0 0; font-size: 12px; color: #666;">⏳ 准备中，即将上线...</p>
-                                <p style="margin: 4px 0 0; font-size: 11px; color: #999;">支持Visa/Mastercard等国际信用卡</p>
+                                <h3 style="margin: 0; font-size: 16px;" data-i18n="checkout.stripe_pay">💳 Stripe 国际支付</h3>
+                                <p style="margin: 4px 0 0; font-size: 12px; color: #666;" data-i18n="checkout.stripe_coming_soon">⏳ 准备中，即将上线...</p>
+                                <p style="margin: 4px 0 0; font-size: 11px; color: #999;" data-i18n="checkout.stripe_cards_supported">支持Visa/Mastercard等国际信用卡</p>
                             </div>
                         </div>
                     </div>
 
-                    <p style="margin-top: 16px; padding: 12px; background: #e8f5e9; border-radius: 8px; font-size: 13px; color: #2e7d32;">
+                    <p style="margin-top: 16px; padding: 12px; background: #e8f5e9; border-radius: 8px; font-size: 13px; color: #2e7d32;" data-i18n-html="checkout.payment_success_tip">
                         💡 <strong>提示：</strong>支付成功后，会员权益将自动激活，重启应用即可使用
                     </p>
                 </div>
@@ -232,42 +237,42 @@
             <!-- 右侧：订单摘要 -->
             <div>
                 <div class="checkout-card order-summary">
-                    <h3 style="margin-bottom: 16px;">订单摘要</h3>
+                    <h3 style="margin-bottom: 16px;" data-i18n="checkout.order_summary">订单摘要</h3>
 
                     <div class="summary-row">
-                        <span>套餐</span>
+                        <span data-i18n="checkout.plan">套餐</span>
                         <span id="plan-name">Pro 年度</span>
                     </div>
 
                     <div class="summary-row">
-                        <span>有效期</span>
+                        <span data-i18n="checkout.validity">有效期</span>
                         <span id="plan-validity">365天</span>
                     </div>
 
                     <div style="margin: 16px 0; padding: 12px; background: white; border-radius: 8px;">
-                        <p style="font-size: 13px; margin: 0; color: #666;">✓ 20次/天 AI智能规划</p>
-                        <p style="font-size: 13px; margin: 4px 0 0; color: #666;">✓ 去除进度条水印</p>
-                        <p style="font-size: 13px; margin: 4px 0 0; color: #666;">✓ 统计报告分析</p>
-                        <p style="font-size: 13px; margin: 4px 0 0; color: #666;">✓ 数据云同步</p>
-                        <p style="font-size: 13px; margin: 4px 0 0; color: #666;">✓ 场景系统</p>
-                        <p style="font-size: 13px; margin: 4px 0 0; color: #666;">✓ 加入VIP会员群</p>
+                        <p style="font-size: 13px; margin: 0; color: #666;" data-i18n="checkout.feature_ai_planning">✓ 20次/天 AI智能规划</p>
+                        <p style="font-size: 13px; margin: 4px 0 0; color: #666;" data-i18n="checkout.feature_no_watermark">✓ 去除进度条水印</p>
+                        <p style="font-size: 13px; margin: 4px 0 0; color: #666;" data-i18n="checkout.feature_analytics">✓ 统计报告分析</p>
+                        <p style="font-size: 13px; margin: 4px 0 0; color: #666;" data-i18n="checkout.feature_cloud_sync">✓ 数据云同步</p>
+                        <p style="font-size: 13px; margin: 4px 0 0; color: #666;" data-i18n="checkout.feature_scenes">✓ 场景系统</p>
+                        <p style="font-size: 13px; margin: 4px 0 0; color: #666;" data-i18n="checkout.feature_vip_group">✓ 加入VIP会员群</p>
                     </div>
 
                     <div class="summary-row total">
-                        <span>总计</span>
+                        <span data-i18n="checkout.total">总计</span>
                         <span id="plan-price">¥199</span>
                     </div>
 
-                    <p style="margin-top: 16px; font-size: 12px; color: #999; text-align: center;">
+                    <p style="margin-top: 16px; font-size: 12px; color: #999; text-align: center;" data-i18n="checkout.no_auto_renewal">
                         到期后不会自动续费
                     </p>
                 </div>
 
                 <div style="margin-top: 16px; padding: 12px; background: #fff3cd; border-radius: 8px; font-size: 12px; color: #856404;">
-                    🔒 <strong>安全保障</strong><br>
-                    • 所有支付信息经过加密传输<br>
-                    • 7天内未使用可全额退款<br>
-                    • 完整的隐私保护承诺
+                    <span data-i18n-html="checkout.security_title">🔒 <strong>安全保障</strong></span><br>
+                    <span data-i18n="checkout.security_encryption">• 所有支付信息经过加密传输</span><br>
+                    <span data-i18n="checkout.security_refund">• 7天内未使用可全额退款</span><br>
+                    <span data-i18n="checkout.security_privacy">• 完整的隐私保护承诺</span>
                 </div>
             </div>
         </div>
@@ -279,16 +284,15 @@
         const planId = urlParams.get('plan') || 'pro_yearly';
 
         const plans = {
-            'pro_monthly': { name: 'Pro 月度', price: '¥29', validity: '30天' },
-            'pro_yearly': { name: 'Pro 年度', price: '¥199', validity: '365天' },
-            'lifetime': { name: '会员合伙人', price: '¥599', validity: '永久' }
+            'pro_monthly': { nameKey: 'checkout.plan_pro_monthly', price: '¥29', validityKey: 'checkout.validity_30days' },
+            'pro_yearly': { nameKey: 'checkout.plan_pro_yearly', price: '¥199', validityKey: 'checkout.validity_365days' },
+            'lifetime': { nameKey: 'checkout.plan_lifetime', price: '¥599', validityKey: 'checkout.validity_forever' }
         };
 
         const plan = plans[planId];
         if (plan) {
-            document.getElementById('plan-name').textContent = plan.name;
+            // Only set price here, name/validity will be translated by i18n script below
             document.getElementById('plan-price').textContent = plan.price;
-            document.getElementById('plan-validity').textContent = plan.validity;
         }
     </script>
 
@@ -296,9 +300,47 @@
     <footer class="footer">
         <div class="footer-container">
             <div class="footer-bottom">
-                <p>© 2025 GaiYa 团队 | 需要帮助？<a href="help.html" style="color: var(--primary-color); margin-left: 8px;">查看帮助中心</a></p>
+                <p>© 2025 GaiYa 团队 | <span data-i18n="checkout.need_help">需要帮助？</span><a href="help.html" style="color: var(--primary-color); margin-left: 8px;" data-i18n="checkout.view_help_center">查看帮助中心</a></p>
             </div>
         </div>
     </footer>
+
+    <!-- i18n Internationalization -->
+    <script src="js/i18n.js"></script>
+    <script>
+        // Update plan info after i18n is ready
+        function updatePlanInfo() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const planId = urlParams.get('plan') || 'pro_yearly';
+            const plans = {
+                'pro_monthly': { nameKey: 'checkout.plan_pro_monthly', price: '¥29', validityKey: 'checkout.validity_30days' },
+                'pro_yearly': { nameKey: 'checkout.plan_pro_yearly', price: '¥199', validityKey: 'checkout.validity_365days' },
+                'lifetime': { nameKey: 'checkout.plan_lifetime', price: '¥599', validityKey: 'checkout.validity_forever' }
+            };
+            const plan = plans[planId];
+            if (plan && window.i18n && typeof window.i18n.t === 'function') {
+                const name = window.i18n.t(plan.nameKey);
+                const validity = window.i18n.t(plan.validityKey);
+                // Only update if translation was found (not returning the key)
+                if (name !== plan.nameKey) {
+                    document.getElementById('plan-name').textContent = name;
+                    document.getElementById('plan-validity').textContent = validity;
+                } else {
+                    setTimeout(updatePlanInfo, 100);
+                    return;
+                }
+                document.getElementById('plan-price').textContent = plan.price;
+            } else {
+                setTimeout(updatePlanInfo, 100);
+            }
+        }
+        // Wait for DOMContentLoaded + i18n init
+        document.addEventListener('DOMContentLoaded', () => setTimeout(updatePlanInfo, 300));
+
+        // Listen for language change events and update plan info
+        document.addEventListener('i18n:update', () => {
+            updatePlanInfo();
+        });
+    </script>
 </body>
 </html>

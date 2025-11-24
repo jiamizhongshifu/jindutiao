@@ -1,0 +1,4811 @@
+[
+  {
+    "line": 53,
+    "original": "简体中文",
+    "key": "general.text_4364",
+    "before": "return [{\"code\": \"zh_CN\", \"name\": \"简体中文\"}, {\"code\": \"en_US\", \"name\": \"English\"}]",
+    "after": "return [{\"code\": \"zh_CN\", \"name\": tr('general.text_4364')}, {\"code\": \"en_US\", \"n"
+  },
+  {
+    "line": 66,
+    "original": "模板名",
+    "key": "tasks.template_1",
+    "before": "existing_templates: 现有模板列表 [{\"name\": \"模板名\", ...}, ...]",
+    "after": "existing_templates: 现有模板列表 [{\"name\": tr('tasks.template_1'), ...}, ...]"
+  },
+  {
+    "line": 76,
+    "original": "保存为模板",
+    "key": "tasks.save_as_template",
+    "before": "self.setWindowTitle(\"保存为模板\")",
+    "after": "self.setWindowTitle(tr('tasks.save_as_template'))"
+  },
+  {
+    "line": 83,
+    "original": "选择要覆盖的模板或输入新的模板名称:",
+    "key": "tasks.template_2",
+    "before": "hint_label = QLabel(\"选择要覆盖的模板或输入新的模板名称:\")",
+    "after": "hint_label = QLabel(tr('tasks.template_2'))"
+  },
+  {
+    "line": 85,
+    "original": "请输入模板名称:",
+    "key": "tasks.template_3",
+    "before": "hint_label = QLabel(\"请输入模板名称:\")",
+    "after": "hint_label = QLabel(tr('tasks.template_3'))"
+  },
+  {
+    "line": 100,
+    "original": "{template_name} ({task_count}个任务)",
+    "key": "tasks.text_3308",
+    "before": "display_text = f\"{template_name} ({task_count}个任务)\"",
+    "after": "display_text = ftr('tasks.text_3308')"
+  },
+  {
+    "line": 105,
+    "original": "选择历史模板或输入新名称",
+    "key": "tasks.template_4",
+    "before": "self.input_widget.setPlaceholderText(\"选择历史模板或输入新名称\")",
+    "after": "self.input_widget.setPlaceholderText(tr('tasks.template_4'))"
+  },
+  {
+    "line": 109,
+    "original": "例如: 工作日模板",
+    "key": "tasks.template_5",
+    "before": "self.input_widget.setPlaceholderText(\"例如: 工作日模板\")",
+    "after": "self.input_widget.setPlaceholderText(tr('tasks.template_5'))"
+  },
+  {
+    "line": 116,
+    "original": "💡 提示:\\n",
+    "key": "message.text_8425",
+    "before": "\"💡 提示:\\n\"",
+    "after": "tr('message.text_8425')"
+  },
+  {
+    "line": 117,
+    "original": "• 选择历史模板将直接覆盖该模板\\n",
+    "key": "tasks.template_6",
+    "before": "\"• 选择历史模板将直接覆盖该模板\\n\"",
+    "after": "tr('tasks.template_6')"
+  },
+  {
+    "line": 118,
+    "original": "• 输入新名称将创建新的模板",
+    "key": "tasks.template_7",
+    "before": "\"• 输入新名称将创建新的模板\"",
+    "after": "tr('tasks.template_7')"
+  },
+  {
+    "line": 161,
+    "original": "模板名称不能为空!",
+    "key": "tasks.template_8",
+    "before": "QMessageBox.warning(self, \"输入错误\", \"模板名称不能为空!\")",
+    "after": "QMessageBox.warning(self, \"输入错误\", tr('tasks.template_8'))"
+  },
+  {
+    "line": 161,
+    "original": "输入错误",
+    "key": "message.text_2881",
+    "before": "QMessageBox.warning(self, \"输入错误\", \"模板名称不能为空!\")",
+    "after": "QMessageBox.warning(self, tr('message.text_2881'), tr('tasks.template_8'))"
+  },
+  {
+    "line": 431,
+    "original": "❌ 禁用",
+    "key": "general.text_2945",
+    "before": "status_item = QTableWidgetItem(\"✅ 启用\" if enabled else \"❌ 禁用\")",
+    "after": "status_item = QTableWidgetItem(\"✅ 启用\" if enabled else tr('general.text_2945'))"
+  },
+  {
+    "line": 431,
+    "original": "✅ 启用",
+    "key": "general.text_5680",
+    "before": "status_item = QTableWidgetItem(\"✅ 启用\" if enabled else \"❌ 禁用\")",
+    "after": "status_item = QTableWidgetItem(tr('general.text_5680') if enabled else tr('gener"
+  },
+  {
+    "line": 443,
+    "original": "启用",
+    "key": "general.text_5680_1",
+    "before": "toggle_btn.setToolTip(\"禁用\" if enabled else \"启用\")",
+    "after": "toggle_btn.setToolTip(\"禁用\" if enabled else tr('general.text_5680_1'))"
+  },
+  {
+    "line": 443,
+    "original": "禁用",
+    "key": "general.text_2945_1",
+    "before": "toggle_btn.setToolTip(\"禁用\" if enabled else \"启用\")",
+    "after": "toggle_btn.setToolTip(tr('general.text_2945_1') if enabled else tr('general.text"
+  },
+  {
+    "line": 452,
+    "original": "编辑",
+    "key": "button.edit",
+    "before": "edit_btn.setToolTip(\"编辑\")",
+    "after": "edit_btn.setToolTip(tr('button.edit'))"
+  },
+  {
+    "line": 461,
+    "original": "删除",
+    "key": "button.delete",
+    "before": "delete_btn.setToolTip(\"删除\")",
+    "after": "delete_btn.setToolTip(tr('button.delete'))"
+  },
+  {
+    "line": 480,
+    "original": "模板自动应用",
+    "key": "tasks.template_11",
+    "before": "if not self._check_login_and_guide(\"模板自动应用\"):",
+    "after": "if not self._check_login_and_guide(tr('tasks.template_11')):"
+  },
+  {
+    "line": 485,
+    "original": "时间表管理器未初始化",
+    "key": "tasks.time_6",
+    "before": "QMessageBox.warning(self, \"警告\", \"时间表管理器未初始化\")",
+    "after": "QMessageBox.warning(self, \"警告\", tr('tasks.time_6'))"
+  },
+  {
+    "line": 485,
+    "original": "警告",
+    "key": "message.warning",
+    "before": "QMessageBox.warning(self, \"警告\", \"时间表管理器未初始化\")",
+    "after": "QMessageBox.warning(self, tr('message.warning'), tr('tasks.time_6'))"
+  },
+  {
+    "line": 489,
+    "original": "模板管理器未初始化",
+    "key": "tasks.template_12",
+    "before": "QMessageBox.warning(self, \"警告\", \"模板管理器未初始化\")",
+    "after": "QMessageBox.warning(self, \"警告\", tr('tasks.template_12'))"
+  },
+  {
+    "line": 489,
+    "original": "警告",
+    "key": "message.warning",
+    "before": "QMessageBox.warning(self, \"警告\", \"模板管理器未初始化\")",
+    "after": "QMessageBox.warning(self, tr('message.warning'), tr('tasks.template_12'))"
+  },
+  {
+    "line": 500,
+    "original": "添加模板应用规则",
+    "key": "tasks.template_13",
+    "before": "dialog.setWindowTitle(\"添加模板应用规则\")",
+    "after": "dialog.setWindowTitle(tr('tasks.template_13'))"
+  },
+  {
+    "line": 507,
+    "original": "选择模板:",
+    "key": "tasks.template_14",
+    "before": "template_layout.addWidget(QLabel(\"选择模板:\"))",
+    "after": "template_layout.addWidget(QLabel(tr('tasks.template_14')))"
+  },
+  {
+    "line": 520,
+    "original": "规则类型",
+    "key": "general.text_7707",
+    "before": "type_group = QGroupBox(\"规则类型\")",
+    "after": "type_group = QGroupBox(tr('general.text_7707'))"
+  },
+  {
+    "line": 524,
+    "original": "按星期重复",
+    "key": "general.text_3012",
+    "before": "weekdays_radio = QRadioButton(\"按星期重复\")",
+    "after": "weekdays_radio = QRadioButton(tr('general.text_3012'))"
+  },
+  {
+    "line": 525,
+    "original": "每月重复",
+    "key": "general.text_4222",
+    "before": "monthly_radio = QRadioButton(\"每月重复\")",
+    "after": "monthly_radio = QRadioButton(tr('general.text_4222'))"
+  },
+  {
+    "line": 526,
+    "original": "特定日期",
+    "key": "general.text_7678",
+    "before": "specific_radio = QRadioButton(\"特定日期\")",
+    "after": "specific_radio = QRadioButton(tr('general.text_7678'))"
+  },
+  {
+    "line": 543,
+    "original": "周四",
+    "key": "general.text_3255",
+    "before": "for i, name in [(1, \"周一\"), (2, \"周二\"), (3, \"周三\"), (4, \"周四\"),",
+    "after": "for i, name in [(1, \"周一\"), (2, \"周二\"), (3, \"周三\"), (4, tr('general.text_3255')),"
+  },
+  {
+    "line": 543,
+    "original": "周三",
+    "key": "general.text_4896",
+    "before": "for i, name in [(1, \"周一\"), (2, \"周二\"), (3, \"周三\"), (4, \"周四\"),",
+    "after": "for i, name in [(1, \"周一\"), (2, \"周二\"), (3, tr('general.text_4896')), (4, tr('gene"
+  },
+  {
+    "line": 543,
+    "original": "周二",
+    "key": "general.text_9226",
+    "before": "for i, name in [(1, \"周一\"), (2, \"周二\"), (3, \"周三\"), (4, \"周四\"),",
+    "after": "for i, name in [(1, \"周一\"), (2, tr('general.text_9226')), (3, tr('general.text_48"
+  },
+  {
+    "line": 543,
+    "original": "周一",
+    "key": "general.text_615",
+    "before": "for i, name in [(1, \"周一\"), (2, \"周二\"), (3, \"周三\"), (4, \"周四\"),",
+    "after": "for i, name in [(1, tr('general.text_615')), (2, tr('general.text_9226')), (3, t"
+  },
+  {
+    "line": 544,
+    "original": "周日",
+    "key": "general.text_5821",
+    "before": "(5, \"周五\"), (6, \"周六\"), (7, \"周日\")]:",
+    "after": "(5, \"周五\"), (6, \"周六\"), (7, tr('general.text_5821'))]:"
+  },
+  {
+    "line": 544,
+    "original": "周六",
+    "key": "general.text_5012",
+    "before": "(5, \"周五\"), (6, \"周六\"), (7, \"周日\")]:",
+    "after": "(5, \"周五\"), (6, tr('general.text_5012')), (7, tr('general.text_5821'))]:"
+  },
+  {
+    "line": 544,
+    "original": "周五",
+    "key": "general.text_2962",
+    "before": "(5, \"周五\"), (6, \"周六\"), (7, \"周日\")]:",
+    "after": "(5, tr('general.text_2962')), (6, tr('general.text_5012')), (7, tr('general.text"
+  },
+  {
+    "line": 554,
+    "original": "每月的哪些天?（用逗号分隔，例如: 1,15,28）",
+    "key": "general.text_1240",
+    "before": "monthly_label = QLabel(\"每月的哪些天?（用逗号分隔，例如: 1,15,28）\")",
+    "after": "monthly_label = QLabel(tr('general.text_1240'))"
+  },
+  {
+    "line": 568,
+    "original": "选择具体日期:",
+    "key": "dialog.text_9512",
+    "before": "specific_label = QLabel(\"选择具体日期:\")",
+    "after": "specific_label = QLabel(tr('dialog.text_9512'))"
+  },
+  {
+    "line": 583,
+    "original": "+ 添加日期",
+    "key": "general.text_6594",
+    "before": "add_date_btn = QPushButton(\"+ 添加日期\")",
+    "after": "add_date_btn = QPushButton(tr('general.text_6594'))"
+  },
+  {
+    "line": 648,
+    "original": "取消",
+    "key": "button.cancel",
+    "before": "cancel_btn = QPushButton(\"取消\")",
+    "after": "cancel_btn = QPushButton(tr('button.cancel'))"
+  },
+  {
+    "line": 652,
+    "original": "保存",
+    "key": "button.save",
+    "before": "save_btn = QPushButton(\"保存\")",
+    "after": "save_btn = QPushButton(tr('button.save'))"
+  },
+  {
+    "line": 671,
+    "original": "请至少选择一个星期",
+    "key": "dialog.text_5845",
+    "before": "QMessageBox.warning(self, \"警告\", \"请至少选择一个星期\")",
+    "after": "QMessageBox.warning(self, \"警告\", tr('dialog.text_5845'))"
+  },
+  {
+    "line": 671,
+    "original": "警告",
+    "key": "message.warning",
+    "before": "QMessageBox.warning(self, \"警告\", \"请至少选择一个星期\")",
+    "after": "QMessageBox.warning(self, tr('message.warning'), tr('dialog.text_5845'))"
+  },
+  {
+    "line": 683,
+    "original": "请输入每月的日期",
+    "key": "general.text_1278",
+    "before": "QMessageBox.warning(self, \"警告\", \"请输入每月的日期\")",
+    "after": "QMessageBox.warning(self, \"警告\", tr('general.text_1278'))"
+  },
+  {
+    "line": 683,
+    "original": "警告",
+    "key": "message.warning",
+    "before": "QMessageBox.warning(self, \"警告\", \"请输入每月的日期\")",
+    "after": "QMessageBox.warning(self, tr('message.warning'), tr('general.text_1278'))"
+  },
+  {
+    "line": 690,
+    "original": "日期必须在1-31之间",
+    "key": "general.text_8123",
+    "before": "QMessageBox.warning(self, \"警告\", \"日期必须在1-31之间\")",
+    "after": "QMessageBox.warning(self, \"警告\", tr('general.text_8123'))"
+  },
+  {
+    "line": 690,
+    "original": "警告",
+    "key": "message.warning",
+    "before": "QMessageBox.warning(self, \"警告\", \"日期必须在1-31之间\")",
+    "after": "QMessageBox.warning(self, tr('message.warning'), tr('general.text_8123'))"
+  },
+  {
+    "line": 700,
+    "original": "日期格式错误，请使用逗号分隔的数字",
+    "key": "message.text_9244",
+    "before": "QMessageBox.warning(self, \"警告\", \"日期格式错误，请使用逗号分隔的数字\")",
+    "after": "QMessageBox.warning(self, \"警告\", tr('message.text_9244'))"
+  },
+  {
+    "line": 700,
+    "original": "警告",
+    "key": "message.warning",
+    "before": "QMessageBox.warning(self, \"警告\", \"日期格式错误，请使用逗号分隔的数字\")",
+    "after": "QMessageBox.warning(self, tr('message.warning'), tr('message.text_9244'))"
+  },
+  {
+    "line": 705,
+    "original": "请至少添加一个日期",
+    "key": "general.text_1577",
+    "before": "QMessageBox.warning(self, \"警告\", \"请至少添加一个日期\")",
+    "after": "QMessageBox.warning(self, \"警告\", tr('general.text_1577'))"
+  },
+  {
+    "line": 705,
+    "original": "警告",
+    "key": "message.warning",
+    "before": "QMessageBox.warning(self, \"警告\", \"请至少添加一个日期\")",
+    "after": "QMessageBox.warning(self, tr('message.warning'), tr('general.text_1577'))"
+  },
+  {
+    "line": 715,
+    "original": "请选择规则类型",
+    "key": "dialog.text_7710",
+    "before": "QMessageBox.warning(self, \"警告\", \"请选择规则类型\")",
+    "after": "QMessageBox.warning(self, \"警告\", tr('dialog.text_7710'))"
+  },
+  {
+    "line": 715,
+    "original": "警告",
+    "key": "message.warning",
+    "before": "QMessageBox.warning(self, \"警告\", \"请选择规则类型\")",
+    "after": "QMessageBox.warning(self, tr('message.warning'), tr('dialog.text_7710'))"
+  },
+  {
+    "line": 719,
+    "original": "时间表规则已添加",
+    "key": "tasks.time_7",
+    "before": "QMessageBox.information(self, \"成功\", \"时间表规则已添加\")",
+    "after": "QMessageBox.information(self, \"成功\", tr('tasks.time_7'))"
+  },
+  {
+    "line": 719,
+    "original": "成功",
+    "key": "message.success",
+    "before": "QMessageBox.information(self, \"成功\", \"时间表规则已添加\")",
+    "after": "QMessageBox.information(self, tr('message.success'), tr('tasks.time_7'))"
+  },
+  {
+    "line": 722,
+    "original": "该规则与现有规则冲突，请检查",
+    "key": "general.text_4396",
+    "before": "QMessageBox.warning(self, \"冲突\", \"该规则与现有规则冲突，请检查\")",
+    "after": "QMessageBox.warning(self, \"冲突\", tr('general.text_4396'))"
+  },
+  {
+    "line": 722,
+    "original": "冲突",
+    "key": "general.text_5397",
+    "before": "QMessageBox.warning(self, \"冲突\", \"该规则与现有规则冲突，请检查\")",
+    "after": "QMessageBox.warning(self, tr('general.text_5397'), tr('general.text_4396'))"
+  },
+  {
+    "line": 726,
+    "original": "添加规则失败:\\n{str(e)}",
+    "key": "message.text_9039",
+    "before": "QMessageBox.critical(self, \"错误\", f\"添加规则失败:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, \"错误\", ftr('message.text_9039'))"
+  },
+  {
+    "line": 726,
+    "original": "错误",
+    "key": "message.error",
+    "before": "QMessageBox.critical(self, \"错误\", f\"添加规则失败:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, tr('message.error'), ftr('message.text_9039'))"
+  },
+  {
+    "line": 731,
+    "original": "模板自动应用",
+    "key": "tasks.template_11",
+    "before": "if not self._check_login_and_guide(\"模板自动应用\"):",
+    "after": "if not self._check_login_and_guide(tr('tasks.template_11')):"
+  },
+  {
+    "line": 736,
+    "original": "时间表管理器未初始化",
+    "key": "tasks.time_6",
+    "before": "QMessageBox.warning(self, \"警告\", \"时间表管理器未初始化\")",
+    "after": "QMessageBox.warning(self, \"警告\", tr('tasks.time_6'))"
+  },
+  {
+    "line": 736,
+    "original": "警告",
+    "key": "message.warning",
+    "before": "QMessageBox.warning(self, \"警告\", \"时间表管理器未初始化\")",
+    "after": "QMessageBox.warning(self, tr('message.warning'), tr('tasks.time_6'))"
+  },
+  {
+    "line": 740,
+    "original": "模板管理器未初始化",
+    "key": "tasks.template_12",
+    "before": "QMessageBox.warning(self, \"警告\", \"模板管理器未初始化\")",
+    "after": "QMessageBox.warning(self, \"警告\", tr('tasks.template_12'))"
+  },
+  {
+    "line": 740,
+    "original": "警告",
+    "key": "message.warning",
+    "before": "QMessageBox.warning(self, \"警告\", \"模板管理器未初始化\")",
+    "after": "QMessageBox.warning(self, tr('message.warning'), tr('tasks.template_12'))"
+  },
+  {
+    "line": 746,
+    "original": "无效的规则索引",
+    "key": "general.text_5661",
+    "before": "QMessageBox.warning(self, \"警告\", \"无效的规则索引\")",
+    "after": "QMessageBox.warning(self, \"警告\", tr('general.text_5661'))"
+  },
+  {
+    "line": 746,
+    "original": "警告",
+    "key": "message.warning",
+    "before": "QMessageBox.warning(self, \"警告\", \"无效的规则索引\")",
+    "after": "QMessageBox.warning(self, tr('message.warning'), tr('general.text_5661'))"
+  },
+  {
+    "line": 759,
+    "original": "编辑模板应用规则",
+    "key": "tasks.template_15",
+    "before": "dialog.setWindowTitle(\"编辑模板应用规则\")",
+    "after": "dialog.setWindowTitle(tr('tasks.template_15'))"
+  },
+  {
+    "line": 766,
+    "original": "选择模板:",
+    "key": "tasks.template_14",
+    "before": "template_layout.addWidget(QLabel(\"选择模板:\"))",
+    "after": "template_layout.addWidget(QLabel(tr('tasks.template_14')))"
+  },
+  {
+    "line": 784,
+    "original": "规则类型",
+    "key": "general.text_7707",
+    "before": "type_group = QGroupBox(\"规则类型\")",
+    "after": "type_group = QGroupBox(tr('general.text_7707'))"
+  },
+  {
+    "line": 788,
+    "original": "按星期重复",
+    "key": "general.text_3012",
+    "before": "weekdays_radio = QRadioButton(\"按星期重复\")",
+    "after": "weekdays_radio = QRadioButton(tr('general.text_3012'))"
+  },
+  {
+    "line": 789,
+    "original": "每月重复",
+    "key": "general.text_4222",
+    "before": "monthly_radio = QRadioButton(\"每月重复\")",
+    "after": "monthly_radio = QRadioButton(tr('general.text_4222'))"
+  },
+  {
+    "line": 790,
+    "original": "特定日期",
+    "key": "general.text_7678",
+    "before": "specific_radio = QRadioButton(\"特定日期\")",
+    "after": "specific_radio = QRadioButton(tr('general.text_7678'))"
+  },
+  {
+    "line": 807,
+    "original": "周四",
+    "key": "general.text_3255",
+    "before": "for i, name in [(1, \"周一\"), (2, \"周二\"), (3, \"周三\"), (4, \"周四\"),",
+    "after": "for i, name in [(1, \"周一\"), (2, \"周二\"), (3, \"周三\"), (4, tr('general.text_3255')),"
+  },
+  {
+    "line": 807,
+    "original": "周三",
+    "key": "general.text_4896",
+    "before": "for i, name in [(1, \"周一\"), (2, \"周二\"), (3, \"周三\"), (4, \"周四\"),",
+    "after": "for i, name in [(1, \"周一\"), (2, \"周二\"), (3, tr('general.text_4896')), (4, tr('gene"
+  },
+  {
+    "line": 807,
+    "original": "周二",
+    "key": "general.text_9226",
+    "before": "for i, name in [(1, \"周一\"), (2, \"周二\"), (3, \"周三\"), (4, \"周四\"),",
+    "after": "for i, name in [(1, \"周一\"), (2, tr('general.text_9226')), (3, tr('general.text_48"
+  },
+  {
+    "line": 807,
+    "original": "周一",
+    "key": "general.text_615",
+    "before": "for i, name in [(1, \"周一\"), (2, \"周二\"), (3, \"周三\"), (4, \"周四\"),",
+    "after": "for i, name in [(1, tr('general.text_615')), (2, tr('general.text_9226')), (3, t"
+  },
+  {
+    "line": 808,
+    "original": "周日",
+    "key": "general.text_5821",
+    "before": "(5, \"周五\"), (6, \"周六\"), (7, \"周日\")]:",
+    "after": "(5, \"周五\"), (6, \"周六\"), (7, tr('general.text_5821'))]:"
+  },
+  {
+    "line": 808,
+    "original": "周六",
+    "key": "general.text_5012",
+    "before": "(5, \"周五\"), (6, \"周六\"), (7, \"周日\")]:",
+    "after": "(5, \"周五\"), (6, tr('general.text_5012')), (7, tr('general.text_5821'))]:"
+  },
+  {
+    "line": 808,
+    "original": "周五",
+    "key": "general.text_2962",
+    "before": "(5, \"周五\"), (6, \"周六\"), (7, \"周日\")]:",
+    "after": "(5, tr('general.text_2962')), (6, tr('general.text_5012')), (7, tr('general.text"
+  },
+  {
+    "line": 818,
+    "original": "每月的哪些天?（用逗号分隔，例如: 1,15,28）",
+    "key": "general.text_1240",
+    "before": "monthly_label = QLabel(\"每月的哪些天?（用逗号分隔，例如: 1,15,28）\")",
+    "after": "monthly_label = QLabel(tr('general.text_1240'))"
+  },
+  {
+    "line": 832,
+    "original": "选择具体日期:",
+    "key": "dialog.text_9512",
+    "before": "specific_label = QLabel(\"选择具体日期:\")",
+    "after": "specific_label = QLabel(tr('dialog.text_9512'))"
+  },
+  {
+    "line": 847,
+    "original": "+ 添加日期",
+    "key": "general.text_6594",
+    "before": "add_date_btn = QPushButton(\"+ 添加日期\")",
+    "after": "add_date_btn = QPushButton(tr('general.text_6594'))"
+  },
+  {
+    "line": 948,
+    "original": "取消",
+    "key": "button.cancel",
+    "before": "cancel_btn = QPushButton(\"取消\")",
+    "after": "cancel_btn = QPushButton(tr('button.cancel'))"
+  },
+  {
+    "line": 952,
+    "original": "保存",
+    "key": "button.save",
+    "before": "save_btn = QPushButton(\"保存\")",
+    "after": "save_btn = QPushButton(tr('button.save'))"
+  },
+  {
+    "line": 973,
+    "original": "请至少选择一个星期",
+    "key": "dialog.text_5845",
+    "before": "QMessageBox.warning(self, \"警告\", \"请至少选择一个星期\")",
+    "after": "QMessageBox.warning(self, \"警告\", tr('dialog.text_5845'))"
+  },
+  {
+    "line": 973,
+    "original": "警告",
+    "key": "message.warning",
+    "before": "QMessageBox.warning(self, \"警告\", \"请至少选择一个星期\")",
+    "after": "QMessageBox.warning(self, tr('message.warning'), tr('dialog.text_5845'))"
+  },
+  {
+    "line": 982,
+    "original": "请输入每月的日期",
+    "key": "general.text_1278",
+    "before": "QMessageBox.warning(self, \"警告\", \"请输入每月的日期\")",
+    "after": "QMessageBox.warning(self, \"警告\", tr('general.text_1278'))"
+  },
+  {
+    "line": 982,
+    "original": "警告",
+    "key": "message.warning",
+    "before": "QMessageBox.warning(self, \"警告\", \"请输入每月的日期\")",
+    "after": "QMessageBox.warning(self, tr('message.warning'), tr('general.text_1278'))"
+  },
+  {
+    "line": 989,
+    "original": "日期必须在1-31之间",
+    "key": "general.text_8123",
+    "before": "QMessageBox.warning(self, \"警告\", \"日期必须在1-31之间\")",
+    "after": "QMessageBox.warning(self, \"警告\", tr('general.text_8123'))"
+  },
+  {
+    "line": 989,
+    "original": "警告",
+    "key": "message.warning",
+    "before": "QMessageBox.warning(self, \"警告\", \"日期必须在1-31之间\")",
+    "after": "QMessageBox.warning(self, tr('message.warning'), tr('general.text_8123'))"
+  },
+  {
+    "line": 996,
+    "original": "日期格式错误，请使用逗号分隔的数字",
+    "key": "message.text_9244",
+    "before": "QMessageBox.warning(self, \"警告\", \"日期格式错误，请使用逗号分隔的数字\")",
+    "after": "QMessageBox.warning(self, \"警告\", tr('message.text_9244'))"
+  },
+  {
+    "line": 996,
+    "original": "警告",
+    "key": "message.warning",
+    "before": "QMessageBox.warning(self, \"警告\", \"日期格式错误，请使用逗号分隔的数字\")",
+    "after": "QMessageBox.warning(self, tr('message.warning'), tr('message.text_9244'))"
+  },
+  {
+    "line": 1001,
+    "original": "请至少添加一个日期",
+    "key": "general.text_1577",
+    "before": "QMessageBox.warning(self, \"警告\", \"请至少添加一个日期\")",
+    "after": "QMessageBox.warning(self, \"警告\", tr('general.text_1577'))"
+  },
+  {
+    "line": 1001,
+    "original": "警告",
+    "key": "message.warning",
+    "before": "QMessageBox.warning(self, \"警告\", \"请至少添加一个日期\")",
+    "after": "QMessageBox.warning(self, tr('message.warning'), tr('general.text_1577'))"
+  },
+  {
+    "line": 1008,
+    "original": "请选择规则类型",
+    "key": "dialog.text_7710",
+    "before": "QMessageBox.warning(self, \"警告\", \"请选择规则类型\")",
+    "after": "QMessageBox.warning(self, \"警告\", tr('dialog.text_7710'))"
+  },
+  {
+    "line": 1008,
+    "original": "警告",
+    "key": "message.warning",
+    "before": "QMessageBox.warning(self, \"警告\", \"请选择规则类型\")",
+    "after": "QMessageBox.warning(self, tr('message.warning'), tr('dialog.text_7710'))"
+  },
+  {
+    "line": 1014,
+    "original": "时间表规则已更新",
+    "key": "tasks.time_9",
+    "before": "QMessageBox.information(self, \"成功\", \"时间表规则已更新\")",
+    "after": "QMessageBox.information(self, \"成功\", tr('tasks.time_9'))"
+  },
+  {
+    "line": 1014,
+    "original": "成功",
+    "key": "message.success",
+    "before": "QMessageBox.information(self, \"成功\", \"时间表规则已更新\")",
+    "after": "QMessageBox.information(self, tr('message.success'), tr('tasks.time_9'))"
+  },
+  {
+    "line": 1017,
+    "original": "更新规则失败，请检查",
+    "key": "message.text_474",
+    "before": "QMessageBox.warning(self, \"失败\", \"更新规则失败，请检查\")",
+    "after": "QMessageBox.warning(self, \"失败\", tr('message.text_474'))"
+  },
+  {
+    "line": 1017,
+    "original": "失败",
+    "key": "message.text_8834",
+    "before": "QMessageBox.warning(self, \"失败\", \"更新规则失败，请检查\")",
+    "after": "QMessageBox.warning(self, tr('message.text_8834'), tr('message.text_474'))"
+  },
+  {
+    "line": 1021,
+    "original": "编辑规则失败:\\n{str(e)}",
+    "key": "message.text_8262",
+    "before": "QMessageBox.critical(self, \"错误\", f\"编辑规则失败:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, \"错误\", ftr('message.text_8262'))"
+  },
+  {
+    "line": 1021,
+    "original": "错误",
+    "key": "message.error",
+    "before": "QMessageBox.critical(self, \"错误\", f\"编辑规则失败:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, tr('message.error'), ftr('message.text_8262'))"
+  },
+  {
+    "line": 1026,
+    "original": "模板自动应用",
+    "key": "tasks.template_11",
+    "before": "if not self._check_login_and_guide(\"模板自动应用\"):",
+    "after": "if not self._check_login_and_guide(tr('tasks.template_11')):"
+  },
+  {
+    "line": 1035,
+    "original": "操作失败:\\n{str(e)}",
+    "key": "message.text_2528",
+    "before": "QMessageBox.critical(self, \"错误\", f\"操作失败:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, \"错误\", ftr('message.text_2528'))"
+  },
+  {
+    "line": 1035,
+    "original": "错误",
+    "key": "message.error",
+    "before": "QMessageBox.critical(self, \"错误\", f\"操作失败:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, tr('message.error'), ftr('message.text_2528'))"
+  },
+  {
+    "line": 1040,
+    "original": "模板自动应用",
+    "key": "tasks.template_11",
+    "before": "if not self._check_login_and_guide(\"模板自动应用\"):",
+    "after": "if not self._check_login_and_guide(tr('tasks.template_11')):"
+  },
+  {
+    "line": 1047,
+    "original": "确认删除",
+    "key": "general.text_3556",
+    "before": "\"确认删除\",",
+    "after": "tr('general.text_3556'),"
+  },
+  {
+    "line": 1048,
+    "original": "确定要删除这条规则吗?",
+    "key": "dialog.text_8307",
+    "before": "\"确定要删除这条规则吗?\",",
+    "after": "tr('dialog.text_8307'),"
+  },
+  {
+    "line": 1056,
+    "original": "规则已删除",
+    "key": "general.text_8628",
+    "before": "QMessageBox.information(self, \"成功\", \"规则已删除\")",
+    "after": "QMessageBox.information(self, \"成功\", tr('general.text_8628'))"
+  },
+  {
+    "line": 1056,
+    "original": "成功",
+    "key": "message.success",
+    "before": "QMessageBox.information(self, \"成功\", \"规则已删除\")",
+    "after": "QMessageBox.information(self, tr('message.success'), tr('general.text_8628'))"
+  },
+  {
+    "line": 1060,
+    "original": "删除失败:\\n{str(e)}",
+    "key": "message.text_2862",
+    "before": "QMessageBox.critical(self, \"错误\", f\"删除失败:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, \"错误\", ftr('message.text_2862'))"
+  },
+  {
+    "line": 1060,
+    "original": "错误",
+    "key": "message.error",
+    "before": "QMessageBox.critical(self, \"错误\", f\"删除失败:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, tr('message.error'), ftr('message.text_2862'))"
+  },
+  {
+    "line": 1066,
+    "original": "时间表管理器未初始化",
+    "key": "tasks.time_6",
+    "before": "QMessageBox.warning(self, \"警告\", \"时间表管理器未初始化\")",
+    "after": "QMessageBox.warning(self, \"警告\", tr('tasks.time_6'))"
+  },
+  {
+    "line": 1066,
+    "original": "警告",
+    "key": "message.warning",
+    "before": "QMessageBox.warning(self, \"警告\", \"时间表管理器未初始化\")",
+    "after": "QMessageBox.warning(self, tr('message.warning'), tr('tasks.time_6'))"
+  },
+  {
+    "line": 1073,
+    "original": "测试日期匹配",
+    "key": "general.text_4326",
+    "before": "dialog.setWindowTitle(\"测试日期匹配\")",
+    "after": "dialog.setWindowTitle(tr('general.text_4326'))"
+  },
+  {
+    "line": 1080,
+    "original": "选择一个日期，查看该日期会匹配到哪个模板：",
+    "key": "tasks.template_16",
+    "before": "hint_label = QLabel(\"选择一个日期，查看该日期会匹配到哪个模板：\")",
+    "after": "hint_label = QLabel(tr('tasks.template_16'))"
+  },
+  {
+    "line": 1108,
+    "original": "测试日期: {selected_date.strftime('%Y-%m-%d %A')}",
+    "key": "general.text_7713",
+    "before": "result_lines.append(f\"测试日期: {selected_date.strftime('%Y-%m-%d %A')}\")",
+    "after": "result_lines.append(ftr('general.text_7713'))"
+  },
+  {
+    "line": 1119,
+    "original": "✅ 该日期会自动加载模板: {template_name}",
+    "key": "tasks.template_17",
+    "before": "result_lines.append(f\"✅ 该日期会自动加载模板: {template_name}\")",
+    "after": "result_lines.append(ftr('tasks.template_17'))"
+  },
+  {
+    "line": 1123,
+    "original": "⚠️ 警告：该日期有 {len(all_matched)} 个模板规则冲突！",
+    "key": "tasks.text_8594",
+    "before": "result_lines.append(f\"⚠️ 警告：该日期有 {len(all_matched)} 个模板规则冲突！\")",
+    "after": "result_lines.append(ftr('tasks.text_8594'))"
+  },
+  {
+    "line": 1124,
+    "original": "冲突的模板：",
+    "key": "tasks.template_18",
+    "before": "result_lines.append(\"冲突的模板：\")",
+    "after": "result_lines.append(tr('tasks.template_18'))"
+  },
+  {
+    "line": 1133,
+    "original": "建议：删除或禁用其中某些规则，避免冲突",
+    "key": "general.text_6307",
+    "before": "result_lines.append(\"建议：删除或禁用其中某些规则，避免冲突\")",
+    "after": "result_lines.append(tr('general.text_6307'))"
+  },
+  {
+    "line": 1136,
+    "original": "❌ 该日期没有匹配到任何模板规则",
+    "key": "tasks.template_19",
+    "before": "result_lines.append(\"❌ 该日期没有匹配到任何模板规则\")",
+    "after": "result_lines.append(tr('tasks.template_19'))"
+  },
+  {
+    "line": 1138,
+    "original": "将使用默认24小时模板",
+    "key": "tasks.template_20",
+    "before": "result_lines.append(\"将使用默认24小时模板\")",
+    "after": "result_lines.append(tr('tasks.template_20'))"
+  },
+  {
+    "line": 1143,
+    "original": "🔍 执行测试",
+    "key": "general.text_8461",
+    "before": "test_btn = QPushButton(\"🔍 执行测试\")",
+    "after": "test_btn = QPushButton(tr('general.text_8461'))"
+  },
+  {
+    "line": 1149,
+    "original": "关闭",
+    "key": "button.close",
+    "before": "close_btn = QPushButton(\"关闭\")",
+    "after": "close_btn = QPushButton(tr('button.close'))"
+  },
+  {
+    "line": 1162,
+    "original": "测试失败:\\n{str(e)}",
+    "key": "message.text_9244_1",
+    "before": "QMessageBox.critical(self, \"错误\", f\"测试失败:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, \"错误\", ftr('message.text_9244_1'))"
+  },
+  {
+    "line": 1162,
+    "original": "错误",
+    "key": "message.error",
+    "before": "QMessageBox.critical(self, \"错误\", f\"测试失败:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, tr('message.error'), ftr('message.text_9244_1'))"
+  },
+  {
+    "line": 1235,
+    "original": "⏳ AI服务正在初始化...",
+    "key": "ai.text_9372",
+    "before": "self.quota_label.setText(\"⏳ AI服务正在初始化...\")",
+    "after": "self.quota_label.setText(tr('ai.text_9372'))"
+  },
+  {
+    "line": 1283,
+    "original": "⚠️ AI服务正在启动...",
+    "key": "ai.text_9377",
+    "before": "self.quota_label.setText(\"⚠️ AI服务正在启动...\")",
+    "after": "self.quota_label.setText(tr('ai.text_9377'))"
+  },
+  {
+    "line": 1303,
+    "original": "❌ AI服务初始化失败",
+    "key": "ai.text_857",
+    "before": "self.quota_label.setText(f\"❌ AI服务初始化失败\")",
+    "after": "self.quota_label.setText(ftr('ai.text_857'))"
+  },
+  {
+    "line": 1315,
+    "original": "{VERSION_STRING_ZH} - 配置管理器",
+    "key": "config.config_2",
+    "before": "self.setWindowTitle(f'{VERSION_STRING_ZH} - 配置管理器')",
+    "after": "self.setWindowTitle(ftr('config.config_2'))"
+  },
+  {
+    "line": 1364,
+    "original": "🎨 外观配置",
+    "key": "config.config_3",
+    "before": "tabs.addTab(self.create_config_tab(), \"🎨 外观配置\")",
+    "after": "tabs.addTab(self.create_config_tab(), tr('config.config_3'))"
+  },
+  {
+    "line": 1365,
+    "original": "📋 任务管理",
+    "key": "tasks.task",
+    "before": "tabs.addTab(self.create_tasks_tab(), \"📋 任务管理\")",
+    "after": "tabs.addTab(self.create_tasks_tab(), tr('tasks.task'))"
+  },
+  {
+    "line": 1369,
+    "original": "🎬 场景设置",
+    "key": "config.settings",
+    "before": "tabs.addTab(QWidget(), \"🎬 场景设置\")  # 占位widget",
+    "after": "tabs.addTab(QWidget(), tr('config.settings'))  # 占位widget"
+  },
+  {
+    "line": 1373,
+    "original": "🔔 通知设置",
+    "key": "config.settings_1",
+    "before": "tabs.addTab(QWidget(), \"🔔 通知设置\")  # 占位widget",
+    "after": "tabs.addTab(QWidget(), tr('config.settings_1'))  # 占位widget"
+  },
+  {
+    "line": 1377,
+    "original": "👤 个人中心",
+    "key": "general.text_8429",
+    "before": "tabs.addTab(QWidget(), \"👤 个人中心\")  # 占位widget",
+    "after": "tabs.addTab(QWidget(), tr('general.text_8429'))  # 占位widget"
+  },
+  {
+    "line": 1381,
+    "original": "📖 关于",
+    "key": "general.text_8018",
+    "before": "tabs.addTab(QWidget(), \"📖 关于\")  # 占位widget",
+    "after": "tabs.addTab(QWidget(), tr('general.text_8018'))  # 占位widget"
+  },
+  {
+    "line": 1394,
+    "original": "保存所有设置",
+    "key": "config.settings_2",
+    "before": "save_btn = QPushButton(\"保存所有设置\")",
+    "after": "save_btn = QPushButton(tr('config.settings_2'))"
+  },
+  {
+    "line": 1399,
+    "original": "取消",
+    "key": "button.cancel",
+    "before": "cancel_btn = QPushButton(\"取消\")",
+    "after": "cancel_btn = QPushButton(tr('button.cancel'))"
+  },
+  {
+    "line": 1449,
+    "original": "🎬 场景设置",
+    "key": "config.settings",
+    "before": "self.tabs.insertTab(2, self.scene_tab_widget, \"🎬 场景设置\")",
+    "after": "self.tabs.insertTab(2, self.scene_tab_widget, tr('config.settings'))"
+  },
+  {
+    "line": 1457,
+    "original": "加载场景设置失败: {e}",
+    "key": "config.settings_4",
+    "before": "error_label = QLabel(f\"加载场景设置失败: {e}\")",
+    "after": "error_label = QLabel(ftr('config.settings_4'))"
+  },
+  {
+    "line": 1462,
+    "original": "🎬 场景设置",
+    "key": "config.settings",
+    "before": "self.tabs.insertTab(2, self.scene_tab_widget, \"🎬 场景设置\")",
+    "after": "self.tabs.insertTab(2, self.scene_tab_widget, tr('config.settings'))"
+  },
+  {
+    "line": 1474,
+    "original": "🔔 通知设置",
+    "key": "config.settings_1",
+    "before": "self.tabs.insertTab(3, self.notification_tab_widget, \"🔔 通知设置\")",
+    "after": "self.tabs.insertTab(3, self.notification_tab_widget, tr('config.settings_1'))"
+  },
+  {
+    "line": 1482,
+    "original": "加载通知设置失败: {e}",
+    "key": "config.settings_6",
+    "before": "error_label = QLabel(f\"加载通知设置失败: {e}\")",
+    "after": "error_label = QLabel(ftr('config.settings_6'))"
+  },
+  {
+    "line": 1487,
+    "original": "🔔 通知设置",
+    "key": "config.settings_1",
+    "before": "self.tabs.insertTab(3, self.notification_tab_widget, \"🔔 通知设置\")",
+    "after": "self.tabs.insertTab(3, self.notification_tab_widget, tr('config.settings_1'))"
+  },
+  {
+    "line": 1500,
+    "original": "👤 个人中心",
+    "key": "general.text_8429",
+    "before": "self.tabs.insertTab(4, self.account_tab_widget, \"👤 个人中心\")",
+    "after": "self.tabs.insertTab(4, self.account_tab_widget, tr('general.text_8429'))"
+  },
+  {
+    "line": 1508,
+    "original": "加载个人中心标签页失败: {e}",
+    "key": "message.text_347",
+    "before": "error_label = QLabel(f\"加载个人中心标签页失败: {e}\")",
+    "after": "error_label = QLabel(ftr('message.text_347'))"
+  },
+  {
+    "line": 1513,
+    "original": "👤 个人中心",
+    "key": "general.text_8429",
+    "before": "self.tabs.insertTab(4, self.account_tab_widget, \"👤 个人中心\")",
+    "after": "self.tabs.insertTab(4, self.account_tab_widget, tr('general.text_8429'))"
+  },
+  {
+    "line": 1525,
+    "original": "📖 关于",
+    "key": "general.text_8018",
+    "before": "self.tabs.insertTab(5, self.about_tab_widget, \"📖 关于\")",
+    "after": "self.tabs.insertTab(5, self.about_tab_widget, tr('general.text_8018'))"
+  },
+  {
+    "line": 1535,
+    "original": "加载关于标签页失败: {e}\\n\\n请检查日志文件获取详细信息",
+    "key": "message.text_9945",
+    "before": "error_label = QLabel(f\"加载关于标签页失败: {e}\\n\\n请检查日志文件获取详细信息\")",
+    "after": "error_label = QLabel(ftr('message.text_9945'))"
+  },
+  {
+    "line": 1540,
+    "original": "📖 关于",
+    "key": "general.text_8018",
+    "before": "self.tabs.insertTab(5, self.about_tab_widget, \"📖 关于\")",
+    "after": "self.tabs.insertTab(5, self.about_tab_widget, tr('general.text_8018'))"
+  },
+  {
+    "line": 1556,
+    "original": "🔧 基本设置",
+    "key": "config.settings_7",
+    "before": "basic_group = QGroupBox(\"🔧 基本设置\")",
+    "after": "basic_group = QGroupBox(tr('config.settings_7'))"
+  },
+  {
+    "line": 1575,
+    "original": "极细",
+    "key": "general.text_535",
+    "before": "(\"极细\", 6),",
+    "after": "(tr('general.text_535'), 6),"
+  },
+  {
+    "line": 1576,
+    "original": "细",
+    "key": "general.text_5145",
+    "before": "(\"细\", 10),",
+    "after": "(tr('general.text_5145'), 10),"
+  },
+  {
+    "line": 1577,
+    "original": "标准",
+    "key": "general.text_1413",
+    "before": "(\"标准\", 20),",
+    "after": "(tr('general.text_1413'), 20),"
+  },
+  {
+    "line": 1578,
+    "original": "粗",
+    "key": "general.text_3042",
+    "before": "(\"粗\", 30)",
+    "after": "(tr('general.text_3042'), 30)"
+  },
+  {
+    "line": 1594,
+    "original": "自定义:",
+    "key": "general.text_8118",
+    "before": "custom_label = QLabel(\"自定义:\")",
+    "after": "custom_label = QLabel(tr('general.text_8118'))"
+  },
+  {
+    "line": 1610,
+    "original": "进度条高度:",
+    "key": "config.text_5481",
+    "before": "basic_layout.addRow(\"进度条高度:\", height_container)",
+    "after": "basic_layout.addRow(tr('config.text_5481'), height_container)"
+  },
+  {
+    "line": 1620,
+    "original": "显示器索引:",
+    "key": "general.display",
+    "before": "basic_layout.addRow(\"显示器索引:\", self.screen_spin)",
+    "after": "basic_layout.addRow(tr('general.display'), self.screen_spin)"
+  },
+  {
+    "line": 1627,
+    "original": " 毫秒",
+    "key": "general.text_8120",
+    "before": "self.interval_spin.setSuffix(\" 毫秒\")",
+    "after": "self.interval_spin.setSuffix(tr('general.text_8120'))"
+  },
+  {
+    "line": 1628,
+    "original": "更新间隔:",
+    "key": "general.text_7375",
+    "before": "basic_layout.addRow(\"更新间隔:\", self.interval_spin)",
+    "after": "basic_layout.addRow(tr('general.text_7375'), self.interval_spin)"
+  },
+  {
+    "line": 1635,
+    "original": "开机自动启动",
+    "key": "general.text_8014",
+    "before": "self.autostart_check = QCheckBox(\"开机自动启动\")",
+    "after": "self.autostart_check = QCheckBox(tr('general.text_8014'))"
+  },
+  {
+    "line": 1636,
+    "original": "勾选后，GaiYa每日进度条将在Windows开机时自动启动",
+    "key": "general.text_2184",
+    "before": "self.autostart_check.setToolTip(\"勾选后，GaiYa每日进度条将在Windows开机时自动启动\")",
+    "after": "self.autostart_check.setToolTip(tr('general.text_2184'))"
+  },
+  {
+    "line": 1652,
+    "original": "自启动:",
+    "key": "general.text_3030",
+    "before": "basic_layout.addRow(\"自启动:\", autostart_container)",
+    "after": "basic_layout.addRow(tr('general.text_3030'), autostart_container)"
+  },
+  {
+    "line": 1690,
+    "original": "🎨 颜色设置",
+    "key": "config.settings_8",
+    "before": "color_group = QGroupBox(\"🎨 颜色设置\")",
+    "after": "color_group = QGroupBox(tr('config.settings_8'))"
+  },
+  {
+    "line": 1702,
+    "original": "选择颜色",
+    "key": "config.color",
+    "before": "self.bg_color_btn = QPushButton(\"选择颜色\")",
+    "after": "self.bg_color_btn = QPushButton(tr('config.color'))"
+  },
+  {
+    "line": 1715,
+    "original": "背景颜色:",
+    "key": "config.color_1",
+    "before": "color_layout.addRow(\"背景颜色:\", bg_color_layout)",
+    "after": "color_layout.addRow(tr('config.color_1'), bg_color_layout)"
+  },
+  {
+    "line": 1722,
+    "original": "背景透明度:",
+    "key": "config.text_5991",
+    "before": "color_layout.addRow(\"背景透明度:\", self.opacity_spin)",
+    "after": "color_layout.addRow(tr('config.text_5991'), self.opacity_spin)"
+  },
+  {
+    "line": 1730,
+    "original": "选择颜色",
+    "key": "config.color",
+    "before": "self.marker_color_btn = QPushButton(\"选择颜色\")",
+    "after": "self.marker_color_btn = QPushButton(tr('config.color'))"
+  },
+  {
+    "line": 1743,
+    "original": "时间标记颜色:",
+    "key": "config.color_2",
+    "before": "color_layout.addRow(\"时间标记颜色:\", marker_color_layout)",
+    "after": "color_layout.addRow(tr('config.color_2'), marker_color_layout)"
+  },
+  {
+    "line": 1750,
+    "original": " 像素",
+    "key": "general.text_546",
+    "before": "self.marker_width_spin.setSuffix(\" 像素\")",
+    "after": "self.marker_width_spin.setSuffix(tr('general.text_546'))"
+  },
+  {
+    "line": 1751,
+    "original": "时间标记宽度:",
+    "key": "config.time",
+    "before": "color_layout.addRow(\"时间标记宽度:\", self.marker_width_spin)",
+    "after": "color_layout.addRow(tr('config.time'), self.marker_width_spin)"
+  },
+  {
+    "line": 1763,
+    "original": "(line=线条, image=图片, gif=动画)",
+    "key": "general.image",
+    "before": "marker_type_hint = QLabel(\"(line=线条, image=图片, gif=动画)\")",
+    "after": "marker_type_hint = QLabel(tr('general.image'))"
+  },
+  {
+    "line": 1768,
+    "original": "时间标记类型:",
+    "key": "tasks.time_11",
+    "before": "color_layout.addRow(\"时间标记类型:\", marker_type_layout)",
+    "after": "color_layout.addRow(tr('tasks.time_11'), marker_type_layout)"
+  },
+  {
+    "line": 1774,
+    "original": "选择图片文件 (JPG/PNG/GIF/WebP)",
+    "key": "dialog.image",
+    "before": "self.marker_image_input.setPlaceholderText(\"选择图片文件 (JPG/PNG/GIF/WebP)\")",
+    "after": "self.marker_image_input.setPlaceholderText(tr('dialog.image'))"
+  },
+  {
+    "line": 1777,
+    "original": "📁 浏览",
+    "key": "general.text_9419",
+    "before": "marker_image_btn = QPushButton(\"📁 浏览\")",
+    "after": "marker_image_btn = QPushButton(tr('general.text_9419'))"
+  },
+  {
+    "line": 1783,
+    "original": "标记图片:",
+    "key": "general.marker",
+    "before": "color_layout.addRow(\"标记图片:\", marker_image_layout)",
+    "after": "color_layout.addRow(tr('general.marker'), marker_image_layout)"
+  },
+  {
+    "line": 1798,
+    "original": "小",
+    "key": "general.text_4516",
+    "before": "(\"小\", 25),",
+    "after": "(tr('general.text_4516'), 25),"
+  },
+  {
+    "line": 1799,
+    "original": "中",
+    "key": "general.text_8778",
+    "before": "(\"中\", 35),",
+    "after": "(tr('general.text_8778'), 35),"
+  },
+  {
+    "line": 1800,
+    "original": "大",
+    "key": "general.text_4022",
+    "before": "(\"大\", 50)",
+    "after": "(tr('general.text_4022'), 50)"
+  },
+  {
+    "line": 1816,
+    "original": "自定义:",
+    "key": "general.text_8118",
+    "before": "custom_size_label = QLabel(\"自定义:\")",
+    "after": "custom_size_label = QLabel(tr('general.text_8118'))"
+  },
+  {
+    "line": 1831,
+    "original": "标记图片大小:",
+    "key": "general.size",
+    "before": "color_layout.addRow(\"标记图片大小:\", marker_size_container)",
+    "after": "color_layout.addRow(tr('general.size'), marker_size_container)"
+  },
+  {
+    "line": 1843,
+    "original": "(正值向右,负值向左)",
+    "key": "general.text_3166",
+    "before": "x_offset_hint = QLabel(\"(正值向右,负值向左)\")",
+    "after": "x_offset_hint = QLabel(tr('general.text_3166'))"
+  },
+  {
+    "line": 1849,
+    "original": "标记图片 X 偏移:",
+    "key": "general.marker_1",
+    "before": "color_layout.addRow(\"标记图片 X 偏移:\", x_offset_layout)",
+    "after": "color_layout.addRow(tr('general.marker_1'), x_offset_layout)"
+  },
+  {
+    "line": 1858,
+    "original": "(正值向上,负值向下)",
+    "key": "general.text_8424",
+    "before": "y_offset_hint = QLabel(\"(正值向上,负值向下)\")",
+    "after": "y_offset_hint = QLabel(tr('general.text_8424'))"
+  },
+  {
+    "line": 1864,
+    "original": "标记图片 Y 偏移:",
+    "key": "general.marker_2",
+    "before": "color_layout.addRow(\"标记图片 Y 偏移:\", y_offset_layout)",
+    "after": "color_layout.addRow(tr('general.marker_2'), y_offset_layout)"
+  },
+  {
+    "line": 1874,
+    "original": "(100%=原速, 200%=2倍速)",
+    "key": "general.text_9595",
+    "before": "speed_hint = QLabel(\"(100%=原速, 200%=2倍速)\")",
+    "after": "speed_hint = QLabel(tr('general.text_9595'))"
+  },
+  {
+    "line": 1880,
+    "original": "动画播放速度:",
+    "key": "general.animation",
+    "before": "color_layout.addRow(\"动画播放速度:\", speed_layout)",
+    "after": "color_layout.addRow(tr('general.animation'), speed_layout)"
+  },
+  {
+    "line": 1889,
+    "original": "✨ 视觉效果",
+    "key": "general.text_96",
+    "before": "effect_group = QGroupBox(\"✨ 视觉效果\")",
+    "after": "effect_group = QGroupBox(tr('general.text_96'))"
+  },
+  {
+    "line": 1896,
+    "original": "启用阴影效果",
+    "key": "config.text_1866",
+    "before": "self.shadow_check = QCheckBox(\"启用阴影效果\")",
+    "after": "self.shadow_check = QCheckBox(tr('config.text_1866'))"
+  },
+  {
+    "line": 1905,
+    "original": " 像素",
+    "key": "general.text_546",
+    "before": "self.radius_spin.setSuffix(\" 像素\")",
+    "after": "self.radius_spin.setSuffix(tr('general.text_546'))"
+  },
+  {
+    "line": 1906,
+    "original": "圆角半径:",
+    "key": "config.text_7611",
+    "before": "effect_layout.addRow(\"圆角半径:\", self.radius_spin)",
+    "after": "effect_layout.addRow(tr('config.text_7611'), self.radius_spin)"
+  },
+  {
+    "line": 1932,
+    "original": "🤖 AI智能规划",
+    "key": "ai.text_6479",
+    "before": "ai_group = QGroupBox(\"🤖 AI智能规划\")",
+    "after": "ai_group = QGroupBox(tr('ai.text_6479'))"
+  },
+  {
+    "line": 1937,
+    "original": "💡 用自然语言描述您的计划,AI将自动生成任务时间表",
+    "key": "tasks.task_1",
+    "before": "ai_hint = QLabel(\"💡 用自然语言描述您的计划,AI将自动生成任务时间表\")",
+    "after": "ai_hint = QLabel(tr('tasks.task_1'))"
+  },
+  {
+    "line": 1943,
+    "original": "描述您的计划:",
+    "key": "general.text_6454",
+    "before": "input_label = QLabel(\"描述您的计划:\")",
+    "after": "input_label = QLabel(tr('general.text_6454'))"
+  },
+  {
+    "line": 1949,
+    "original": "例如: 明天9点开会1小时,然后写代码到下午5点,中午12点休息1小时,晚上6点健身...",
+    "key": "general.text_5947",
+    "before": "self.ai_input.setPlaceholderText(\"例如: 明天9点开会1小时,然后写代码到下午5点,中午12点休息1小时,晚上6点健身...\"",
+    "after": "self.ai_input.setPlaceholderText(tr('general.text_5947'))"
+  },
+  {
+    "line": 1960,
+    "original": "✨ 智能生成任务",
+    "key": "tasks.task_2",
+    "before": "self.generate_btn = QPushButton(\"✨ 智能生成任务\")",
+    "after": "self.generate_btn = QPushButton(tr('tasks.task_2'))"
+  },
+  {
+    "line": 1983,
+    "original": "配额状态: 加载中...",
+    "key": "general.text_265",
+    "before": "self.quota_label = QLabel(\"配额状态: 加载中...\")",
+    "after": "self.quota_label = QLabel(tr('general.text_265'))"
+  },
+  {
+    "line": 1988,
+    "original": "🔄 刷新配额",
+    "key": "general.text_2178",
+    "before": "refresh_quota_btn = QPushButton(\"🔄 刷新配额\")",
+    "after": "refresh_quota_btn = QPushButton(tr('general.text_2178'))"
+  },
+  {
+    "line": 2015,
+    "original": "⏳ 正在连接云服务（可能需要10-15秒）...",
+    "key": "general.text_3841",
+    "before": "self.quota_label.setText(\"⏳ 正在连接云服务（可能需要10-15秒）...\")",
+    "after": "self.quota_label.setText(tr('general.text_3841'))"
+  },
+  {
+    "line": 2021,
+    "original": "双击表格单元格可以编辑任务内容",
+    "key": "tasks.task_3",
+    "before": "info_label = QLabel(\"双击表格单元格可以编辑任务内容\")",
+    "after": "info_label = QLabel(tr('tasks.task_3'))"
+  },
+  {
+    "line": 2026,
+    "original": "🎨 预设主题配色",
+    "key": "tasks.theme_3",
+    "before": "theme_group = QGroupBox(\"🎨 预设主题配色\")",
+    "after": "theme_group = QGroupBox(tr('tasks.theme_3'))"
+  },
+  {
+    "line": 2030,
+    "original": "选择主题:",
+    "key": "tasks.theme_4",
+    "before": "theme_label = QLabel(\"选择主题:\")",
+    "after": "theme_label = QLabel(tr('tasks.theme_4'))"
+  },
+  {
+    "line": 2045,
+    "original": "配色预览:",
+    "key": "tasks.text_8984",
+    "before": "preview_label = QLabel(\"配色预览:\")",
+    "after": "preview_label = QLabel(tr('tasks.text_8984'))"
+  },
+  {
+    "line": 2060,
+    "original": "📋 预设模板",
+    "key": "tasks.template_21",
+    "before": "self.template_group = QGroupBox(\"📋 预设模板\")",
+    "after": "self.template_group = QGroupBox(tr('tasks.template_21'))"
+  },
+  {
+    "line": 2064,
+    "original": "快速加载:",
+    "key": "general.text_9756",
+    "before": "template_label = QLabel(\"快速加载:\")",
+    "after": "template_label = QLabel(tr('general.text_9756'))"
+  },
+  {
+    "line": 2079,
+    "original": "模板加载中...",
+    "key": "tasks.template_22",
+    "before": "fallback_label = QLabel(\"模板加载中...\")",
+    "after": "fallback_label = QLabel(tr('tasks.template_22'))"
+  },
+  {
+    "line": 2090,
+    "original": "💾 我的模板",
+    "key": "tasks.template_23",
+    "before": "self.custom_template_group = QGroupBox(\"💾 我的模板\")",
+    "after": "self.custom_template_group = QGroupBox(tr('tasks.template_23'))"
+  },
+  {
+    "line": 2094,
+    "original": "选择模板:",
+    "key": "tasks.template_14",
+    "before": "custom_label = QLabel(\"选择模板:\")",
+    "after": "custom_label = QLabel(tr('tasks.template_14'))"
+  },
+  {
+    "line": 2104,
+    "original": "📂 加载",
+    "key": "general.text_2004",
+    "before": "load_custom_btn = QPushButton(\"📂 加载\")",
+    "after": "load_custom_btn = QPushButton(tr('general.text_2004'))"
+  },
+  {
+    "line": 2105,
+    "original": "加载选中的自定义模板",
+    "key": "tasks.template_24",
+    "before": "load_custom_btn.setToolTip(\"加载选中的自定义模板\")",
+    "after": "load_custom_btn.setToolTip(tr('tasks.template_24'))"
+  },
+  {
+    "line": 2112,
+    "original": "🗑️ 删除",
+    "key": "general.text_1284",
+    "before": "delete_custom_btn = QPushButton(\"🗑️ 删除\")",
+    "after": "delete_custom_btn = QPushButton(tr('general.text_1284'))"
+  },
+  {
+    "line": 2113,
+    "original": "删除选中的自定义模板",
+    "key": "tasks.template_25",
+    "before": "delete_custom_btn.setToolTip(\"删除选中的自定义模板\")",
+    "after": "delete_custom_btn.setToolTip(tr('tasks.template_25'))"
+  },
+  {
+    "line": 2129,
+    "original": "🎨 可视化时间轴编辑器",
+    "key": "tasks.time_12",
+    "before": "timeline_group = QGroupBox(\"🎨 可视化时间轴编辑器\")",
+    "after": "timeline_group = QGroupBox(tr('tasks.time_12'))"
+  },
+  {
+    "line": 2133,
+    "original": "💡 提示：拖动色块边缘可调整任务时长",
+    "key": "tasks.task_4",
+    "before": "timeline_hint = QLabel(\"💡 提示：拖动色块边缘可调整任务时长\")",
+    "after": "timeline_hint = QLabel(tr('tasks.task_4'))"
+  },
+  {
+    "line": 2155,
+    "original": "操作",
+    "key": "general.text_3307",
+    "before": "self.tasks_table.setHorizontalHeaderLabels([\"开始时间\", \"结束时间\", \"任务名称\", \"背景颜色\", \"文字颜",
+    "after": "self.tasks_table.setHorizontalHeaderLabels([\"开始时间\", \"结束时间\", \"任务名称\", \"背景颜色\", \"文字颜"
+  },
+  {
+    "line": 2155,
+    "original": "文字颜色",
+    "key": "config.color_3",
+    "before": "self.tasks_table.setHorizontalHeaderLabels([\"开始时间\", \"结束时间\", \"任务名称\", \"背景颜色\", \"文字颜",
+    "after": "self.tasks_table.setHorizontalHeaderLabels([\"开始时间\", \"结束时间\", \"任务名称\", \"背景颜色\", tr('"
+  },
+  {
+    "line": 2155,
+    "original": "背景颜色",
+    "key": "config.background_color",
+    "before": "self.tasks_table.setHorizontalHeaderLabels([\"开始时间\", \"结束时间\", \"任务名称\", \"背景颜色\", \"文字颜",
+    "after": "self.tasks_table.setHorizontalHeaderLabels([\"开始时间\", \"结束时间\", \"任务名称\", tr('config.b"
+  },
+  {
+    "line": 2155,
+    "original": "任务名称",
+    "key": "tasks.name",
+    "before": "self.tasks_table.setHorizontalHeaderLabels([\"开始时间\", \"结束时间\", \"任务名称\", \"背景颜色\", \"文字颜",
+    "after": "self.tasks_table.setHorizontalHeaderLabels([\"开始时间\", \"结束时间\", tr('tasks.name'), tr"
+  },
+  {
+    "line": 2155,
+    "original": "结束时间",
+    "key": "tasks.end_time",
+    "before": "self.tasks_table.setHorizontalHeaderLabels([\"开始时间\", \"结束时间\", \"任务名称\", \"背景颜色\", \"文字颜",
+    "after": "self.tasks_table.setHorizontalHeaderLabels([\"开始时间\", tr('tasks.end_time'), tr('ta"
+  },
+  {
+    "line": 2155,
+    "original": "开始时间",
+    "key": "tasks.start_time",
+    "before": "self.tasks_table.setHorizontalHeaderLabels([\"开始时间\", \"结束时间\", \"任务名称\", \"背景颜色\", \"文字颜",
+    "after": "self.tasks_table.setHorizontalHeaderLabels([tr('tasks.start_time'), tr('tasks.en"
+  },
+  {
+    "line": 2170,
+    "original": "➕ 添加任务",
+    "key": "tasks.task_5",
+    "before": "add_btn = QPushButton(\"➕ 添加任务\")",
+    "after": "add_btn = QPushButton(tr('tasks.task_5'))"
+  },
+  {
+    "line": 2175,
+    "original": "💾 保存为模板",
+    "key": "tasks.template_26",
+    "before": "save_template_btn = QPushButton(\"💾 保存为模板\")",
+    "after": "save_template_btn = QPushButton(tr('tasks.template_26'))"
+  },
+  {
+    "line": 2180,
+    "original": "📂 加载自定义模板",
+    "key": "tasks.template_27",
+    "before": "load_custom_btn = QPushButton(\"📂 加载自定义模板\")",
+    "after": "load_custom_btn = QPushButton(tr('tasks.template_27'))"
+  },
+  {
+    "line": 2185,
+    "original": "🗑️ 清空所有任务",
+    "key": "tasks.task_6",
+    "before": "clear_btn = QPushButton(\"🗑️ 清空所有任务\")",
+    "after": "clear_btn = QPushButton(tr('tasks.task_6'))"
+  },
+  {
+    "line": 2199,
+    "original": "📅 模板自动应用管理",
+    "key": "tasks.template_28",
+    "before": "schedule_panel = QGroupBox(\"📅 模板自动应用管理\")",
+    "after": "schedule_panel = QGroupBox(tr('tasks.template_28'))"
+  },
+  {
+    "line": 2204,
+    "original": "💡 为每个模板设置自动应用的日期规则，到了指定时间会自动加载对应模板",
+    "key": "config.settings_9",
+    "before": "schedule_hint = QLabel(\"💡 为每个模板设置自动应用的日期规则，到了指定时间会自动加载对应模板\")",
+    "after": "schedule_hint = QLabel(tr('config.settings_9'))"
+  },
+  {
+    "line": 2213,
+    "original": "操作",
+    "key": "general.text_3307",
+    "before": "\"模板名称\", \"应用时间\", \"状态\", \"操作\"",
+    "after": "\"模板名称\", \"应用时间\", \"状态\", tr('general.text_3307')"
+  },
+  {
+    "line": 2213,
+    "original": "状态",
+    "key": "general.text_5578",
+    "before": "\"模板名称\", \"应用时间\", \"状态\", \"操作\"",
+    "after": "\"模板名称\", \"应用时间\", tr('general.text_5578'), tr('general.text_3307')"
+  },
+  {
+    "line": 2213,
+    "original": "应用时间",
+    "key": "tasks.time_13",
+    "before": "\"模板名称\", \"应用时间\", \"状态\", \"操作\"",
+    "after": "\"模板名称\", tr('tasks.time_13'), tr('general.text_5578'), tr('general.text_3307')"
+  },
+  {
+    "line": 2213,
+    "original": "模板名称",
+    "key": "tasks.template_29",
+    "before": "\"模板名称\", \"应用时间\", \"状态\", \"操作\"",
+    "after": "tr('tasks.template_29'), tr('tasks.time_13'), tr('general.text_5578'), tr('gener"
+  },
+  {
+    "line": 2232,
+    "original": "➕ 添加规则",
+    "key": "general.text_9422",
+    "before": "add_schedule_btn = QPushButton(\"➕ 添加规则\")",
+    "after": "add_schedule_btn = QPushButton(tr('general.text_9422'))"
+  },
+  {
+    "line": 2238,
+    "original": "🔍 测试日期",
+    "key": "general.text_2260",
+    "before": "test_date_btn = QPushButton(\"🔍 测试日期\")",
+    "after": "test_date_btn = QPushButton(tr('general.text_2260'))"
+  },
+  {
+    "line": 2239,
+    "original": "测试指定日期会匹配到哪个模板",
+    "key": "tasks.template_30",
+    "before": "test_date_btn.setToolTip(\"测试指定日期会匹配到哪个模板\")",
+    "after": "test_date_btn.setToolTip(tr('tasks.template_30'))"
+  },
+  {
+    "line": 2306,
+    "original": "主题管理器未初始化，请稍后再试",
+    "key": "tasks.theme_5",
+    "before": "QMessageBox.warning(self, \"错误\", \"主题管理器未初始化，请稍后再试\")",
+    "after": "QMessageBox.warning(self, \"错误\", tr('tasks.theme_5'))"
+  },
+  {
+    "line": 2306,
+    "original": "错误",
+    "key": "message.error",
+    "before": "QMessageBox.warning(self, \"错误\", \"主题管理器未初始化，请稍后再试\")",
+    "after": "QMessageBox.warning(self, tr('message.error'), tr('tasks.theme_5'))"
+  },
+  {
+    "line": 2318,
+    "original": "请先选择一个主题",
+    "key": "tasks.theme_6",
+    "before": "QMessageBox.warning(self, \"提示\", \"请先选择一个主题\")",
+    "after": "QMessageBox.warning(self, \"提示\", tr('tasks.theme_6'))"
+  },
+  {
+    "line": 2318,
+    "original": "提示",
+    "key": "message.info",
+    "before": "QMessageBox.warning(self, \"提示\", \"请先选择一个主题\")",
+    "after": "QMessageBox.warning(self, tr('message.info'), tr('tasks.theme_6'))"
+  },
+  {
+    "line": 2324,
+    "original": "已应用主题: {self.theme_manager.get_current_theme().get('name', 'Unknown')}",
+    "key": "tasks.theme_7",
+    "before": "QMessageBox.information(self, \"成功\", f\"已应用主题: {self.theme_manager.get_current_the",
+    "after": "QMessageBox.information(self, \"成功\", ftr('tasks.theme_7'))"
+  },
+  {
+    "line": 2324,
+    "original": "成功",
+    "key": "message.success",
+    "before": "QMessageBox.information(self, \"成功\", f\"已应用主题: {self.theme_manager.get_current_the",
+    "after": "QMessageBox.information(self, tr('message.success'), ftr('tasks.theme_7'))"
+  },
+  {
+    "line": 2329,
+    "original": "应用主题失败",
+    "key": "tasks.theme_8",
+    "before": "QMessageBox.warning(self, \"错误\", \"应用主题失败\")",
+    "after": "QMessageBox.warning(self, \"错误\", tr('tasks.theme_8'))"
+  },
+  {
+    "line": 2329,
+    "original": "错误",
+    "key": "message.error",
+    "before": "QMessageBox.warning(self, \"错误\", \"应用主题失败\")",
+    "after": "QMessageBox.warning(self, tr('message.error'), tr('tasks.theme_8'))"
+  },
+  {
+    "line": 2334,
+    "original": "主题管理器未初始化，请稍后再试",
+    "key": "tasks.theme_5",
+    "before": "QMessageBox.warning(self, \"错误\", \"主题管理器未初始化，请稍后再试\")",
+    "after": "QMessageBox.warning(self, \"错误\", tr('tasks.theme_5'))"
+  },
+  {
+    "line": 2334,
+    "original": "错误",
+    "key": "message.error",
+    "before": "QMessageBox.warning(self, \"错误\", \"主题管理器未初始化，请稍后再试\")",
+    "after": "QMessageBox.warning(self, tr('message.error'), tr('tasks.theme_5'))"
+  },
+  {
+    "line": 2339,
+    "original": "请先选择一个主题",
+    "key": "tasks.theme_6",
+    "before": "QMessageBox.warning(self, \"提示\", \"请先选择一个主题\")",
+    "after": "QMessageBox.warning(self, \"提示\", tr('tasks.theme_6'))"
+  },
+  {
+    "line": 2339,
+    "original": "提示",
+    "key": "message.info",
+    "before": "QMessageBox.warning(self, \"提示\", \"请先选择一个主题\")",
+    "after": "QMessageBox.warning(self, tr('message.info'), tr('tasks.theme_6'))"
+  },
+  {
+    "line": 2345,
+    "original": "确认",
+    "key": "general.text_3896",
+    "before": "\"确认\",",
+    "after": "tr('general.text_3896'),"
+  },
+  {
+    "line": 2346,
+    "original": "确定要将当前主题的配色应用到所有任务吗？\\n这将覆盖现有的任务颜色。",
+    "key": "config.task",
+    "before": "\"确定要将当前主题的配色应用到所有任务吗？\\n这将覆盖现有的任务颜色。\",",
+    "after": "tr('config.task'),"
+  },
+  {
+    "line": 2367,
+    "original": "已应用主题配色到任务",
+    "key": "tasks.task_7",
+    "before": "QMessageBox.information(self, \"成功\", \"已应用主题配色到任务\")",
+    "after": "QMessageBox.information(self, \"成功\", tr('tasks.task_7'))"
+  },
+  {
+    "line": 2367,
+    "original": "成功",
+    "key": "message.success",
+    "before": "QMessageBox.information(self, \"成功\", \"已应用主题配色到任务\")",
+    "after": "QMessageBox.information(self, tr('message.success'), tr('tasks.task_7'))"
+  },
+  {
+    "line": 2454,
+    "original": "配置场景效果,让进度条更具个性化",
+    "key": "config.config_4",
+    "before": "info_label = QLabel(\"配置场景效果,让进度条更具个性化\")",
+    "after": "info_label = QLabel(tr('config.config_4'))"
+  },
+  {
+    "line": 2459,
+    "original": "⚙️ 基础设置",
+    "key": "config.settings_10",
+    "before": "basic_group = QGroupBox(\"⚙️ 基础设置\")",
+    "after": "basic_group = QGroupBox(tr('config.settings_10'))"
+  },
+  {
+    "line": 2465,
+    "original": "启用场景系统",
+    "key": "general.text_9791",
+    "before": "self.scene_enabled_check = QCheckBox(\"启用场景系统\")",
+    "after": "self.scene_enabled_check = QCheckBox(tr('general.text_9791'))"
+  },
+  {
+    "line": 2473,
+    "original": "依然展示进度条",
+    "key": "general.text_889",
+    "before": "self.show_progress_in_scene_check = QCheckBox(\"依然展示进度条\")",
+    "after": "self.show_progress_in_scene_check = QCheckBox(tr('general.text_889'))"
+  },
+  {
+    "line": 2476,
+    "original": "场景模式下在场景上方叠加显示进度条",
+    "key": "general.display_1",
+    "before": "self.show_progress_in_scene_check.setToolTip(\"场景模式下在场景上方叠加显示进度条\")",
+    "after": "self.show_progress_in_scene_check.setToolTip(tr('general.display_1'))"
+  },
+  {
+    "line": 2483,
+    "original": "🎬 场景选择",
+    "key": "dialog.text_8004",
+    "before": "scene_select_group = QGroupBox(\"🎬 场景选择\")",
+    "after": "scene_select_group = QGroupBox(tr('dialog.text_8004'))"
+  },
+  {
+    "line": 2490,
+    "original": "当前场景:",
+    "key": "general.text_5026",
+    "before": "scene_label = QLabel(\"当前场景:\")",
+    "after": "scene_label = QLabel(tr('general.text_5026'))"
+  },
+  {
+    "line": 2517,
+    "original": "无场景",
+    "key": "general.text_6942",
+    "before": "self.scene_combo.addItem(\"无场景\", None)",
+    "after": "self.scene_combo.addItem(tr('general.text_6942'), None)"
+  },
+  {
+    "line": 2533,
+    "original": "无可用场景",
+    "key": "general.text_1681",
+    "before": "self.scene_combo.addItem(\"无可用场景\", None)",
+    "after": "self.scene_combo.addItem(tr('general.text_1681'), None)"
+  },
+  {
+    "line": 2542,
+    "original": "🔄 刷新场景",
+    "key": "general.text_8177",
+    "before": "refresh_button = QPushButton(\"🔄 刷新场景\")",
+    "after": "refresh_button = QPushButton(tr('general.text_8177'))"
+  },
+  {
+    "line": 2562,
+    "original": "重新扫描scenes目录，加载新导出的场景",
+    "key": "general.text_7449",
+    "before": "refresh_button.setToolTip(\"重新扫描scenes目录，加载新导出的场景\")",
+    "after": "refresh_button.setToolTip(tr('general.text_7449'))"
+  },
+  {
+    "line": 2569,
+    "original": "请选择一个场景",
+    "key": "dialog.text_7655",
+    "before": "self.scene_description_label = QLabel(\"请选择一个场景\")",
+    "after": "self.scene_description_label = QLabel(tr('dialog.text_7655'))"
+  },
+  {
+    "line": 2581,
+    "original": "🛠️ 高级功能",
+    "key": "general.text_7925",
+    "before": "advanced_group = QGroupBox(\"🛠️ 高级功能\")",
+    "after": "advanced_group = QGroupBox(tr('general.text_7925'))"
+  },
+  {
+    "line": 2588,
+    "original": "🎨 打开场景编辑器",
+    "key": "general.text_1288",
+    "before": "self.open_scene_editor_btn = QPushButton(\"🎨 打开场景编辑器\")",
+    "after": "self.open_scene_editor_btn = QPushButton(tr('general.text_1288'))"
+  },
+  {
+    "line": 2612,
+    "original": "场景编辑器可以创建和编辑自定义场景效果",
+    "key": "general.text_3998",
+    "before": "editor_hint = QLabel(\"场景编辑器可以创建和编辑自定义场景效果\")",
+    "after": "editor_hint = QLabel(tr('general.text_3998'))"
+  },
+  {
+    "line": 2640,
+    "original": "未选择场景,将显示默认进度条样式",
+    "key": "dialog.display",
+    "before": "self.scene_description_label.setText(\"未选择场景,将显示默认进度条样式\")",
+    "after": "self.scene_description_label.setText(tr('dialog.display'))"
+  },
+  {
+    "line": 2649,
+    "original": "无描述",
+    "key": "general.text_7472",
+    "before": "description = metadata.get('description', '无描述')",
+    "after": "description = metadata.get('description', tr('general.text_7472'))"
+  },
+  {
+    "line": 2651,
+    "original": "未知",
+    "key": "general.text_5229",
+    "before": "author = metadata.get('author', '未知')",
+    "after": "author = metadata.get('author', tr('general.text_5229'))"
+  },
+  {
+    "line": 2653,
+    "original": "描述: {description}\\n版本: {version}  作者: {author}",
+    "key": "general.text_930",
+    "before": "desc_text = f\"描述: {description}\\n版本: {version}  作者: {author}\"",
+    "after": "desc_text = ftr('general.text_930')"
+  },
+  {
+    "line": 2656,
+    "original": "无法加载场景信息",
+    "key": "general.text_8358",
+    "before": "self.scene_description_label.setText(\"无法加载场景信息\")",
+    "after": "self.scene_description_label.setText(tr('general.text_8358'))"
+  },
+  {
+    "line": 2658,
+    "original": "场景管理器未初始化",
+    "key": "general.text_7526",
+    "before": "self.scene_description_label.setText(\"场景管理器未初始化\")",
+    "after": "self.scene_description_label.setText(tr('general.text_7526'))"
+  },
+  {
+    "line": 2687,
+    "original": "错误",
+    "key": "message.error",
+    "before": "\"错误\",",
+    "after": "tr('message.error'),"
+  },
+  {
+    "line": 2688,
+    "original": "打开场景编辑器失败:\\n{str(e)}\\n\\n请检查日志文件获取详细信息",
+    "key": "message.text_8079",
+    "before": "f\"打开场景编辑器失败:\\n{str(e)}\\n\\n请检查日志文件获取详细信息\"",
+    "after": "ftr('message.text_8079')"
+  },
+  {
+    "line": 2721,
+    "original": "无场景",
+    "key": "general.text_6942",
+    "before": "self.scene_combo.addItem(\"无场景\", None)",
+    "after": "self.scene_combo.addItem(tr('general.text_6942'), None)"
+  },
+  {
+    "line": 2745,
+    "original": "刷新失败",
+    "key": "message.text_9771",
+    "before": "\"刷新失败\",",
+    "after": "tr('message.text_9771'),"
+  },
+  {
+    "line": 2746,
+    "original": "刷新场景列表时出错:\\n{e}",
+    "key": "general.text_9348",
+    "before": "f\"刷新场景列表时出错:\\n{e}\"",
+    "after": "ftr('general.text_9348')"
+  },
+  {
+    "line": 2755,
+    "original": "配置任务提醒通知,让您不会错过任何重要时刻",
+    "key": "config.config_5",
+    "before": "info_label = QLabel(\"配置任务提醒通知,让您不会错过任何重要时刻\")",
+    "after": "info_label = QLabel(tr('config.config_5'))"
+  },
+  {
+    "line": 2760,
+    "original": "⚙️ 基础设置",
+    "key": "config.settings_10",
+    "before": "basic_group = QGroupBox(\"⚙️ 基础设置\")",
+    "after": "basic_group = QGroupBox(tr('config.settings_10'))"
+  },
+  {
+    "line": 2765,
+    "original": "启用任务提醒通知",
+    "key": "tasks.task_8",
+    "before": "self.notify_enabled_check = QCheckBox(\"启用任务提醒通知\")",
+    "after": "self.notify_enabled_check = QCheckBox(tr('tasks.task_8'))"
+  },
+  {
+    "line": 2773,
+    "original": "播放提示音",
+    "key": "message.text_1045",
+    "before": "self.notify_sound_check = QCheckBox(\"播放提示音\")",
+    "after": "self.notify_sound_check = QCheckBox(tr('message.text_1045'))"
+  },
+  {
+    "line": 2782,
+    "original": "⏰ 提醒时机",
+    "key": "general.text_8275",
+    "before": "timing_group = QGroupBox(\"⏰ 提醒时机\")",
+    "after": "timing_group = QGroupBox(tr('general.text_8275'))"
+  },
+  {
+    "line": 2788,
+    "original": "🔔 任务开始前提醒",
+    "key": "tasks.task_9",
+    "before": "before_start_group = QGroupBox(\"🔔 任务开始前提醒\")",
+    "after": "before_start_group = QGroupBox(tr('tasks.task_9'))"
+  },
+  {
+    "line": 2806,
+    "original": "选择在任务开始前多久提醒(可多选):",
+    "key": "tasks.task_10",
+    "before": "before_start_hint = QLabel(\"选择在任务开始前多久提醒(可多选):\")",
+    "after": "before_start_hint = QLabel(tr('tasks.task_10'))"
+  },
+  {
+    "line": 2813,
+    "original": "任务开始时提醒",
+    "key": "tasks.task_11",
+    "before": "self.notify_on_start_check = QCheckBox(\"任务开始时提醒\")",
+    "after": "self.notify_on_start_check = QCheckBox(tr('tasks.task_11'))"
+  },
+  {
+    "line": 2827,
+    "original": "提前 {minutes} 分钟",
+    "key": "general.text_9462",
+    "before": "checkbox = QCheckBox(f\"提前 {minutes} 分钟\")",
+    "after": "checkbox = QCheckBox(ftr('general.text_9462'))"
+  },
+  {
+    "line": 2840,
+    "original": "🔕 任务结束前提醒",
+    "key": "tasks.task_12",
+    "before": "before_end_group = QGroupBox(\"🔕 任务结束前提醒\")",
+    "after": "before_end_group = QGroupBox(tr('tasks.task_12'))"
+  },
+  {
+    "line": 2858,
+    "original": "选择在任务结束前多久提醒(可多选):",
+    "key": "tasks.task_13",
+    "before": "before_end_hint = QLabel(\"选择在任务结束前多久提醒(可多选):\")",
+    "after": "before_end_hint = QLabel(tr('tasks.task_13'))"
+  },
+  {
+    "line": 2865,
+    "original": "任务结束时提醒",
+    "key": "tasks.task_14",
+    "before": "self.notify_on_end_check = QCheckBox(\"任务结束时提醒\")",
+    "after": "self.notify_on_end_check = QCheckBox(tr('tasks.task_14'))"
+  },
+  {
+    "line": 2878,
+    "original": "提前 {minutes} 分钟",
+    "key": "general.text_9462",
+    "before": "checkbox = QCheckBox(f\"提前 {minutes} 分钟\")",
+    "after": "checkbox = QCheckBox(ftr('general.text_9462'))"
+  },
+  {
+    "line": 2894,
+    "original": "🌙 免打扰时段",
+    "key": "general.text_2952",
+    "before": "quiet_group = QGroupBox(\"🌙 免打扰时段\")",
+    "after": "quiet_group = QGroupBox(tr('general.text_2952'))"
+  },
+  {
+    "line": 2901,
+    "original": "启用免打扰时段",
+    "key": "general.text_1681_1",
+    "before": "self.quiet_enabled_check = QCheckBox(\"启用免打扰时段\")",
+    "after": "self.quiet_enabled_check = QCheckBox(tr('general.text_1681_1'))"
+  },
+  {
+    "line": 2915,
+    "original": "(在此时间后不发送通知)",
+    "key": "tasks.time_14",
+    "before": "quiet_start_hint = QLabel(\"(在此时间后不发送通知)\")",
+    "after": "quiet_start_hint = QLabel(tr('tasks.time_14'))"
+  },
+  {
+    "line": 2919,
+    "original": "开始时间:",
+    "key": "tasks.time_15",
+    "before": "quiet_layout.addRow(\"开始时间:\", quiet_start_layout)",
+    "after": "quiet_layout.addRow(tr('tasks.time_15'), quiet_start_layout)"
+  },
+  {
+    "line": 2930,
+    "original": "(在此时间前不发送通知)",
+    "key": "tasks.time_16",
+    "before": "quiet_end_hint = QLabel(\"(在此时间前不发送通知)\")",
+    "after": "quiet_end_hint = QLabel(tr('tasks.time_16'))"
+  },
+  {
+    "line": 2934,
+    "original": "结束时间:",
+    "key": "tasks.time_17",
+    "before": "quiet_layout.addRow(\"结束时间:\", quiet_end_layout)",
+    "after": "quiet_layout.addRow(tr('tasks.time_17'), quiet_end_layout)"
+  },
+  {
+    "line": 2936,
+    "original": "示例: 22:00 - 08:00 表示晚上10点到早上8点不打扰",
+    "key": "general.text_1040",
+    "before": "quiet_example = QLabel(\"示例: 22:00 - 08:00 表示晚上10点到早上8点不打扰\")",
+    "after": "quiet_example = QLabel(tr('general.text_1040'))"
+  },
+  {
+    "line": 2962,
+    "original": "个人中心",
+    "key": "general.text_8429_1",
+    "before": "title_label = QLabel(\"个人中心\")",
+    "after": "title_label = QLabel(tr('general.text_8429_1'))"
+  },
+  {
+    "line": 2969,
+    "original": "未登录",
+    "key": "account.not_logged_in",
+    "before": "email = auth_client.get_user_email() or \"未登录\"",
+    "after": "email = auth_client.get_user_email() or tr('account.not_logged_in')"
+  },
+  {
+    "line": 2972,
+    "original": "未登录",
+    "key": "account.not_logged_in",
+    "before": "if email != \"未登录\":",
+    "after": "if email != tr('account.not_logged_in'):"
+  },
+  {
+    "line": 2977,
+    "original": "会员合伙人",
+    "key": "membership.text_4367",
+    "before": "tier_names = {\"free\": \"免费用户\", \"pro\": \"高级版\", \"lifetime\": \"会员合伙人\"}",
+    "after": "tier_names = {\"free\": \"免费用户\", \"pro\": \"高级版\", \"lifetime\": tr('membership.text_4367"
+  },
+  {
+    "line": 2977,
+    "original": "高级版",
+    "key": "general.text_9492",
+    "before": "tier_names = {\"free\": \"免费用户\", \"pro\": \"高级版\", \"lifetime\": \"会员合伙人\"}",
+    "after": "tier_names = {\"free\": \"免费用户\", \"pro\": tr('general.text_9492'), \"lifetime\": tr('me"
+  },
+  {
+    "line": 2977,
+    "original": "免费用户",
+    "key": "general.text_1841",
+    "before": "tier_names = {\"free\": \"免费用户\", \"pro\": \"高级版\", \"lifetime\": \"会员合伙人\"}",
+    "after": "tier_names = {\"free\": tr('general.text_1841'), \"pro\": tr('general.text_9492'), \""
+  },
+  {
+    "line": 2979,
+    "original": "邮箱：{email}  |  会员等级：{tier_name}",
+    "key": "account.text_7480",
+    "before": "info_label = QLabel(f\"邮箱：{email}  |  会员等级：{tier_name}\")",
+    "after": "info_label = QLabel(ftr('account.text_7480'))"
+  },
+  {
+    "line": 2985,
+    "original": "退出登录",
+    "key": "account.logout",
+    "before": "logout_btn = QPushButton(\"退出登录\")",
+    "after": "logout_btn = QPushButton(tr('account.logout'))"
+  },
+  {
+    "line": 2995,
+    "original": "未登录",
+    "key": "account.not_logged_in",
+    "before": "if email != \"未登录\":",
+    "after": "if email != tr('account.not_logged_in'):"
+  },
+  {
+    "line": 2997,
+    "original": "会员套餐对比",
+    "key": "membership.text_4366",
+    "before": "tip_label = QLabel(\"会员套餐对比\")",
+    "after": "tip_label = QLabel(tr('membership.text_4366'))"
+  },
+  {
+    "line": 3010,
+    "original": "Pro 月度",
+    "key": "general.text_2512",
+    "before": "\"name\": \"Pro 月度\",",
+    "after": "\"name\": tr('general.text_2512'),"
+  },
+  {
+    "line": 3012,
+    "original": "/月",
+    "key": "general.text_8521",
+    "before": "\"period\": \"/月\",",
+    "after": "\"period\": tr('general.text_8521'),"
+  },
+  {
+    "line": 3013,
+    "original": "有效期30天",
+    "key": "general.text_8162",
+    "before": "\"validity\": \"有效期30天\",",
+    "after": "\"validity\": tr('general.text_8162'),"
+  },
+  {
+    "line": 3014,
+    "original": "到期后不会自动扣费",
+    "key": "general.text_9982",
+    "before": "\"renewal\": \"到期后不会自动扣费\",",
+    "after": "\"renewal\": tr('general.text_9982'),"
+  },
+  {
+    "line": 3016,
+    "original": "加入VIP会员群",
+    "key": "membership.text_2561",
+    "before": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \"",
+    "after": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \""
+  },
+  {
+    "line": 3016,
+    "original": "抢先体验新功能",
+    "key": "general.text_6335",
+    "before": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \"",
+    "after": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \""
+  },
+  {
+    "line": 3016,
+    "original": "场景系统",
+    "key": "general.text_9163",
+    "before": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \"",
+    "after": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", t"
+  },
+  {
+    "line": 3016,
+    "original": "数据云同步",
+    "key": "general.text_6202",
+    "before": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \"",
+    "after": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", tr('genera"
+  },
+  {
+    "line": 3016,
+    "original": "番茄时钟",
+    "key": "general.text_2898",
+    "before": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \"",
+    "after": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", tr('general.text_2"
+  },
+  {
+    "line": 3016,
+    "original": "去除进度条水印",
+    "key": "general.text_9216",
+    "before": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \"",
+    "after": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", \"统计报告分析\", tr('general.text_9216'), tr('"
+  },
+  {
+    "line": 3016,
+    "original": "统计报告分析",
+    "key": "general.text_1259",
+    "before": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \"",
+    "after": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", tr('general.text_1259'), tr('general.te"
+  },
+  {
+    "line": 3016,
+    "original": "20次/天 AI智能规划",
+    "key": "ai.text_712",
+    "before": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \"",
+    "after": "\"features\": [\"所有免费功能 +\", tr('ai.text_712'), tr('general.text_1259'), tr('general"
+  },
+  {
+    "line": 3016,
+    "original": "所有免费功能 +",
+    "key": "general.text_1225",
+    "before": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \"",
+    "after": "\"features\": [tr('general.text_1225'), tr('ai.text_712'), tr('general.text_1259')"
+  },
+  {
+    "line": 3020,
+    "original": "Pro 年度",
+    "key": "general.text_233",
+    "before": "\"name\": \"Pro 年度\",",
+    "after": "\"name\": tr('general.text_233'),"
+  },
+  {
+    "line": 3022,
+    "original": "/年",
+    "key": "general.text_7856",
+    "before": "\"period\": \"/年\",",
+    "after": "\"period\": tr('general.text_7856'),"
+  },
+  {
+    "line": 3025,
+    "original": "节省 40%",
+    "key": "general.text_4494",
+    "before": "\"discount_badge\": \"节省 40%\",",
+    "after": "\"discount_badge\": tr('general.text_4494'),"
+  },
+  {
+    "line": 3026,
+    "original": "有效期365天",
+    "key": "general.text_831",
+    "before": "\"validity\": \"有效期365天\",",
+    "after": "\"validity\": tr('general.text_831'),"
+  },
+  {
+    "line": 3027,
+    "original": "到期后不会自动扣费",
+    "key": "general.text_9982",
+    "before": "\"renewal\": \"到期后不会自动扣费\",",
+    "after": "\"renewal\": tr('general.text_9982'),"
+  },
+  {
+    "line": 3029,
+    "original": "加入VIP会员群",
+    "key": "membership.text_2561",
+    "before": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \"",
+    "after": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \""
+  },
+  {
+    "line": 3029,
+    "original": "抢先体验新功能",
+    "key": "general.text_6335",
+    "before": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \"",
+    "after": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \""
+  },
+  {
+    "line": 3029,
+    "original": "场景系统",
+    "key": "general.text_9163",
+    "before": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \"",
+    "after": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", t"
+  },
+  {
+    "line": 3029,
+    "original": "数据云同步",
+    "key": "general.text_6202",
+    "before": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \"",
+    "after": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", tr('genera"
+  },
+  {
+    "line": 3029,
+    "original": "番茄时钟",
+    "key": "general.text_2898",
+    "before": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \"",
+    "after": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", tr('general.text_2"
+  },
+  {
+    "line": 3029,
+    "original": "去除进度条水印",
+    "key": "general.text_9216",
+    "before": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \"",
+    "after": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", \"统计报告分析\", tr('general.text_9216'), tr('"
+  },
+  {
+    "line": 3029,
+    "original": "统计报告分析",
+    "key": "general.text_1259",
+    "before": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \"",
+    "after": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", tr('general.text_1259'), tr('general.te"
+  },
+  {
+    "line": 3029,
+    "original": "20次/天 AI智能规划",
+    "key": "ai.text_712",
+    "before": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \"",
+    "after": "\"features\": [\"所有免费功能 +\", tr('ai.text_712'), tr('general.text_1259'), tr('general"
+  },
+  {
+    "line": 3029,
+    "original": "所有免费功能 +",
+    "key": "general.text_1225",
+    "before": "\"features\": [\"所有免费功能 +\", \"20次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \"",
+    "after": "\"features\": [tr('general.text_1225'), tr('ai.text_712'), tr('general.text_1259')"
+  },
+  {
+    "line": 3033,
+    "original": "会员合伙人",
+    "key": "membership.text_4367",
+    "before": "\"name\": \"会员合伙人\",",
+    "after": "\"name\": tr('membership.text_4367'),"
+  },
+  {
+    "line": 3036,
+    "original": "永久有效",
+    "key": "general.text_4301",
+    "before": "\"validity\": \"永久有效\",",
+    "after": "\"validity\": tr('general.text_4301'),"
+  },
+  {
+    "line": 3037,
+    "original": "一次购买,终身可用",
+    "key": "general.text_3315",
+    "before": "\"renewal\": \"一次购买,终身可用\",",
+    "after": "\"renewal\": tr('general.text_3315'),"
+  },
+  {
+    "line": 3039,
+    "original": "共同成长,分享价值",
+    "key": "general.text_8160",
+    "before": "\"features\": [\"所有免费功能 +\", \"50次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \"",
+    "after": "\"features\": [\"所有免费功能 +\", \"50次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \""
+  },
+  {
+    "line": 3039,
+    "original": "专属1v1咨询服务",
+    "key": "general.text_9901",
+    "before": "\"features\": [\"所有免费功能 +\", \"50次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \"",
+    "after": "\"features\": [\"所有免费功能 +\", \"50次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \""
+  },
+  {
+    "line": 3039,
+    "original": "优先体验所有新功能",
+    "key": "general.text_4064",
+    "before": "\"features\": [\"所有免费功能 +\", \"50次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \"",
+    "after": "\"features\": [\"所有免费功能 +\", \"50次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \""
+  },
+  {
+    "line": 3039,
+    "original": "专属合伙人社群",
+    "key": "general.text_3982",
+    "before": "\"features\": [\"所有免费功能 +\", \"50次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \"",
+    "after": "\"features\": [\"所有免费功能 +\", \"50次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \""
+  },
+  {
+    "line": 3039,
+    "original": "33%引荐返现比例",
+    "key": "general.text_1438",
+    "before": "\"features\": [\"所有免费功能 +\", \"50次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \"",
+    "after": "\"features\": [\"所有免费功能 +\", \"50次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \""
+  },
+  {
+    "line": 3039,
+    "original": "场景系统",
+    "key": "general.text_9163",
+    "before": "\"features\": [\"所有免费功能 +\", \"50次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \"",
+    "after": "\"features\": [\"所有免费功能 +\", \"50次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", t"
+  },
+  {
+    "line": 3039,
+    "original": "数据云同步",
+    "key": "general.text_6202",
+    "before": "\"features\": [\"所有免费功能 +\", \"50次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \"",
+    "after": "\"features\": [\"所有免费功能 +\", \"50次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", tr('genera"
+  },
+  {
+    "line": 3039,
+    "original": "番茄时钟",
+    "key": "general.text_2898",
+    "before": "\"features\": [\"所有免费功能 +\", \"50次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \"",
+    "after": "\"features\": [\"所有免费功能 +\", \"50次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", tr('general.text_2"
+  },
+  {
+    "line": 3039,
+    "original": "去除进度条水印",
+    "key": "general.text_9216",
+    "before": "\"features\": [\"所有免费功能 +\", \"50次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \"",
+    "after": "\"features\": [\"所有免费功能 +\", \"50次/天 AI智能规划\", \"统计报告分析\", tr('general.text_9216'), tr('"
+  },
+  {
+    "line": 3039,
+    "original": "统计报告分析",
+    "key": "general.text_1259",
+    "before": "\"features\": [\"所有免费功能 +\", \"50次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \"",
+    "after": "\"features\": [\"所有免费功能 +\", \"50次/天 AI智能规划\", tr('general.text_1259'), tr('general.te"
+  },
+  {
+    "line": 3039,
+    "original": "50次/天 AI智能规划",
+    "key": "ai.text_1718",
+    "before": "\"features\": [\"所有免费功能 +\", \"50次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \"",
+    "after": "\"features\": [\"所有免费功能 +\", tr('ai.text_1718'), tr('general.text_1259'), tr('genera"
+  },
+  {
+    "line": 3039,
+    "original": "所有免费功能 +",
+    "key": "general.text_1225",
+    "before": "\"features\": [\"所有免费功能 +\", \"50次/天 AI智能规划\", \"统计报告分析\", \"去除进度条水印\", \"番茄时钟\", \"数据云同步\", \"",
+    "after": "\"features\": [tr('general.text_1225'), tr('ai.text_1718'), tr('general.text_1259'"
+  },
+  {
+    "line": 3175,
+    "original": "感谢您的支持！",
+    "key": "general.text_237",
+    "before": "info_label = QLabel(\"感谢您的支持！\")",
+    "after": "info_label = QLabel(tr('general.text_237'))"
+  },
+  {
+    "line": 3183,
+    "original": "👋 欢迎使用 GaiYa 每日进度条",
+    "key": "general.text_2084",
+    "before": "welcome_label = QLabel(\"👋 欢迎使用 GaiYa 每日进度条\")",
+    "after": "welcome_label = QLabel(tr('general.text_2084'))"
+  },
+  {
+    "line": 3188,
+    "original": "登录后即可使用 AI智能规划、数据云同步等高级功能",
+    "key": "account.text_789",
+    "before": "tip_label = QLabel(\"登录后即可使用 AI智能规划、数据云同步等高级功能\")",
+    "after": "tip_label = QLabel(tr('account.text_789'))"
+  },
+  {
+    "line": 3194,
+    "original": "🔑 点击登录 / 注册",
+    "key": "account.text_9039",
+    "before": "login_button = QPushButton(\"🔑 点击登录 / 注册\")",
+    "after": "login_button = QPushButton(tr('account.text_9039'))"
+  },
+  {
+    "line": 3224,
+    "original": "🎁 登录后享受的权益：",
+    "key": "account.text_8733",
+    "before": "features_label = QLabel(\"🎁 登录后享受的权益：\")",
+    "after": "features_label = QLabel(tr('account.text_8733'))"
+  },
+  {
+    "line": 3229,
+    "original": "• 免费用户：每天 3 次 AI智能规划配额",
+    "key": "ai.text_7976",
+    "before": "\"• 免费用户：每天 3 次 AI智能规划配额\",",
+    "after": "tr('ai.text_7976'),"
+  },
+  {
+    "line": 3230,
+    "original": "• Pro会员：每天 20 次 AI智能规划配额",
+    "key": "ai.text_2310",
+    "before": "\"• Pro会员：每天 20 次 AI智能规划配额\",",
+    "after": "tr('ai.text_2310'),"
+  },
+  {
+    "line": 3231,
+    "original": "• 数据云同步：自定义模板和历史统计同步到云端",
+    "key": "tasks.template_31",
+    "before": "\"• 数据云同步：自定义模板和历史统计同步到云端\",",
+    "after": "tr('tasks.template_31'),"
+  },
+  {
+    "line": 3232,
+    "original": "• 模板自动应用：根据日期规则自动切换任务模板",
+    "key": "tasks.task_15",
+    "before": "\"• 模板自动应用：根据日期规则自动切换任务模板\",",
+    "after": "tr('tasks.task_15'),"
+  },
+  {
+    "line": 3233,
+    "original": "• 优先获取新功能和更新",
+    "key": "general.text_337",
+    "before": "\"• 优先获取新功能和更新\",",
+    "after": "tr('general.text_337'),"
+  },
+  {
+    "line": 3234,
+    "original": "• 加入专属VIP会员群，获取更多支持",
+    "key": "membership.text_7568",
+    "before": "\"• 加入专属VIP会员群，获取更多支持\"",
+    "after": "tr('membership.text_7568')"
+  },
+  {
+    "line": 3266,
+    "original": "您当前是免费用户。升级高级版可解锁更多功能。",
+    "key": "general.text_8577",
+    "before": "tier_message = \"您当前是免费用户。升级高级版可解锁更多功能。\"",
+    "after": "tier_message = tr('general.text_8577')"
+  },
+  {
+    "line": 3268,
+    "original": "您是高级版用户，可以使用所有功能。",
+    "key": "general.text_6070",
+    "before": "tier_message = \"您是高级版用户，可以使用所有功能。\"",
+    "after": "tier_message = tr('general.text_6070')"
+  },
+  {
+    "line": 3270,
+    "original": "您是终身会员，尊享所有高级功能。",
+    "key": "membership.text_3181",
+    "before": "tier_message = \"您是终身会员，尊享所有高级功能。\"",
+    "after": "tier_message = tr('membership.text_3181')"
+  },
+  {
+    "line": 3272,
+    "original": "您的账户信息已更新。",
+    "key": "general.text_781",
+    "before": "tier_message = \"您的账户信息已更新。\"",
+    "after": "tier_message = tr('general.text_781')"
+  },
+  {
+    "line": 3277,
+    "original": "登录成功",
+    "key": "account.text_4681",
+    "before": "\"登录成功\",",
+    "after": "tr('account.text_4681'),"
+  },
+  {
+    "line": 3278,
+    "original": "欢迎回来，{user_info.get('email', '用户')}！\\n\\n",
+    "key": "general.text_7870",
+    "before": "f\"欢迎回来，{user_info.get('email', '用户')}！\\n\\n\"",
+    "after": "ftr('general.text_7870')"
+  },
+  {
+    "line": 3293,
+    "original": "确认退出",
+    "key": "general.text_2943",
+    "before": "\"确认退出\",",
+    "after": "tr('general.text_2943'),"
+  },
+  {
+    "line": 3294,
+    "original": "确定要退出当前账号吗？\\n\\n退出后将以游客身份继续使用，免费用户功能将受到限制。",
+    "key": "dialog.text_3235",
+    "before": "\"确定要退出当前账号吗？\\n\\n退出后将以游客身份继续使用，免费用户功能将受到限制。\",",
+    "after": "tr('dialog.text_3235'),"
+  },
+  {
+    "line": 3309,
+    "original": "退出成功",
+    "key": "message.text_3943",
+    "before": "\"退出成功\",",
+    "after": "tr('message.text_3943'),"
+  },
+  {
+    "line": 3310,
+    "original": "已退出当前账号。\\n\\n请重新启动应用以切换到游客模式。",
+    "key": "account.text_617",
+    "before": "\"已退出当前账号。\\n\\n请重新启动应用以切换到游客模式。\"",
+    "after": "tr('account.text_617')"
+  },
+  {
+    "line": 3319,
+    "original": "退出成功",
+    "key": "message.text_3943",
+    "before": "\"退出成功\",",
+    "after": "tr('message.text_3943'),"
+  },
+  {
+    "line": 3320,
+    "original": "已退出当前账号。\\n\\n请重新启动应用以切换到游客模式。",
+    "key": "account.text_617",
+    "before": "\"已退出当前账号。\\n\\n请重新启动应用以切换到游客模式。\"",
+    "after": "tr('account.text_617')"
+  },
+  {
+    "line": 3324,
+    "original": "此功能",
+    "key": "general.text_894",
+    "before": "def _check_login_and_guide(self, feature_name: str = \"此功能\") -> bool:",
+    "after": "def _check_login_and_guide(self, feature_name: str = tr('general.text_894')) -> "
+  },
+  {
+    "line": 3347,
+    "original": "需要登录",
+    "key": "account.text_72",
+    "before": "\"需要登录\",",
+    "after": "tr('account.text_72'),"
+  },
+  {
+    "line": 3348,
+    "original": "💡 {feature_name}需要登录后才能使用。\\n\\n",
+    "key": "account.text_1986",
+    "before": "f\"💡 {feature_name}需要登录后才能使用。\\n\\n\"",
+    "after": "ftr('account.text_1986')"
+  },
+  {
+    "line": 3349,
+    "original": "登录后您将享有：\\n",
+    "key": "account.text_2043",
+    "before": "f\"登录后您将享有：\\n\"",
+    "after": "ftr('account.text_2043')"
+  },
+  {
+    "line": 3350,
+    "original": "• 免费用户：3次/天 AI智能规划\\n",
+    "key": "ai.text_1722",
+    "before": "f\"• 免费用户：3次/天 AI智能规划\\n\"",
+    "after": "ftr('ai.text_1722')"
+  },
+  {
+    "line": 3351,
+    "original": "• Pro会员：20次/天 AI智能规划\\n",
+    "key": "ai.text_5978",
+    "before": "f\"• Pro会员：20次/天 AI智能规划\\n\"",
+    "after": "ftr('ai.text_5978')"
+  },
+  {
+    "line": 3352,
+    "original": "• 更多高级功能和服务\\n\\n",
+    "key": "general.text_8545",
+    "before": "f\"• 更多高级功能和服务\\n\\n\"",
+    "after": "ftr('general.text_8545')"
+  },
+  {
+    "line": 3353,
+    "original": "是否前往个人中心登录？",
+    "key": "account.text_9446",
+    "before": "f\"是否前往个人中心登录？\",",
+    "after": "ftr('account.text_9446'),"
+  },
+  {
+    "line": 3532,
+    "original": "/月",
+    "key": "general.text_8521",
+    "before": "monthly_period_label = QLabel(\"/月\")",
+    "after": "monthly_period_label = QLabel(tr('general.text_8521'))"
+  },
+  {
+    "line": 3565,
+    "original": "升级会员",
+    "key": "button.upgrade",
+    "before": "button = QPushButton(\"升级会员\")",
+    "after": "button = QPushButton(tr('button.upgrade'))"
+  },
+  {
+    "line": 3682,
+    "original": "升级会员",
+    "key": "button.upgrade",
+    "before": "button = QPushButton(\"升级会员\")",
+    "after": "button = QPushButton(tr('button.upgrade'))"
+  },
+  {
+    "line": 3784,
+    "original": "限量1000名",
+    "key": "general.text_1955",
+    "before": "limited_badge = QLabel(\"限量1000名\")",
+    "after": "limited_badge = QLabel(tr('general.text_1955'))"
+  },
+  {
+    "line": 3817,
+    "original": "一次付费",
+    "key": "general.text_7372",
+    "before": "onetime_label = QLabel(\"一次付费\")",
+    "after": "onetime_label = QLabel(tr('general.text_7372'))"
+  },
+  {
+    "line": 3823,
+    "original": "终身可用",
+    "key": "general.text_4449",
+    "before": "lifetime_label = QLabel(\"终身可用\")",
+    "after": "lifetime_label = QLabel(tr('general.text_4449'))"
+  },
+  {
+    "line": 3831,
+    "original": "<a href=\"#\" style=\"color: #666666; text-decoration: none;\">📜 阅读合伙人邀请函</a>",
+    "key": "general.text_1349",
+    "before": "invitation_link = QLabel('<a href=\"#\" style=\"color: #666666; text-decoration: no",
+    "after": "invitation_link = QLabel(tr('general.text_1349'))"
+  },
+  {
+    "line": 3842,
+    "original": "成为合伙人",
+    "key": "general.text_2050",
+    "before": "button = QPushButton(\"成为合伙人\")",
+    "after": "button = QPushButton(tr('general.text_2050'))"
+  },
+  {
+    "line": 3918,
+    "original": "GaiYa每日进度条",
+    "key": "general.text_7404",
+    "before": "dialog.setWindowTitle(\"GaiYa每日进度条\")",
+    "after": "dialog.setWindowTitle(tr('general.text_7404'))"
+  },
+  {
+    "line": 3931,
+    "original": "致 GaiYa 会员合伙人的一封信",
+    "key": "membership.text_3923",
+    "before": "title_label = QLabel(\"致 GaiYa 会员合伙人的一封信\")",
+    "after": "title_label = QLabel(tr('membership.text_3923'))"
+  },
+  {
+    "line": 3942,
+    "original": "邀请您共同成长，共享价值",
+    "key": "general.text_304",
+    "before": "subtitle_label = QLabel(\"邀请您共同成长，共享价值\")",
+    "after": "subtitle_label = QLabel(tr('general.text_304'))"
+  },
+  {
+    "line": 3994,
+    "original": ">从2023年初的深夜构想到今天，GaiYa 已陪伴了<b>几百位早期用户</b>度过他们的每一个工作日。有人用它管理番茄钟，有人用它切换工作与生活，还有人说：",
+    "key": "general.text_3267",
+    "before": "<p style=\"margin-bottom: 15px;\">从2023年初的深夜构想到今天，GaiYa 已陪伴了<b>几百位早期用户</b>度过他们的每一个",
+    "after": "<p style=\"margin-bottom: 15px;tr('general.text_3267')看到进度条走到'下班'那一刻，终于能心安理得地关电脑了"
+  },
+  {
+    "line": 4004,
+    "original": ">当你看见那条进度条一点点推进，看见今天已经过去了63%，看见",
+    "key": "general.text_6435",
+    "before": "<p style=\"margin-bottom: 15px;\">当你看见那条进度条一点点推进，看见今天已经过去了63%，看见\"下班\"色块还有2小时才到 —— 你",
+    "after": "<p style=\"margin-bottom: 15px;tr('general.text_6435')下班\"色块还有2小时才到 —— 你会做出不同的选择。这"
+  },
+  {
+    "line": 4032,
+    "original": ">599元换算下来，相当于<b>年费199元使用3年</b>——而我承诺的是<b style=",
+    "key": "general.text_5531",
+    "before": "<p style=\"margin-bottom: 15px;\">599元换算下来，相当于<b>年费199元使用3年</b>——而我承诺的是<b style=\"c",
+    "after": "<p style=\"margin-bottom: 15px;tr('general.text_5531')color: #4CAF50;\">终身使用</b>。这"
+  },
+  {
+    "line": 4040,
+    "original": ">此次会员合伙人招募，<b style=",
+    "key": "membership.text_7157",
+    "before": "<p style=\"margin-bottom: 15px;\">此次会员合伙人招募，<b style=\"color: #FF9800;\">首批仅开放1000个名",
+    "after": "<p style=\"margin-bottom: 15px;tr('membership.text_7157')color: #FF9800;\">首批仅开放10"
+  },
+  {
+    "line": 4045,
+    "original": "进度条让我第一次感受到'时间握在手里'的踏实感。",
+    "key": "tasks.time_18",
+    "before": "\"进度条让我第一次感受到'时间握在手里'的踏实感。\" —— @产品经理 Alex",
+    "after": "tr('tasks.time_18') —— @产品经理 Alex"
+  },
+  {
+    "line": 4048,
+    "original": "工作配色和休息配色的切换，让我学会了按时下班。",
+    "key": "tasks.text_4734",
+    "before": "\"工作配色和休息配色的切换，让我学会了按时下班。\" —— @UI设计师 小林",
+    "after": "tr('tasks.text_4734') —— @UI设计师 小林"
+  },
+  {
+    "line": 4072,
+    "original": "我愿意成为会员合伙人",
+    "key": "membership.text_1588",
+    "before": "button = QPushButton(\"我愿意成为会员合伙人\")",
+    "after": "button = QPushButton(tr('membership.text_1588'))"
+  },
+  {
+    "line": 4160,
+    "original": "💡 会员提示",
+    "key": "membership.text_4341",
+    "before": "title_label = QLabel(\"💡 会员提示\")",
+    "after": "title_label = QLabel(tr('membership.text_4341'))"
+  },
+  {
+    "line": 4214,
+    "original": "💎 会员方案详细对比",
+    "key": "membership.text_789",
+    "before": "title_label = QLabel(\"💎 会员方案详细对比\")",
+    "after": "title_label = QLabel(tr('membership.text_789'))"
+  },
+  {
+    "line": 4223,
+    "original": "会员合伙人",
+    "key": "membership.text_4367",
+    "before": "table.setHorizontalHeaderLabels([\"功能特性\", \"免费版\", \"Pro 月度\", \"Pro 年度\", \"会员合伙人\"])",
+    "after": "table.setHorizontalHeaderLabels([\"功能特性\", \"免费版\", \"Pro 月度\", \"Pro 年度\", tr('membersh"
+  },
+  {
+    "line": 4223,
+    "original": "Pro 年度",
+    "key": "general.text_233",
+    "before": "table.setHorizontalHeaderLabels([\"功能特性\", \"免费版\", \"Pro 月度\", \"Pro 年度\", \"会员合伙人\"])",
+    "after": "table.setHorizontalHeaderLabels([\"功能特性\", \"免费版\", \"Pro 月度\", tr('general.text_233')"
+  },
+  {
+    "line": 4223,
+    "original": "Pro 月度",
+    "key": "general.text_2512",
+    "before": "table.setHorizontalHeaderLabels([\"功能特性\", \"免费版\", \"Pro 月度\", \"Pro 年度\", \"会员合伙人\"])",
+    "after": "table.setHorizontalHeaderLabels([\"功能特性\", \"免费版\", tr('general.text_2512'), tr('gen"
+  },
+  {
+    "line": 4223,
+    "original": "免费版",
+    "key": "membership.free",
+    "before": "table.setHorizontalHeaderLabels([\"功能特性\", \"免费版\", \"Pro 月度\", \"Pro 年度\", \"会员合伙人\"])",
+    "after": "table.setHorizontalHeaderLabels([\"功能特性\", tr('membership.free'), tr('general.text"
+  },
+  {
+    "line": 4223,
+    "original": "功能特性",
+    "key": "general.text_5871",
+    "before": "table.setHorizontalHeaderLabels([\"功能特性\", \"免费版\", \"Pro 月度\", \"Pro 年度\", \"会员合伙人\"])",
+    "after": "table.setHorizontalHeaderLabels([tr('general.text_5871'), tr('membership.free'),"
+  },
+  {
+    "line": 4262,
+    "original": "【核心功能】",
+    "key": "general.text_253",
+    "before": "\"name\": \"【核心功能】\",",
+    "after": "\"name\": tr('general.text_253'),"
+  },
+  {
+    "line": 4267,
+    "original": "每日进度条显示",
+    "key": "general.display_2",
+    "before": "\"name\": \"每日进度条显示\",",
+    "after": "\"name\": tr('general.display_2'),"
+  },
+  {
+    "line": 4268,
+    "original": "✓ 带水印",
+    "key": "general.text_3093",
+    "before": "\"free\": \"✓ 带水印\",",
+    "after": "\"free\": tr('general.text_3093'),"
+  },
+  {
+    "line": 4269,
+    "original": "✓ 无水印",
+    "key": "general.text_1163",
+    "before": "\"monthly\": \"✓ 无水印\",",
+    "after": "\"monthly\": tr('general.text_1163'),"
+  },
+  {
+    "line": 4270,
+    "original": "✓ 无水印",
+    "key": "general.text_1163",
+    "before": "\"yearly\": \"✓ 无水印\",",
+    "after": "\"yearly\": tr('general.text_1163'),"
+  },
+  {
+    "line": 4271,
+    "original": "✓ 无水印",
+    "key": "general.text_1163",
+    "before": "\"lifetime\": \"✓ 无水印\",",
+    "after": "\"lifetime\": tr('general.text_1163'),"
+  },
+  {
+    "line": 4276,
+    "original": "AI 智能任务规划",
+    "key": "tasks.task_16",
+    "before": "\"name\": \"AI 智能任务规划\",",
+    "after": "\"name\": tr('tasks.task_16'),"
+  },
+  {
+    "line": 4277,
+    "original": "3次/天",
+    "key": "general.text_4292",
+    "before": "\"free\": \"3次/天\",",
+    "after": "\"free\": tr('general.text_4292'),"
+  },
+  {
+    "line": 4278,
+    "original": "20次/天",
+    "key": "general.text_2657",
+    "before": "\"monthly\": \"20次/天\",",
+    "after": "\"monthly\": tr('general.text_2657'),"
+  },
+  {
+    "line": 4279,
+    "original": "20次/天",
+    "key": "general.text_2657",
+    "before": "\"yearly\": \"20次/天\",",
+    "after": "\"yearly\": tr('general.text_2657'),"
+  },
+  {
+    "line": 4280,
+    "original": "50次/天",
+    "key": "general.text_8716",
+    "before": "\"lifetime\": \"50次/天\",",
+    "after": "\"lifetime\": tr('general.text_8716'),"
+  },
+  {
+    "line": 4285,
+    "original": "统计报告分析",
+    "key": "general.text_1259",
+    "before": "\"name\": \"统计报告分析\",",
+    "after": "\"name\": tr('general.text_1259'),"
+  },
+  {
+    "line": 4294,
+    "original": "【高级功能】",
+    "key": "general.text_7925_1",
+    "before": "\"name\": \"【高级功能】\",",
+    "after": "\"name\": tr('general.text_7925_1'),"
+  },
+  {
+    "line": 4299,
+    "original": "主题自定义",
+    "key": "tasks.theme_9",
+    "before": "\"name\": \"主题自定义\",",
+    "after": "\"name\": tr('tasks.theme_9'),"
+  },
+  {
+    "line": 4308,
+    "original": "番茄时钟",
+    "key": "general.text_2898",
+    "before": "\"name\": \"番茄时钟\",",
+    "after": "\"name\": tr('general.text_2898'),"
+  },
+  {
+    "line": 4317,
+    "original": "数据云同步",
+    "key": "general.text_6202",
+    "before": "\"name\": \"数据云同步\",",
+    "after": "\"name\": tr('general.text_6202'),"
+  },
+  {
+    "line": 4326,
+    "original": "场景系统",
+    "key": "general.text_9163",
+    "before": "\"name\": \"场景系统\",",
+    "after": "\"name\": tr('general.text_9163'),"
+  },
+  {
+    "line": 4335,
+    "original": "抢先体验新功能",
+    "key": "general.text_6335",
+    "before": "\"name\": \"抢先体验新功能\",",
+    "after": "\"name\": tr('general.text_6335'),"
+  },
+  {
+    "line": 4344,
+    "original": "加入VIP会员群",
+    "key": "membership.text_2561",
+    "before": "\"name\": \"加入VIP会员群\",",
+    "after": "\"name\": tr('membership.text_2561'),"
+  },
+  {
+    "line": 4353,
+    "original": "【会员权益】",
+    "key": "membership.text_3582",
+    "before": "\"name\": \"【会员权益】\",",
+    "after": "\"name\": tr('membership.text_3582'),"
+  },
+  {
+    "line": 4358,
+    "original": "有效期",
+    "key": "general.text_9982_1",
+    "before": "\"name\": \"有效期\",",
+    "after": "\"name\": tr('general.text_9982_1'),"
+  },
+  {
+    "line": 4360,
+    "original": "30天",
+    "key": "general.text_6050",
+    "before": "\"monthly\": \"30天\",",
+    "after": "\"monthly\": tr('general.text_6050'),"
+  },
+  {
+    "line": 4361,
+    "original": "365天",
+    "key": "general.text_1894",
+    "before": "\"yearly\": \"365天\",",
+    "after": "\"yearly\": tr('general.text_1894'),"
+  },
+  {
+    "line": 4362,
+    "original": "永久",
+    "key": "general.text_7796",
+    "before": "\"lifetime\": \"永久\",",
+    "after": "\"lifetime\": tr('general.text_7796'),"
+  },
+  {
+    "line": 4367,
+    "original": "引荐返现比例",
+    "key": "general.text_5194",
+    "before": "\"name\": \"引荐返现比例\",",
+    "after": "\"name\": tr('general.text_5194'),"
+  },
+  {
+    "line": 4376,
+    "original": "专属合伙人社群",
+    "key": "general.text_3982",
+    "before": "\"name\": \"专属合伙人社群\",",
+    "after": "\"name\": tr('general.text_3982'),"
+  },
+  {
+    "line": 4385,
+    "original": "1v1咨询服务",
+    "key": "general.text_2448",
+    "before": "\"name\": \"1v1咨询服务\",",
+    "after": "\"name\": tr('general.text_2448'),"
+  },
+  {
+    "line": 4530,
+    "original": "/月",
+    "key": "general.text_8521",
+    "before": "\"pro_monthly\": {\"name\": \"Pro 月度\", \"price_cny\": \"¥29\", \"price_usd\": \"$4.99\", \"per",
+    "after": "\"pro_monthly\": {\"name\": \"Pro 月度\", \"price_cny\": \"¥29\", \"price_usd\": \"$4.99\", \"per"
+  },
+  {
+    "line": 4530,
+    "original": "Pro 月度",
+    "key": "general.text_2512",
+    "before": "\"pro_monthly\": {\"name\": \"Pro 月度\", \"price_cny\": \"¥29\", \"price_usd\": \"$4.99\", \"per",
+    "after": "\"pro_monthly\": {\"name\": tr('general.text_2512'), \"price_cny\": \"¥29\", \"price_usd\""
+  },
+  {
+    "line": 4531,
+    "original": "/年",
+    "key": "general.text_7856",
+    "before": "\"pro_yearly\": {\"name\": \"Pro 年度\", \"price_cny\": \"¥199\", \"price_usd\": \"$39.99\", \"pe",
+    "after": "\"pro_yearly\": {\"name\": \"Pro 年度\", \"price_cny\": \"¥199\", \"price_usd\": \"$39.99\", \"pe"
+  },
+  {
+    "line": 4531,
+    "original": "Pro 年度",
+    "key": "general.text_233",
+    "before": "\"pro_yearly\": {\"name\": \"Pro 年度\", \"price_cny\": \"¥199\", \"price_usd\": \"$39.99\", \"pe",
+    "after": "\"pro_yearly\": {\"name\": tr('general.text_233'), \"price_cny\": \"¥199\", \"price_usd\":"
+  },
+  {
+    "line": 4532,
+    "original": "会员合伙人",
+    "key": "membership.text_4367",
+    "before": "\"lifetime\": {\"name\": \"会员合伙人\", \"price_cny\": \"¥599\", \"price_usd\": \"$89.99\", \"perio",
+    "after": "\"lifetime\": {\"name\": tr('membership.text_4367'), \"price_cny\": \"¥599\", \"price_usd"
+  },
+  {
+    "line": 4539,
+    "original": "选择支付方式",
+    "key": "dialog.text_4776",
+    "before": "dialog.setWindowTitle(\"选择支付方式\")",
+    "after": "dialog.setWindowTitle(tr('dialog.text_4776'))"
+  },
+  {
+    "line": 4552,
+    "original": "您选择的套餐：{plan['name']} - {plan['price_cny']}{plan['period']}",
+    "key": "dialog.text_1819",
+    "before": "title_label = QLabel(f\"您选择的套餐：{plan['name']} - {plan['price_cny']}{plan['period'",
+    "after": "title_label = QLabel(ftr('dialog.text_1819'))"
+  },
+  {
+    "line": 4571,
+    "original": "请选择支付方式：",
+    "key": "dialog.text_4054",
+    "before": "hint_label = QLabel(\"请选择支付方式：\")",
+    "after": "hint_label = QLabel(tr('dialog.text_4054'))"
+  },
+  {
+    "line": 4592,
+    "original": "💚 微信支付",
+    "key": "general.text_6108",
+    "before": "\"💚 微信支付\",",
+    "after": "tr('general.text_6108'),"
+  },
+  {
+    "line": 4605,
+    "original": "💳 国际支付 (Stripe)",
+    "key": "general.text_3367",
+    "before": "\"💳 国际支付 (Stripe)\",",
+    "after": "tr('general.text_3367'),"
+  },
+  {
+    "line": 4607,
+    "original": "支持 Visa/Mastercard/Amex",
+    "key": "general.text_8587",
+    "before": "\"支持 Visa/Mastercard/Amex\"",
+    "after": "tr('general.text_8587')"
+  },
+  {
+    "line": 4617,
+    "original": "取消",
+    "key": "button.cancel",
+    "before": "cancel_button = QPushButton(\"取消\")",
+    "after": "cancel_button = QPushButton(tr('button.cancel'))"
+  },
+  {
+    "line": 4638,
+    "original": "确认支付",
+    "key": "general.text_3723",
+    "before": "confirm_button = QPushButton(\"确认支付\")",
+    "after": "confirm_button = QPushButton(tr('general.text_3723'))"
+  },
+  {
+    "line": 4804,
+    "original": "等待支付",
+    "key": "general.text_7719",
+    "before": "self.payment_polling_dialog.setWindowTitle(\"等待支付\")",
+    "after": "self.payment_polling_dialog.setWindowTitle(tr('general.text_7719'))"
+  },
+  {
+    "line": 4806,
+    "original": "正在等待支付完成...\\n\\n",
+    "key": "general.text_8669",
+    "before": "\"正在等待支付完成...\\n\\n\"",
+    "after": "tr('general.text_8669')"
+  },
+  {
+    "line": 4807,
+    "original": "请在打开的浏览器页面中完成支付。\\n",
+    "key": "general.text_106",
+    "before": "\"请在打开的浏览器页面中完成支付。\\n\"",
+    "after": "tr('general.text_106')"
+  },
+  {
+    "line": 4808,
+    "original": "支付完成后，此窗口将自动关闭。",
+    "key": "general.text_7328",
+    "before": "\"支付完成后，此窗口将自动关闭。\"",
+    "after": "tr('general.text_7328')"
+  },
+  {
+    "line": 4822,
+    "original": "创建订单失败",
+    "key": "message.text_7021",
+    "before": "error_msg = result.get(\"error\", \"创建订单失败\")",
+    "after": "error_msg = result.get(\"error\", tr('message.text_7021'))"
+  },
+  {
+    "line": 4824,
+    "original": "渠道",
+    "key": "general.text_9284",
+    "before": "if \"MERCHANT_STATUS_NOT_NORMAL\" in error_msg or \"渠道\" in error_msg:",
+    "after": "if \"MERCHANT_STATUS_NOT_NORMAL\" in error_msg or tr('general.text_9284') in error"
+  },
+  {
+    "line": 4826,
+    "original": "支付渠道暂时不可用：{error_msg}\\n\\n",
+    "key": "general.text_4602",
+    "before": "f\"支付渠道暂时不可用：{error_msg}\\n\\n\"",
+    "after": "ftr('general.text_4602')"
+  },
+  {
+    "line": 4827,
+    "original": "可能的原因：\\n",
+    "key": "general.text_3397",
+    "before": "\"可能的原因：\\n\"",
+    "after": "tr('general.text_3397')"
+  },
+  {
+    "line": 4828,
+    "original": "• 支付渠道临时维护中\\n",
+    "key": "general.text_342",
+    "before": "\"• 支付渠道临时维护中\\n\"",
+    "after": "tr('general.text_342')"
+  },
+  {
+    "line": 4829,
+    "original": "• 需要在商户后台完成渠道签约\\n\\n",
+    "key": "general.text_3431",
+    "before": "\"• 需要在商户后台完成渠道签约\\n\\n\"",
+    "after": "tr('general.text_3431')"
+  },
+  {
+    "line": 4830,
+    "original": "建议操作：\\n",
+    "key": "general.text_8428",
+    "before": "\"建议操作：\\n\"",
+    "after": "tr('general.text_8428')"
+  },
+  {
+    "line": 4831,
+    "original": "1. 稍后重试（5-10分钟后）\\n",
+    "key": "general.text_4295",
+    "before": "\"1. 稍后重试（5-10分钟后）\\n\"",
+    "after": "tr('general.text_4295')"
+  },
+  {
+    "line": 4832,
+    "original": "2. 联系支付服务商客服（zpayz.cn）",
+    "key": "general.text_689",
+    "before": "\"2. 联系支付服务商客服（zpayz.cn）\"",
+    "after": "tr('general.text_689')"
+  },
+  {
+    "line": 4837,
+    "original": "创建订单失败：{error_msg}\\n\\n",
+    "key": "message.text_6152",
+    "before": "f\"创建订单失败：{error_msg}\\n\\n\"",
+    "after": "ftr('message.text_6152')"
+  },
+  {
+    "line": 4838,
+    "original": "调试信息：\\n",
+    "key": "general.text_2017",
+    "before": "f\"调试信息：\\n\"",
+    "after": "ftr('general.text_2017')"
+  },
+  {
+    "line": 4839,
+    "original": "• 套餐类型: {plan_id}\\n",
+    "key": "membership.text_5177",
+    "before": "f\"• 套餐类型: {plan_id}\\n\"",
+    "after": "ftr('membership.text_5177')"
+  },
+  {
+    "line": 4840,
+    "original": "• 支付方式: {pay_type}",
+    "key": "general.text_7174",
+    "before": "f\"• 支付方式: {pay_type}\"",
+    "after": "ftr('general.text_7174')"
+  },
+  {
+    "line": 4844,
+    "original": "创建订单失败",
+    "key": "message.text_7021",
+    "before": "QMessageBox.critical(self, \"创建订单失败\", detailed_msg)",
+    "after": "QMessageBox.critical(self, tr('message.text_7021'), detailed_msg)"
+  },
+  {
+    "line": 4869,
+    "original": "用户信息不完整，请重新登录",
+    "key": "account.text_4359",
+    "before": "error_msg = \"用户信息不完整，请重新登录\"",
+    "after": "error_msg = tr('account.text_4359')"
+  },
+  {
+    "line": 4872,
+    "original": "错误",
+    "key": "message.error",
+    "before": "QMessageBox.critical(self, \"错误\", error_msg)",
+    "after": "QMessageBox.critical(self, tr('message.error'), error_msg)"
+  },
+  {
+    "line": 4901,
+    "original": "支付窗口已打开",
+    "key": "general.text_8275_1",
+    "before": "\"支付窗口已打开\",",
+    "after": "tr('general.text_8275_1'),"
+  },
+  {
+    "line": 4902,
+    "original": "Stripe支付页面已在浏览器中打开。\\n\\n",
+    "key": "general.text_492",
+    "before": "\"Stripe支付页面已在浏览器中打开。\\n\\n\"",
+    "after": "tr('general.text_492')"
+  },
+  {
+    "line": 4903,
+    "original": "请在浏览器中完成支付。\\n",
+    "key": "general.text_6234",
+    "before": "\"请在浏览器中完成支付。\\n\"",
+    "after": "tr('general.text_6234')"
+  },
+  {
+    "line": 4904,
+    "original": "支付成功后，会员权益将自动激活。",
+    "key": "membership.text_4165",
+    "before": "\"支付成功后，会员权益将自动激活。\"",
+    "after": "tr('membership.text_4165')"
+  },
+  {
+    "line": 4907,
+    "original": "创建支付会话失败",
+    "key": "message.text_1907",
+    "before": "error_msg = result.get(\"error\", \"创建支付会话失败\")",
+    "after": "error_msg = result.get(\"error\", tr('message.text_1907'))"
+  },
+  {
+    "line": 4909,
+    "original": "创建Stripe支付会话失败：{error_msg}\\n\\n",
+    "key": "message.text_2414",
+    "before": "f\"创建Stripe支付会话失败：{error_msg}\\n\\n\"",
+    "after": "ftr('message.text_2414')"
+  },
+  {
+    "line": 4910,
+    "original": "调试信息：\\n",
+    "key": "general.text_2017",
+    "before": "f\"调试信息：\\n\"",
+    "after": "ftr('general.text_2017')"
+  },
+  {
+    "line": 4911,
+    "original": "• 套餐类型: {plan_id}\\n",
+    "key": "membership.text_5177",
+    "before": "f\"• 套餐类型: {plan_id}\\n\"",
+    "after": "ftr('membership.text_5177')"
+  },
+  {
+    "line": 4912,
+    "original": "• 用户ID: {user_id}\\n",
+    "key": "general.text_1880",
+    "before": "f\"• 用户ID: {user_id}\\n\"",
+    "after": "ftr('general.text_1880')"
+  },
+  {
+    "line": 4913,
+    "original": "• 邮箱: {email}",
+    "key": "account.text_1446",
+    "before": "f\"• 邮箱: {email}\"",
+    "after": "ftr('account.text_1446')"
+  },
+  {
+    "line": 4917,
+    "original": "创建支付会话失败",
+    "key": "message.text_1907",
+    "before": "QMessageBox.critical(self, \"创建支付会话失败\", detailed_msg)",
+    "after": "QMessageBox.critical(self, tr('message.text_1907'), detailed_msg)"
+  },
+  {
+    "line": 4920,
+    "original": "Stripe支付异常: {str(e)}",
+    "key": "general.text_48",
+    "before": "error_msg = f\"Stripe支付异常: {str(e)}\"",
+    "after": "error_msg = ftr('general.text_48')"
+  },
+  {
+    "line": 4927,
+    "original": "支付异常",
+    "key": "general.text_3363",
+    "before": "\"支付异常\",",
+    "after": "tr('general.text_3363'),"
+  },
+  {
+    "line": 4928,
+    "original": "处理Stripe支付时发生异常：\\n\\n{error_msg}\\n\\n请查看日志获取详细信息。",
+    "key": "general.text_2720",
+    "before": "f\"处理Stripe支付时发生异常：\\n\\n{error_msg}\\n\\n请查看日志获取详细信息。\"",
+    "after": "ftr('general.text_2720')"
+  },
+  {
+    "line": 4990,
+    "original": "等待支付",
+    "key": "general.text_7719",
+    "before": "self.payment_polling_dialog.setWindowTitle(\"等待支付\")",
+    "after": "self.payment_polling_dialog.setWindowTitle(tr('general.text_7719'))"
+  },
+  {
+    "line": 4992,
+    "original": "正在等待支付完成...\\n\\n",
+    "key": "general.text_8669",
+    "before": "\"正在等待支付完成...\\n\\n\"",
+    "after": "tr('general.text_8669')"
+  },
+  {
+    "line": 4993,
+    "original": "请在打开的浏览器页面中完成支付。\\n",
+    "key": "general.text_106",
+    "before": "\"请在打开的浏览器页面中完成支付。\\n\"",
+    "after": "tr('general.text_106')"
+  },
+  {
+    "line": 4994,
+    "original": "支付完成后，此窗口将自动关闭。",
+    "key": "general.text_7328",
+    "before": "\"支付完成后，此窗口将自动关闭。\"",
+    "after": "tr('general.text_7328')"
+  },
+  {
+    "line": 5013,
+    "original": "创建订单失败",
+    "key": "message.text_7021",
+    "before": "error_msg = result.get(\"error\", \"创建订单失败\")",
+    "after": "error_msg = result.get(\"error\", tr('message.text_7021'))"
+  },
+  {
+    "line": 5016,
+    "original": "渠道",
+    "key": "general.text_9284",
+    "before": "if \"MERCHANT_STATUS_NOT_NORMAL\" in error_msg or \"渠道\" in error_msg:",
+    "after": "if \"MERCHANT_STATUS_NOT_NORMAL\" in error_msg or tr('general.text_9284') in error"
+  },
+  {
+    "line": 5018,
+    "original": "支付渠道暂时不可用：{error_msg}\\n\\n",
+    "key": "general.text_4602",
+    "before": "f\"支付渠道暂时不可用：{error_msg}\\n\\n\"",
+    "after": "ftr('general.text_4602')"
+  },
+  {
+    "line": 5019,
+    "original": "可能的原因：\\n",
+    "key": "general.text_3397",
+    "before": "\"可能的原因：\\n\"",
+    "after": "tr('general.text_3397')"
+  },
+  {
+    "line": 5020,
+    "original": "• 支付渠道临时维护中\\n",
+    "key": "general.text_342",
+    "before": "\"• 支付渠道临时维护中\\n\"",
+    "after": "tr('general.text_342')"
+  },
+  {
+    "line": 5021,
+    "original": "• 需要在商户后台完成渠道签约\\n\\n",
+    "key": "general.text_3431",
+    "before": "\"• 需要在商户后台完成渠道签约\\n\\n\"",
+    "after": "tr('general.text_3431')"
+  },
+  {
+    "line": 5022,
+    "original": "建议操作：\\n",
+    "key": "general.text_8428",
+    "before": "\"建议操作：\\n\"",
+    "after": "tr('general.text_8428')"
+  },
+  {
+    "line": 5023,
+    "original": "1. 稍后重试（5-10分钟后）\\n",
+    "key": "general.text_4295",
+    "before": "\"1. 稍后重试（5-10分钟后）\\n\"",
+    "after": "tr('general.text_4295')"
+  },
+  {
+    "line": 5024,
+    "original": "2. 尝试切换支付方式（支付宝/微信）\\n",
+    "key": "general.text_898",
+    "before": "\"2. 尝试切换支付方式（支付宝/微信）\\n\"",
+    "after": "tr('general.text_898')"
+  },
+  {
+    "line": 5025,
+    "original": "3. 联系支付服务商客服（zpayz.cn）",
+    "key": "general.text_8774",
+    "before": "\"3. 联系支付服务商客服（zpayz.cn）\"",
+    "after": "tr('general.text_8774')"
+  },
+  {
+    "line": 5031,
+    "original": "创建订单失败：{error_msg}\\n\\n",
+    "key": "message.text_6152",
+    "before": "f\"创建订单失败：{error_msg}\\n\\n\"",
+    "after": "ftr('message.text_6152')"
+  },
+  {
+    "line": 5032,
+    "original": "调试信息：\\n",
+    "key": "general.text_2017",
+    "before": "f\"调试信息：\\n\"",
+    "after": "ftr('general.text_2017')"
+  },
+  {
+    "line": 5033,
+    "original": "• 套餐类型: {self.selected_plan_id}\\n",
+    "key": "membership.text_2601",
+    "before": "f\"• 套餐类型: {self.selected_plan_id}\\n\"",
+    "after": "ftr('membership.text_2601')"
+  },
+  {
+    "line": 5034,
+    "original": "• 支付方式: {pay_type}",
+    "key": "general.text_7174",
+    "before": "f\"• 支付方式: {pay_type}\"",
+    "after": "ftr('general.text_7174')"
+  },
+  {
+    "line": 5038,
+    "original": "创建订单失败",
+    "key": "message.text_7021",
+    "before": "QMessageBox.critical(self, \"创建订单失败\", detailed_msg)",
+    "after": "QMessageBox.critical(self, tr('message.text_7021'), detailed_msg)"
+  },
+  {
+    "line": 5055,
+    "original": "支付成功",
+    "key": "message.text_7580",
+    "before": "\"支付成功\",",
+    "after": "tr('message.text_7580'),"
+  },
+  {
+    "line": 5056,
+    "original": "支付已完成！\\n您的会员权益已激活。\\n\\n请重新启动应用以生效。",
+    "key": "membership.text_3849",
+    "before": "\"支付已完成！\\n您的会员权益已激活。\\n\\n请重新启动应用以生效。\"",
+    "after": "tr('membership.text_3849')"
+  },
+  {
+    "line": 5218,
+    "original": "选色",
+    "key": "general.text_2586",
+    "before": "color_btn = QPushButton(\"选色\")",
+    "after": "color_btn = QPushButton(tr('general.text_2586'))"
+  },
+  {
+    "line": 5260,
+    "original": "选色",
+    "key": "general.text_2586",
+    "before": "text_color_btn = QPushButton(\"选色\")",
+    "after": "text_color_btn = QPushButton(tr('general.text_2586'))"
+  },
+  {
+    "line": 5293,
+    "original": "🗑️ 删除",
+    "key": "general.text_1284",
+    "before": "delete_btn = QPushButton(\"🗑️ 删除\")",
+    "after": "delete_btn = QPushButton(tr('general.text_1284'))"
+  },
+  {
+    "line": 5353,
+    "original": "新任务",
+    "key": "tasks.task_17",
+    "before": "name_item = QTableWidgetItem(\"新任务\")",
+    "after": "name_item = QTableWidgetItem(tr('tasks.task_17'))"
+  },
+  {
+    "line": 5368,
+    "original": "选色",
+    "key": "general.text_2586",
+    "before": "color_btn = QPushButton(\"选色\")",
+    "after": "color_btn = QPushButton(tr('general.text_2586'))"
+  },
+  {
+    "line": 5395,
+    "original": "选色",
+    "key": "general.text_2586",
+    "before": "text_color_btn = QPushButton(\"选色\")",
+    "after": "text_color_btn = QPushButton(tr('general.text_2586'))"
+  },
+  {
+    "line": 5414,
+    "original": "🗑️ 删除",
+    "key": "general.text_1284",
+    "before": "delete_btn = QPushButton(\"🗑️ 删除\")",
+    "after": "delete_btn = QPushButton(tr('general.text_1284'))"
+  },
+  {
+    "line": 5427,
+    "original": "确认删除",
+    "key": "general.text_3556",
+    "before": "self, '确认删除',",
+    "after": "self, tr('general.text_3556'),"
+  },
+  {
+    "line": 5428,
+    "original": "确定要删除第 {row + 1} 个任务吗?",
+    "key": "tasks.task_18",
+    "before": "f'确定要删除第 {row + 1} 个任务吗?',",
+    "after": "ftr('tasks.task_18'),"
+  },
+  {
+    "line": 5448,
+    "original": "确认清空",
+    "key": "general.text_5596",
+    "before": "self, '确认清空',",
+    "after": "self, tr('general.text_5596'),"
+  },
+  {
+    "line": 5449,
+    "original": "确定要清空所有任务吗?\\n\\n这将删除表格中的所有任务(不会立即保存,需要点击【保存所有设置】)",
+    "key": "config.task_1",
+    "before": "'确定要清空所有任务吗?\\n\\n这将删除表格中的所有任务(不会立即保存,需要点击【保存所有设置】)',",
+    "after": "tr('config.task_1'),"
+  },
+  {
+    "line": 5458,
+    "original": "所有任务已清空\\n\\n记得点击【保存所有设置】按钮来保存更改",
+    "key": "config.settings_11",
+    "before": "QMessageBox.information(self, \"提示\", \"所有任务已清空\\n\\n记得点击【保存所有设置】按钮来保存更改\")",
+    "after": "QMessageBox.information(self, \"提示\", tr('config.settings_11'))"
+  },
+  {
+    "line": 5458,
+    "original": "提示",
+    "key": "message.info",
+    "before": "QMessageBox.information(self, \"提示\", \"所有任务已清空\\n\\n记得点击【保存所有设置】按钮来保存更改\")",
+    "after": "QMessageBox.information(self, tr('message.info'), tr('config.settings_11'))"
+  },
+  {
+    "line": 5477,
+    "original": "当前没有任何任务,无法保存为模板!",
+    "key": "tasks.task_19",
+    "before": "QMessageBox.warning(self, \"无法保存\", \"当前没有任何任务,无法保存为模板!\")",
+    "after": "QMessageBox.warning(self, \"无法保存\", tr('tasks.task_19'))"
+  },
+  {
+    "line": 5477,
+    "original": "无法保存",
+    "key": "general.text_4418",
+    "before": "QMessageBox.warning(self, \"无法保存\", \"当前没有任何任务,无法保存为模板!\")",
+    "after": "QMessageBox.warning(self, tr('general.text_4418'), tr('tasks.task_19'))"
+  },
+  {
+    "line": 5554,
+    "original": "自定义模板 ({len(tasks)}个任务)",
+    "key": "tasks.task_20",
+    "before": "\"description\": f\"自定义模板 ({len(tasks)}个任务)\",",
+    "after": "\"description\": ftr('tasks.task_20'),"
+  },
+  {
+    "line": 5568,
+    "original": "模板已更新:\\n{template_filename}\\n\\n包含 {len(tasks)} 个任务。",
+    "key": "tasks.template_32",
+    "before": "success_msg = f\"模板已更新:\\n{template_filename}\\n\\n包含 {len(tasks)} 个任务。\"",
+    "after": "success_msg = ftr('tasks.template_32')"
+  },
+  {
+    "line": 5570,
+    "original": "模板已创建:\\n{template_filename}\\n\\n已添加到【我的模板】列表中,包含 {len(tasks)} 个任务。",
+    "key": "tasks.template_33",
+    "before": "success_msg = f\"模板已创建:\\n{template_filename}\\n\\n已添加到【我的模板】列表中,包含 {len(tasks)} 个任务",
+    "after": "success_msg = ftr('tasks.template_33')"
+  },
+  {
+    "line": 5574,
+    "original": "保存成功",
+    "key": "message.save_success",
+    "before": "\"保存成功\",",
+    "after": "tr('message.save_success'),"
+  },
+  {
+    "line": 5578,
+    "original": "无法保存模板:\\n{str(e)}",
+    "key": "tasks.template_34",
+    "before": "QMessageBox.critical(self, \"保存失败\", f\"无法保存模板:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, \"保存失败\", ftr('tasks.template_34'))"
+  },
+  {
+    "line": 5578,
+    "original": "保存失败",
+    "key": "message.save_failed",
+    "before": "QMessageBox.critical(self, \"保存失败\", f\"无法保存模板:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, tr('message.save_failed'), ftr('tasks.template_34'))"
+  },
+  {
+    "line": 5591,
+    "original": "没有自定义模板",
+    "key": "tasks.template_35",
+    "before": "\"没有自定义模板\",",
+    "after": "tr('tasks.template_35'),"
+  },
+  {
+    "line": 5592,
+    "original": "当前没有找到任何自定义模板。\\n\\n您可以先配置任务,然后点击【保存为模板】按钮创建模板。",
+    "key": "config.template",
+    "before": "\"当前没有找到任何自定义模板。\\n\\n您可以先配置任务,然后点击【保存为模板】按钮创建模板。\"",
+    "after": "tr('config.template')"
+  },
+  {
+    "line": 5602,
+    "original": "选择模板",
+    "key": "dialog.select_template",
+    "before": "\"选择模板\",",
+    "after": "tr('dialog.select_template'),"
+  },
+  {
+    "line": 5603,
+    "original": "请选择要加载的自定义模板:",
+    "key": "tasks.template_36",
+    "before": "\"请选择要加载的自定义模板:\",",
+    "after": "tr('tasks.template_36'),"
+  },
+  {
+    "line": 5621,
+    "original": "确认加载模板",
+    "key": "tasks.template_37",
+    "before": "'确认加载模板',",
+    "after": "tr('tasks.template_37'),"
+  },
+  {
+    "line": 5622,
+    "original": "即将加载自定义模板: {template_name}\\n\\n包含 {len(template_tasks)} 个任务\\n\\n当前表格中的任务将被替换,是否继续?",
+    "key": "tasks.template_38",
+    "before": "f'即将加载自定义模板: {template_name}\\n\\n包含 {len(template_tasks)} 个任务\\n\\n当前表格中的任务将被替换,是否继",
+    "after": "ftr('tasks.template_38'),"
+  },
+  {
+    "line": 5640,
+    "original": "加载成功",
+    "key": "message.load_success",
+    "before": "\"加载成功\",",
+    "after": "tr('message.load_success'),"
+  },
+  {
+    "line": 5641,
+    "original": "已加载 {len(template_tasks)} 个任务\\n\\n记得点击【保存所有设置】按钮来应用更改",
+    "key": "config.text_8030",
+    "before": "f\"已加载 {len(template_tasks)} 个任务\\n\\n记得点击【保存所有设置】按钮来应用更改\"",
+    "after": "ftr('config.text_8030')"
+  },
+  {
+    "line": 5645,
+    "original": "模板文件格式错误:\\n{str(e)}",
+    "key": "tasks.template_39",
+    "before": "QMessageBox.critical(self, \"错误\", f\"模板文件格式错误:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, \"错误\", ftr('tasks.template_39'))"
+  },
+  {
+    "line": 5645,
+    "original": "错误",
+    "key": "message.error",
+    "before": "QMessageBox.critical(self, \"错误\", f\"模板文件格式错误:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, tr('message.error'), ftr('tasks.template_39'))"
+  },
+  {
+    "line": 5647,
+    "original": "加载模板失败:\\n{str(e)}",
+    "key": "tasks.template_40",
+    "before": "QMessageBox.critical(self, \"错误\", f\"加载模板失败:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, \"错误\", ftr('tasks.template_40'))"
+  },
+  {
+    "line": 5647,
+    "original": "错误",
+    "key": "message.error",
+    "before": "QMessageBox.critical(self, \"错误\", f\"加载模板失败:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, tr('message.error'), ftr('tasks.template_40'))"
+  },
+  {
+    "line": 5672,
+    "original": "快速加载:",
+    "key": "general.text_9756",
+    "before": "template_label = QLabel(\"快速加载:\")",
+    "after": "template_label = QLabel(tr('general.text_9756'))"
+  },
+  {
+    "line": 5738,
+    "original": "(暂无自定义模板)",
+    "key": "tasks.template_45",
+    "before": "self.custom_template_combo.addItem(\"(暂无自定义模板)\", None)",
+    "after": "self.custom_template_combo.addItem(tr('tasks.template_45'), None)"
+  },
+  {
+    "line": 5742,
+    "original": "{template['name']} ({template.get('task_count', 0)}个任务)",
+    "key": "tasks.text_7625",
+    "before": "display_name = f\"{template['name']} ({template.get('task_count', 0)}个任务)\"",
+    "after": "display_name = ftr('tasks.text_7625')"
+  },
+  {
+    "line": 5762,
+    "original": "请先创建自定义模板",
+    "key": "tasks.template_47",
+    "before": "QMessageBox.information(self, \"提示\", \"请先创建自定义模板\")",
+    "after": "QMessageBox.information(self, \"提示\", tr('tasks.template_47'))"
+  },
+  {
+    "line": 5762,
+    "original": "提示",
+    "key": "message.info",
+    "before": "QMessageBox.information(self, \"提示\", \"请先创建自定义模板\")",
+    "after": "QMessageBox.information(self, tr('message.info'), tr('tasks.template_47'))"
+  },
+  {
+    "line": 5780,
+    "original": "请先创建自定义模板",
+    "key": "tasks.template_47",
+    "before": "QMessageBox.information(self, \"提示\", \"请先创建自定义模板\")",
+    "after": "QMessageBox.information(self, \"提示\", tr('tasks.template_47'))"
+  },
+  {
+    "line": 5780,
+    "original": "提示",
+    "key": "message.info",
+    "before": "QMessageBox.information(self, \"提示\", \"请先创建自定义模板\")",
+    "after": "QMessageBox.information(self, tr('message.info'), tr('tasks.template_47'))"
+  },
+  {
+    "line": 5791,
+    "original": "模板文件不存在:\\n{filename}",
+    "key": "tasks.template_48",
+    "before": "QMessageBox.warning(self, \"错误\", f\"模板文件不存在:\\n{filename}\")",
+    "after": "QMessageBox.warning(self, \"错误\", ftr('tasks.template_48'))"
+  },
+  {
+    "line": 5791,
+    "original": "错误",
+    "key": "message.error",
+    "before": "QMessageBox.warning(self, \"错误\", f\"模板文件不存在:\\n{filename}\")",
+    "after": "QMessageBox.warning(self, tr('message.error'), ftr('tasks.template_48'))"
+  },
+  {
+    "line": 5801,
+    "original": "确认加载模板",
+    "key": "tasks.template_37",
+    "before": "'确认加载模板',",
+    "after": "tr('tasks.template_37'),"
+  },
+  {
+    "line": 5802,
+    "original": "即将加载自定义模板: {filename}\\n\\n包含 {len(template_tasks)} 个任务\\n\\n当前表格中的任务将被替换,是否继续?",
+    "key": "tasks.template_49",
+    "before": "f'即将加载自定义模板: {filename}\\n\\n包含 {len(template_tasks)} 个任务\\n\\n当前表格中的任务将被替换,是否继续?',",
+    "after": "ftr('tasks.template_49'),"
+  },
+  {
+    "line": 5820,
+    "original": "加载成功",
+    "key": "message.load_success",
+    "before": "\"加载成功\",",
+    "after": "tr('message.load_success'),"
+  },
+  {
+    "line": 5821,
+    "original": "已加载 {len(template_tasks)} 个任务\\n\\n记得点击【保存所有设置】按钮来应用更改",
+    "key": "config.text_8030",
+    "before": "f\"已加载 {len(template_tasks)} 个任务\\n\\n记得点击【保存所有设置】按钮来应用更改\"",
+    "after": "ftr('config.text_8030')"
+  },
+  {
+    "line": 5825,
+    "original": "模板文件格式错误:\\n{str(e)}",
+    "key": "tasks.template_39",
+    "before": "QMessageBox.critical(self, \"错误\", f\"模板文件格式错误:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, \"错误\", ftr('tasks.template_39'))"
+  },
+  {
+    "line": 5825,
+    "original": "错误",
+    "key": "message.error",
+    "before": "QMessageBox.critical(self, \"错误\", f\"模板文件格式错误:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, tr('message.error'), ftr('tasks.template_39'))"
+  },
+  {
+    "line": 5827,
+    "original": "加载模板失败:\\n{str(e)}",
+    "key": "tasks.template_40",
+    "before": "QMessageBox.critical(self, \"错误\", f\"加载模板失败:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, \"错误\", ftr('tasks.template_40'))"
+  },
+  {
+    "line": 5827,
+    "original": "错误",
+    "key": "message.error",
+    "before": "QMessageBox.critical(self, \"错误\", f\"加载模板失败:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, tr('message.error'), ftr('tasks.template_40'))"
+  },
+  {
+    "line": 5836,
+    "original": "确认删除",
+    "key": "general.text_3556",
+    "before": "'确认删除',",
+    "after": "tr('general.text_3556'),"
+  },
+  {
+    "line": 5837,
+    "original": "确定要删除模板 \"{template[\"name\"]}\" 吗?\\n\\n此操作不可撤销!",
+    "key": "tasks.template_50",
+    "before": "f'确定要删除模板 \"{template[\"name\"]}\" 吗?\\n\\n此操作不可撤销!',",
+    "after": "ftr('tasks.template_50'),"
+  },
+  {
+    "line": 5857,
+    "original": " 已删除",
+    "key": "general.text_7546",
+    "before": "QMessageBox.information(self, \"删除成功\", f\"模板 \\\"{template['name']}\\\" 已删除\")",
+    "after": "QMessageBox.information(self, \"删除成功\", f\"模板 \\\"{template['name']}\\tr('general.text"
+  },
+  {
+    "line": 5857,
+    "original": "模板 \\",
+    "key": "tasks.template_51",
+    "before": "QMessageBox.information(self, \"删除成功\", f\"模板 \\\"{template['name']}\\\" 已删除\")",
+    "after": "QMessageBox.information(self, \"删除成功\", ftr('tasks.template_51'){template['name']}"
+  },
+  {
+    "line": 5857,
+    "original": "删除成功",
+    "key": "message.delete_success",
+    "before": "QMessageBox.information(self, \"删除成功\", f\"模板 \\\"{template['name']}\\\" 已删除\")",
+    "after": "QMessageBox.information(self, tr('message.delete_success'), ftr('tasks.template_"
+  },
+  {
+    "line": 5860,
+    "original": "无法删除模板:\\n{str(e)}",
+    "key": "tasks.template_52",
+    "before": "QMessageBox.critical(self, \"删除失败\", f\"无法删除模板:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, \"删除失败\", ftr('tasks.template_52'))"
+  },
+  {
+    "line": 5860,
+    "original": "删除失败",
+    "key": "message.text_6395",
+    "before": "QMessageBox.critical(self, \"删除失败\", f\"无法删除模板:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, tr('message.text_6395'), ftr('tasks.template_52'))"
+  },
+  {
+    "line": 5918,
+    "original": "模板管理器未初始化",
+    "key": "tasks.template_12",
+    "before": "QMessageBox.warning(self, \"警告\", \"模板管理器未初始化\")",
+    "after": "QMessageBox.warning(self, \"警告\", tr('tasks.template_12'))"
+  },
+  {
+    "line": 5918,
+    "original": "警告",
+    "key": "message.warning",
+    "before": "QMessageBox.warning(self, \"警告\", \"模板管理器未初始化\")",
+    "after": "QMessageBox.warning(self, tr('message.warning'), tr('tasks.template_12'))"
+  },
+  {
+    "line": 5964,
+    "original": "保存成功",
+    "key": "message.save_success",
+    "before": "\"保存成功\",",
+    "after": "tr('message.save_success'),"
+  },
+  {
+    "line": 5965,
+    "original": "已保存 {updated_count} 个模板的自动应用设置",
+    "key": "config.template_2",
+    "before": "f\"已保存 {updated_count} 个模板的自动应用设置\"",
+    "after": "ftr('config.template_2')"
+  },
+  {
+    "line": 5969,
+    "original": "没有设置被保存",
+    "key": "config.settings_13",
+    "before": "QMessageBox.warning(self, \"警告\", \"没有设置被保存\")",
+    "after": "QMessageBox.warning(self, \"警告\", tr('config.settings_13'))"
+  },
+  {
+    "line": 5969,
+    "original": "警告",
+    "key": "message.warning",
+    "before": "QMessageBox.warning(self, \"警告\", \"没有设置被保存\")",
+    "after": "QMessageBox.warning(self, tr('message.warning'), tr('config.settings_13'))"
+  },
+  {
+    "line": 5973,
+    "original": "保存失败:\\n{str(e)}",
+    "key": "message.text_2078",
+    "before": "QMessageBox.critical(self, \"错误\", f\"保存失败:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, \"错误\", ftr('message.text_2078'))"
+  },
+  {
+    "line": 5973,
+    "original": "错误",
+    "key": "message.error",
+    "before": "QMessageBox.critical(self, \"错误\", f\"保存失败:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, tr('message.error'), ftr('message.text_2078'))"
+  },
+  {
+    "line": 5982,
+    "original": "模板管理器未初始化",
+    "key": "tasks.template_12",
+    "before": "QMessageBox.warning(self, \"警告\", \"模板管理器未初始化\")",
+    "after": "QMessageBox.warning(self, \"警告\", tr('tasks.template_12'))"
+  },
+  {
+    "line": 5982,
+    "original": "警告",
+    "key": "message.warning",
+    "before": "QMessageBox.warning(self, \"警告\", \"模板管理器未初始化\")",
+    "after": "QMessageBox.warning(self, tr('message.warning'), tr('tasks.template_12'))"
+  },
+  {
+    "line": 5987,
+    "original": "测试模板匹配",
+    "key": "tasks.template_53",
+    "before": "dialog.setWindowTitle(\"测试模板匹配\")",
+    "after": "dialog.setWindowTitle(tr('tasks.template_53'))"
+  },
+  {
+    "line": 5994,
+    "original": "选择一个日期，查看该日期会匹配到哪个模板：",
+    "key": "tasks.template_16",
+    "before": "hint_label = QLabel(\"选择一个日期，查看该日期会匹配到哪个模板：\")",
+    "after": "hint_label = QLabel(tr('tasks.template_16'))"
+  },
+  {
+    "line": 6024,
+    "original": "测试日期: {test_datetime.strftime('%Y-%m-%d %A')}",
+    "key": "general.text_5335",
+    "before": "result_lines.append(f\"测试日期: {test_datetime.strftime('%Y-%m-%d %A')}\")",
+    "after": "result_lines.append(ftr('general.text_5335'))"
+  },
+  {
+    "line": 6025,
+    "original": "\\n日期类型: {date_type}",
+    "key": "general.text_6999",
+    "before": "result_lines.append(f\"\\n日期类型: {date_type}\")",
+    "after": "result_lines.append(ftr('general.text_6999'))"
+  },
+  {
+    "line": 6026,
+    "original": "  - weekday: 工作日",
+    "key": "general.text_4093",
+    "before": "result_lines.append(f\"  - weekday: 工作日\")",
+    "after": "result_lines.append(ftr('general.text_4093'))"
+  },
+  {
+    "line": 6027,
+    "original": "  - weekend: 周末",
+    "key": "general.text_4325",
+    "before": "result_lines.append(f\"  - weekend: 周末\")",
+    "after": "result_lines.append(ftr('general.text_4325'))"
+  },
+  {
+    "line": 6028,
+    "original": "  - holiday: 节假日",
+    "key": "general.text_3273",
+    "before": "result_lines.append(f\"  - holiday: 节假日\")",
+    "after": "result_lines.append(ftr('general.text_3273'))"
+  },
+  {
+    "line": 6030,
+    "original": "\\n匹配到 {len(matching_templates)} 个启用自动应用的模板:",
+    "key": "tasks.text_6218",
+    "before": "result_lines.append(f\"\\n匹配到 {len(matching_templates)} 个启用自动应用的模板:\")",
+    "after": "result_lines.append(ftr('tasks.text_6218'))"
+  },
+  {
+    "line": 6038,
+    "original": "  {i}. {tmpl['name']} (优先级: {priority}, 条件: {', '.join(conditions) if conditions else '任意'})",
+    "key": "general.text_6890",
+    "before": "f\"  {i}. {tmpl['name']} (优先级: {priority}, 条件: {', '.join(conditions) if conditio",
+    "after": "ftr('general.text_6890')"
+  },
+  {
+    "line": 6042,
+    "original": "\\n✅ 最佳匹配（优先级最高）: {best_match['name']}",
+    "key": "general.text_8554",
+    "before": "result_lines.append(f\"\\n✅ 最佳匹配（优先级最高）: {best_match['name']}\")",
+    "after": "result_lines.append(ftr('general.text_8554'))"
+  },
+  {
+    "line": 6043,
+    "original": "   → 将自动加载: {best_match['filename']}",
+    "key": "general.text_8535",
+    "before": "result_lines.append(f\"   → 将自动加载: {best_match['filename']}\")",
+    "after": "result_lines.append(ftr('general.text_8535'))"
+  },
+  {
+    "line": 6045,
+    "original": "  (无匹配模板)",
+    "key": "tasks.template_54",
+    "before": "result_lines.append(\"  (无匹配模板)\")",
+    "after": "result_lines.append(tr('tasks.template_54'))"
+  },
+  {
+    "line": 6046,
+    "original": "\\n❌ 没有模板会在该日期自动应用",
+    "key": "tasks.template_55",
+    "before": "result_lines.append(\"\\n❌ 没有模板会在该日期自动应用\")",
+    "after": "result_lines.append(tr('tasks.template_55'))"
+  },
+  {
+    "line": 6047,
+    "original": "   → 将使用默认24小时模板",
+    "key": "tasks.template_56",
+    "before": "result_lines.append(\"   → 将使用默认24小时模板\")",
+    "after": "result_lines.append(tr('tasks.template_56'))"
+  },
+  {
+    "line": 6052,
+    "original": "🔍 执行测试",
+    "key": "general.text_8461",
+    "before": "test_btn = QPushButton(\"🔍 执行测试\")",
+    "after": "test_btn = QPushButton(tr('general.text_8461'))"
+  },
+  {
+    "line": 6058,
+    "original": "关闭",
+    "key": "button.close",
+    "before": "close_btn = QPushButton(\"关闭\")",
+    "after": "close_btn = QPushButton(tr('button.close'))"
+  },
+  {
+    "line": 6071,
+    "original": "测试失败:\\n{str(e)}",
+    "key": "message.text_9244_1",
+    "before": "QMessageBox.critical(self, \"错误\", f\"测试失败:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, \"错误\", ftr('message.text_9244_1'))"
+  },
+  {
+    "line": 6071,
+    "original": "错误",
+    "key": "message.error",
+    "before": "QMessageBox.critical(self, \"错误\", f\"测试失败:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, tr('message.error'), ftr('message.text_9244_1'))"
+  },
+  {
+    "line": 6080,
+    "original": "模板不存在",
+    "key": "tasks.template_58",
+    "before": "\"模板不存在\",",
+    "after": "tr('tasks.template_58'),"
+  },
+  {
+    "line": 6081,
+    "original": "找不到模板文件: {template_filename}\\n\\n请确保模板文件在程序目录中",
+    "key": "tasks.template_59",
+    "before": "f\"找不到模板文件: {template_filename}\\n\\n请确保模板文件在程序目录中\"",
+    "after": "ftr('tasks.template_59')"
+  },
+  {
+    "line": 6093,
+    "original": "确认加载模板",
+    "key": "tasks.template_37",
+    "before": "'确认加载模板',",
+    "after": "tr('tasks.template_37'),"
+  },
+  {
+    "line": 6094,
+    "original": "即将加载 {template_filename}\\n\\n包含 {len(template_tasks)} 个任务\\n\\n当前表格中的任务将被替换,是否继续?",
+    "key": "tasks.text_7162",
+    "before": "f'即将加载 {template_filename}\\n\\n包含 {len(template_tasks)} 个任务\\n\\n当前表格中的任务将被替换,是否继续?",
+    "after": "ftr('tasks.text_7162'),"
+  },
+  {
+    "line": 6112,
+    "original": "加载成功",
+    "key": "message.load_success",
+    "before": "\"加载成功\",",
+    "after": "tr('message.load_success'),"
+  },
+  {
+    "line": 6113,
+    "original": "已加载 {len(template_tasks)} 个任务\\n\\n记得点击【保存所有设置】按钮来应用更改",
+    "key": "config.text_8030",
+    "before": "f\"已加载 {len(template_tasks)} 个任务\\n\\n记得点击【保存所有设置】按钮来应用更改\"",
+    "after": "ftr('config.text_8030')"
+  },
+  {
+    "line": 6117,
+    "original": "模板文件格式错误:\\n{str(e)}",
+    "key": "tasks.template_39",
+    "before": "QMessageBox.critical(self, \"错误\", f\"模板文件格式错误:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, \"错误\", ftr('tasks.template_39'))"
+  },
+  {
+    "line": 6117,
+    "original": "错误",
+    "key": "message.error",
+    "before": "QMessageBox.critical(self, \"错误\", f\"模板文件格式错误:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, tr('message.error'), ftr('tasks.template_39'))"
+  },
+  {
+    "line": 6119,
+    "original": "加载模板失败:\\n{str(e)}",
+    "key": "tasks.template_40",
+    "before": "QMessageBox.critical(self, \"错误\", f\"加载模板失败:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, \"错误\", ftr('tasks.template_40'))"
+  },
+  {
+    "line": 6119,
+    "original": "错误",
+    "key": "message.error",
+    "before": "QMessageBox.critical(self, \"错误\", f\"加载模板失败:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, tr('message.error'), ftr('tasks.template_40'))"
+  },
+  {
+    "line": 6172,
+    "original": "(将在开机时自动启动)",
+    "key": "general.text_5835",
+    "before": "self.autostart_status_label.setText(\"(将在开机时自动启动)\")",
+    "after": "self.autostart_status_label.setText(tr('general.text_5835'))"
+  },
+  {
+    "line": 6175,
+    "original": "(未启用)",
+    "key": "general.text_4936",
+    "before": "self.autostart_status_label.setText(\"(未启用)\")",
+    "after": "self.autostart_status_label.setText(tr('general.text_4936'))"
+  },
+  {
+    "line": 6274,
+    "original": "图片文件 (*.jpg *.jpeg *.png *.gif *.webp)",
+    "key": "general.image_1",
+    "before": "file_dialog.setNameFilter(\"图片文件 (*.jpg *.jpeg *.png *.gif *.webp)\")",
+    "after": "file_dialog.setNameFilter(tr('general.image_1'))"
+  },
+  {
+    "line": 6300,
+    "original": "选择颜色",
+    "key": "config.color",
+    "before": "color = QColorDialog.getColor(current_color, self, \"选择颜色\")",
+    "after": "color = QColorDialog.getColor(current_color, self, tr('config.color'))"
+  },
+  {
+    "line": 6400,
+    "original": "警告",
+    "key": "message.warning",
+    "before": "\"警告\",",
+    "after": "tr('message.warning'),"
+  },
+  {
+    "line": 6401,
+    "original": "开机自启动设置失败\\n\\n可能需要管理员权限或系统限制",
+    "key": "config.settings_17",
+    "before": "f\"开机自启动设置失败\\n\\n可能需要管理员权限或系统限制\"",
+    "after": "ftr('config.settings_17')"
+  },
+  {
+    "line": 6500,
+    "original": "时间错误",
+    "key": "tasks.time_20",
+    "before": "\"时间错误\",",
+    "after": "tr('tasks.time_20'),"
+  },
+  {
+    "line": 6501,
+    "original": "第 {row + 1} 个任务的结束时间必须大于开始时间!\\n\\n任务: {name_item.text()}",
+    "key": "tasks.time_21",
+    "before": "f\"第 {row + 1} 个任务的结束时间必须大于开始时间!\\n\\n任务: {name_item.text()}\"",
+    "after": "ftr('tasks.time_21')"
+  },
+  {
+    "line": 6520,
+    "original": "时间重叠警告",
+    "key": "tasks.time_22",
+    "before": "\"时间重叠警告\",",
+    "after": "tr('tasks.time_22'),"
+  },
+  {
+    "line": 6521,
+    "original": "第 {row1} 个任务 ({task1_name}) 和第 {row2} 个任务 ({task2_name}) 的时间段有重叠!\\n\\n是否仍要保存?",
+    "key": "tasks.task_23",
+    "before": "f\"第 {row1} 个任务 ({task1_name}) 和第 {row2} 个任务 ({task2_name}) 的时间段有重叠!\\n\\n是否仍要保存?\",",
+    "after": "ftr('tasks.task_23'),"
+  },
+  {
+    "line": 6530,
+    "original": "配置和任务已保存!\\n\\n如果 Gaiya 正在运行,更改会自动生效。",
+    "key": "config.config_8",
+    "before": "QMessageBox.information(self, \"成功\", \"配置和任务已保存!\\n\\n如果 Gaiya 正在运行,更改会自动生效。\")",
+    "after": "QMessageBox.information(self, \"成功\", tr('config.config_8'))"
+  },
+  {
+    "line": 6530,
+    "original": "成功",
+    "key": "message.success",
+    "before": "QMessageBox.information(self, \"成功\", \"配置和任务已保存!\\n\\n如果 Gaiya 正在运行,更改会自动生效。\")",
+    "after": "QMessageBox.information(self, tr('message.success'), tr('config.config_8'))"
+  },
+  {
+    "line": 6534,
+    "original": "保存失败:\\n{str(e)}",
+    "key": "message.text_2078",
+    "before": "QMessageBox.critical(self, \"错误\", f\"保存失败:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, \"错误\", ftr('message.text_2078'))"
+  },
+  {
+    "line": 6534,
+    "original": "错误",
+    "key": "message.error",
+    "before": "QMessageBox.critical(self, \"错误\", f\"保存失败:\\n{str(e)}\")",
+    "after": "QMessageBox.critical(self, tr('message.error'), ftr('message.text_2078'))"
+  },
+  {
+    "line": 6549,
+    "original": "⏳ 正在连接云服务...",
+    "key": "general.text_7882",
+    "before": "self.quota_label.setText(\"⏳ 正在连接云服务...\")",
+    "after": "self.quota_label.setText(tr('general.text_7882'))"
+  },
+  {
+    "line": 6613,
+    "original": "✓ 今日剩余: {daily_plan_remaining} 次规划",
+    "key": "general.text_8809",
+    "before": "self.quota_label.setText(f\"✓ 今日剩余: {daily_plan_remaining} 次规划\")",
+    "after": "self.quota_label.setText(ftr('general.text_8809'))"
+  },
+  {
+    "line": 6618,
+    "original": "⚠️ 今日配额已用完",
+    "key": "general.text_8612",
+    "before": "self.quota_label.setText(\"⚠️ 今日配额已用完\")",
+    "after": "self.quota_label.setText(tr('general.text_8612'))"
+  },
+  {
+    "line": 6630,
+    "original": "⚠️ 无法连接云服务（请点击刷新重试）",
+    "key": "general.text_2843",
+    "before": "self.quota_label.setText(\"⚠️ 无法连接云服务（请点击刷新重试）\")",
+    "after": "self.quota_label.setText(tr('general.text_2843'))"
+  },
+  {
+    "line": 6643,
+    "original": "AI智能规划",
+    "key": "ai.text_6479_1",
+    "before": "if not self._check_login_and_guide(\"AI智能规划\"):",
+    "after": "if not self._check_login_and_guide(tr('ai.text_6479_1')):"
+  },
+  {
+    "line": 6655,
+    "original": "输入为空",
+    "key": "general.text_142",
+    "before": "\"输入为空\",",
+    "after": "tr('general.text_142'),"
+  },
+  {
+    "line": 6656,
+    "original": "请先描述您的计划!\\n\\n例如: 明天9点开会1小时,然后写代码到下午5点",
+    "key": "general.text_9625",
+    "before": "\"请先描述您的计划!\\n\\n例如: 明天9点开会1小时,然后写代码到下午5点\"",
+    "after": "tr('general.text_9625')"
+  },
+  {
+    "line": 6664,
+    "original": "请稍候",
+    "key": "general.text_8874",
+    "before": "\"请稍候\",",
+    "after": "tr('general.text_8874'),"
+  },
+  {
+    "line": 6665,
+    "original": "AI正在处理上一个请求,请稍候...",
+    "key": "ai.text_3969",
+    "before": "\"AI正在处理上一个请求,请稍候...\"",
+    "after": "tr('ai.text_3969')"
+  },
+  {
+    "line": 6674,
+    "original": "AI服务正在初始化",
+    "key": "ai.text_9372_1",
+    "before": "\"AI服务正在初始化\",",
+    "after": "tr('ai.text_9372_1'),"
+  },
+  {
+    "line": 6675,
+    "original": "AI服务正在后台启动中,请稍候片刻再试...",
+    "key": "ai.text_6551",
+    "before": "\"AI服务正在后台启动中,请稍候片刻再试...\",",
+    "after": "tr('ai.text_6551'),"
+  },
+  {
+    "line": 6685,
+    "original": "⏳ AI正在生成...",
+    "key": "ai.text_3863",
+    "before": "self.generate_btn.setText(\"⏳ AI正在生成...\")",
+    "after": "self.generate_btn.setText(tr('ai.text_3863'))"
+  },
+  {
+    "line": 6722,
+    "original": "生成失败",
+    "key": "ai.generate_failed",
+    "before": "\"生成失败\",",
+    "after": "tr('ai.generate_failed'),"
+  },
+  {
+    "line": 6723,
+    "original": "AI未能生成任何任务,请尝试更详细地描述您的计划。",
+    "key": "tasks.task_24",
+    "before": "\"AI未能生成任何任务,请尝试更详细地描述您的计划。\"",
+    "after": "tr('tasks.task_24')"
+  },
+  {
+    "line": 6731,
+    "original": "确认替换",
+    "key": "general.text_5713",
+    "before": "'确认替换',",
+    "after": "tr('general.text_5713'),"
+  },
+  {
+    "line": 6732,
+    "original": "AI已生成 {len(tasks)} 个任务\\n\\n是否替换当前表格中的所有任务?",
+    "key": "tasks.task_25",
+    "before": "f'AI已生成 {len(tasks)} 个任务\\n\\n是否替换当前表格中的所有任务?',",
+    "after": "ftr('tasks.task_25'),"
+  },
+  {
+    "line": 6750,
+    "original": "生成成功",
+    "key": "ai.generate_success",
+    "before": "\"生成成功\",",
+    "after": "tr('ai.generate_success'),"
+  },
+  {
+    "line": 6751,
+    "original": "✓ 已生成 {len(tasks)} 个任务\\n",
+    "key": "tasks.task_26",
+    "before": "f\"✓ 已生成 {len(tasks)} 个任务\\n\"",
+    "after": "ftr('tasks.task_26')"
+  },
+  {
+    "line": 6752,
+    "original": "📊 Token使用: {token_usage}\\n\\n",
+    "key": "general.text_2367",
+    "before": "f\"📊 Token使用: {token_usage}\\n\\n\"",
+    "after": "ftr('general.text_2367')"
+  },
+  {
+    "line": 6753,
+    "original": "记得点击【保存所有设置】按钮来保存更改",
+    "key": "config.settings_18",
+    "before": "\"记得点击【保存所有设置】按钮来保存更改\"",
+    "after": "tr('config.settings_18')"
+  },
+  {
+    "line": 6769,
+    "original": "发生错误",
+    "key": "message.text_656_1",
+    "before": "\"发生错误\",",
+    "after": "tr('message.text_656_1'),"
+  },
+  {
+    "line": 6770,
+    "original": "生成任务时发生错误:\\n\\n{str(e)}",
+    "key": "tasks.task_27",
+    "before": "f\"生成任务时发生错误:\\n\\n{str(e)}\"",
+    "after": "ftr('tasks.task_27')"
+  },
+  {
+    "line": 6776,
+    "original": "✨ 智能生成任务",
+    "key": "tasks.task_2",
+    "before": "self.generate_btn.setText(\"✨ 智能生成任务\")",
+    "after": "self.generate_btn.setText(tr('tasks.task_2'))"
+  },
+  {
+    "line": 6783,
+    "original": "AI生成失败",
+    "key": "ai.text_3402",
+    "before": "\"AI生成失败\",",
+    "after": "tr('ai.text_3402'),"
+  },
+  {
+    "line": 6784,
+    "original": "生成任务时发生错误:\\n\\n{error_msg}\\n\\n请检查:\\n1. 后端服务器是否正常运行\\n2. 网络连接是否正常\\n3. API密钥是否有效",
+    "key": "tasks.task_28",
+    "before": "f\"生成任务时发生错误:\\n\\n{error_msg}\\n\\n请检查:\\n1. 后端服务器是否正常运行\\n2. 网络连接是否正常\\n3. API密钥是否有效\"",
+    "after": "ftr('tasks.task_28')"
+  },
+  {
+    "line": 6789,
+    "original": "✨ 智能生成任务",
+    "key": "tasks.task_2",
+    "before": "self.generate_btn.setText(\"✨ 智能生成任务\")",
+    "after": "self.generate_btn.setText(tr('tasks.task_2'))"
+  },
+  {
+    "line": 6857,
+    "original": "版本 v{__version__}",
+    "key": "general.text_7718",
+    "before": "version_label = QLabel(f\"版本 v{__version__}\")",
+    "after": "version_label = QLabel(ftr('general.text_7718'))"
+  },
+  {
+    "line": 6871,
+    "original": "检查更新",
+    "key": "general.text_5645",
+    "before": "self.check_update_btn = QPushButton(\"检查更新\")",
+    "after": "self.check_update_btn = QPushButton(tr('general.text_5645'))"
+  },
+  {
+    "line": 6901,
+    "original": "<a href=\"#\" style=\"color: #2196F3; text-decoration: none;\">直接向创始人反馈问题</a>",
+    "key": "general.text_8848",
+    "before": "feedback_link = QLabel('<a href=\"#\" style=\"color: #2196F3; text-decoration: none",
+    "after": "feedback_link = QLabel(tr('general.text_8848'))"
+  },
+  {
+    "line": 6937,
+    "original": "无更新说明",
+    "key": "general.text_4539",
+    "before": "return \"无更新说明\"",
+    "after": "return tr('general.text_4539')"
+  },
+  {
+    "line": 6981,
+    "original": "\\n详细内容请访问 GitHub Release 页面查看...",
+    "key": "general.text_2095",
+    "before": "highlights.append(\"\\n详细内容请访问 GitHub Release 页面查看...\")",
+    "after": "highlights.append(tr('general.text_2095'))"
+  },
+  {
+    "line": 6983,
+    "original": "无更新说明",
+    "key": "general.text_4539",
+    "before": "return '\\n'.join(highlights) if highlights else \"无更新说明\"",
+    "after": "return '\\n'.join(highlights) if highlights else tr('general.text_4539')"
+  },
+  {
+    "line": 7005,
+    "original": "更新失败",
+    "key": "message.text_8269",
+    "before": "\"更新失败\",",
+    "after": "tr('message.text_8269'),"
+  },
+  {
+    "line": 7006,
+    "original": "未找到可执行文件，请手动前往 GitHub 下载",
+    "key": "general.text_2727",
+    "before": "\"未找到可执行文件，请手动前往 GitHub 下载\"",
+    "after": "tr('general.text_2727')"
+  },
+  {
+    "line": 7014,
+    "original": "取消",
+    "key": "button.cancel",
+    "before": "progress = QProgressDialog(\"正在下载更新...\", \"取消\", 0, 100, self)",
+    "after": "progress = QProgressDialog(\"正在下载更新...\", tr('button.cancel'), 0, 100, self)"
+  },
+  {
+    "line": 7014,
+    "original": "正在下载更新...",
+    "key": "general.text_3464",
+    "before": "progress = QProgressDialog(\"正在下载更新...\", \"取消\", 0, 100, self)",
+    "after": "progress = QProgressDialog(tr('general.text_3464'), tr('button.cancel'), 0, 100,"
+  },
+  {
+    "line": 7015,
+    "original": "自动更新",
+    "key": "general.text_9339",
+    "before": "progress.setWindowTitle(\"自动更新\")",
+    "after": "progress.setWindowTitle(tr('general.text_9339'))"
+  },
+  {
+    "line": 7085,
+    "original": "下载完成",
+    "key": "general.text_3563",
+    "before": "\"下载完成\",",
+    "after": "tr('general.text_3563'),"
+  },
+  {
+    "line": 7086,
+    "original": "新版本已下载完成，是否立即安装并重启应用？\\n\\n下载位置：{file_path}",
+    "key": "config.text_5748",
+    "before": "f\"新版本已下载完成，是否立即安装并重启应用？\\n\\n下载位置：{file_path}\",",
+    "after": "ftr('config.text_5748'),"
+  },
+  {
+    "line": 7097,
+    "original": "下载失败",
+    "key": "message.text_3776",
+    "before": "\"下载失败\",",
+    "after": "tr('message.text_3776'),"
+  },
+  {
+    "line": 7098,
+    "original": "自动更新失败：{error_msg}\\n\\n请手动前往 GitHub 下载",
+    "key": "message.text_7674",
+    "before": "f\"自动更新失败：{error_msg}\\n\\n请手动前往 GitHub 下载\"",
+    "after": "ftr('message.text_7674')"
+  },
+  {
+    "line": 7103,
+    "original": "更新已取消",
+    "key": "dialog.text_2948",
+    "before": "QMessageBox.information(self, \"已取消\", \"更新已取消\")",
+    "after": "QMessageBox.information(self, \"已取消\", tr('dialog.text_2948'))"
+  },
+  {
+    "line": 7103,
+    "original": "已取消",
+    "key": "dialog.text_6870",
+    "before": "QMessageBox.information(self, \"已取消\", \"更新已取消\")",
+    "after": "QMessageBox.information(self, tr('dialog.text_6870'), tr('dialog.text_2948'))"
+  },
+  {
+    "line": 7126,
+    "original": "无法自动更新",
+    "key": "general.text_5736",
+    "before": "\"无法自动更新\",",
+    "after": "tr('general.text_5736'),"
+  },
+  {
+    "line": 7127,
+    "original": "当前以源码方式运行，无法自动替换程序。\\n请手动替换可执行文件。",
+    "key": "general.text_337_1",
+    "before": "\"当前以源码方式运行，无法自动替换程序。\\n请手动替换可执行文件。\"",
+    "after": "tr('general.text_337_1')"
+  },
+  {
+    "line": 7178,
+    "original": "准备更新",
+    "key": "general.text_4035",
+    "before": "\"准备更新\",",
+    "after": "tr('general.text_4035'),"
+  },
+  {
+    "line": 7179,
+    "original": "程序将关闭并自动完成更新，请稍候...",
+    "key": "general.text_6484",
+    "before": "\"程序将关闭并自动完成更新，请稍候...\"",
+    "after": "tr('general.text_6484')"
+  },
+  {
+    "line": 7189,
+    "original": "安装失败",
+    "key": "message.text_4839",
+    "before": "\"安装失败\",",
+    "after": "tr('message.text_4839'),"
+  },
+  {
+    "line": 7190,
+    "original": "无法安装更新：{str(e)}\\n\\n请手动替换程序文件",
+    "key": "general.text_8423",
+    "before": "f\"无法安装更新：{str(e)}\\n\\n请手动替换程序文件\"",
+    "after": "ftr('general.text_8423')"
+  },
+  {
+    "line": 7201,
+    "original": "检查中...",
+    "key": "general.text_2760",
+    "before": "self.check_update_btn.setText(\"检查中...\")",
+    "after": "self.check_update_btn.setText(tr('general.text_2760'))"
+  },
+  {
+    "line": 7218,
+    "original": "v{latest_version} 可更新",
+    "key": "general.text_8527",
+    "before": "self.check_update_btn.setText(f\"v{latest_version} 可更新\")",
+    "after": "self.check_update_btn.setText(ftr('general.text_8527'))"
+  },
+  {
+    "line": 7242,
+    "original": "发现新版本",
+    "key": "general.text_377",
+    "before": "msg.setWindowTitle(\"发现新版本\")",
+    "after": "msg.setWindowTitle(tr('general.text_377'))"
+  },
+  {
+    "line": 7243,
+    "original": "发现新版本 v{latest_version}",
+    "key": "general.text_1975",
+    "before": "msg.setText(f\"发现新版本 v{latest_version}\")",
+    "after": "msg.setText(ftr('general.text_1975'))"
+  },
+  {
+    "line": 7244,
+    "original": "当前版本: v{current_version}\\n\\n核心更新:\\n{changelog_highlights}",
+    "key": "general.text_9902",
+    "before": "msg.setInformativeText(f\"当前版本: v{current_version}\\n\\n核心更新:\\n{changelog_highlight",
+    "after": "msg.setInformativeText(ftr('general.text_9902'))"
+  },
+  {
+    "line": 7248,
+    "original": "立即更新",
+    "key": "general.text_2613",
+    "before": "auto_update_btn = msg.addButton(\"立即更新\", QMessageBox.ButtonRole.AcceptRole)",
+    "after": "auto_update_btn = msg.addButton(tr('general.text_2613'), QMessageBox.ButtonRole."
+  },
+  {
+    "line": 7249,
+    "original": "前往下载",
+    "key": "general.text_7203",
+    "before": "manual_download_btn = msg.addButton(\"前往下载\", QMessageBox.ButtonRole.ActionRole)",
+    "after": "manual_download_btn = msg.addButton(tr('general.text_7203'), QMessageBox.ButtonR"
+  },
+  {
+    "line": 7264,
+    "original": "已是最新版本",
+    "key": "general.text_2128",
+    "before": "\"已是最新版本\",",
+    "after": "tr('general.text_2128'),"
+  },
+  {
+    "line": 7265,
+    "original": "当前版本 v{current_version} 已是最新版本！",
+    "key": "general.text_9902_1",
+    "before": "f\"当前版本 v{current_version} 已是最新版本！\"",
+    "after": "ftr('general.text_9902_1')"
+  },
+  {
+    "line": 7267,
+    "original": "检查更新",
+    "key": "general.text_5645",
+    "before": "self.check_update_btn.setText(\"检查更新\")",
+    "after": "self.check_update_btn.setText(tr('general.text_5645'))"
+  },
+  {
+    "line": 7270,
+    "original": "网络请求超时，请检查网络连接",
+    "key": "general.text_3254",
+    "before": "QMessageBox.warning(self, \"检查更新失败\", \"网络请求超时，请检查网络连接\")",
+    "after": "QMessageBox.warning(self, \"检查更新失败\", tr('general.text_3254'))"
+  },
+  {
+    "line": 7270,
+    "original": "检查更新失败",
+    "key": "message.text_8308",
+    "before": "QMessageBox.warning(self, \"检查更新失败\", \"网络请求超时，请检查网络连接\")",
+    "after": "QMessageBox.warning(self, tr('message.text_8308'), tr('general.text_3254'))"
+  },
+  {
+    "line": 7271,
+    "original": "检查更新",
+    "key": "general.text_5645",
+    "before": "self.check_update_btn.setText(\"检查更新\")",
+    "after": "self.check_update_btn.setText(tr('general.text_5645'))"
+  },
+  {
+    "line": 7277,
+    "original": "暂无发布版本",
+    "key": "general.text_6306",
+    "before": "\"暂无发布版本\",",
+    "after": "tr('general.text_6306'),"
+  },
+  {
+    "line": 7278,
+    "original": "当前版本: v{__version__}\\n\\n项目仓库暂未发布正式版本，敬请期待！\\n\\n您可以访问 GitHub 仓库查看最新开发进展：\\n{APP_METADATA['repository']}",
+    "key": "general.text_3549",
+    "before": "f\"当前版本: v{__version__}\\n\\n项目仓库暂未发布正式版本，敬请期待！\\n\\n您可以访问 GitHub 仓库查看最新开发进展：\\n{APP_M",
+    "after": "ftr('general.text_3549')"
+  },
+  {
+    "line": 7281,
+    "original": "无法连接到更新服务器\\n\\n{str(e)}",
+    "key": "general.text_709",
+    "before": "QMessageBox.warning(self, \"检查更新失败\", f\"无法连接到更新服务器\\n\\n{str(e)}\")",
+    "after": "QMessageBox.warning(self, \"检查更新失败\", ftr('general.text_709'))"
+  },
+  {
+    "line": 7281,
+    "original": "检查更新失败",
+    "key": "message.text_8308",
+    "before": "QMessageBox.warning(self, \"检查更新失败\", f\"无法连接到更新服务器\\n\\n{str(e)}\")",
+    "after": "QMessageBox.warning(self, tr('message.text_8308'), ftr('general.text_709'))"
+  },
+  {
+    "line": 7282,
+    "original": "检查更新",
+    "key": "general.text_5645",
+    "before": "self.check_update_btn.setText(\"检查更新\")",
+    "after": "self.check_update_btn.setText(tr('general.text_5645'))"
+  },
+  {
+    "line": 7284,
+    "original": "无法连接到更新服务器\\n\\n{str(e)}",
+    "key": "general.text_709",
+    "before": "QMessageBox.warning(self, \"检查更新失败\", f\"无法连接到更新服务器\\n\\n{str(e)}\")",
+    "after": "QMessageBox.warning(self, \"检查更新失败\", ftr('general.text_709'))"
+  },
+  {
+    "line": 7284,
+    "original": "检查更新失败",
+    "key": "message.text_8308",
+    "before": "QMessageBox.warning(self, \"检查更新失败\", f\"无法连接到更新服务器\\n\\n{str(e)}\")",
+    "after": "QMessageBox.warning(self, tr('message.text_8308'), ftr('general.text_709'))"
+  },
+  {
+    "line": 7285,
+    "original": "检查更新",
+    "key": "general.text_5645",
+    "before": "self.check_update_btn.setText(\"检查更新\")",
+    "after": "self.check_update_btn.setText(tr('general.text_5645'))"
+  },
+  {
+    "line": 7289,
+    "original": "发生未知错误\\n\\n{str(e)}",
+    "key": "message.text_1318",
+    "before": "QMessageBox.warning(self, \"检查更新失败\", f\"发生未知错误\\n\\n{str(e)}\")",
+    "after": "QMessageBox.warning(self, \"检查更新失败\", ftr('message.text_1318'))"
+  },
+  {
+    "line": 7289,
+    "original": "检查更新失败",
+    "key": "message.text_8308",
+    "before": "QMessageBox.warning(self, \"检查更新失败\", f\"发生未知错误\\n\\n{str(e)}\")",
+    "after": "QMessageBox.warning(self, tr('message.text_8308'), ftr('message.text_1318'))"
+  },
+  {
+    "line": 7290,
+    "original": "检查更新",
+    "key": "general.text_5645",
+    "before": "self.check_update_btn.setText(\"检查更新\")",
+    "after": "self.check_update_btn.setText(tr('general.text_5645'))"
+  },
+  {
+    "line": 7328,
+    "original": "添加创始人微信",
+    "key": "general.text_6717",
+    "before": "dialog.setWindowTitle(\"添加创始人微信\")",
+    "after": "dialog.setWindowTitle(tr('general.text_6717'))"
+  },
+  {
+    "line": 7335,
+    "original": "扫描二维码，直接反馈问题",
+    "key": "general.text_1302",
+    "before": "title_label = QLabel(\"扫描二维码，直接反馈问题\")",
+    "after": "title_label = QLabel(tr('general.text_1302'))"
+  },
+  {
+    "line": 7370,
+    "original": "无法加载二维码图片",
+    "key": "general.image_2",
+    "before": "error_label = QLabel(\"无法加载二维码图片\")",
+    "after": "error_label = QLabel(tr('general.image_2'))"
+  },
+  {
+    "line": 7375,
+    "original": "二维码图片不存在\\n路径: {qrcode_path}",
+    "key": "general.image_3",
+    "before": "error_label = QLabel(f\"二维码图片不存在\\n路径: {qrcode_path}\")",
+    "after": "error_label = QLabel(ftr('general.image_3'))"
+  },
+  {
+    "line": 7381,
+    "original": "扫一扫上面的二维码图案，加我为朋友。",
+    "key": "general.text_2502",
+    "before": "hint_label = QLabel(\"扫一扫上面的二维码图案，加我为朋友。\")",
+    "after": "hint_label = QLabel(tr('general.text_2502'))"
+  }
+]

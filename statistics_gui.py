@@ -11,6 +11,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QFont, QPainter, QPen
 from statistics_manager import StatisticsManager
 from gaiya.core.theme_manager import ThemeManager
+from i18n.translator import tr
 from pathlib import Path
 import logging
 import sys
@@ -154,19 +155,19 @@ class StatisticsWindow(QWidget):
 
         # 顶部标题栏
         title_layout = QHBoxLayout()
-        title_label = QLabel("📊 任务统计报告")
+        title_label = QLabel(tr("statistics.window_title"))
         self.title_label = title_label  # 保存引用以便主题更新
         title_label.setStyleSheet("font-size: 20px; font-weight: bold; color: #2196F3;")
         title_layout.addWidget(title_label)
         title_layout.addStretch()
 
         # 刷新按钮
-        refresh_button = QPushButton("🔄 刷新")
+        refresh_button = QPushButton(tr("statistics.btn_refresh"))
         refresh_button.clicked.connect(self.load_statistics)
         title_layout.addWidget(refresh_button)
 
         # 导出按钮
-        export_button = QPushButton("📥 导出CSV")
+        export_button = QPushButton(tr("statistics.btn_export_csv"))
         export_button.clicked.connect(self.export_statistics)
         title_layout.addWidget(export_button)
 
@@ -203,7 +204,7 @@ class StatisticsWindow(QWidget):
         content_layout.addLayout(self.today_cards_layout)
 
         # 圆形进度条
-        progress_group = QGroupBox("今日完成率")
+        progress_group = QGroupBox(tr("statistics.card.today_completion"))
         progress_layout = QHBoxLayout(progress_group)
         progress_layout.setAlignment(Qt.AlignCenter)
 
@@ -213,12 +214,18 @@ class StatisticsWindow(QWidget):
         content_layout.addWidget(progress_group)
 
         # 任务详情表格
-        details_group = QGroupBox("今日任务详情")
+        details_group = QGroupBox(tr("statistics.table.today_task_details"))
         details_layout = QVBoxLayout(details_group)
 
         self.today_table = QTableWidget()
         self.today_table.setColumnCount(5)
-        self.today_table.setHorizontalHeaderLabels(['任务名称', '开始时间', '结束时间', '时长(分钟)', '状态'])
+        self.today_table.setHorizontalHeaderLabels([
+            tr("statistics.table.task_name"),
+            tr("statistics.table.start_time"),
+            tr("statistics.table.end_time"),
+            tr("statistics.table.duration_minutes"),
+            tr("statistics.table.status")
+        ])
         self.today_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.today_table.setAlternatingRowColors(True)
         # 样式将在 apply_theme 中设置
@@ -231,7 +238,7 @@ class StatisticsWindow(QWidget):
         scroll.setWidget(content_widget)
         layout.addWidget(scroll)
 
-        self.tab_widget.addTab(tab, "📅 今日统计")
+        self.tab_widget.addTab(tab, tr("statistics.tab.today"))
 
     def create_weekly_tab(self):
         """创建本周统计标签页"""
@@ -252,7 +259,7 @@ class StatisticsWindow(QWidget):
         content_layout.addLayout(self.weekly_cards_layout)
 
         # 周进度条
-        progress_group = QGroupBox("本周完成率")
+        progress_group = QGroupBox(tr("statistics.card.weekly_completion"))
         progress_layout = QHBoxLayout(progress_group)
         progress_layout.setAlignment(Qt.AlignCenter)
 
@@ -262,13 +269,18 @@ class StatisticsWindow(QWidget):
         content_layout.addWidget(progress_group)
 
         # 每日趋势表格
-        trend_group = QGroupBox("每日完成情况")
+        trend_group = QGroupBox(tr("statistics.table.daily_completion"))
         trend_layout = QVBoxLayout(trend_group)
 
         self.weekly_table = QTableWidget()
         self.weekly_table.setColumnCount(6)
         self.weekly_table.setHorizontalHeaderLabels([
-            '日期', '星期', '任务数', '完成数', '计划时长(h)', '完成率(%)'
+            tr("statistics.table.date"),
+            tr("statistics.table.weekday"),
+            tr("statistics.table.task_count"),
+            tr("statistics.table.completed_count"),
+            tr("statistics.table.planned_hours"),
+            tr("statistics.table.completion_rate")
         ])
         self.weekly_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.weekly_table.setAlternatingRowColors(True)
@@ -281,7 +293,7 @@ class StatisticsWindow(QWidget):
         scroll.setWidget(content_widget)
         layout.addWidget(scroll)
 
-        self.tab_widget.addTab(tab, "📊 本周统计")
+        self.tab_widget.addTab(tab, tr("statistics.tab.weekly"))
 
     def create_monthly_tab(self):
         """创建本月统计标签页"""
@@ -302,7 +314,7 @@ class StatisticsWindow(QWidget):
         content_layout.addLayout(self.monthly_cards_layout)
 
         # 月进度条
-        progress_group = QGroupBox("本月完成率")
+        progress_group = QGroupBox(tr("statistics.card.monthly_completion"))
         progress_layout = QHBoxLayout(progress_group)
         progress_layout.setAlignment(Qt.AlignCenter)
 
@@ -312,13 +324,17 @@ class StatisticsWindow(QWidget):
         content_layout.addWidget(progress_group)
 
         # 每日统计表格
-        daily_group = QGroupBox("每日统计")
+        daily_group = QGroupBox(tr("statistics.table.daily_stats"))
         daily_layout = QVBoxLayout(daily_group)
 
         self.monthly_table = QTableWidget()
         self.monthly_table.setColumnCount(5)
         self.monthly_table.setHorizontalHeaderLabels([
-            '日期', '任务数', '完成数', '计划时长(h)', '完成率(%)'
+            tr("statistics.table.date"),
+            tr("statistics.table.task_count"),
+            tr("statistics.table.completed_count"),
+            tr("statistics.table.planned_hours"),
+            tr("statistics.table.completion_rate")
         ])
         self.monthly_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.monthly_table.setAlternatingRowColors(True)
@@ -331,7 +347,7 @@ class StatisticsWindow(QWidget):
         scroll.setWidget(content_widget)
         layout.addWidget(scroll)
 
-        self.tab_widget.addTab(tab, "📈 本月统计")
+        self.tab_widget.addTab(tab, tr("statistics.tab.monthly"))
 
     def create_tasks_tab(self):
         """创建任务分类统计标签页"""
@@ -340,7 +356,7 @@ class StatisticsWindow(QWidget):
         layout.setContentsMargins(20, 20, 20, 20)
 
         # 标题
-        title_label = QLabel("📋 任务分类统计(历史累计)")
+        title_label = QLabel(tr("statistics.tab.category_history"))
         title_label.setStyleSheet("font-size: 16px; font-weight: bold; margin-bottom: 10px;")
         layout.addWidget(title_label)
 
@@ -348,19 +364,22 @@ class StatisticsWindow(QWidget):
         self.tasks_table = QTableWidget()
         self.tasks_table.setColumnCount(4)
         self.tasks_table.setHorizontalHeaderLabels([
-            '任务名称', '完成次数', '总时长(小时)', '颜色'
+            tr("statistics.table.task_name"),
+            tr("statistics.table.completion_times"),
+            tr("statistics.table.total_hours"),
+            tr("statistics.table.color")
         ])
         self.tasks_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.tasks_table.setAlternatingRowColors(True)
 
         layout.addWidget(self.tasks_table)
 
-        self.tab_widget.addTab(tab, "📋 任务分类")
+        self.tab_widget.addTab(tab, tr("statistics.tab.category"))
 
     def load_statistics(self):
         """加载统计数据"""
         try:
-            self.logger.info("开始加载统计数据...")
+            self.logger.info(tr("statistics.message.loading_start"))
 
             # 加载今日统计
             self.load_today_statistics()
@@ -374,11 +393,11 @@ class StatisticsWindow(QWidget):
             # 加载任务分类统计
             self.load_task_statistics()
 
-            self.logger.info("统计数据加载完成")
+            self.logger.info(tr("statistics.message.loading_complete"))
 
         except Exception as e:
-            self.logger.error(f"加载统计数据失败: {e}", exc_info=True)
-            QMessageBox.warning(self, "错误", f"加载统计数据失败:\n{str(e)}")
+            self.logger.error(tr("statistics.error.loading_failed_log", e=e), exc_info=True)
+            QMessageBox.warning(self, tr("statistics.error.error_title"), tr("statistics.error.loading_failed_message", error=str(e)))
 
     def load_today_statistics(self):
         """加载今日统计"""
@@ -388,16 +407,16 @@ class StatisticsWindow(QWidget):
         self.clear_layout(self.today_cards_layout)
 
         # 创建统计卡片
-        total_card = StatCard("总任务数", str(summary['total_tasks']), "📝", "#2196F3")
+        total_card = StatCard(tr("statistics.card.total_tasks"), str(summary['total_tasks']), "📝", "#2196F3")
         self.today_cards_layout.addWidget(total_card)
 
-        completed_card = StatCard("已完成", str(summary['completed_tasks']), "✅", "#4CAF50")
+        completed_card = StatCard(tr("statistics.card.completed"), str(summary['completed_tasks']), "✅", "#4CAF50")
         self.today_cards_layout.addWidget(completed_card)
 
-        in_progress_card = StatCard("进行中", str(summary['in_progress_tasks']), "⏳", "#FF9800")
+        in_progress_card = StatCard(tr("statistics.card.in_progress"), str(summary['in_progress_tasks']), "⏳", "#FF9800")
         self.today_cards_layout.addWidget(in_progress_card)
 
-        not_started_card = StatCard("未开始", str(summary['not_started_tasks']), "⏰", "#9E9E9E")
+        not_started_card = StatCard(tr("statistics.card.not_started"), str(summary['not_started_tasks']), "⏰", "#9E9E9E")
         self.today_cards_layout.addWidget(not_started_card)
 
         # 更新圆形进度条
@@ -425,9 +444,9 @@ class StatisticsWindow(QWidget):
 
             # 状态
             status_text = {
-                "completed": "✅ 已完成",
-                "in_progress": "⏳ 进行中",
-                "not_started": "⏰ 未开始"
+                "completed": tr("statistics.status.completed"),
+                "in_progress": tr("statistics.status.in_progress"),
+                "not_started": tr("statistics.status.not_started")
             }.get(task_info['status'], task_info['status'])
             self.today_table.setItem(row, 4, QTableWidgetItem(status_text))
 
@@ -439,14 +458,14 @@ class StatisticsWindow(QWidget):
         self.clear_layout(self.weekly_cards_layout)
 
         # 创建统计卡片
-        total_card = StatCard("总任务数", str(summary['total_tasks']), "📝", "#2196F3")
+        total_card = StatCard(tr("statistics.card.total_tasks"), str(summary['total_tasks']), "📝", "#2196F3")
         self.weekly_cards_layout.addWidget(total_card)
 
-        completed_card = StatCard("已完成", str(summary['completed_tasks']), "✅", "#4CAF50")
+        completed_card = StatCard(tr("statistics.card.completed"), str(summary['completed_tasks']), "✅", "#4CAF50")
         self.weekly_cards_layout.addWidget(completed_card)
 
         hours_card = StatCard(
-            "完成时长",
+            tr("statistics.card.completed_duration"),
             f"{summary['total_completed_minutes'] / 60:.1f}h",
             "⏱️",
             "#FF9800"
@@ -482,14 +501,14 @@ class StatisticsWindow(QWidget):
         self.clear_layout(self.monthly_cards_layout)
 
         # 创建统计卡片
-        total_card = StatCard("总任务数", str(summary['total_tasks']), "📝", "#2196F3")
+        total_card = StatCard(tr("statistics.card.total_tasks"), str(summary['total_tasks']), "📝", "#2196F3")
         self.monthly_cards_layout.addWidget(total_card)
 
-        completed_card = StatCard("已完成", str(summary['completed_tasks']), "✅", "#4CAF50")
+        completed_card = StatCard(tr("statistics.card.completed"), str(summary['completed_tasks']), "✅", "#4CAF50")
         self.monthly_cards_layout.addWidget(completed_card)
 
         hours_card = StatCard(
-            "完成时长",
+            tr("statistics.card.completed_duration"),
             f"{summary['total_completed_minutes'] / 60:.1f}h",
             "⏱️",
             "#9C27B0"
@@ -557,9 +576,9 @@ class StatisticsWindow(QWidget):
         try:
             file_path, _ = QFileDialog.getSaveFileName(
                 self,
-                "导出统计数据",
+                tr("statistics.message.export_dialog_title"),
                 "statistics_export.csv",
-                "CSV文件 (*.csv)"
+                tr("statistics.message.csv_file_filter")
             )
 
             if file_path:
@@ -567,22 +586,22 @@ class StatisticsWindow(QWidget):
                 if success:
                     QMessageBox.information(
                         self,
-                        "导出成功",
-                        f"统计数据已导出到:\n{file_path}"
+                        tr("statistics.message.export_success_title"),
+                        tr("statistics.message.export_success_message", file_path=file_path)
                     )
                 else:
                     QMessageBox.warning(
                         self,
-                        "导出失败",
-                        "导出统计数据失败,请查看日志了解详情"
+                        tr("statistics.error.export_failed_title"),
+                        tr("statistics.error.export_failed_simple")
                     )
 
         except Exception as e:
-            self.logger.error(f"导出统计数据失败: {e}", exc_info=True)
+            self.logger.error(tr("statistics.error.export_failed_log", e=e), exc_info=True)
             QMessageBox.critical(
                 self,
-                "错误",
-                f"导出失败:\n{str(e)}"
+                tr("statistics.error.error_title"),
+                tr("statistics.error.export_failed_message", error=str(e))
             )
 
     def apply_theme(self):

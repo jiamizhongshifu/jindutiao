@@ -1,0 +1,126 @@
+=== UI文件国际化工作量评估 ===
+
+扫描文件总数: 10
+累计中文字符串: 815
+
+================================================================================
+
+1. scene_editor.py
+   - 中文字符串数: 397
+   - 文件行数: 3811
+   - 示例字符串:
+     • 事件动作
+     • 事件配置
+     • 转换为字典
+     • 添加元素命令
+     • 添加元素
+
+2. gaiya/ui/auth_ui.py
+   - 中文字符串数: 94
+   - 文件行数: 804
+   - 示例字符串:
+     • 认证对话框（登录/注册）
+     • 初始化UI
+     • GaiYa - 账户登录
+     • 欢迎使用 GaiYa
+     • 每日进度条 - 让时间可视化
+
+3. gaiya/ui/membership_ui.py
+   - 中文字符串数: 76
+   - 文件行数: 1275
+   - 示例字符串:
+     • 使用QPainter手动绘制的渐变卡片（用于Featured Card）
+     • 设置选中状态
+     • 鼠标进入
+     • 鼠标离开
+     • 手动绘制卡片 - 边框绘制在子组件之上
+
+4. statistics_gui.py
+   - 中文字符串数: 71
+   - 文件行数: 666
+   - 示例字符串:
+     • 圆形进度条小部件
+     • 设置百分比并刷新
+     • 绘制圆形进度条
+     • 统计卡片小部件
+     • 初始化UI
+
+5. gaiya/ui/pomodoro_panel.py
+   - 中文字符串数: 56
+   - 文件行数: 603
+   - 示例字符串:
+     • 番茄钟设置对话框
+     • 初始化用户界面
+     • 番茄钟设置
+     •  分钟
+     • 工作时长:
+
+6. gaiya/ui/email_verification_dialog.py
+   - 中文字符串数: 45
+   - 文件行数: 409
+   - 示例字符串:
+     • 邮箱验证对话框（使用Supabase邮箱验证链接）
+     • 初始化UI
+     • 验证您的邮箱
+     • 请打开您的邮箱，点击邮件中的<b>验证链接</b>完成注册。<br><br>
+     • <small>验证完成后，本窗口将自动关闭并登录。</small>
+
+7. gaiya/ui/otp_dialog.py
+   - 中文字符串数: 33
+   - 文件行数: 330
+   - 示例字符串:
+     • OTP验证对话框
+     • 初始化UI
+     • 邮箱验证
+     • 重新发送 (60s)
+     • 处理数字输入
+
+8. gaiya/ui/onboarding/setup_wizard.py
+   - 中文字符串数: 26
+   - 文件行数: 302
+   - 示例字符串:
+     • 配置向导 - 2步快速设置
+     • 设置向导界面
+     • 用户点击AI生成按钮
+     • 获取用户选择的模板ID
+     • 窗口显示时自动居中
+
+9. gaiya/ui/onboarding/quota_exhausted_dialog.py
+   - 中文字符串数: 9
+   - 文件行数: 114
+   - 示例字符串:
+     • 配额用尽对话框 - 引导用户升级会员
+     • 和
+     • 设置UI界面
+     • 你今天的配额已经用完了。\n\n
+     • 升级会员即可享受：
+
+10. gaiya/ui/onboarding/welcome_dialog.py
+   - 中文字符串数: 8
+   - 文件行数: 123
+   - 示例字符串:
+     • 欢迎对话框 - 首次启动时显示
+     • 设置UI界面
+     • ⏰ 智能提醒永不错过重要时刻
+     • 🎨 丰富主题个性化你的界面
+     • 🤖 AI智能规划优化时间管理
+
+================================================================================
+
+优先级分组建议:
+
+🔴 高优先级（≥50个字符串）:
+   • scene_editor.py (397个)
+   • gaiya/ui/auth_ui.py (94个)
+   • gaiya/ui/membership_ui.py (76个)
+   • statistics_gui.py (71个)
+   • gaiya/ui/pomodoro_panel.py (56个)
+
+🟡 中优先级（20-49个字符串）:
+   • gaiya/ui/email_verification_dialog.py (45个)
+   • gaiya/ui/otp_dialog.py (33个)
+   • gaiya/ui/onboarding/setup_wizard.py (26个)
+
+🟢 低优先级（<20个字符串）:
+   • gaiya/ui/onboarding/quota_exhausted_dialog.py (9个)
+   • gaiya/ui/onboarding/welcome_dialog.py (8个)

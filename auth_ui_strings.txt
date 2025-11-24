@@ -1,0 +1,8 @@
+=== auth_ui.py 中文字符串提取 ===
+共找到 5 个中文字符串
+
+Line 453: [AUTH-UI] 邮箱验证成功，用户信息: {user_info}
+Line 656: [AUTH-UI] WebEngine 不可用，自动切换到邮箱登录
+Line 667: [AUTH-UI] 延迟创建微信登录widget（QWebEngineView）...
+Line 673: [AUTH-UI] 微信登录widget创建完成
+Line 795: 登录成功！用户信息: {user_info}

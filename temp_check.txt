@@ -1,0 +1,6 @@
+common.dialog_titles.error: ´íÎó
+common.buttons.cancel: È¡Ïû
+common.buttons.delete: É¾³ý
+common.buttons.edit: None
+
+All buttons keys: ['save', 'cancel', 'delete', 'confirm', 'close', 'ok', 'yes', 'no', 'apply', 'reset', 'refresh', 'load', 'execute', 'test']

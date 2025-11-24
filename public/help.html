@@ -158,15 +158,21 @@
                 <span style="font-weight: 700; color: var(--text-primary); margin-left: 8px;">GaiYa每日进度条</span>
             </a>
             <ul class="navbar-menu">
-                <li><a href="index.html#features">功能</a></li>
-                <li><a href="index.html#pricing">定价</a></li>
-                <li><a href="index.html#testimonials">评价</a></li>
-                <li><a href="index.html#faq">帮助</a></li>
-                <li><a href="index.html#about">关于</a></li>
-                <li><a href="index.html#download">下载</a></li>
+                <li><a href="index.html#features" data-i18n="nav.features">功能</a></li>
+                <li><a href="index.html#pricing" data-i18n="nav.pricing">定价</a></li>
+                <li><a href="index.html#testimonials" data-i18n="nav.testimonials">评价</a></li>
+                <li><a href="index.html#faq" data-i18n="nav.help">帮助</a></li>
+                <li><a href="index.html#about" data-i18n="nav.about">关于</a></li>
+                <li><a href="index.html#download" data-i18n="nav.download">下载</a></li>
             </ul>
-            <div class="navbar-actions">
-                <a href="download.html" class="btn btn-primary">免费下载</a>
+                        <div class="navbar-actions">
+                <!-- Language Switcher -->
+                <div class="language-switcher">
+                    <button class="lang-btn" data-lang-switch="zh_CN" onclick="switchLanguage('zh_CN')">中</button>
+                    <button class="lang-btn" data-lang-switch="en_US" onclick="switchLanguage('en_US')">EN</button>
+                </div>
+                <a href="https://github.com/jiamizhongshifu/jindutiao" target="_blank" class="btn btn-secondary btn-small">GitHub</a>
+                <a href="index.html#download" class="btn btn-primary btn-small" data-i18n="hero.download_btn">立即下载</a>
             </div>
         </div>
     </nav>
@@ -174,13 +180,13 @@
     <div class="help-container">
         <!-- 页面头部 -->
         <div class="help-header">
-            <h1>💡 帮助中心</h1>
-            <p>快速找到您需要的答案，让 GaiYa 使用更顺畅</p>
+            <h1 data-i18n="help_page.title">💡 帮助中心</h1>
+            <p data-i18n="help_page.subtitle">快速找到您需要的答案，让 GaiYa 使用更顺畅</p>
         </div>
 
         <!-- 搜索框 -->
         <div class="search-box">
-            <input type="text" id="searchInput" placeholder="搜索您的问题...">
+            <input type="text" id="searchInput" data-i18n-placeholder="help_page.search_placeholder" placeholder="搜索您的问题...">
             <button>🔍</button>
         </div>
 
@@ -188,7 +194,7 @@
         <div class="faq-section">
             <!-- 入门使用 -->
             <div class="faq-category">
-                <h2 class="faq-category-title">🚀 入门使用</h2>
+                <h2 class="faq-category-title" data-i18n="help_page.getting_started">🚀 入门使用</h2>
 
                 <div class="faq-item">
                     <div class="faq-question" onclick="toggleFaq(this)">
@@ -675,5 +681,8 @@
             }
         });
     </script>
+
+    <!-- i18n Internationalization -->
+    <script src="js/i18n.js"></script>
 </body>
 </html>

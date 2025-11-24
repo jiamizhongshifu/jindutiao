@@ -1,0 +1,2105 @@
+{
+  "summary": {
+    "total": 233,
+    "matched": 232,
+    "new": 1
+  },
+  "matched_keys": [
+    {
+      "item": {
+        "line": 63,
+        "text": "保存为模板",
+        "code": "self.setWindowTitle(\"保存为模板\")"
+      },
+      "key": "dialog.save_template_title",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 70,
+        "text": "选择要覆盖的模板或输入新的模板名称:",
+        "code": "hint_label = QLabel(\"选择要覆盖的模板或输入新的模板名称:\")"
+      },
+      "key": "dialog.select_or_new",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 72,
+        "text": "请输入模板名称:",
+        "code": "hint_label = QLabel(\"请输入模板名称:\")"
+      },
+      "key": "dialog.enter_name",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 92,
+        "text": "选择历史模板或输入新名称",
+        "code": "self.input_widget.setPlaceholderText(\"选择历史模板或输入新名称\")"
+      },
+      "key": "templates.dialog.placeholder_select",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 96,
+        "text": "例如: 工作日模板",
+        "code": "self.input_widget.setPlaceholderText(\"例如: 工作日模板\")"
+      },
+      "key": "templates.dialog.placeholder_example",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 148,
+        "text": "输入错误",
+        "code": "QMessageBox.warning(self, \"输入错误\", \"模板名称不能为空!\")"
+      },
+      "key": "message.text_2881",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 430,
+        "text": "禁用",
+        "code": "toggle_btn.setToolTip(\"禁用\" if enabled else \"启用\")"
+      },
+      "key": "account.message.disabled",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 439,
+        "text": "编辑",
+        "code": "edit_btn.setToolTip(\"编辑\")"
+      },
+      "key": "button.edit",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 448,
+        "text": "删除",
+        "code": "delete_btn.setToolTip(\"删除\")"
+      },
+      "key": "button.delete",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 472,
+        "text": "警告",
+        "code": "QMessageBox.warning(self, \"警告\", \"时间表管理器未初始化\")"
+      },
+      "key": "message.warning",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 476,
+        "text": "警告",
+        "code": "QMessageBox.warning(self, \"警告\", \"模板管理器未初始化\")"
+      },
+      "key": "message.warning",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 487,
+        "text": "添加模板应用规则",
+        "code": "dialog.setWindowTitle(\"添加模板应用规则\")"
+      },
+      "key": "schedule.dialogs.add_rule",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 494,
+        "text": "选择模板:",
+        "code": "template_layout.addWidget(QLabel(\"选择模板:\"))"
+      },
+      "key": "templates.auto_apply.select_template",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 511,
+        "text": "按星期重复",
+        "code": "weekdays_radio = QRadioButton(\"按星期重复\")"
+      },
+      "key": "general.text_3012",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 512,
+        "text": "每月重复",
+        "code": "monthly_radio = QRadioButton(\"每月重复\")"
+      },
+      "key": "general.text_4222",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 513,
+        "text": "特定日期",
+        "code": "specific_radio = QRadioButton(\"特定日期\")"
+      },
+      "key": "general.text_7678",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 541,
+        "text": "每月的哪些天?（用逗号分隔，例如: 1,15,28）",
+        "code": "monthly_label = QLabel(\"每月的哪些天?（用逗号分隔，例如: 1,15,28）\")"
+      },
+      "key": "general.text_1240",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 555,
+        "text": "选择具体日期:",
+        "code": "specific_label = QLabel(\"选择具体日期:\")"
+      },
+      "key": "dialog.text_9512",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 570,
+        "text": "+ 添加日期",
+        "code": "add_date_btn = QPushButton(\"+ 添加日期\")"
+      },
+      "key": "general.text_6594",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 635,
+        "text": "取消",
+        "code": "cancel_btn = QPushButton(\"取消\")"
+      },
+      "key": "button.cancel",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 639,
+        "text": "保存",
+        "code": "save_btn = QPushButton(\"保存\")"
+      },
+      "key": "button.save",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 658,
+        "text": "警告",
+        "code": "QMessageBox.warning(self, \"警告\", \"请至少选择一个星期\")"
+      },
+      "key": "message.warning",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 670,
+        "text": "警告",
+        "code": "QMessageBox.warning(self, \"警告\", \"请输入每月的日期\")"
+      },
+      "key": "message.warning",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 677,
+        "text": "警告",
+        "code": "QMessageBox.warning(self, \"警告\", \"日期必须在1-31之间\")"
+      },
+      "key": "message.warning",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 687,
+        "text": "警告",
+        "code": "QMessageBox.warning(self, \"警告\", \"日期格式错误，请使用逗号分隔的数字\")"
+      },
+      "key": "message.warning",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 692,
+        "text": "警告",
+        "code": "QMessageBox.warning(self, \"警告\", \"请至少添加一个日期\")"
+      },
+      "key": "message.warning",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 702,
+        "text": "警告",
+        "code": "QMessageBox.warning(self, \"警告\", \"请选择规则类型\")"
+      },
+      "key": "message.warning",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 706,
+        "text": "成功",
+        "code": "QMessageBox.information(self, \"成功\", \"时间表规则已添加\")"
+      },
+      "key": "message.success",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 709,
+        "text": "冲突",
+        "code": "QMessageBox.warning(self, \"冲突\", \"该规则与现有规则冲突，请检查\")"
+      },
+      "key": "general.text_5397",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 713,
+        "text": "错误",
+        "code": "QMessageBox.critical(self, \"错误\", f\"添加规则失败:\\n{str(e)}\")"
+      },
+      "key": "membership.payment.error",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 723,
+        "text": "警告",
+        "code": "QMessageBox.warning(self, \"警告\", \"时间表管理器未初始化\")"
+      },
+      "key": "message.warning",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 727,
+        "text": "警告",
+        "code": "QMessageBox.warning(self, \"警告\", \"模板管理器未初始化\")"
+      },
+      "key": "message.warning",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 733,
+        "text": "警告",
+        "code": "QMessageBox.warning(self, \"警告\", \"无效的规则索引\")"
+      },
+      "key": "message.warning",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 746,
+        "text": "编辑模板应用规则",
+        "code": "dialog.setWindowTitle(\"编辑模板应用规则\")"
+      },
+      "key": "schedule.dialogs.edit_rule",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 753,
+        "text": "选择模板:",
+        "code": "template_layout.addWidget(QLabel(\"选择模板:\"))"
+      },
+      "key": "templates.auto_apply.select_template",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 775,
+        "text": "按星期重复",
+        "code": "weekdays_radio = QRadioButton(\"按星期重复\")"
+      },
+      "key": "general.text_3012",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 776,
+        "text": "每月重复",
+        "code": "monthly_radio = QRadioButton(\"每月重复\")"
+      },
+      "key": "general.text_4222",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 777,
+        "text": "特定日期",
+        "code": "specific_radio = QRadioButton(\"特定日期\")"
+      },
+      "key": "general.text_7678",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 805,
+        "text": "每月的哪些天?（用逗号分隔，例如: 1,15,28）",
+        "code": "monthly_label = QLabel(\"每月的哪些天?（用逗号分隔，例如: 1,15,28）\")"
+      },
+      "key": "general.text_1240",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 819,
+        "text": "选择具体日期:",
+        "code": "specific_label = QLabel(\"选择具体日期:\")"
+      },
+      "key": "dialog.text_9512",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 834,
+        "text": "+ 添加日期",
+        "code": "add_date_btn = QPushButton(\"+ 添加日期\")"
+      },
+      "key": "general.text_6594",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 935,
+        "text": "取消",
+        "code": "cancel_btn = QPushButton(\"取消\")"
+      },
+      "key": "button.cancel",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 939,
+        "text": "保存",
+        "code": "save_btn = QPushButton(\"保存\")"
+      },
+      "key": "button.save",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 960,
+        "text": "警告",
+        "code": "QMessageBox.warning(self, \"警告\", \"请至少选择一个星期\")"
+      },
+      "key": "message.warning",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 969,
+        "text": "警告",
+        "code": "QMessageBox.warning(self, \"警告\", \"请输入每月的日期\")"
+      },
+      "key": "message.warning",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 976,
+        "text": "警告",
+        "code": "QMessageBox.warning(self, \"警告\", \"日期必须在1-31之间\")"
+      },
+      "key": "message.warning",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 983,
+        "text": "警告",
+        "code": "QMessageBox.warning(self, \"警告\", \"日期格式错误，请使用逗号分隔的数字\")"
+      },
+      "key": "message.warning",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 988,
+        "text": "警告",
+        "code": "QMessageBox.warning(self, \"警告\", \"请至少添加一个日期\")"
+      },
+      "key": "message.warning",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 995,
+        "text": "警告",
+        "code": "QMessageBox.warning(self, \"警告\", \"请选择规则类型\")"
+      },
+      "key": "message.warning",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1001,
+        "text": "成功",
+        "code": "QMessageBox.information(self, \"成功\", \"时间表规则已更新\")"
+      },
+      "key": "message.success",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1004,
+        "text": "失败",
+        "code": "QMessageBox.warning(self, \"失败\", \"更新规则失败，请检查\")"
+      },
+      "key": "message.text_8834",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1008,
+        "text": "错误",
+        "code": "QMessageBox.critical(self, \"错误\", f\"编辑规则失败:\\n{str(e)}\")"
+      },
+      "key": "membership.payment.error",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1022,
+        "text": "错误",
+        "code": "QMessageBox.critical(self, \"错误\", f\"操作失败:\\n{str(e)}\")"
+      },
+      "key": "membership.payment.error",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1043,
+        "text": "成功",
+        "code": "QMessageBox.information(self, \"成功\", \"规则已删除\")"
+      },
+      "key": "message.success",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1047,
+        "text": "错误",
+        "code": "QMessageBox.critical(self, \"错误\", f\"删除失败:\\n{str(e)}\")"
+      },
+      "key": "membership.payment.error",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1053,
+        "text": "警告",
+        "code": "QMessageBox.warning(self, \"警告\", \"时间表管理器未初始化\")"
+      },
+      "key": "message.warning",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1060,
+        "text": "测试日期匹配",
+        "code": "dialog.setWindowTitle(\"测试日期匹配\")"
+      },
+      "key": "general.text_4326",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1067,
+        "text": "选择一个日期，查看该日期会匹配到哪个模板：",
+        "code": "hint_label = QLabel(\"选择一个日期，查看该日期会匹配到哪个模板：\")"
+      },
+      "key": "templates.auto_apply.test_instruction",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1130,
+        "text": "🔍 执行测试",
+        "code": "test_btn = QPushButton(\"🔍 执行测试\")"
+      },
+      "key": "general.text_8461",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1136,
+        "text": "关闭",
+        "code": "close_btn = QPushButton(\"关闭\")"
+      },
+      "key": "button.close",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1149,
+        "text": "错误",
+        "code": "QMessageBox.critical(self, \"错误\", f\"测试失败:\\n{str(e)}\")"
+      },
+      "key": "membership.payment.error",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1222,
+        "text": "⏳ AI服务正在初始化...",
+        "code": "self.quota_label.setText(\"⏳ AI服务正在初始化...\")"
+      },
+      "key": "ai.text_9372",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1270,
+        "text": "⚠️ AI服务正在启动...",
+        "code": "self.quota_label.setText(\"⚠️ AI服务正在启动...\")"
+      },
+      "key": "ai.text_9377",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1290,
+        "text": "❌ AI服务初始化失败",
+        "code": "self.quota_label.setText(f\"❌ AI服务初始化失败\")"
+      },
+      "key": "ai.text_857",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1302,
+        "text": "{VERSION_STRING_ZH} - 配置管理器",
+        "code": "self.setWindowTitle(f'{VERSION_STRING_ZH} - 配置管理器')"
+      },
+      "key": "config.config_2",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1381,
+        "text": "保存所有设置",
+        "code": "save_btn = QPushButton(\"保存所有设置\")"
+      },
+      "key": "config.settings_2",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1386,
+        "text": "取消",
+        "code": "cancel_btn = QPushButton(\"取消\")"
+      },
+      "key": "button.cancel",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1444,
+        "text": "加载场景设置失败: {e}",
+        "code": "error_label = QLabel(f\"加载场景设置失败: {e}\")"
+      },
+      "key": "config.settings_4",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1469,
+        "text": "加载通知设置失败: {e}",
+        "code": "error_label = QLabel(f\"加载通知设置失败: {e}\")"
+      },
+      "key": "config.settings_6",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1495,
+        "text": "加载个人中心标签页失败: {e}",
+        "code": "error_label = QLabel(f\"加载个人中心标签页失败: {e}\")"
+      },
+      "key": "message.text_347",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1522,
+        "text": "加载关于标签页失败: {e}\\n\\n请检查日志文件获取详细信息",
+        "code": "error_label = QLabel(f\"加载关于标签页失败: {e}\\n\\n请检查日志文件获取详细信息\")"
+      },
+      "key": "message.text_9945",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1581,
+        "text": "自定义:",
+        "code": "custom_label = QLabel(\"自定义:\")"
+      },
+      "key": "config.custom_label",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1645,
+        "text": "勾选后，GaiYa每日进度条将在Windows开机时自动启动",
+        "code": "self.autostart_check.setToolTip(\"勾选后，GaiYa每日进度条将在Windows开机时自动启动\")"
+      },
+      "key": "config.auto_start_tooltip",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1679,
+        "text": "选择颜色",
+        "code": "self.bg_color_btn = QPushButton(\"选择颜色\")"
+      },
+      "key": "config.color",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1707,
+        "text": "选择颜色",
+        "code": "self.marker_color_btn = QPushButton(\"选择颜色\")"
+      },
+      "key": "config.color",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1751,
+        "text": "选择图片文件 (JPG/PNG/GIF/WebP)",
+        "code": "self.marker_image_input.setPlaceholderText(\"选择图片文件 (JPG/PNG/GIF/WebP)\")"
+      },
+      "key": "config.choose_image_file",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1793,
+        "text": "自定义:",
+        "code": "custom_size_label = QLabel(\"自定义:\")"
+      },
+      "key": "config.custom_label",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1914,
+        "text": "💡 用自然语言描述您的计划,AI将自动生成任务时间表",
+        "code": "ai_hint = QLabel(\"💡 用自然语言描述您的计划,AI将自动生成任务时间表\")"
+      },
+      "key": "tasks.hints.ai_description",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1920,
+        "text": "描述您的计划:",
+        "code": "input_label = QLabel(\"描述您的计划:\")"
+      },
+      "key": "tasks.labels.describe_plan",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1926,
+        "text": "例如: 明天9点开会1小时,然后写代码到下午5点,中午12点休息1小时,晚上6点健身...",
+        "code": "self.ai_input.setPlaceholderText(\"例如: 明天9点开会1小时,然后写代码到下午5点,中午12点休息1小时,晚上6点健身...\")"
+      },
+      "key": "general.text_5947",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1937,
+        "text": "✨ 智能生成任务",
+        "code": "self.generate_btn = QPushButton(\"✨ 智能生成任务\")"
+      },
+      "key": "account.ui.ai_smart_generate",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1960,
+        "text": "配额状态: 加载中...",
+        "code": "self.quota_label = QLabel(\"配额状态: 加载中...\")"
+      },
+      "key": "tasks.labels.quota_status_loading",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1965,
+        "text": "🔄 刷新配额",
+        "code": "refresh_quota_btn = QPushButton(\"🔄 刷新配额\")"
+      },
+      "key": "tasks.buttons.refresh_quota",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1992,
+        "text": "⏳ 正在连接云服务（可能需要10-15秒）...",
+        "code": "self.quota_label.setText(\"⏳ 正在连接云服务（可能需要10-15秒）...\")"
+      },
+      "key": "general.text_3841",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 1998,
+        "text": "双击表格单元格可以编辑任务内容",
+        "code": "info_label = QLabel(\"双击表格单元格可以编辑任务内容\")"
+      },
+      "key": "tasks.hints.double_click_edit",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2007,
+        "text": "选择主题:",
+        "code": "theme_label = QLabel(\"选择主题:\")"
+      },
+      "key": "tasks.labels.select_theme",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2022,
+        "text": "配色预览:",
+        "code": "preview_label = QLabel(\"配色预览:\")"
+      },
+      "key": "tasks.labels.color_preview",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2041,
+        "text": "快速加载:",
+        "code": "template_label = QLabel(\"快速加载:\")"
+      },
+      "key": "tasks.labels.quick_load",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2056,
+        "text": "模板加载中...",
+        "code": "fallback_label = QLabel(\"模板加载中...\")"
+      },
+      "key": "tasks.labels.template_loading",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2071,
+        "text": "选择模板:",
+        "code": "custom_label = QLabel(\"选择模板:\")"
+      },
+      "key": "templates.auto_apply.select_template",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2081,
+        "text": "📂 加载",
+        "code": "load_custom_btn = QPushButton(\"📂 加载\")"
+      },
+      "key": "tasks.buttons.load",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2089,
+        "text": "🗑️ 删除",
+        "code": "delete_custom_btn = QPushButton(\"🗑️ 删除\")"
+      },
+      "key": "general.text_1284",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2110,
+        "text": "💡 提示：拖动色块边缘可调整任务时长",
+        "code": "timeline_hint = QLabel(\"💡 提示：拖动色块边缘可调整任务时长\")"
+      },
+      "key": "tasks.hints.drag_to_adjust",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2147,
+        "text": "➕ 添加任务",
+        "code": "add_btn = QPushButton(\"➕ 添加任务\")"
+      },
+      "key": "tasks.buttons.add_task",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2152,
+        "text": "💾 保存为模板",
+        "code": "save_template_btn = QPushButton(\"💾 保存为模板\")"
+      },
+      "key": "account.other.save_as_template",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2157,
+        "text": "📂 加载自定义模板",
+        "code": "load_custom_btn = QPushButton(\"📂 加载自定义模板\")"
+      },
+      "key": "tasks.buttons.load_custom_template",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2162,
+        "text": "🗑️ 清空所有任务",
+        "code": "clear_btn = QPushButton(\"🗑️ 清空所有任务\")"
+      },
+      "key": "tasks.buttons.clear_all_tasks",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2181,
+        "text": "💡 为每个模板设置自动应用的日期规则，到了指定时间会自动加载对应模板",
+        "code": "schedule_hint = QLabel(\"💡 为每个模板设置自动应用的日期规则，到了指定时间会自动加载对应模板\")"
+      },
+      "key": "config.settings_9",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2209,
+        "text": "➕ 添加规则",
+        "code": "add_schedule_btn = QPushButton(\"➕ 添加规则\")"
+      },
+      "key": "tasks.buttons.add_rule",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2215,
+        "text": "🔍 测试日期",
+        "code": "test_date_btn = QPushButton(\"🔍 测试日期\")"
+      },
+      "key": "tasks.buttons.test_date",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2283,
+        "text": "错误",
+        "code": "QMessageBox.warning(self, \"错误\", \"主题管理器未初始化，请稍后再试\")"
+      },
+      "key": "membership.payment.error",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2295,
+        "text": "提示",
+        "code": "QMessageBox.warning(self, \"提示\", \"请先选择一个主题\")"
+      },
+      "key": "message.info",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2306,
+        "text": "错误",
+        "code": "QMessageBox.warning(self, \"错误\", \"应用主题失败\")"
+      },
+      "key": "membership.payment.error",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2311,
+        "text": "错误",
+        "code": "QMessageBox.warning(self, \"错误\", \"主题管理器未初始化，请稍后再试\")"
+      },
+      "key": "membership.payment.error",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2316,
+        "text": "提示",
+        "code": "QMessageBox.warning(self, \"提示\", \"请先选择一个主题\")"
+      },
+      "key": "message.info",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2344,
+        "text": "成功",
+        "code": "QMessageBox.information(self, \"成功\", \"已应用主题配色到任务\")"
+      },
+      "key": "message.success",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2431,
+        "text": "配置场景效果,让进度条更具个性化",
+        "code": "info_label = QLabel(\"配置场景效果,让进度条更具个性化\")"
+      },
+      "key": "config.config_4",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2442,
+        "text": "启用场景系统",
+        "code": "self.scene_enabled_check = QCheckBox(\"启用场景系统\")"
+      },
+      "key": "general.text_9791",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2450,
+        "text": "依然展示进度条",
+        "code": "self.show_progress_in_scene_check = QCheckBox(\"依然展示进度条\")"
+      },
+      "key": "general.text_889",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2453,
+        "text": "场景模式下在场景上方叠加显示进度条",
+        "code": "self.show_progress_in_scene_check.setToolTip(\"场景模式下在场景上方叠加显示进度条\")"
+      },
+      "key": "general.display_1",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2467,
+        "text": "当前场景:",
+        "code": "scene_label = QLabel(\"当前场景:\")"
+      },
+      "key": "general.text_5026",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2494,
+        "text": "无场景",
+        "code": "self.scene_combo.addItem(\"无场景\", None)"
+      },
+      "key": "general.text_6942",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2510,
+        "text": "无可用场景",
+        "code": "self.scene_combo.addItem(\"无可用场景\", None)"
+      },
+      "key": "general.text_1681",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2519,
+        "text": "🔄 刷新场景",
+        "code": "refresh_button = QPushButton(\"🔄 刷新场景\")"
+      },
+      "key": "menu.refresh_scene",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2539,
+        "text": "重新扫描scenes目录，加载新导出的场景",
+        "code": "refresh_button.setToolTip(\"重新扫描scenes目录，加载新导出的场景\")"
+      },
+      "key": "general.text_7449",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2546,
+        "text": "请选择一个场景",
+        "code": "self.scene_description_label = QLabel(\"请选择一个场景\")"
+      },
+      "key": "dialog.text_7655",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2565,
+        "text": "🎨 打开场景编辑器",
+        "code": "self.open_scene_editor_btn = QPushButton(\"🎨 打开场景编辑器\")"
+      },
+      "key": "general.text_1288",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2589,
+        "text": "场景编辑器可以创建和编辑自定义场景效果",
+        "code": "editor_hint = QLabel(\"场景编辑器可以创建和编辑自定义场景效果\")"
+      },
+      "key": "general.text_3998",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2617,
+        "text": "未选择场景,将显示默认进度条样式",
+        "code": "self.scene_description_label.setText(\"未选择场景,将显示默认进度条样式\")"
+      },
+      "key": "dialog.display",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2633,
+        "text": "无法加载场景信息",
+        "code": "self.scene_description_label.setText(\"无法加载场景信息\")"
+      },
+      "key": "general.text_8358",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2635,
+        "text": "场景管理器未初始化",
+        "code": "self.scene_description_label.setText(\"场景管理器未初始化\")"
+      },
+      "key": "general.text_7526",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2698,
+        "text": "无场景",
+        "code": "self.scene_combo.addItem(\"无场景\", None)"
+      },
+      "key": "general.text_6942",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2732,
+        "text": "配置任务提醒通知,让您不会错过任何重要时刻",
+        "code": "info_label = QLabel(\"配置任务提醒通知,让您不会错过任何重要时刻\")"
+      },
+      "key": "config.config_5",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2742,
+        "text": "启用任务提醒通知",
+        "code": "self.notify_enabled_check = QCheckBox(\"启用任务提醒通知\")"
+      },
+      "key": "notification.enable_notifications",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2750,
+        "text": "播放提示音",
+        "code": "self.notify_sound_check = QCheckBox(\"播放提示音\")"
+      },
+      "key": "message.text_1045",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2783,
+        "text": "选择在任务开始前多久提醒(可多选):",
+        "code": "before_start_hint = QLabel(\"选择在任务开始前多久提醒(可多选):\")"
+      },
+      "key": "notification.before_start_hint",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2790,
+        "text": "任务开始时提醒",
+        "code": "self.notify_on_start_check = QCheckBox(\"任务开始时提醒\")"
+      },
+      "key": "notification.notify_at_start",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2804,
+        "text": "提前 {minutes} 分钟",
+        "code": "checkbox = QCheckBox(f\"提前 {minutes} 分钟\")"
+      },
+      "key": "general.text_9462",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2835,
+        "text": "选择在任务结束前多久提醒(可多选):",
+        "code": "before_end_hint = QLabel(\"选择在任务结束前多久提醒(可多选):\")"
+      },
+      "key": "notification.before_end_hint",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2842,
+        "text": "任务结束时提醒",
+        "code": "self.notify_on_end_check = QCheckBox(\"任务结束时提醒\")"
+      },
+      "key": "notification.notify_at_end",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2855,
+        "text": "提前 {minutes} 分钟",
+        "code": "checkbox = QCheckBox(f\"提前 {minutes} 分钟\")"
+      },
+      "key": "general.text_9462",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2878,
+        "text": "启用免打扰时段",
+        "code": "self.quiet_enabled_check = QCheckBox(\"启用免打扰时段\")"
+      },
+      "key": "general.text_1681_1",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2892,
+        "text": "(在此时间后不发送通知)",
+        "code": "quiet_start_hint = QLabel(\"(在此时间后不发送通知)\")"
+      },
+      "key": "notification.after_time_hint",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2907,
+        "text": "(在此时间前不发送通知)",
+        "code": "quiet_end_hint = QLabel(\"(在此时间前不发送通知)\")"
+      },
+      "key": "notification.before_time_hint",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2913,
+        "text": "示例: 22:00 - 08:00 表示晚上10点到早上8点不打扰",
+        "code": "quiet_example = QLabel(\"示例: 22:00 - 08:00 表示晚上10点到早上8点不打扰\")"
+      },
+      "key": "general.text_1040",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2956,
+        "text": "邮箱：{email}  |  会员等级：{tier_name}",
+        "code": "info_label = QLabel(f\"邮箱：{email}  |  会员等级：{tier_name}\")"
+      },
+      "key": "account.text_7480",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2962,
+        "text": "退出登录",
+        "code": "logout_btn = QPushButton(\"退出登录\")"
+      },
+      "key": "button.logout",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 2974,
+        "text": "会员套餐对比",
+        "code": "tip_label = QLabel(\"会员套餐对比\")"
+      },
+      "key": "account.membership_comparison",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 3060,
+        "text": "选择支付方式",
+        "code": "# payment_title = QLabel(\"选择支付方式\")"
+      },
+      "key": "account.select_payment_method",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 3078,
+        "text": "支付宝",
+        "code": "# alipay_radio = QRadioButton(\"支付宝\")"
+      },
+      "key": "account.payment_alipay",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 3129,
+        "text": "微信支付",
+        "code": "# wxpay_radio = QRadioButton(\"微信支付\")"
+      },
+      "key": "account.payment_wechat",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 3152,
+        "text": "感谢您的支持！",
+        "code": "info_label = QLabel(\"感谢您的支持！\")"
+      },
+      "key": "account.thank_you",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 3160,
+        "text": "👋 欢迎使用 GaiYa 每日进度条",
+        "code": "welcome_label = QLabel(\"👋 欢迎使用 GaiYa 每日进度条\")"
+      },
+      "key": "account.welcome_message",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 3165,
+        "text": "登录后即可使用 AI智能规划、数据云同步等高级功能",
+        "code": "tip_label = QLabel(\"登录后即可使用 AI智能规划、数据云同步等高级功能\")"
+      },
+      "key": "account.text_789",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 3171,
+        "text": "🔑 点击登录 / 注册",
+        "code": "login_button = QPushButton(\"🔑 点击登录 / 注册\")"
+      },
+      "key": "account.text_9039",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 3201,
+        "text": "🎁 登录后享受的权益：",
+        "code": "features_label = QLabel(\"🎁 登录后享受的权益：\")"
+      },
+      "key": "account.text_8733",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 3509,
+        "text": "/月",
+        "code": "monthly_period_label = QLabel(\"/月\")"
+      },
+      "key": "account.per_month",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 3542,
+        "text": "升级会员",
+        "code": "button = QPushButton(\"升级会员\")"
+      },
+      "key": "button.upgrade",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 3659,
+        "text": "升级会员",
+        "code": "button = QPushButton(\"升级会员\")"
+      },
+      "key": "button.upgrade",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 3761,
+        "text": "限量1000名",
+        "code": "limited_badge = QLabel(\"限量1000名\")"
+      },
+      "key": "membership.ui.limited_offer",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 3794,
+        "text": "一次付费",
+        "code": "onetime_label = QLabel(\"一次付费\")"
+      },
+      "key": "membership.ui.one_time_payment",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 3800,
+        "text": "终身可用",
+        "code": "lifetime_label = QLabel(\"终身可用\")"
+      },
+      "key": "membership.ui.lifetime_access",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 3819,
+        "text": "成为合伙人",
+        "code": "button = QPushButton(\"成为合伙人\")"
+      },
+      "key": "membership.ui.become_partner",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 3895,
+        "text": "GaiYa每日进度条",
+        "code": "dialog.setWindowTitle(\"GaiYa每日进度条\")"
+      },
+      "key": "app.name",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 3908,
+        "text": "致 GaiYa 会员合伙人的一封信",
+        "code": "title_label = QLabel(\"致 GaiYa 会员合伙人的一封信\")"
+      },
+      "key": "about.letter_title",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 3919,
+        "text": "邀请您共同成长，共享价值",
+        "code": "subtitle_label = QLabel(\"邀请您共同成长，共享价值\")"
+      },
+      "key": "about.letter_subtitle",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 4049,
+        "text": "我愿意成为会员合伙人",
+        "code": "button = QPushButton(\"我愿意成为会员合伙人\")"
+      },
+      "key": "membership.buttons.become_partner",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 4137,
+        "text": "💡 会员提示",
+        "code": "title_label = QLabel(\"💡 会员提示\")"
+      },
+      "key": "membership.ui.member_tips",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 4191,
+        "text": "💎 会员方案详细对比",
+        "code": "title_label = QLabel(\"💎 会员方案详细对比\")"
+      },
+      "key": "membership.ui.comparison_title",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 4516,
+        "text": "选择支付方式",
+        "code": "dialog.setWindowTitle(\"选择支付方式\")"
+      },
+      "key": "account.select_payment_method",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 4548,
+        "text": "请选择支付方式：",
+        "code": "hint_label = QLabel(\"请选择支付方式：\")"
+      },
+      "key": "membership.payment.select_prompt",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 4594,
+        "text": "取消",
+        "code": "cancel_button = QPushButton(\"取消\")"
+      },
+      "key": "button.cancel",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 4615,
+        "text": "确认支付",
+        "code": "confirm_button = QPushButton(\"确认支付\")"
+      },
+      "key": "membership.payment.confirm_payment",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 4781,
+        "text": "等待支付",
+        "code": "self.payment_polling_dialog.setWindowTitle(\"等待支付\")"
+      },
+      "key": "account.payment.waiting_payment",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 4821,
+        "text": "创建订单失败",
+        "code": "QMessageBox.critical(self, \"创建订单失败\", detailed_msg)"
+      },
+      "key": "membership.payment.create_order_failed",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 4849,
+        "text": "错误",
+        "code": "QMessageBox.critical(self, \"错误\", error_msg)"
+      },
+      "key": "membership.payment.error",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 4894,
+        "text": "创建支付会话失败",
+        "code": "QMessageBox.critical(self, \"创建支付会话失败\", detailed_msg)"
+      },
+      "key": "membership.payment.create_session_failed",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 4930,
+        "text": "提示",
+        "code": "#     QMessageBox.warning(self, \"提示\", \"请选择支付方式\")"
+      },
+      "key": "message.info",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 4967,
+        "text": "等待支付",
+        "code": "self.payment_polling_dialog.setWindowTitle(\"等待支付\")"
+      },
+      "key": "account.payment.waiting_payment",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 5015,
+        "text": "创建订单失败",
+        "code": "QMessageBox.critical(self, \"创建订单失败\", detailed_msg)"
+      },
+      "key": "membership.payment.create_order_failed",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 5195,
+        "text": "选色",
+        "code": "color_btn = QPushButton(\"选色\")"
+      },
+      "key": "general.text_2586",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 5237,
+        "text": "选色",
+        "code": "text_color_btn = QPushButton(\"选色\")"
+      },
+      "key": "general.text_2586",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 5270,
+        "text": "🗑️ 删除",
+        "code": "delete_btn = QPushButton(\"🗑️ 删除\")"
+      },
+      "key": "general.text_1284",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 5345,
+        "text": "选色",
+        "code": "color_btn = QPushButton(\"选色\")"
+      },
+      "key": "general.text_2586",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 5372,
+        "text": "选色",
+        "code": "text_color_btn = QPushButton(\"选色\")"
+      },
+      "key": "general.text_2586",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 5391,
+        "text": "🗑️ 删除",
+        "code": "delete_btn = QPushButton(\"🗑️ 删除\")"
+      },
+      "key": "general.text_1284",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 5435,
+        "text": "提示",
+        "code": "QMessageBox.information(self, \"提示\", \"所有任务已清空\\n\\n记得点击【保存所有设置】按钮来保存更改\")"
+      },
+      "key": "message.info",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 5454,
+        "text": "无法保存",
+        "code": "QMessageBox.warning(self, \"无法保存\", \"当前没有任何任务,无法保存为模板!\")"
+      },
+      "key": "account.message.cannot_save_empty",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 5649,
+        "text": "快速加载:",
+        "code": "template_label = QLabel(\"快速加载:\")"
+      },
+      "key": "tasks.labels.quick_load",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 5715,
+        "text": "(暂无自定义模板)",
+        "code": "self.custom_template_combo.addItem(\"(暂无自定义模板)\", None)"
+      },
+      "key": "account.message.no_custom_templates_placeholder",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 5739,
+        "text": "提示",
+        "code": "QMessageBox.information(self, \"提示\", \"请先创建自定义模板\")"
+      },
+      "key": "message.info",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 5757,
+        "text": "提示",
+        "code": "QMessageBox.information(self, \"提示\", \"请先创建自定义模板\")"
+      },
+      "key": "message.info",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 5768,
+        "text": "错误",
+        "code": "QMessageBox.warning(self, \"错误\", f\"模板文件不存在:\\n{filename}\")"
+      },
+      "key": "membership.payment.error",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 5802,
+        "text": "错误",
+        "code": "QMessageBox.critical(self, \"错误\", f\"模板文件格式错误:\\n{str(e)}\")"
+      },
+      "key": "membership.payment.error",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 5804,
+        "text": "错误",
+        "code": "QMessageBox.critical(self, \"错误\", f\"加载模板失败:\\n{str(e)}\")"
+      },
+      "key": "membership.payment.error",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 5837,
+        "text": "删除失败",
+        "code": "QMessageBox.critical(self, \"删除失败\", f\"无法删除模板:\\n{str(e)}\")"
+      },
+      "key": "account.message.delete_failed",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 5895,
+        "text": "警告",
+        "code": "QMessageBox.warning(self, \"警告\", \"模板管理器未初始化\")"
+      },
+      "key": "message.warning",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 5946,
+        "text": "警告",
+        "code": "QMessageBox.warning(self, \"警告\", \"没有设置被保存\")"
+      },
+      "key": "message.warning",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 5950,
+        "text": "错误",
+        "code": "QMessageBox.critical(self, \"错误\", f\"保存失败:\\n{str(e)}\")"
+      },
+      "key": "membership.payment.error",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 5959,
+        "text": "警告",
+        "code": "QMessageBox.warning(self, \"警告\", \"模板管理器未初始化\")"
+      },
+      "key": "message.warning",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 5964,
+        "text": "测试模板匹配",
+        "code": "dialog.setWindowTitle(\"测试模板匹配\")"
+      },
+      "key": "tasks.messages.test_template_match",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 5971,
+        "text": "选择一个日期，查看该日期会匹配到哪个模板：",
+        "code": "hint_label = QLabel(\"选择一个日期，查看该日期会匹配到哪个模板：\")"
+      },
+      "key": "templates.auto_apply.test_instruction",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 6029,
+        "text": "🔍 执行测试",
+        "code": "test_btn = QPushButton(\"🔍 执行测试\")"
+      },
+      "key": "general.text_8461",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 6035,
+        "text": "关闭",
+        "code": "close_btn = QPushButton(\"关闭\")"
+      },
+      "key": "button.close",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 6048,
+        "text": "错误",
+        "code": "QMessageBox.critical(self, \"错误\", f\"测试失败:\\n{str(e)}\")"
+      },
+      "key": "membership.payment.error",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 6094,
+        "text": "错误",
+        "code": "QMessageBox.critical(self, \"错误\", f\"模板文件格式错误:\\n{str(e)}\")"
+      },
+      "key": "membership.payment.error",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 6096,
+        "text": "错误",
+        "code": "QMessageBox.critical(self, \"错误\", f\"加载模板失败:\\n{str(e)}\")"
+      },
+      "key": "membership.payment.error",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 6149,
+        "text": "(将在开机时自动启动)",
+        "code": "self.autostart_status_label.setText(\"(将在开机时自动启动)\")"
+      },
+      "key": "account.message.autostart_enabled",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 6152,
+        "text": "(未启用)",
+        "code": "self.autostart_status_label.setText(\"(未启用)\")"
+      },
+      "key": "account.message.autostart_disabled",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 6482,
+        "text": "成功",
+        "code": "QMessageBox.information(self, \"成功\", \"配置和任务已保存!\\n\\n如果 Gaiya 正在运行,更改会自动生效。\")"
+      },
+      "key": "message.success",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 6486,
+        "text": "错误",
+        "code": "QMessageBox.critical(self, \"错误\", f\"保存失败:\\n{str(e)}\")"
+      },
+      "key": "membership.payment.error",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 6501,
+        "text": "⏳ 正在连接云服务...",
+        "code": "self.quota_label.setText(\"⏳ 正在连接云服务...\")"
+      },
+      "key": "account.ui.connecting_cloud",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 6565,
+        "text": "✓ 今日剩余: {daily_plan_remaining} 次规划",
+        "code": "self.quota_label.setText(f\"✓ 今日剩余: {daily_plan_remaining} 次规划\")"
+      },
+      "key": "account.message.quota_remaining",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 6570,
+        "text": "⚠️ 今日配额已用完",
+        "code": "self.quota_label.setText(\"⚠️ 今日配额已用完\")"
+      },
+      "key": "account.message.quota_exhausted",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 6582,
+        "text": "⚠️ 无法连接云服务（请点击刷新重试）",
+        "code": "self.quota_label.setText(\"⚠️ 无法连接云服务（请点击刷新重试）\")"
+      },
+      "key": "account.ui.cannot_connect_cloud",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 6637,
+        "text": "⏳ AI正在生成...",
+        "code": "self.generate_btn.setText(\"⏳ AI正在生成...\")"
+      },
+      "key": "ai.text_3863",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 6728,
+        "text": "✨ 智能生成任务",
+        "code": "self.generate_btn.setText(\"✨ 智能生成任务\")"
+      },
+      "key": "account.ui.ai_smart_generate",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 6741,
+        "text": "✨ 智能生成任务",
+        "code": "self.generate_btn.setText(\"✨ 智能生成任务\")"
+      },
+      "key": "account.ui.ai_smart_generate",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 6809,
+        "text": "版本 v{__version__}",
+        "code": "version_label = QLabel(f\"版本 v{__version__}\")"
+      },
+      "key": "general.text_7718",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 6823,
+        "text": "检查更新",
+        "code": "self.check_update_btn = QPushButton(\"检查更新\")"
+      },
+      "key": "general.text_5645",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 6967,
+        "text": "自动更新",
+        "code": "progress.setWindowTitle(\"自动更新\")"
+      },
+      "key": "general.text_9339",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 7055,
+        "text": "已取消",
+        "code": "QMessageBox.information(self, \"已取消\", \"更新已取消\")"
+      },
+      "key": "dialog.text_6870",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 7153,
+        "text": "检查中...",
+        "code": "self.check_update_btn.setText(\"检查中...\")"
+      },
+      "key": "general.text_2760",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 7170,
+        "text": "v{latest_version} 可更新",
+        "code": "self.check_update_btn.setText(f\"v{latest_version} 可更新\")"
+      },
+      "key": "general.text_8527",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 7194,
+        "text": "发现新版本",
+        "code": "msg.setWindowTitle(\"发现新版本\")"
+      },
+      "key": "general.text_377",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 7195,
+        "text": "发现新版本 v{latest_version}",
+        "code": "msg.setText(f\"发现新版本 v{latest_version}\")"
+      },
+      "key": "general.text_1975",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 7200,
+        "text": "立即更新",
+        "code": "auto_update_btn = msg.addButton(\"立即更新\", QMessageBox.ButtonRole.AcceptRole)"
+      },
+      "key": "general.text_2613",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 7201,
+        "text": "前往下载",
+        "code": "manual_download_btn = msg.addButton(\"前往下载\", QMessageBox.ButtonRole.ActionRole)"
+      },
+      "key": "general.text_7203",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 7219,
+        "text": "检查更新",
+        "code": "self.check_update_btn.setText(\"检查更新\")"
+      },
+      "key": "general.text_5645",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 7222,
+        "text": "检查更新失败",
+        "code": "QMessageBox.warning(self, \"检查更新失败\", \"网络请求超时，请检查网络连接\")"
+      },
+      "key": "message.text_8308",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 7223,
+        "text": "检查更新",
+        "code": "self.check_update_btn.setText(\"检查更新\")"
+      },
+      "key": "general.text_5645",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 7233,
+        "text": "检查更新失败",
+        "code": "QMessageBox.warning(self, \"检查更新失败\", f\"无法连接到更新服务器\\n\\n{str(e)}\")"
+      },
+      "key": "message.text_8308",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 7234,
+        "text": "检查更新",
+        "code": "self.check_update_btn.setText(\"检查更新\")"
+      },
+      "key": "general.text_5645",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 7236,
+        "text": "检查更新失败",
+        "code": "QMessageBox.warning(self, \"检查更新失败\", f\"无法连接到更新服务器\\n\\n{str(e)}\")"
+      },
+      "key": "message.text_8308",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 7237,
+        "text": "检查更新",
+        "code": "self.check_update_btn.setText(\"检查更新\")"
+      },
+      "key": "general.text_5645",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 7241,
+        "text": "检查更新失败",
+        "code": "QMessageBox.warning(self, \"检查更新失败\", f\"发生未知错误\\n\\n{str(e)}\")"
+      },
+      "key": "message.text_8308",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 7242,
+        "text": "检查更新",
+        "code": "self.check_update_btn.setText(\"检查更新\")"
+      },
+      "key": "general.text_5645",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 7280,
+        "text": "添加创始人微信",
+        "code": "dialog.setWindowTitle(\"添加创始人微信\")"
+      },
+      "key": "general.text_6717",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 7287,
+        "text": "扫描二维码，直接反馈问题",
+        "code": "title_label = QLabel(\"扫描二维码，直接反馈问题\")"
+      },
+      "key": "about.labels.scan_qr_feedback",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 7322,
+        "text": "无法加载二维码图片",
+        "code": "error_label = QLabel(\"无法加载二维码图片\")"
+      },
+      "key": "general.image_2",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 7327,
+        "text": "二维码图片不存在\\n路径: {qrcode_path}",
+        "code": "error_label = QLabel(f\"二维码图片不存在\\n路径: {qrcode_path}\")"
+      },
+      "key": "general.image_3",
+      "status": "matched"
+    },
+    {
+      "item": {
+        "line": 7333,
+        "text": "扫一扫上面的二维码图案，加我为朋友。",
+        "code": "hint_label = QLabel(\"扫一扫上面的二维码图案，加我为朋友。\")"
+      },
+      "key": "about.labels.scan_add_friend",
+      "status": "matched"
+    }
+  ],
+  "new_translations": {
+    "config.ui.ui_1efed7": {
+      "zh_CN": ">直接向创始人反馈问题</a>",
+      "en_US": "[TODO: >直接向创始人反馈问题</a>]",
+      "line": 6853,
+      "code": "feedback_link = QLabel('<a href=\"#\" style=\"color: #2196F3; text-decoration: none;\">直接向创始人反馈问题</a>')"
+    }
+  }
+}

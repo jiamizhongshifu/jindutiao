@@ -1,0 +1,98 @@
+Total TODO items: 537
+
+ACCOUNT (12 items):
+  account.text_1446: • 邮箱: {email}
+  account.text_1986: 💡 {feature_name}需要登录后才能使用。\n\n
+  account.text_2043: 登录后您将享有：\n
+  account.text_4359: 用户信息不完整，请重新登录
+  account.text_4681: 登录成功
+  account.text_617: 已退出当前账号。\n\n请重新启动应用以切换到游客模式。
+  account.text_72: 需要登录
+  account.text_7480: 邮箱：{email}  |  会员等级：{tier_name}
+  account.text_789: 登录后即可使用 AI智能规划、数据云同步等高级功能
+  account.text_8733: 🎁 登录后享受的权益：
+  account.text_9039: 🔑 点击登录 / 注册
+  account.text_9446: 是否前往个人中心登录？
+
+AI (20 items):
+  ai.text_1718: 50次/天 AI智能规划
+  ai.text_1722: • 免费用户：3次/天 AI智能规划\n
+  ai.text_2310: • Pro会员：每天 20 次 AI智能规划配额
+  ai.text_3235: 断开AI worker信号时出错: {e}
+  ai.text_3280: AI状态定时器已停止（配额检查成功）
+  ai.text_3402: AI生成失败
+  ai.text_3857: AI服务错误: {error_msg}
+  ai.text_3863: ⏳ AI正在生成...
+  ai.text_3969: AI正在处理上一个请求,请稍候...
+  ai.text_4639: 初始化AI组件失败: {e}
+  ai.text_5978: • Pro会员：20次/天 AI智能规划\n
+  ai.text_6479: 🤖 AI智能规划
+  ai.text_6479_1: AI智能规划
+  ai.text_6551: AI服务正在后台启动中,请稍候片刻再试...
+  ai.text_712: 20次/天 AI智能规划
+  ai.text_7976: • 免费用户：每天 3 次 AI智能规划配额
+  ai.text_857: ❌ AI服务初始化失败
+  ai.text_9372: ⏳ AI服务正在初始化...
+  ai.text_9372_1: AI服务正在初始化
+  ai.text_9377: ⚠️ AI服务正在启动...
+
+CONFIG (46 items):
+  config.color: 选择颜色
+  config.color_1: 背景颜色:
+  config.color_2: 时间标记颜色:
+  config.color_3: 文字颜色
+  config.config: 配置和任务加载完成
+  config.config_1: 加载配置和任务失败: {e}
+  config.config_2: {VERSION_STRING_ZH} - 配置管理器
+  config.config_3: 🎨 外观配置
+  config.config_4: 配置场景效果,让进度条更具个性化
+  config.config_5: 配置任务提醒通知,让您不会错过任何重要时刻
+  config.config_6: 配置文件JSON解析错误: {e}
+  config.config_7: 加载配置文件失败: {e}
+  config.config_8: 配置和任务已保存!\n\n如果 Gaiya 正在运行,更改会自动生效。
+  config.config_9: 配置管理器已关闭，资源已清理
+  config.settings: 🎬 场景设置
+  config.settings_1: 🔔 通知设置
+  config.settings_10: ⚙️ 基础设置
+  config.settings_11: 所有任务已清空\n\n记得点击【保存所有设置】按钮来保存更改
+  config.settings_12: 加载模板自动应用设置失败: {e}
+  config.settings_13: 没有设置被保存
+
+DIALOG (14 items):
+  dialog.display: 未选择场景,将显示默认进度条样式
+  dialog.image: 选择图片文件 (JPG/PNG/GIF/WebP)
+  dialog.text_1819: 您选择的套餐：{plan['name']} - {plan['price_cny']}{plan['period']}
+  dialog.text_2948: 更新已取消
+  dialog.text_3235: 确定要退出当前账号吗？\n\n退出后将以游客身份继续使用，免费用户功能将受到限制。
+  dialog.text_4054: 请选择支付方式：
+  dialog.text_4776: 选择支付方式
+  dialog.text_5845: 请至少选择一个星期
+  dialog.text_6870: 已取消
+  dialog.text_7655: 请选择一个场景
+  dialog.text_7710: 请选择规则类型
+  dialog.text_8004: 🎬 场景选择
+  dialog.text_8307: 确定要删除这条规则吗?
+  dialog.text_9512: 选择具体日期:
+
+GENERAL (58 items):
+  general.animation: 动画播放速度:
+  general.display: 显示器索引:
+  general.display_1: 场景模式下在场景上方叠加显示进度条
+  general.display_2: 每日进度条显示
+  general.image: (line=线条, image=图片, gif=动画)
+  general.image_1: 图片文件 (*.jpg *.jpeg *.png *.gif *.webp)
+  general.image_2: 无法加载二维码图片
+  general.image_3: 二维码图片不存在\n路径: {qrcode_path}
+  general.marker: 标记图片:
+  general.marker_1: 标记图片 X 偏移:
+  general.marker_2: 标记图片 Y 偏移:
+  general.size: 标记图片大小:
+  general.text_1040: 示例: 22:00 - 08:00 表示晚上10点到早上8点不打扰
+  general.text_106: 请在打开的浏览器页面中完成支付。\n
+  general.text_1159: 场景编辑器已关闭
+  general.text_1163: ✓ 无水印
+  general.text_1225: 所有免费功能 +
+  general.text_1240: 每月的哪些天?（用逗号分隔，例如: 1,15,28）
+  general.text_1259: 统计报告分析
+  general.text_1278: 请输入每月的日期
+

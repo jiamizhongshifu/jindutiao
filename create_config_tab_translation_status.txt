@@ -1,0 +1,41 @@
+Translation Status for create_config_tab strings
+================================================================================
+
+Total strings to translate: 32
+Already exists: 115
+Need to create: 32
+
+MISSING TRANSLATIONS:
+--------------------------------------------------------------------------------
+基本设置 (config group title)
+颜色设置 (config group title)
+视觉效果 (config group title)
+进度条高度 (config label)
+显示器索引 (config label)
+更新间隔 (config label)
+自启动 (config label)
+背景颜色 (config label)
+背景透明度 (config label)
+时间标记颜色 (config label)
+时间标记宽度 (config label)
+时间标记类型 (config label)
+标记图片 (config label)
+标记图片大小 (config label)
+标记图片 X 偏移 (config label)
+标记图片 Y 偏移 (config label)
+动画播放速度 (config label)
+圆角半径 (config label)
+选择颜色 (button)
+浏览 (button)
+开机自动启动 (checkbox)
+启用阴影效果 (checkbox)
+极细 (preset option)
+细 (preset option)
+标准 (preset option)
+粗 (preset option)
+小 (preset option)
+中 (preset option)
+大 (preset option)
+毫秒 (unit)
+像素 (unit)
+自定义 (label)

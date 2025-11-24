@@ -8,6 +8,12 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
 
+import sys
+import os
+# 添加父目录到路径以导入i18n模块
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from i18n.translator import tr
+
 
 class SetupWizard(QWizard):
     """配置向导
@@ -31,7 +37,7 @@ class SetupWizard(QWizard):
     def setup_ui(self):
         """设置向导界面"""
         # 向导基本设置
-        self.setWindowTitle("快速配置")
+        self.setWindowTitle(tr("wizard.window.title"))
         self.setFixedSize(550, 700)  # 增加高度 650→700，确保完成页无需滚动
         self.setModal(True)
 
@@ -87,8 +93,8 @@ class TemplateSelectionPage(QWizardPage):
     def setup_ui(self):
         """设置页面UI"""
         # 页面标题和说明
-        self.setTitle("选择任务模板")
-        self.setSubTitle("为你推荐3个热门模板，选择最适合的一个即可快速开始")
+        self.setTitle(tr("wizard.template_page.title"))
+        self.setSubTitle(tr("wizard.template_page.subtitle"))
 
         layout = QVBoxLayout(self)
         layout.setSpacing(15)
@@ -98,33 +104,33 @@ class TemplateSelectionPage(QWizardPage):
         self.button_group = QButtonGroup(self)
 
         # 模板1：工作日模板
-        work_radio = QRadioButton("📊 工作日模板")
+        work_radio = QRadioButton(tr("wizard.templates.work_weekday.name"))
         work_radio.setProperty("template_id", "work_weekday")
         radio_font = QFont()
         radio_font.setPointSize(13)  # 设置单选按钮字号为13pt
         work_radio.setFont(radio_font)
         work_description = QLabel(
-            "适合上班族。包含：通勤、会议、工作、午休、晚餐、学习等典型工作日任务。"
+            tr("wizard.templates.work_weekday.description")
         )
         work_description.setWordWrap(True)
         work_description.setStyleSheet("color: #666666; font-size: 12px; margin-left: 25px; margin-bottom: 15px;")  # 字号11→12px, 间距10→15px
 
         # 模板2：学生模板
-        student_radio = QRadioButton("🎓 学生模板")
+        student_radio = QRadioButton(tr("wizard.templates.student.name"))
         student_radio.setProperty("template_id", "student")
         student_radio.setFont(radio_font)  # 使用相同字体
         student_description = QLabel(
-            "适合学生党。包含：早读、上课、自习、运动、社团活动等校园生活任务。"
+            tr("wizard.templates.student.description")
         )
         student_description.setWordWrap(True)
         student_description.setStyleSheet("color: #666666; font-size: 12px; margin-left: 25px; margin-bottom: 15px;")  # 字号11→12px, 间距10→15px
 
         # 模板3：自由职业模板
-        freelancer_radio = QRadioButton("💼 自由职业模板")
+        freelancer_radio = QRadioButton(tr("wizard.templates.freelancer.name"))
         freelancer_radio.setProperty("template_id", "freelancer")
         freelancer_radio.setFont(radio_font)  # 使用相同字体
         freelancer_description = QLabel(
-            "适合自由工作者。包含：客户沟通、项目开发、创作时间、休息等灵活时间安排。"
+            tr("wizard.templates.freelancer.description")
         )
         freelancer_description.setWordWrap(True)
         freelancer_description.setStyleSheet("color: #666666; font-size: 12px; margin-left: 25px; margin-bottom: 15px;")  # 字号11→12px, 间距10→15px
@@ -155,14 +161,14 @@ class TemplateSelectionPage(QWizardPage):
         layout.addSpacing(15)  # 增加间距 10→15px
 
         # AI生成选项
-        ai_label = QLabel("或者，让AI根据你的需求智能生成任务：")
+        ai_label = QLabel(tr("wizard.template_page.ai_option_label"))
         ai_label_font = QFont()
         ai_label_font.setPointSize(13)  # 设置AI标签字号为13pt
         ai_label_font.setBold(True)
         ai_label.setFont(ai_label_font)
         layout.addWidget(ai_label)
 
-        ai_btn = QPushButton("🤖 AI智能生成任务")
+        ai_btn = QPushButton(tr("wizard.template_page.ai_button"))
         ai_btn.setFixedHeight(45)  # 增加按钮高度 40→45px
         ai_btn.setStyleSheet("""
             QPushButton {
@@ -181,7 +187,7 @@ class TemplateSelectionPage(QWizardPage):
 
         layout.addSpacing(10)  # AI按钮与提示文字之间的间距
 
-        ai_note = QLabel("💡 点击后将关闭向导，打开配置界面使用AI生成")
+        ai_note = QLabel(tr("wizard.template_page.ai_note"))
         ai_note.setStyleSheet("color: #888888; font-size: 11px;")  # 字号10→11px
         layout.addWidget(ai_note)
 
@@ -209,15 +215,15 @@ class CompletionPage(QWizardPage):
     def setup_ui(self):
         """设置页面UI"""
         # 页面标题
-        self.setTitle("配置完成！🎉")
-        self.setSubTitle("你已成功完成基础配置，现在可以开始使用 GaiYa 了")
+        self.setTitle(tr("wizard.complete_page.title"))
+        self.setSubTitle(tr("wizard.complete_page.subtitle"))
 
         layout = QVBoxLayout(self)
         layout.setSpacing(15)
         layout.setContentsMargins(20, 20, 20, 20)
 
         # 配置摘要
-        summary_label = QLabel("✅ 已完成的配置：")
+        summary_label = QLabel(tr("wizard.complete_page.summary_title"))
         summary_label.setStyleSheet("font-weight: bold; font-size: 14px;")
         layout.addWidget(summary_label)
 
@@ -232,7 +238,7 @@ class CompletionPage(QWizardPage):
         layout.addWidget(self.template_label)
 
         # 进度条位置信息
-        position_label = QLabel("进度条位置: 屏幕底部（固定）")
+        position_label = QLabel(tr("wizard.complete_page.position_label"))
         position_font = QFont()
         position_font.setPointSize(13)
         position_label.setFont(position_font)
@@ -242,7 +248,7 @@ class CompletionPage(QWizardPage):
         layout.addSpacing(15)
 
         # 下一步建议标题
-        suggestions_title = QLabel("下一步建议:")
+        suggestions_title = QLabel(tr("wizard.complete_page.suggestions_title"))
         suggestions_font = QFont()
         suggestions_font.setPointSize(13)
         suggestions_font.setBold(True)
@@ -252,9 +258,9 @@ class CompletionPage(QWizardPage):
 
         # 建议列表
         suggestions = [
-            "• 打开配置界面自定义任务时间和颜色",
-            "• 设置任务提醒时间",
-            "• 选择喜欢的主题配色"
+            tr("wizard.suggestions.customize_tasks"),
+            tr("wizard.suggestions.set_reminders"),
+            tr("wizard.suggestions.choose_theme")
         ]
 
         for suggestion in suggestions:
@@ -266,15 +272,15 @@ class CompletionPage(QWizardPage):
             layout.addWidget(suggestion_label)
 
         # 快速上手提示
-        tips_label = QLabel("💡 快速上手提示：")
+        tips_label = QLabel(tr("wizard.complete_page.tips_title"))
         tips_label.setStyleSheet("font-weight: bold; font-size: 14px;")  # 字号12→14px
         layout.addWidget(tips_label)
 
         tips = [
-            "• 右键点击进度条可以打开配置界面",
-            "• 系统托盘图标右键菜单提供快捷操作",
-            "• 支持快捷键：双击隐藏/显示进度条",
-            "• 免费用户每天有3次AI任务规划配额"
+            tr("wizard.tips.right_click_config"),
+            tr("wizard.tips.tray_menu"),
+            tr("wizard.tips.double_click_toggle"),
+            tr("wizard.tips.free_quota")
         ]
 
         for tip in tips:
@@ -293,10 +299,10 @@ class CompletionPage(QWizardPage):
         template_id = wizard.get_selected_template()
 
         template_names = {
-            "work_weekday": "工作日模板 📊",
-            "student": "学生模板 🎓",
-            "freelancer": "自由职业模板 💼"
+            "work_weekday": tr("wizard.templates.work_weekday.name"),
+            "student": tr("wizard.templates.student.name"),
+            "freelancer": tr("wizard.templates.freelancer.name")
         }
 
         template_name = template_names.get(template_id, template_id)
-        self.template_label.setText(f"已选择任务模板: {template_name}")
+        self.template_label.setText(tr("wizard.complete_page.selected_template", template_name=template_name))

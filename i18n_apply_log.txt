@@ -1,0 +1,54 @@
+[OK] Line 1556
+[OK] Line 1690
+[SKIP] Line 1889: Content mismatch
+  Expected:         visual_group = QGroupBox("✨ 视觉效果")
+  Found:            effect_group = QGroupBox("✨ 视觉效果")
+
+[OK] Line 1594
+[OK] Line 1610
+[OK] Line 1620
+[OK] Line 1627
+[OK] Line 1628
+[OK] Line 1635
+[OK] Line 1636
+[OK] Line 1652
+[OK] Line 1702
+[OK] Line 1715
+[OK] Line 1722
+[OK] Line 1730
+[OK] Line 1743
+[OK] Line 1750
+[OK] Line 1751
+[OK] Line 1763
+[OK] Line 1768
+[OK] Line 1774
+[OK] Line 1777
+[OK] Line 1783
+[OK] Line 1816
+[SKIP] Line 1831: Content mismatch
+  Expected:         color_layout.addRow("标记图片大小:", size_container)
+  Found:            color_layout.addRow("标记图片大小:", marker_size_container)
+
+[OK] Line 1843
+[OK] Line 1849
+[OK] Line 1858
+[OK] Line 1864
+[SKIP] Line 1874: Content mismatch
+  Expected:         animation_speed_hint = QLabel("(100%=原速, 200%=2倍速)")
+  Found:            speed_hint = QLabel("(100%=原速, 200%=2倍速)")
+
+[SKIP] Line 1880: Content mismatch
+  Expected:         color_layout.addRow("动画播放速度:", animation_speed_layout)
+  Found:            color_layout.addRow("动画播放速度:", speed_layout)
+
+[OK] Line 1896
+[SKIP] Line 1905: Content mismatch
+  Expected:         self.corner_radius_spin.setSuffix(" 像素")
+  Found:            self.radius_spin.setSuffix(" 像素")
+
+[SKIP] Line 1906: Content mismatch
+  Expected:         visual_layout.addRow("圆角半径:", self.corner_radius_spin)
+  Found:            effect_layout.addRow("圆角半径:", self.radius_spin)
+
+
+[SUCCESS] Made 28 changes

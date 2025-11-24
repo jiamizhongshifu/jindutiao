@@ -1,0 +1,2 @@
+提取完成! 共找到 20 个唯一的中文字符串
+结果已保存到: welcome_dialog_strings_raw.txt

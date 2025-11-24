@@ -22,6 +22,7 @@ import os
 # 添加父目录到路径以导入core模块
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from core.auth_client import AuthClient
+from i18n.translator import tr
 
 
 class GradientCardWidget(QWidget):
@@ -342,8 +343,8 @@ class MembershipDialog(QDialog):
         if not self.auth_client.is_logged_in():
             QMessageBox.warning(
                 parent,
-                "未登录",
-                "请先登录后再购买会员"
+                tr("membership.not_logged_in"),
+                tr("membership.login_required")
             )
             self.reject()
             return
@@ -355,7 +356,7 @@ class MembershipDialog(QDialog):
 
     def init_ui(self):
         """初始化UI"""
-        self.setWindowTitle("升级到专业版")
+        self.setWindowTitle(tr("membership.upgrade_to_pro"))
 
         # ⚠️ 关键修复：明确禁用窗口调整大小功能
         # 仅setFixedSize不够，还需要设置窗口标志移除调整大小边框
@@ -388,7 +389,7 @@ class MembershipDialog(QDialog):
         header_layout.setSpacing(8)
 
         # 标题
-        title_label = QLabel("升级 GaiYa 专业版")
+        title_label = QLabel(tr("membership.dialog_title"))
         title_font = QFont()
         title_font.setPointSize(26)
         title_font.setWeight(QFont.Weight.Bold)
@@ -440,7 +441,7 @@ class MembershipDialog(QDialog):
         footer_layout.addStretch()
 
         # 取消按钮（次要）
-        cancel_button = QPushButton("取消")
+        cancel_button = QPushButton(tr("membership.btn_cancel"))
         cancel_button.setFixedSize(120, 44)
         cancel_button.setStyleSheet("""
             QPushButton {
@@ -463,7 +464,7 @@ class MembershipDialog(QDialog):
         footer_layout.addWidget(cancel_button)
 
         # 购买按钮（主要，Apple蓝）
-        self.purchase_button = QPushButton("立即购买")
+        self.purchase_button = QPushButton(tr("membership.btn_buy_now"))
         self.purchase_button.setFixedSize(160, 44)
         self.purchase_button.setStyleSheet("""
             QPushButton {
@@ -507,17 +508,17 @@ class MembershipDialog(QDialog):
         # 月度会员（橙色卡片）
         monthly_plan = self._create_featured_card(
             plan_type="pro_monthly",
-            title="连续包月",
+            title=tr("membership.plan.monthly_name"),
             price="29",
             original_price="39",
-            unit="元/月",
-            period_price="¥0.97/天",
-            badge="立即开通",
+            unit=tr("membership.plan.per_month"),
+            period_price=tr("membership.plan.monthly_daily_price"),
+            badge=tr("membership.btn_activate"),
             features=[
-                "智能任务规划 50次/天",
-                "进度报告 10次/周",
-                "AI助手 100次/天",
-                "自定义主题"
+                tr("membership.feature.smart_planning_50"),
+                tr("membership.feature.progress_report_10"),
+                tr("membership.feature.ai_assistant_100"),
+                tr("membership.feature.custom_theme")
             ],
             bg_colors=["#ffb347", "#ff9f2e"],  # 橙色渐变
             is_recommended=False
@@ -527,17 +528,17 @@ class MembershipDialog(QDialog):
         # 年度会员（蓝色卡片 - 最推荐）
         yearly_plan = self._create_featured_card(
             plan_type="pro_yearly",
-            title="连续包年",
+            title=tr("membership.plan.yearly_name"),
             price="199",
             original_price="239",
-            unit="元/年",
-            period_price="¥0.55/天",
-            badge="订阅特惠",
+            unit=tr("membership.plan.per_year"),
+            period_price=tr("membership.plan.yearly_daily_price"),
+            badge=tr("membership.plan.subscription_deal"),
             features=[
-                "所有专业版功能",
-                "节省40元",
-                "优先客服支持",
-                "新功能优先体验"
+                tr("membership.feature.all_pro_features"),
+                tr("membership.feature.save_40"),
+                tr("membership.feature.priority_support"),
+                tr("membership.feature.early_access")
             ],
             bg_colors=["#5ba3ff", "#3d8eff"],  # 蓝色渐变
             is_recommended=True
@@ -547,7 +548,7 @@ class MembershipDialog(QDialog):
         # 终身会员（紫色卡片）- 暂时隐藏，后续调整价格后再启用
         # lifetime_plan = self._create_featured_card(
         #     plan_type="lifetime",
-        #     title="终身会员",
+        #     title=tr("membership.plan.lifetime"),
         #     price="299",
         #     original_price="399",
         #     unit="元/终身",
@@ -854,7 +855,7 @@ class MembershipDialog(QDialog):
 
         # === 推荐标签（顶部，仅年度套餐） ===
         if recommended:
-            badge = QLabel("最超值")
+            badge = QLabel(tr("membership.plan.best_value"))
             badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
             badge.setStyleSheet("""
                 QLabel {
@@ -1032,7 +1033,7 @@ class MembershipDialog(QDialog):
         layout.setSpacing(12)
 
         # 标题（居中）
-        title_label = QLabel("选择支付方式")
+        title_label = QLabel(tr("membership.payment.select_method"))
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title_label.setStyleSheet("""
             QLabel {
@@ -1056,7 +1057,7 @@ class MembershipDialog(QDialog):
         payment_layout.addStretch()
 
         # 支付宝
-        alipay_radio = QRadioButton("支付宝")
+        alipay_radio = QRadioButton(tr("membership.payment.alipay"))
         alipay_radio.setProperty("pay_type", "alipay")
         alipay_radio.setChecked(True)
         alipay_radio.setStyleSheet("""
@@ -1084,7 +1085,7 @@ class MembershipDialog(QDialog):
         payment_layout.addWidget(alipay_radio)
 
         # 微信支付
-        wxpay_radio = QRadioButton("微信支付")
+        wxpay_radio = QRadioButton(tr("membership.payment.wechat"))
         wxpay_radio.setProperty("pay_type", "wxpay")
         wxpay_radio.setStyleSheet(alipay_radio.styleSheet())
         self.payment_button_group.addButton(wxpay_radio)
@@ -1111,12 +1112,12 @@ class MembershipDialog(QDialog):
     def _on_purchase_clicked(self):
         """处理购买按钮点击"""
         if not self.selected_plan:
-            QMessageBox.warning(self, "未选择套餐", "请选择一个会员套餐")
+            QMessageBox.warning(self, tr("membership.error.no_plan_selected_title"), tr("membership.error.no_plan_selected_message"))
             return
 
         # 禁用购买按钮
         self.purchase_button.setEnabled(False)
-        self.purchase_button.setText("正在创建订单...")
+        self.purchase_button.setText(tr("membership.payment.creating_order"))
 
         # 创建支付订单
         user_id = self.auth_client.get_user_id()
@@ -1127,7 +1128,7 @@ class MembershipDialog(QDialog):
 
         # 恢复按钮状态
         self.purchase_button.setEnabled(True)
-        self.purchase_button.setText("立即购买")
+        self.purchase_button.setText(tr("membership.btn_buy_now"))
 
         if result.get("success"):
             # 订单创建成功
@@ -1151,18 +1152,18 @@ class MembershipDialog(QDialog):
 
         else:
             # 订单创建失败
-            error_msg = result.get("error", "创建订单失败")
-            QMessageBox.critical(self, "创建订单失败", f"创建订单失败：{error_msg}")
+            error_msg = result.get("error", tr("membership.error.order_creation_failed_title"))
+            QMessageBox.critical(self, tr("membership.error.order_creation_failed_title"), tr("membership.error.order_creation_failed", error_msg=error_msg))
 
     def _start_payment_polling(self, out_trade_no: str):
         """开始轮询支付状态"""
         # 显示等待对话框
         self.payment_polling_dialog = QMessageBox(self)
-        self.payment_polling_dialog.setWindowTitle("等待支付")
+        self.payment_polling_dialog.setWindowTitle(tr("membership.payment.waiting_title"))
         self.payment_polling_dialog.setText(
-            "正在等待支付完成...\n\n"
-            "请在打开的浏览器页面中完成支付。\n"
-            "支付完成后，此窗口将自动关闭。"
+            tr("membership.payment.waiting_line1") +
+            tr("membership.payment.waiting_line2") +
+            tr("membership.payment.waiting_line3")
         )
         self.payment_polling_dialog.setStandardButtons(QMessageBox.StandardButton.Cancel)
         self.payment_polling_dialog.setIcon(QMessageBox.Icon.Information)
@@ -1193,8 +1194,8 @@ class MembershipDialog(QDialog):
 
                 QMessageBox.information(
                     self,
-                    "支付成功",
-                    "支付已完成！\n您的会员权益已激活。\n\n请重新启动应用以生效。"
+                    tr("membership.payment.success_title"),
+                    tr("membership.payment.success_message")
                 )
 
                 # 发出购买成功信号
@@ -1214,17 +1215,17 @@ class MembershipDialog(QDialog):
     def _get_tier_name(self, tier: str) -> str:
         """获取会员等级名称"""
         tier_names = {
-            "free": "免费版",
-            "pro": "专业版",
-            "lifetime": "终身会员"
+            "free": tr("membership.plan.free"),
+            "pro": tr("membership.plan.pro"),
+            "lifetime": tr("membership.plan.lifetime")
         }
         return tier_names.get(tier, tier)
 
     def _get_pay_type_name(self, pay_type: str) -> str:
         """获取支付方式名称"""
         pay_type_names = {
-            "alipay": "支付宝",
-            "wxpay": "微信支付"
+            "alipay": tr("membership.payment.alipay"),
+            "wxpay": tr("membership.payment.wechat")
         }
         return pay_type_names.get(pay_type, pay_type)
 

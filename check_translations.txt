@@ -1,0 +1,7 @@
+tasks.template_4:
+  EN: Select历史Template或输入新名称
+  ZH: 选择历史模板或输入新名称
+
+tasks.template_5:
+  EN: 例如: 工作日Template
+  ZH: 例如: 工作日模板

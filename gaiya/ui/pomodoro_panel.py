@@ -10,6 +10,7 @@ from PySide6.QtCore import Qt, QRectF, QTimer, QPoint, Signal
 from PySide6.QtGui import QPainter, QColor, QPen, QFont, QCursor
 from gaiya.core.pomodoro_state import PomodoroState
 from gaiya.core.theme_manager import ThemeManager
+from i18n.translator import tr
 
 
 class PomodoroSettingsDialog(QDialog):
@@ -25,7 +26,7 @@ class PomodoroSettingsDialog(QDialog):
 
     def init_ui(self):
         """初始化用户界面"""
-        self.setWindowTitle('番茄钟设置')
+        self.setWindowTitle(tr("pomodoro.settings.dialog_title"))
         self.setFixedSize(350, 250)
 
         # 主布局
@@ -41,29 +42,29 @@ class PomodoroSettingsDialog(QDialog):
         self.work_duration_input = QSpinBox()
         self.work_duration_input.setRange(1, 120)
         self.work_duration_input.setValue(pomodoro_config.get('work_duration', 1500) // 60)
-        self.work_duration_input.setSuffix(' 分钟')
-        form_layout.addRow('工作时长:', self.work_duration_input)
+        self.work_duration_input.setSuffix(tr("pomodoro.unit.minutes"))
+        form_layout.addRow(tr("pomodoro.settings.work_duration"), self.work_duration_input)
 
         # 短休息时长(分钟)
         self.short_break_input = QSpinBox()
         self.short_break_input.setRange(1, 60)
         self.short_break_input.setValue(pomodoro_config.get('short_break', 300) // 60)
-        self.short_break_input.setSuffix(' 分钟')
-        form_layout.addRow('短休息时长:', self.short_break_input)
+        self.short_break_input.setSuffix(tr("pomodoro.unit.minutes"))
+        form_layout.addRow(tr("pomodoro.settings.short_break"), self.short_break_input)
 
         # 长休息时长(分钟)
         self.long_break_input = QSpinBox()
         self.long_break_input.setRange(1, 120)
         self.long_break_input.setValue(pomodoro_config.get('long_break', 900) // 60)
-        self.long_break_input.setSuffix(' 分钟')
-        form_layout.addRow('长休息时长:', self.long_break_input)
+        self.long_break_input.setSuffix(tr("pomodoro.unit.minutes"))
+        form_layout.addRow(tr("pomodoro.settings.long_break"), self.long_break_input)
 
         # 长休息间隔(番茄钟数量)
         self.long_break_interval_input = QSpinBox()
         self.long_break_interval_input.setRange(1, 10)
         self.long_break_interval_input.setValue(pomodoro_config.get('long_break_interval', 4))
-        self.long_break_interval_input.setSuffix(' 个番茄钟')
-        form_layout.addRow('长休息间隔:', self.long_break_interval_input)
+        self.long_break_interval_input.setSuffix(tr("pomodoro.unit.pomodoro_count"))
+        form_layout.addRow(tr("pomodoro.settings.long_break_interval"), self.long_break_interval_input)
 
         layout.addLayout(form_layout)
 
@@ -71,12 +72,12 @@ class PomodoroSettingsDialog(QDialog):
         button_layout = QHBoxLayout()
 
         # 保存按钮
-        save_button = QPushButton('保存')
+        save_button = QPushButton(tr("pomodoro.button.save"))
         save_button.clicked.connect(self.save_settings)
         button_layout.addWidget(save_button)
 
         # 取消按钮
-        cancel_button = QPushButton('取消')
+        cancel_button = QPushButton(tr("pomodoro.button.cancel"))
         cancel_button.clicked.connect(self.reject)
         button_layout.addWidget(cancel_button)
 
@@ -105,7 +106,7 @@ class PomodoroSettingsDialog(QDialog):
             with open(config_file, 'w', encoding='utf-8') as f:
                 json.dump(self.config, f, indent=4, ensure_ascii=False)
 
-            self.logger.info("番茄钟设置已保存")
+            self.logger.info(tr("pomodoro.settings.saved"))
 
             # 发送信号通知配置已更新
             self.settings_saved.emit(self.config)
@@ -114,11 +115,11 @@ class PomodoroSettingsDialog(QDialog):
             self.accept()
 
         except Exception as e:
-            self.logger.error(f"保存番茄钟设置失败: {e}", exc_info=True)
+            self.logger.error(tr("pomodoro.error.save_failed_log", e=e), exc_info=True)
             QMessageBox.critical(
                 self,
-                "错误",
-                f"保存设置失败:\n{str(e)}"
+                tr("pomodoro.error.error_title"),
+                tr("pomodoro.error.save_failed_message", error=str(e))
             )
 
 
@@ -175,12 +176,12 @@ class PomodoroPanel(QWidget):
             self.logger.warning(f"主题管理器初始化失败: {e}")
             self.theme_manager = None
 
-        self.logger.info("番茄钟面板创建成功")
+        self.logger.info(tr("pomodoro.log.panel_created"))
 
     def init_ui(self):
         """初始化用户界面"""
         # 设置窗口属性
-        self.setWindowTitle('番茄钟')
+        self.setWindowTitle(tr("pomodoro.unit.panel_title"))
 
         # 窗口标志:无边框,始终置顶,不接受焦点
         flags = (
@@ -213,7 +214,7 @@ class PomodoroPanel(QWidget):
         panel_y = bar_geometry.y() - self.height() - 10
 
         self.move(panel_x, panel_y)
-        self.logger.info(f"番茄钟面板定位: x={panel_x}, y={panel_y}")
+        self.logger.info(tr("pomodoro.log.panel_positioned", panel_x=panel_x, panel_y=panel_y))
 
     def start_work(self):
         """开始工作番茄钟"""
@@ -221,7 +222,7 @@ class PomodoroPanel(QWidget):
         self.time_remaining = self.work_duration
         self.countdown_timer.start(1000)  # 每秒更新一次
         self.update()
-        self.logger.info("番茄钟开始:工作模式")
+        self.logger.info(tr("pomodoro.log.started_work"))
 
     def start_short_break(self):
         """开始短休息"""
@@ -229,7 +230,7 @@ class PomodoroPanel(QWidget):
         self.time_remaining = self.short_break
         self.countdown_timer.start(1000)
         self.update()
-        self.logger.info("番茄钟开始:短休息")
+        self.logger.info(tr("pomodoro.log.started_short_break"))
 
     def start_long_break(self):
         """开始长休息"""
@@ -237,7 +238,7 @@ class PomodoroPanel(QWidget):
         self.time_remaining = self.long_break
         self.countdown_timer.start(1000)
         self.update()
-        self.logger.info("番茄钟开始:长休息")
+        self.logger.info(tr("pomodoro.log.started_long_break"))
 
     def toggle_pause(self):
         """切换暂停/继续"""
@@ -254,12 +255,12 @@ class PomodoroPanel(QWidget):
                 self.state = PomodoroState.SHORT_BREAK
             else:
                 self.state = PomodoroState.WORK
-            self.logger.info("番茄钟继续")
+            self.logger.info(tr("pomodoro.log.resumed"))
         else:
             # 暂停当前状态
             self.countdown_timer.stop()
             self.state = PomodoroState.PAUSED
-            self.logger.info("番茄钟暂停")
+            self.logger.info(tr("pomodoro.log.paused"))
 
         self.update()
 
@@ -268,7 +269,7 @@ class PomodoroPanel(QWidget):
         self.countdown_timer.stop()
         self.state = PomodoroState.IDLE
         self.time_remaining = self.work_duration
-        self.logger.info("番茄钟停止")
+        self.logger.info(tr("pomodoro.log.stopped"))
         self.close()
         self.closed.emit()
 
@@ -285,13 +286,13 @@ class PomodoroPanel(QWidget):
             self.settings_window = PomodoroSettingsDialog(self.config, self.logger, parent=self)
             self.settings_window.settings_saved.connect(self.on_settings_saved)
             self.settings_window.show()
-            self.logger.info("番茄钟设置窗口已打开")
+            self.logger.info(tr("pomodoro.log.settings_opened"))
 
         except Exception as e:
-            self.logger.error(f"打开番茄钟设置窗口失败: {e}", exc_info=True)
+            self.logger.error(tr("pomodoro.error.open_settings_failed_log", e=e), exc_info=True)
             self.tray_icon.showMessage(
-                "错误",
-                f"打开设置失败: {str(e)}",
+                tr("pomodoro.error.error_title"),
+                tr("pomodoro.error.open_settings_failed_message", error=str(e)),
                 QSystemTrayIcon.Critical,
                 3000
             )
@@ -307,16 +308,16 @@ class PomodoroPanel(QWidget):
             self.long_break = pomodoro_config.get('long_break', 900)
             self.long_break_interval = pomodoro_config.get('long_break_interval', 4)
 
-            self.logger.info("番茄钟配置已更新")
+            self.logger.info(tr("pomodoro.settings.updated"))
             self.tray_icon.showMessage(
-                "设置已保存",
-                "番茄钟配置已更新",
+                tr("pomodoro.settings.saved"),
+                tr("pomodoro.settings.updated"),
                 QSystemTrayIcon.Information,
                 2000
             )
 
         except Exception as e:
-            self.logger.error(f"更新番茄钟配置失败: {e}", exc_info=True)
+            self.logger.error(tr("pomodoro.log.config_update_failed", e=e), exc_info=True)
 
     def update_countdown(self):
         """更新倒计时"""
@@ -335,12 +336,12 @@ class PomodoroPanel(QWidget):
         if self.state == PomodoroState.WORK:
             # 工作完成
             self.pomodoro_count += 1
-            self.logger.info(f"番茄钟完成:第{self.pomodoro_count}个")
+            self.logger.info(tr("pomodoro.log.completed", count=self.pomodoro_count))
 
             # 发送通知
             self.tray_icon.showMessage(
-                "🍅 番茄钟完成!",
-                f"恭喜完成第{self.pomodoro_count}个番茄钟!\n休息一下吧~",
+                tr("pomodoro.notification.completed_title"),
+                tr("pomodoro.notification.completed_message", count=self.pomodoro_count),
                 QSystemTrayIcon.Information,
                 5000
             )
@@ -353,13 +354,13 @@ class PomodoroPanel(QWidget):
 
         elif self.state in [PomodoroState.SHORT_BREAK, PomodoroState.LONG_BREAK]:
             # 休息完成
-            rest_type = "长休息" if self.state == PomodoroState.LONG_BREAK else "短休息"
+            rest_type = tr("pomodoro.notification.long_break_text") if self.state == PomodoroState.LONG_BREAK else tr("pomodoro.notification.short_break_text")
             self.logger.info(f"{rest_type}完成")
 
             # 发送通知,询问是否开始下一个番茄钟
             self.tray_icon.showMessage(
-                "⏰ 休息时间结束",
-                f"{rest_type}结束啦!准备好开始下一个番茄钟了吗?\n点击番茄钟面板的开始按钮继续~",
+                tr("pomodoro.notification.break_ended_title"),
+                tr("pomodoro.notification.break_ended_message", rest_type=rest_type),
                 QSystemTrayIcon.Information,
                 5000
             )

@@ -1,0 +1,47 @@
+=== email_verification_dialog.py 中文字符串提取 ===
+共找到 44 个中文字符串
+
+Line 47: 验证您的邮箱
+Line 65: 验证邮件已发送
+Line 75: 我们已向 <b>{self.email}</b> 发送了一封验证邮件。<br><br>
+Line 76: 请打开您的邮箱，点击邮件中的<b>验证链接</b>完成注册。<br><br>
+Line 77: <small>验证完成后，本窗口将自动关闭并登录。</small>
+Line 85: ⏳ 等待邮箱验证...
+Line 122: 💡 <b>小贴士：</b><br>
+Line 123: • 请检查垃圾邮件文件夹<br>
+Line 124: • 验证链接有效期为24小时<br>
+Line 125: • 如果没有收到邮件，可以点击下方\
+Line 145: 重新发送验证邮件
+Line 170: 取消
+Line 193: [EMAIL-VERIFICATION] 开始轮询验证状态，邮箱: {self.email}
+Line 203: ⏰ 验证超时，请重新发送验证邮件
+Line 218: [EMAIL-VERIFICATION] 第{self.check_count}次检查验证状态...
+Line 238: [EMAIL-VERIFICATION] 尚未验证，继续等待...
+Line 240: [EMAIL-VERIFICATION] 检查失败: HTTP {response.status_code}
+Line 243: [EMAIL-VERIFICATION] 检查超时，将在5秒后重试
+Line 245: [EMAIL-VERIFICATION] 检查错误: {e}
+Line 249: [EMAIL-VERIFICATION] 验证成功！邮箱: {self.email}
+Line 255: ✅ 邮箱验证成功！
+Line 273: [EMAIL-VERIFICATION] 开始自动登录...
+Line 279: 验证成功
+Line 280: 邮箱验证成功！请使用您的邮箱和密码登录。
+Line 300: [EMAIL-VERIFICATION] 自动登录成功！
+Line 308: 欢迎
+Line 309: 欢迎！{self.email}\n\n您已成功注册并登录 GaiYa 每日进度条。
+Line 316: 登录失败
+Line 319: 自动登录失败
+Line 320: 邮箱验证成功，但自动登录失败：{error_msg}\n\n请手动登录。
+Line 325: [EMAIL-VERIFICATION] 自动登录错误: {e}
+Line 328: 自动登录失败
+Line 329: 邮箱验证成功，但自动登录出错：{str(e)}\n\n请手动登录。
+Line 337: 发送中...
+Line 349: 发送成功
+Line 350: 验证邮件已重新发送，请查收您的邮箱。
+Line 357: 发送失败
+Line 358: 重新发送失败，请稍后重试
+Line 364: 错误
+Line 365: 重新发送失败：{str(e)}
+Line 369: 重新发送验证邮件
+Line 375: 取消验证
+Line 376: 您确定要取消邮箱验证吗？\n\n取消后，您需要在验证邮箱后才能登录。
+Line 404: 验证成功！用户信息：{user_info}

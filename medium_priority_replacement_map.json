@@ -1,0 +1,44 @@
+[
+  {
+    "key": "config.errors.template_save_failed",
+    "zh_CN": "无法保存模板:\n{error}",
+    "en_US": "Unable to save template:\n{error}",
+    "replacement_pattern": "self.i18n.t(\"config.errors.template_save_failed\")"
+  },
+  {
+    "key": "config.errors.template_format_error",
+    "zh_CN": "模板文件格式错误:\n{error}",
+    "en_US": "Template file format error:\n{error}",
+    "replacement_pattern": "self.i18n.t(\"config.errors.template_format_error\")"
+  },
+  {
+    "key": "config.errors.template_load_failed",
+    "zh_CN": "加载模板失败:\n{error}",
+    "en_US": "Failed to load template:\n{error}",
+    "replacement_pattern": "self.i18n.t(\"config.errors.template_load_failed\")"
+  },
+  {
+    "key": "config.messages.template_updated",
+    "zh_CN": "模板已更新:\n{template_filename}\n\n包含 {task_count} 个任务。",
+    "en_US": "Template updated:\n{template_filename}\n\nContains {task_count} tasks.",
+    "replacement_pattern": "self.i18n.t(\"config.messages.template_updated\")"
+  },
+  {
+    "key": "config.messages.template_created",
+    "zh_CN": "模板已创建:\n{template_filename}\n\n已添加到【我的模板】列表中,包含 {task_count} 个任务。",
+    "en_US": "Template created:\n{template_filename}\n\nAdded to [My Templates] list with {task_count} tasks.",
+    "replacement_pattern": "self.i18n.t(\"config.messages.template_created\")"
+  },
+  {
+    "key": "config.prompts.confirm_load_template",
+    "zh_CN": "即将加载自定义模板: {template_name}\n\n包含 {task_count} 个任务\n\n当前表格中的任务将被替换,是否继续?",
+    "en_US": "About to load custom template: {template_name}\n\nContains {task_count} tasks\n\nCurrent tasks will be replaced. Continue?",
+    "replacement_pattern": "self.i18n.t(\"config.prompts.confirm_load_template\")"
+  },
+  {
+    "key": "config.schedule.test_date_display",
+    "zh_CN": "测试日期: {test_date}",
+    "en_US": "Test date: {test_date}",
+    "replacement_pattern": "self.i18n.t(\"config.schedule.test_date_display\")"
+  }
+]

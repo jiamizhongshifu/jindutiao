@@ -1,0 +1,56 @@
+{
+  "summary": {
+    "high_priority": 11,
+    "medium_priority": 4,
+    "docstrings": 64,
+    "logs": 5
+  },
+  "zh_CN_additions": {
+    "config.tooltips.1": "加载选中的自定义模板",
+    "config.tooltips.2": "删除选中的自定义模板",
+    "config.tooltips.3": "测试指定日期会匹配到哪个模板",
+    "config.dialogs.1": "已应用主题: {self.theme_manager.get_current_theme().get(",
+    "config.membership.1": ">此次会员合伙人招募，<b style=",
+    "config.membership.2": "您选择的套餐：{plan[",
+    "config.membership.3": "• 套餐类型: {plan_id}\\n",
+    "config.membership.4": "[STRIPE] 开始创建Stripe支付会话 - 套餐: {plan_id}",
+    "config.membership.5": "• 套餐类型: {plan_id}\\n",
+    "config.membership.6": "• 套餐类型: {self.selected_plan_id}\\n",
+    "config.membership.7": "支付已完成！\\n您的会员权益已激活。\\n\\n请重新启动应用以生效。",
+    "config.templates.1": "模板名",
+    "config.templates.2": "• 选择历史模板将直接覆盖该模板\\n",
+    "config.templates.3": "✅ 该日期会自动加载模板: {template_name}",
+    "config.templates.4": "⚠️ 警告：该日期有 {len(all_matched)} 个模板规则冲突！"
+  },
+  "en_US_additions": {
+    "config.tooltips.1": "[TODO: Translate] 加载选中的自定义模板",
+    "config.tooltips.2": "[TODO: Translate] 删除选中的自定义模板",
+    "config.tooltips.3": "[TODO: Translate] 测试指定日期会匹配到哪个模板",
+    "config.dialogs.1": "[TODO: Translate] 已应用主题: {self.theme_manager.get_current_theme().get(",
+    "config.membership.1": "[TODO: Translate] >此次会员合伙人招募，<b style=",
+    "config.membership.2": "[TODO: Translate] 您选择的套餐：{plan[",
+    "config.membership.3": "[TODO: Translate] • 套餐类型: {plan_id}\\n",
+    "config.membership.4": "[TODO: Translate] [STRIPE] 开始创建Stripe支付会话 - 套餐: {plan_id}",
+    "config.membership.5": "[TODO: Translate] • 套餐类型: {plan_id}\\n",
+    "config.membership.6": "[TODO: Translate] • 套餐类型: {self.selected_plan_id}\\n",
+    "config.membership.7": "[TODO: Translate] 支付已完成！\\n您的会员权益已激活。\\n\\n请重新启动应用以生效。",
+    "config.templates.1": "[TODO] 模板名",
+    "config.templates.2": "[TODO] • 选择历史模板将直接覆盖该模板\\n",
+    "config.templates.3": "[TODO] ✅ 该日期会自动加载模板: {template_name}",
+    "config.templates.4": "[TODO] ⚠️ 警告：该日期有 {len(all_matched)} 个模板规则冲突！"
+  },
+  "categorized_counts": {
+    "tooltips": 3,
+    "dialogs": 1,
+    "membership": 7,
+    "templates": 4,
+    "schedule": 0,
+    "theme": 0,
+    "scene": 0,
+    "notification": 0,
+    "errors": 9,
+    "logs": 5,
+    "docstrings": 64,
+    "general": 7
+  }
+}

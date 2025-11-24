@@ -18,6 +18,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # 添加父目录到路径以导入core模块
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from i18n.translator import tr
 
 
 class OTPDialog(QDialog):
@@ -42,7 +43,7 @@ class OTPDialog(QDialog):
 
     def init_ui(self):
         """初始化UI"""
-        self.setWindowTitle("邮箱验证")
+        self.setWindowTitle(tr("otp.dialog.title"))
         self.setMinimumWidth(450)
         self.setMinimumHeight(350)
 
@@ -60,7 +61,7 @@ class OTPDialog(QDialog):
         main_layout.addWidget(icon_label)
 
         # 标题
-        title_label = QLabel("验证您的邮箱")
+        title_label = QLabel(tr("otp.dialog.sent_title"))
         title_font = QFont()
         title_font.setPointSize(18)
         title_font.setBold(True)
@@ -69,7 +70,7 @@ class OTPDialog(QDialog):
         main_layout.addWidget(title_label)
 
         # 说明文字
-        desc_label = QLabel(f"我们已向 <b>{self.email}</b> 发送了一封包含6位验证码的邮件")
+        desc_label = QLabel(tr("otp.dialog.sent_message_html", email=self.email))
         desc_label.setWordWrap(True)
         desc_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         desc_label.setStyleSheet("color: #666; font-size: 13px;")
@@ -114,10 +115,10 @@ class OTPDialog(QDialog):
         resend_layout = QHBoxLayout()
         resend_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.resend_label = QLabel("没收到验证码？")
+        self.resend_label = QLabel(tr("otp.dialog.no_code_question"))
         self.resend_label.setStyleSheet("color: #666; font-size: 12px;")
 
-        self.resend_button = QPushButton("重新发送 (60s)")
+        self.resend_button = QPushButton(tr("otp.button.resend_countdown", countdown=60))
         self.resend_button.setFlat(True)
         self.resend_button.setEnabled(False)
         self.resend_button.setStyleSheet("""
@@ -141,7 +142,7 @@ class OTPDialog(QDialog):
         main_layout.addLayout(resend_layout)
 
         # 验证按钮
-        self.verify_button = QPushButton("验证")
+        self.verify_button = QPushButton(tr("otp.button.verify"))
         self.verify_button.setMinimumHeight(45)
         self.verify_button.setStyleSheet("""
             QPushButton {
@@ -166,7 +167,7 @@ class OTPDialog(QDialog):
         main_layout.addWidget(self.verify_button)
 
         # 取消按钮
-        cancel_button = QPushButton("取消")
+        cancel_button = QPushButton(tr("otp.button.cancel"))
         cancel_button.setFlat(True)
         cancel_button.setStyleSheet("color: #999;")
         cancel_button.clicked.connect(self.reject)
@@ -196,7 +197,7 @@ class OTPDialog(QDialog):
         """发送OTP验证码"""
         try:
             self.resend_button.setEnabled(False)
-            self.resend_button.setText("发送中...")
+            self.resend_button.setText(tr("otp.button.sending"))
 
             response = requests.post(
                 f"{self.backend_url}/api/auth-send-otp",
@@ -218,39 +219,39 @@ class OTPDialog(QDialog):
                 else:
                     QMessageBox.warning(
                         self,
-                        "发送失败",
-                        data.get("error", "发送验证码失败")
+                        tr("otp.message.send_failed_title"),
+                        data.get("error", tr("otp.message.send_failed_message"))
                     )
                     self.resend_button.setEnabled(True)
-                    self.resend_button.setText("重新发送")
+                    self.resend_button.setText(tr("otp.button.resend"))
             else:
                 QMessageBox.critical(
                     self,
-                    "网络错误",
+                    tr("otp.message.network_error_title"),
                     f"HTTP {response.status_code}"
                 )
                 self.resend_button.setEnabled(True)
-                self.resend_button.setText("重新发送")
+                self.resend_button.setText(tr("otp.button.resend"))
 
         except requests.exceptions.Timeout:
-            QMessageBox.critical(self, "超时", "请求超时，请稍后重试")
+            QMessageBox.critical(self, tr("otp.message.timeout_title"), tr("otp.message.timeout_message"))
             self.resend_button.setEnabled(True)
-            self.resend_button.setText("重新发送")
+            self.resend_button.setText(tr("otp.button.resend"))
         except Exception as e:
-            QMessageBox.critical(self, "错误", f"发送失败：{str(e)}")
+            QMessageBox.critical(self, tr("otp.message.error_title"), tr("otp.message.send_error_message", error=str(e)))
             self.resend_button.setEnabled(True)
-            self.resend_button.setText("重新发送")
+            self.resend_button.setText(tr("otp.button.resend"))
 
     def _update_countdown(self):
         """更新倒计时"""
         self.countdown -= 1
 
         if self.countdown > 0:
-            self.resend_button.setText(f"重新发送 ({self.countdown}s)")
+            self.resend_button.setText(tr("otp.button.resend_countdown", countdown=self.countdown))
         else:
             self.countdown_timer.stop()
             self.resend_button.setEnabled(True)
-            self.resend_button.setText("重新发送")
+            self.resend_button.setText(tr("otp.button.resend"))
 
     def _on_verify_clicked(self):
         """处理验证按钮点击"""
@@ -258,12 +259,12 @@ class OTPDialog(QDialog):
         otp_code = "".join(input_field.text() for input_field in self.otp_inputs)
 
         if len(otp_code) != 6:
-            QMessageBox.warning(self, "输入错误", "请输入完整的6位验证码")
+            QMessageBox.warning(self, tr("otp.message.input_error_title"), tr("otp.message.input_error_message"))
             return
 
         # 禁用按钮
         self.verify_button.setEnabled(False)
-        self.verify_button.setText("验证中...")
+        self.verify_button.setText(tr("otp.button.verifying"))
 
         try:
             response = requests.post(
@@ -281,8 +282,8 @@ class OTPDialog(QDialog):
                 if data.get("success"):
                     QMessageBox.information(
                         self,
-                        "验证成功",
-                        "邮箱验证成功！"
+                        tr("otp.message.verify_success_title"),
+                        tr("otp.message.verify_success_message")
                     )
 
                     # 发出成功信号
@@ -291,8 +292,8 @@ class OTPDialog(QDialog):
                     # 关闭对话框
                     self.accept()
                 else:
-                    error_msg = data.get("error", "验证失败")
-                    QMessageBox.warning(self, "验证失败", error_msg)
+                    error_msg = data.get("error", tr("otp.message.verify_failed_message"))
+                    QMessageBox.warning(self, tr("otp.message.verify_failed_title"), error_msg)
 
                     # 清空输入框
                     for input_field in self.otp_inputs:
@@ -301,16 +302,16 @@ class OTPDialog(QDialog):
             else:
                 QMessageBox.critical(
                     self,
-                    "网络错误",
+                    tr("otp.message.network_error_title"),
                     f"HTTP {response.status_code}"
                 )
 
         except Exception as e:
-            QMessageBox.critical(self, "错误", f"验证失败：{str(e)}")
+            QMessageBox.critical(self, tr("otp.message.error_title"), tr("otp.message.verify_error_message", error=str(e)))
 
         finally:
             self.verify_button.setEnabled(True)
-            self.verify_button.setText("验证")
+            self.verify_button.setText(tr("otp.button.verify"))
 
 
 if __name__ == "__main__":
@@ -322,7 +323,7 @@ if __name__ == "__main__":
     dialog = OTPDialog(email="test@example.com")
 
     def on_success():
-        print("验证成功！")
+        print(tr("otp.message.final_success_message"))
 
     dialog.verification_success.connect(on_success)
     dialog.exec()
