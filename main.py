@@ -2250,12 +2250,9 @@ class TimeProgressBar(QWidget):
                 painter.drawRect(hover_rect)
 
             # 绘制任务文本
-            # 优先使用任务特定的文字颜色，否则使用主题全局文字颜色
-            if 'text_color' in task and task['text_color']:
-                text_color = QColor(task['text_color'])
-            else:
-                theme = self.theme_manager.get_current_theme() if self.theme_manager else None
-                text_color = QColor(theme.get('text_color', '#FFFFFF')) if theme else QColor(255, 255, 255)
+            # 悬停提示框的文字始终使用白色，确保在任务色块背景上清晰可见
+            # 不使用主题的text_color，因为主题text_color是针对进度条背景的，而这里背景是任务颜色
+            text_color = QColor(task.get('text_color', '#FFFFFF'))
             painter.setPen(text_color)
             painter.drawText(hover_rect, Qt.AlignCenter, task_text)
 

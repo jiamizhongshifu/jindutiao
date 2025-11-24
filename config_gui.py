@@ -1315,7 +1315,7 @@ class ConfigManager(QMainWindow):
 
     def init_ui(self):
         """初始化界面"""
-        self.setWindowTitle(self.i18n.tr("config.config_2", VERSION_STRING_ZH=VERSION_STRING_ZH))
+        self.setWindowTitle(self.i18n.tr("config.config_2", VERSION_STRING=VERSION_STRING, VERSION_STRING_ZH=VERSION_STRING_ZH))
 
         # 设置窗口图标
         icon_path = self.get_resource_path('gaiya-logo2-wbk.png')
@@ -1694,7 +1694,7 @@ class ConfigManager(QMainWindow):
         self.bg_color_input.setMaximumWidth(100)
         self.bg_color_input.setFixedHeight(36)
         self.bg_color_btn = QPushButton(self.i18n.tr("config.color"))
-        self.bg_color_btn.setFixedSize(80, 36)
+        self.bg_color_btn.setFixedSize(100, 36)
         self.bg_color_btn.setStyleSheet("QPushButton { padding: 8px 12px; font-size: 12px; }")
         # 使用 partial 避免 Lambda 循环引用
         self.bg_color_btn.clicked.connect(partial(self.choose_color, self.bg_color_input))
@@ -1722,7 +1722,7 @@ class ConfigManager(QMainWindow):
         self.marker_color_input.setMaximumWidth(100)
         self.marker_color_input.setFixedHeight(36)
         self.marker_color_btn = QPushButton(self.i18n.tr("config.color"))
-        self.marker_color_btn.setFixedSize(80, 36)
+        self.marker_color_btn.setFixedSize(100, 36)
         self.marker_color_btn.setStyleSheet("QPushButton { padding: 8px 12px; font-size: 12px; }")
         # 使用 partial 避免 Lambda 循环引用
         self.marker_color_btn.clicked.connect(partial(self.choose_color, self.marker_color_input))
@@ -1770,7 +1770,7 @@ class ConfigManager(QMainWindow):
 
         marker_image_btn = QPushButton(tr("appearance.browse"))
         marker_image_btn.clicked.connect(self.choose_marker_image)
-        marker_image_btn.setFixedSize(70, 36)
+        marker_image_btn.setFixedSize(90, 36)
         marker_image_btn.setStyleSheet("QPushButton { padding: 8px 12px; font-size: 12px; }")
         marker_image_layout.addWidget(marker_image_btn)
 
@@ -2165,6 +2165,13 @@ class ConfigManager(QMainWindow):
         self.tasks_table.setColumnCount(6)
         self.tasks_table.setHorizontalHeaderLabels([self.i18n.tr("config.table.start_time"), self.i18n.tr("config.table.end_time"), self.i18n.tr("config.table.task_name"), self.i18n.tr("config.table.bg_color"), self.i18n.tr("config.table.text_color"), self.i18n.tr("config.table.actions")])
         self.tasks_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
+        # 设置列宽以适应英文文本
+        self.tasks_table.setColumnWidth(0, 100)  # Start Time
+        self.tasks_table.setColumnWidth(1, 100)  # End Time
+        # Column 2 (Task Name) is set to Stretch
+        self.tasks_table.setColumnWidth(3, 195)  # Background Color
+        self.tasks_table.setColumnWidth(4, 195)  # Text Color
+        self.tasks_table.setColumnWidth(5, 80)   # Actions (Delete)
         self.tasks_table.setMinimumHeight(300)
 
         # 监听表格项的变化,实时同步到时间轴
@@ -3777,23 +3784,36 @@ class ConfigManager(QMainWindow):
         layout.setSpacing(8)
         layout.setContentsMargins(15, 20, 15, 20)
 
-        # 标题区域（标题 + 限量标签）
-        title_row = QHBoxLayout()
-        title_row.setSpacing(0)
-        title_row.setContentsMargins(0, 0, 0, 0)
-
-        # 左侧弹性空间（用于居中对齐）
-        title_row.addStretch()
-
-        # 标题文字
+        # 标题文字（居中显示）
         name_label = QLabel(plan['name'])
         name_label.setStyleSheet("font-size: 14px; font-weight: bold; color: #333333; background: transparent;")
-        title_row.addWidget(name_label)
+        name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(name_label)
 
-        # 标题与标签之间的间距
-        title_row.addSpacing(10)
+        layout.addSpacing(10)  # 标题后间距
 
-        # 限量标签（深金色背景）
+        # 价格区域(优先展示)
+        price_layout = QHBoxLayout()
+        price_layout.setSpacing(2)
+        price_label = QLabel(plan['price'])
+        price_label.setStyleSheet("font-size: 36px; font-weight: bold; color: #FFD700; background: transparent;")
+        price_label.setMinimumHeight(45)  # 确保价格数字有足够高度显示完整
+        price_layout.addStretch()
+        price_layout.addWidget(price_label)
+        price_layout.addStretch()
+        layout.addLayout(price_layout)
+
+        layout.addSpacing(5)  # 价格和文案之间间距
+
+        # 一次付费，终身可用（合并成一行显示）
+        lifetime_label = QLabel(self.i18n.tr("membership.ui.one_time_lifetime"))
+        lifetime_label.setStyleSheet("font-size: 12px; font-weight: 600; color: #FFD700; background: transparent;")
+        lifetime_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(lifetime_label)
+
+        layout.addSpacing(8)  # 说明文案和限量标签之间间距
+
+        # 限量标签（移到价格和说明之后）
         limited_badge = QLabel(self.i18n.tr("membership.ui.limited_offer"))
         limited_badge.setStyleSheet("""
             QLabel {
@@ -3805,40 +3825,10 @@ class ConfigManager(QMainWindow):
                 font-weight: normal;
             }
         """)
-        limited_badge.setMinimumWidth(90)
         limited_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        title_row.addWidget(limited_badge)
+        layout.addWidget(limited_badge, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        # 右侧弹性空间（用于居中对齐）
-        title_row.addStretch()
-
-        layout.addLayout(title_row)
-
-        layout.addSpacing(15)
-
-        # 价格区域
-        price_layout = QHBoxLayout()
-        price_layout.setSpacing(2)
-        price_label = QLabel(plan['price'])
-        price_label.setStyleSheet("font-size: 36px; font-weight: bold; color: #FFD700; background: transparent;")
-        price_layout.addStretch()
-        price_layout.addWidget(price_label)
-        price_layout.addStretch()
-        layout.addLayout(price_layout)
-
-        # 一次付费说明
-        onetime_label = QLabel(self.i18n.tr("membership.ui.one_time_payment"))
-        onetime_label.setStyleSheet("font-size: 12px; color: #888888; background: transparent;")
-        onetime_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(onetime_label)
-
-        # 终身可用强调
-        lifetime_label = QLabel(self.i18n.tr("membership.ui.lifetime_access"))
-        lifetime_label.setStyleSheet("font-size: 13px; font-weight: 600; color: #FFD700; background: transparent;")
-        lifetime_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(lifetime_label)
-
-        layout.addSpacing(15)
+        layout.addSpacing(12)  # 限量标签和邀请函之间间距(减小)
 
         # 邀请函链接
         invitation_link = QLabel(f'<a href="#" style="color: #666666; text-decoration: none;">{self.i18n.tr("config.membership.read_partner_invitation")}</a>')
@@ -5233,8 +5223,8 @@ class ConfigManager(QMainWindow):
             color_input.setFixedHeight(36)
 
             color_btn = QPushButton(self.i18n.tr("general.text_2586"))
-            color_btn.setFixedSize(50, 36)
-            color_btn.setStyleSheet("QPushButton { padding: 8px; font-size: 12px; }")
+            color_btn.setFixedSize(75, 36)
+            color_btn.setStyleSheet("QPushButton { padding: 4px 8px; font-size: 11px; }")
             # 使用 partial 避免 Lambda 循环引用
             color_btn.clicked.connect(partial(self.choose_color, color_input))
 
@@ -5275,8 +5265,8 @@ class ConfigManager(QMainWindow):
             text_color_input.setFixedHeight(36)
 
             text_color_btn = QPushButton(self.i18n.tr("general.text_2586"))
-            text_color_btn.setFixedSize(50, 36)
-            text_color_btn.setStyleSheet("QPushButton { padding: 8px; font-size: 12px; }")
+            text_color_btn.setFixedSize(75, 36)
+            text_color_btn.setStyleSheet("QPushButton { padding: 4px 8px; font-size: 11px; }")
             # 使用 partial 避免 Lambda 循环引用
             text_color_btn.clicked.connect(partial(self.choose_color, text_color_input))
 
@@ -5383,8 +5373,8 @@ class ConfigManager(QMainWindow):
         color_input.setFixedHeight(36)
 
         color_btn = QPushButton(self.i18n.tr("general.text_2586"))
-        color_btn.setFixedSize(50, 36)
-        color_btn.setStyleSheet("QPushButton { padding: 8px; font-size: 12px; }")
+        color_btn.setFixedSize(75, 36)
+        color_btn.setStyleSheet("QPushButton { padding: 4px 8px; font-size: 11px; }")
         # 使用 partial 避免 Lambda 循环引用
         color_btn.clicked.connect(partial(self.choose_color, color_input))
 
@@ -5410,8 +5400,8 @@ class ConfigManager(QMainWindow):
         text_color_input.setFixedHeight(36)
 
         text_color_btn = QPushButton(self.i18n.tr("general.text_2586"))
-        text_color_btn.setFixedSize(50, 36)
-        text_color_btn.setStyleSheet("QPushButton { padding: 8px; font-size: 12px; }")
+        text_color_btn.setFixedSize(75, 36)
+        text_color_btn.setStyleSheet("QPushButton { padding: 4px 8px; font-size: 11px; }")
         # 使用 partial 避免 Lambda 循环引用
         text_color_btn.clicked.connect(partial(self.choose_color, text_color_input))
 
@@ -7393,13 +7383,40 @@ del /f /q "%~f0"
         if new_lang == old_lang:
             return
 
-        # 更新配置
-        self.config['language'] = new_lang
-
-        # 保存配置
+        # 在切换语言前,先收集并保存当前UI的所有配置值,避免重置
+        # 这样新窗口加载时就能得到最新的配置
         try:
+            # 收集当前UI的配置值,保证语言切换后不会丢失用户修改
+            self.config['bar_height'] = self.height_spin.value() if hasattr(self, 'height_spin') else self.config.get('bar_height', 10)
+            self.config['background_color'] = self.bg_color_input.text() if hasattr(self, 'bg_color_input') else self.config.get('background_color', '#F5F5F5')
+            self.config['background_opacity'] = self.opacity_spin.value() if hasattr(self, 'opacity_spin') else self.config.get('background_opacity', 240)
+            self.config['marker_color'] = self.marker_color_input.text() if hasattr(self, 'marker_color_input') else self.config.get('marker_color', '#FF5252')
+            self.config['marker_width'] = self.marker_width_spin.value() if hasattr(self, 'marker_width_spin') else self.config.get('marker_width', 2)
+            self.config['marker_type'] = self.marker_type_combo.currentText() if hasattr(self, 'marker_type_combo') else self.config.get('marker_type', 'line')
+            self.config['marker_image_path'] = self.marker_image_input.text() if hasattr(self, 'marker_image_input') else self.config.get('marker_image_path', '')
+            self.config['marker_size'] = self.marker_size_spin.value() if hasattr(self, 'marker_size_spin') else self.config.get('marker_size', 50)
+            self.config['marker_speed'] = self.marker_speed_spin.value() if hasattr(self, 'marker_speed_spin') else self.config.get('marker_speed', 100)
+            self.config['marker_x_offset'] = self.marker_x_offset_spin.value() if hasattr(self, 'marker_x_offset_spin') else self.config.get('marker_x_offset', 0)
+            self.config['marker_y_offset'] = self.marker_y_offset_spin.value() if hasattr(self, 'marker_y_offset_spin') else self.config.get('marker_y_offset', 0)
+            self.config['screen_index'] = self.screen_spin.value() if hasattr(self, 'screen_spin') else self.config.get('screen_index', 0)
+            self.config['update_interval'] = self.interval_spin.value() if hasattr(self, 'interval_spin') else self.config.get('update_interval', 1000)
+            self.config['enable_shadow'] = self.shadow_check.isChecked() if hasattr(self, 'shadow_check') else self.config.get('enable_shadow', True)
+            self.config['corner_radius'] = self.radius_spin.value() if hasattr(self, 'radius_spin') else self.config.get('corner_radius', 0)
+
+            # 保留其他不在外观tab的配置(theme, notification, scene等),避免丢失
+            # 这些配置项通常在对应的tab中,如果尚未加载则保持原配置
+            if 'theme' not in self.config or not self.config['theme']:
+                self.config['theme'] = {'mode': 'preset', 'current_theme_id': 'business', 'auto_apply_task_colors': False}
+            if 'notification' not in self.config or not self.config['notification']:
+                self.config['notification'] = {'enabled': True, 'before_start_minutes': [10, 5], 'on_start': True, 'before_end_minutes': [5], 'on_end': False, 'sound_enabled': True, 'sound_file': '', 'quiet_hours': {'enabled': False, 'start': '22:00', 'end': '08:00'}}
+            if 'scene' not in self.config or not self.config['scene']:
+                self.config['scene'] = {'enabled': False, 'current_scene': None, 'show_progress_bar': False}
+
+            # 更新语言配置
+            self.config['language'] = new_lang
+
+            # 保存完整配置
             import json
-            # 使用构造函数中已设置的self.app_dir,确保保存位置和加载位置一致
             config_path = self.app_dir / 'config.json'
             with open(config_path, 'w', encoding='utf-8') as f:
                 json.dump(self.config, f, ensure_ascii=False, indent=4)

@@ -105,7 +105,7 @@
     "percent": "percent",
     "config": "Configuration and tasks loaded",
     "config_1": "Failed to load configuration and tasks: {e}",
-    "config_2": "GaiYa v{__version__} - Configuration Manager",
+    "config_2": "{VERSION_STRING} - Configuration Manager",
     "config_3": "🎨 Appearance Settings",
     "settings": "🎬 Scene Settings",
     "settings_1": "🔔 Notification Settings",
@@ -720,6 +720,7 @@
       "limited_offer": "Limited to 1000",
       "one_time_payment": "One-time Payment",
       "lifetime_access": "Lifetime Access",
+      "one_time_lifetime": "Pay Once, Use Forever",
       "logout_success": "Logout Successful",
       "account_updated": "Your account information has been updated."
     },

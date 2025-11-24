@@ -207,8 +207,9 @@ class TimelineEditor(QWidget):
 
             # 绘制任务名（如果宽度足够）
             if rect.width() > 60:
-                # 任务色块中的文字统一使用白色,确保在所有颜色背景下都清晰可见
-                painter.setPen(QColor("#FFFFFF"))
+                # 使用任务定义的文字颜色,如果没有则默认白色
+                text_color = task.get('text_color', '#FFFFFF')
+                painter.setPen(QColor(text_color))
                 painter.setFont(QFont("Microsoft YaHei", 9, QFont.Bold))
                 text_rect = rect.adjusted(5, 0, -5, 0)
                 painter.drawText(text_rect, Qt.AlignCenter, task['task'])

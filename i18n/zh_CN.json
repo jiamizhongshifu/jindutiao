@@ -720,6 +720,7 @@
       "limited_offer": "限量1000名",
       "one_time_payment": "一次付费",
       "lifetime_access": "终身可用",
+      "one_time_lifetime": "一次付费，终身可用",
       "logout_success": "退出成功",
       "account_updated": "您的账户信息已更新。"
     },
