@@ -9,6 +9,7 @@ import os
 import sys
 from pathlib import Path
 from functools import partial
+from typing import Dict, List, Any, Optional, Tuple
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QTabWidget, QLabel, QLineEdit, QSpinBox, QPushButton, QColorDialog,
@@ -195,10 +196,18 @@ class ConfigManager(QMainWindow):
 
         self.config_file = self.app_dir / 'config.json'
         self.tasks_file = self.app_dir / 'tasks.json'
-        
+
         # 延迟加载配置和任务，先让窗口显示
         self.config = {}
         self.tasks = []
+
+        # ✅ 性能优化: 配置文件防抖动保存器(减少磁盘I/O)
+        from gaiya.utils.config_debouncer import ConfigDebouncer
+        self.config_debouncer = ConfigDebouncer(
+            config_file=self.config_file,
+            delay_ms=500,  # 500ms防抖动延迟
+            on_save_callback=lambda: self.config_saved.emit()  # 保存完成后发送信号
+        )
         
         # 延迟初始化AI相关组件(避免阻塞UI显示)
         self.ai_client = None
@@ -1309,12 +1318,19 @@ class ConfigManager(QMainWindow):
         if hasattr(self, 'generate_btn'):
             self.generate_btn.setEnabled(False)
 
-    def get_resource_path(self, relative_path):
-        """获取资源文件路径(使用统一的path_utils)"""
+    def get_resource_path(self, relative_path: str) -> Path:
+        """Get absolute path to bundled resource file
+
+        Args:
+            relative_path: Resource file path relative to app root
+
+        Returns:
+            Path: Absolute path to resource file
+        """
         return path_utils.get_resource_path(relative_path)
 
-    def init_ui(self):
-        """初始化界面"""
+    def init_ui(self) -> None:
+        """Initialize main window UI components"""
         self.setWindowTitle(self.i18n.tr("config.config_2", VERSION_STRING=VERSION_STRING, VERSION_STRING_ZH=VERSION_STRING_ZH))
 
         # 设置窗口图标
@@ -1414,8 +1430,12 @@ class ConfigManager(QMainWindow):
         self.save_btn = save_btn
         self.cancel_btn = cancel_btn
 
-    def on_tab_changed(self, index):
-        """标签页切换时的处理(实现懒加载)"""
+    def on_tab_changed(self, index: int) -> None:
+        """Handle tab change event with lazy loading
+
+        Args:
+            index: Tab index that was switched to
+        """
         # 控制底部按钮的显示/隐藏
         # 在"个人中心"(4)和self.i18n.tr("config.tabs.about")(5)页面隐藏按钮
         if index in [4, 5]:  # 个人中心或关于页面
@@ -2275,8 +2295,12 @@ class ConfigManager(QMainWindow):
         return scroll_area
 
 
-    def update_colors_preview(self, task_colors):
-        """更新任务配色预览"""
+    def update_colors_preview(self, task_colors: List[str]) -> None:
+        """Update task color preview widget
+
+        Args:
+            task_colors: List of color hex codes (e.g., ["#FF5733", "#33FF57"])
+        """
         # 清空旧的预览
         while self.colors_preview_widget.layout().count():
             item = self.colors_preview_widget.layout().takeAt(0)
@@ -2299,8 +2323,11 @@ class ConfigManager(QMainWindow):
         self.colors_preview_widget.layout().addStretch()
 
 
-    def apply_selected_theme_silent(self):
-        """静默应用选中的主题（不显示提示框）"""
+    def apply_selected_theme_silent(self) -> None:
+        """Apply selected theme silently without showing notification
+
+        Used during initialization to avoid redundant user notifications.
+        """
         if not self.selected_theme_id:
             return
         
@@ -2315,14 +2342,14 @@ class ConfigManager(QMainWindow):
             self.config.setdefault('theme', {})['current_theme_id'] = self.selected_theme_id
             
             # 立即保存配置（确保主题设置持久化）
-            try:
-                with open(self.config_file, 'w', encoding='utf-8') as f:
-                    json.dump(self.config, f, indent=4, ensure_ascii=False)
-            except Exception as e:
-                self.logger.error(f"保存主题配置失败: {e}")
+            # 使用防抖动保存（主题切换通常是单次操作，但防抖动可以防止快速切换时的多次写入）
+            self.config_debouncer.save_debounced(self.config)
 
-    def apply_selected_theme(self):
-        """应用选中的主题（显示提示）"""
+    def apply_selected_theme(self) -> None:
+        """Apply selected theme with user notification
+
+        Shows confirmation message after theme is successfully applied.
+        """
         if not self.theme_manager:
             QMessageBox.warning(self, self.i18n.tr("membership.payment.error"), "主题管理器未初始化，请稍后再试")
             return
@@ -3317,29 +3344,43 @@ class ConfigManager(QMainWindow):
         )
 
         if reply == QMessageBox.StandardButton.Yes:
-            # 调用登出
+            # ✅ 性能优化: 使用异步Worker避免UI卡顿
             from gaiya.core.auth_client import AuthClient
+            from gaiya.core.async_worker import AsyncNetworkWorker
+
             auth_client = AuthClient()
-            result = auth_client.signout()
 
-            if result.get("success"):
-                # 提示用户
-                QMessageBox.information(
-                    self,
-                    "退出成功",
-                    "已退出当前账号。\n\n请重新启动应用以切换到游客模式。"
-                )
+            # 创建异步Worker
+            self._logout_worker = AsyncNetworkWorker(auth_client.signout)
+            self._logout_worker.success.connect(self._on_logout_success)
+            self._logout_worker.error.connect(self._on_logout_error)
+            self._logout_worker.start()
 
-                # 关闭配置管理器
-                self.close()
-            else:
-                # 即使失败也提示成功（因为本地Token已清除）
-                QMessageBox.information(
-                    self,
-                    "退出成功",
-                    "已退出当前账号。\n\n请重新启动应用以切换到游客模式。"
-                )
-                self.close()
+    def _on_logout_success(self, result: dict):
+        """登出成功回调"""
+        from PySide6.QtWidgets import QMessageBox
+
+        # 提示用户
+        QMessageBox.information(
+            self,
+            "退出成功",
+            "已退出当前账号。\n\n请重新启动应用以切换到游客模式。"
+        )
+
+        # 关闭配置管理器
+        self.close()
+
+    def _on_logout_error(self, error_msg: str):
+        """登出失败回调(实际上本地Token已清除,仍然提示成功)"""
+        from PySide6.QtWidgets import QMessageBox
+
+        # 即使失败也提示成功（因为本地Token已清除）
+        QMessageBox.information(
+            self,
+            "退出成功",
+            "已退出当前账号。\n\n请重新启动应用以切换到游客模式。"
+        )
+        self.close()
 
     def _check_login_and_guide(self, feature_name: str = None) -> bool:
         """
@@ -4782,21 +4823,34 @@ class ConfigManager(QMainWindow):
 
     def _on_wxpay_selected(self, plan_id: str):
         """处理微信支付"""
+        from gaiya.core.auth_client import AuthClient
+        from gaiya.core.async_worker import AsyncNetworkWorker
+        import logging
+
+        pay_type = "wxpay"
+        self._current_pay_type = pay_type  # 保存支付类型用于回调
+        self._current_plan_id = plan_id  # 保存套餐ID用于回调
+
+        logging.info(f"[支付调试] 微信支付 - plan_type: {plan_id}, pay_type: {pay_type}")
+
+        # ✅ 性能优化: 使用异步Worker避免UI卡顿
+        auth_client = AuthClient()
+        self._payment_worker = AsyncNetworkWorker(
+            auth_client.create_payment_order,
+            plan_type=plan_id,
+            pay_type=pay_type
+        )
+        self._payment_worker.success.connect(self._on_wxpay_order_created)
+        self._payment_worker.error.connect(self._on_payment_error)
+        self._payment_worker.start()
+
+    def _on_wxpay_order_created(self, result: dict):
+        """微信支付订单创建成功回调"""
         from PySide6.QtWidgets import QMessageBox
         from PySide6.QtCore import QUrl, QTimer
         from PySide6.QtGui import QDesktopServices
         from gaiya.core.auth_client import AuthClient
         import logging
-
-        pay_type = "wxpay"
-        auth_client = AuthClient()
-
-        logging.info(f"[支付调试] 微信支付 - plan_type: {plan_id}, pay_type: {pay_type}")
-
-        result = auth_client.create_payment_order(
-            plan_type=plan_id,
-            pay_type=pay_type
-        )
 
         logging.info(f"[支付调试] 订单创建结果: {result}")
 
@@ -4858,6 +4912,38 @@ class ConfigManager(QMainWindow):
 
             QMessageBox.critical(self, self.i18n.tr("membership.payment.create_order_failed"), detailed_msg)
 
+    def _on_payment_error(self, error_msg: str):
+        """支付订单创建失败的通用错误处理"""
+        from PySide6.QtWidgets import QMessageBox
+        import logging
+
+        # 从保存的上下文获取套餐和支付类型
+        plan_id = getattr(self, '_current_plan_id', 'unknown')
+        pay_type = getattr(self, '_current_pay_type', 'unknown')
+
+        # 根据错误类型生成详细消息
+        if "MERCHANT_STATUS_NOT_NORMAL" in error_msg or "渠道" in error_msg:
+            detailed_msg = (
+                f"支付渠道暂时不可用：{error_msg}\n\n"
+                "可能的原因：\n"
+                "• 支付渠道临时维护中\n"
+                "• 需要在商户后台完成渠道签约\n\n"
+                "建议操作：\n"
+                "1. 稍后重试（5-10分钟后）\n"
+                "2. 联系支付服务商客服（zpayz.cn）"
+            )
+            logging.error(f"[PAYMENT] Channel error: {error_msg}")
+        else:
+            detailed_msg = (
+                f"创建订单失败：{error_msg}\n\n"
+                f"调试信息：\n"
+                f"• 套餐类型: {plan_id}\n"
+                f"• 支付方式: {pay_type}"
+            )
+            logging.error(f"[PAYMENT] Create order failed - plan_type: {plan_id}, error: {error_msg}")
+
+        QMessageBox.critical(self, self.i18n.tr("membership.payment.create_order_failed"), detailed_msg)
+
     def _on_stripe_selected(self, plan_id: str):
         """处理Stripe国际支付"""
         from PySide6.QtWidgets import QMessageBox
@@ -4871,24 +4957,20 @@ class ConfigManager(QMainWindow):
             auth_client = AuthClient()
 
             logging.info(f"[STRIPE] 创建Stripe Checkout Session - plan_type: {plan_id}")
-            print(f"[STRIPE] 开始创建Stripe支付会话 - 套餐: {plan_id}")
 
             # 获取用户信息
             user_id = auth_client.get_user_id()
             email = auth_client.get_user_email()
 
             logging.info(f"[STRIPE] 用户信息 - user_id: {user_id}, email: {email}")
-            print(f"[STRIPE] 用户信息 - user_id: {user_id}, email: {email}")
 
             if not user_id or not email:
                 error_msg = "用户信息不完整，请重新登录"
                 logging.error(f"[STRIPE] {error_msg}")
-                print(f"[STRIPE ERROR] {error_msg}")
                 QMessageBox.critical(self, self.i18n.tr("membership.payment.error"), error_msg)
                 return
 
             # 调用Stripe创建Checkout Session
-            print(f"[STRIPE] 调用API: /api/stripe-create-checkout")
             result = auth_client.create_stripe_checkout_session(
                 plan_type=plan_id,
                 user_id=user_id,
@@ -4896,7 +4978,6 @@ class ConfigManager(QMainWindow):
             )
 
             logging.info(f"[STRIPE] Checkout Session创建结果: {result}")
-            print(f"[STRIPE] API返回结果: {result}")
 
             if result.get("success"):
                 checkout_url = result.get("checkout_url")
@@ -4904,8 +4985,6 @@ class ConfigManager(QMainWindow):
 
                 logging.info(f"[STRIPE] Opening Stripe Checkout: {checkout_url[:100] if checkout_url else 'None'}...")
                 logging.info(f"[STRIPE] Session ID: {session_id}")
-                print(f"[STRIPE] 打开Checkout URL: {checkout_url}")
-                print(f"[STRIPE] Session ID: {session_id}")
 
                 # 在浏览器中打开Stripe Checkout页面
                 QDesktopServices.openUrl(QUrl(checkout_url))
@@ -4928,15 +5007,12 @@ class ConfigManager(QMainWindow):
                     f"• 邮箱: {email}"
                 )
                 logging.error(f"[STRIPE] Create checkout session failed: {error_msg}")
-                print(f"[STRIPE ERROR] 创建会话失败: {error_msg}")
                 QMessageBox.critical(self, self.i18n.tr("membership.payment.create_session_failed"), detailed_msg)
 
         except Exception as e:
             error_msg = f"Stripe支付异常: {str(e)}"
             logging.error(f"[STRIPE] Exception: {error_msg}")
             logging.error(traceback.format_exc())
-            print(f"[STRIPE EXCEPTION] {error_msg}")
-            print(traceback.format_exc())
             QMessageBox.critical(
                 self,
                 "支付异常",
@@ -4969,111 +5045,134 @@ class ConfigManager(QMainWindow):
         #     return
         # pay_type = selected_button.property("pay_type")
 
-        # 创建订单
+        # ✅ 性能优化: 使用异步Worker避免UI卡顿
+        from gaiya.core.async_worker import AsyncNetworkWorker
         auth_client = AuthClient()
+
+        # 保存支付上下文
+        self._current_pay_type = pay_type
+        self._current_plan_id = self.selected_plan_id
 
         # 添加日志输出以便调试
         import logging
         logging.info(f"[支付调试] 准备创建订单 - plan_type: {self.selected_plan_id}, pay_type: {pay_type}")
 
-        result = auth_client.create_payment_order(
+        # 创建异步Worker
+        self._payment_worker = AsyncNetworkWorker(
+            auth_client.create_payment_order,
             plan_type=self.selected_plan_id,
             pay_type=pay_type
         )
+        self._payment_worker.success.connect(self._on_purchase_order_created)
+        self._payment_worker.error.connect(self._on_payment_error)
+        self._payment_worker.start()
+
+    def _on_purchase_order_created(self, result: dict):
+        """订单创建成功回调"""
+        from PySide6.QtWidgets import QMessageBox
+        from PySide6.QtCore import QUrl, QTimer
+        from PySide6.QtGui import QDesktopServices
+        from gaiya.core.auth_client import AuthClient
+        from functools import partial
+        from urllib.parse import urlencode
+        import logging
+
+        # 获取支付上下文
+        pay_type = self._current_pay_type
 
         logging.info(f"[支付调试] 订单创建结果: {result}")
 
-        if result.get("success"):
-            # 订单创建成功，直接打开支付页面
-            payment_url = result.get("payment_url")
-            params = result.get("params", {})
-            out_trade_no = result.get("out_trade_no")
+        # 订单创建成功，直接打开支付页面
+        payment_url = result.get("payment_url")
+        params = result.get("params", {})
+        out_trade_no = result.get("out_trade_no")
 
-            # 拼接支付参数到URL
-            from urllib.parse import urlencode
-            query_string = urlencode(params)
-            full_payment_url = f"{payment_url}?{query_string}"
+        # 拼接支付参数到URL
+        query_string = urlencode(params)
+        full_payment_url = f"{payment_url}?{query_string}"
 
-            logging.info(f"[PAYMENT] Opening payment URL: {full_payment_url[:100]}...")
-            logging.info(f"[PAYMENT] Order No: {out_trade_no}, Type: {pay_type}")
+        logging.info(f"[PAYMENT] Opening payment URL: {full_payment_url[:100]}...")
+        logging.info(f"[PAYMENT] Order No: {out_trade_no}, Type: {pay_type}")
 
-            # 在浏览器中打开支付URL
-            QDesktopServices.openUrl(QUrl(full_payment_url))
+        # 在浏览器中打开支付URL
+        QDesktopServices.openUrl(QUrl(full_payment_url))
 
-            # 显示等待支付对话框（非阻塞）
-            self.payment_polling_dialog = QMessageBox(self)
-            self.payment_polling_dialog.setWindowTitle(self.i18n.tr("account.payment.waiting_payment"))
-            self.payment_polling_dialog.setText(
-                "正在等待支付完成...\n\n"
-                "请在打开的浏览器页面中完成支付。\n"
-                "支付完成后，此窗口将自动关闭。"
-            )
-            self.payment_polling_dialog.setStandardButtons(QMessageBox.StandardButton.Cancel)
-            self.payment_polling_dialog.setIcon(QMessageBox.Icon.Information)
+        # 显示等待支付对话框（非阻塞）
+        self.payment_polling_dialog = QMessageBox(self)
+        self.payment_polling_dialog.setWindowTitle(self.i18n.tr("account.payment.waiting_payment"))
+        self.payment_polling_dialog.setText(
+            "正在等待支付完成...\n\n"
+            "请在打开的浏览器页面中完成支付。\n"
+            "支付完成后，此窗口将自动关闭。"
+        )
+        self.payment_polling_dialog.setStandardButtons(QMessageBox.StandardButton.Cancel)
+        self.payment_polling_dialog.setIcon(QMessageBox.Icon.Information)
 
-            # 创建定时器轮询支付状态
-            self.payment_timer = QTimer()
-            self.payment_timer.setInterval(3000)  # 每3秒查询一次
-            # 使用 partial 避免 Lambda 循环引用
-            self.payment_timer.timeout.connect(partial(self._check_payment_status, out_trade_no, auth_client))
-            self.payment_timer.start()
+        # 创建定时器轮询支付状态
+        self.payment_timer = QTimer()
+        self.payment_timer.setInterval(3000)  # 每3秒查询一次
 
-            # 监听取消按钮
-            self.payment_polling_dialog.rejected.connect(self._stop_payment_polling)
+        # 创建AuthClient实例用于轮询
+        auth_client = AuthClient()
 
-            # 显示对话框（非阻塞）
-            self.payment_polling_dialog.show()
-        else:
-            # 订单创建失败
-            error_msg = result.get("error", "创建订单失败")
+        # 使用 partial 避免 Lambda 循环引用
+        self.payment_timer.timeout.connect(partial(self._check_payment_status, out_trade_no, auth_client))
+        self.payment_timer.start()
 
-            # 针对支付渠道错误给出更详细的提示
-            if "MERCHANT_STATUS_NOT_NORMAL" in error_msg or "渠道" in error_msg:
-                detailed_msg = (
-                    f"支付渠道暂时不可用：{error_msg}\n\n"
-                    "可能的原因：\n"
-                    "• 支付渠道临时维护中\n"
-                    "• 需要在商户后台完成渠道签约\n\n"
-                    "建议操作：\n"
-                    "1. 稍后重试（5-10分钟后）\n"
-                    "2. 尝试切换支付方式（支付宝/微信）\n"
-                    "3. 联系支付服务商客服（zpayz.cn）"
-                )
-                logging.error(f"[PAYMENT] Channel error: {error_msg}")
-            else:
-                # 显示详细的调试信息
-                detailed_msg = (
-                    f"创建订单失败：{error_msg}\n\n"
-                    f"调试信息：\n"
-                    f"• 套餐类型: {self.selected_plan_id}\n"
-                    f"• 支付方式: {pay_type}"
-                )
-                logging.error(f"[PAYMENT] Create order failed - plan_type: {self.selected_plan_id}, error: {error_msg}")
+        # 监听取消按钮
+        self.payment_polling_dialog.rejected.connect(self._stop_payment_polling)
 
-            QMessageBox.critical(self, self.i18n.tr("membership.payment.create_order_failed"), detailed_msg)
+        # 显示对话框（非阻塞）
+        self.payment_polling_dialog.show()
 
     def _check_payment_status(self, out_trade_no: str, auth_client):
-        """检查支付状态"""
+        """检查支付状态 - 异步调用"""
+        # ✅ 性能优化: 使用异步Worker避免UI卡顿
+        from gaiya.core.async_worker import AsyncNetworkWorker
+
+        # 如果上一次查询还在进行中，跳过本次查询
+        if hasattr(self, '_status_check_worker') and self._status_check_worker.isRunning():
+            import logging
+            logging.debug("[PAYMENT] Previous status check still running, skipping...")
+            return
+
+        # 创建异步Worker
+        self._status_check_worker = AsyncNetworkWorker(
+            auth_client.query_payment_order,
+            out_trade_no
+        )
+        self._status_check_worker.success.connect(self._on_payment_status_checked)
+        self._status_check_worker.error.connect(self._on_payment_status_check_error)
+        self._status_check_worker.start()
+
+    def _on_payment_status_checked(self, result: dict):
+        """支付状态查询成功回调"""
         from PySide6.QtWidgets import QMessageBox
-        result = auth_client.query_payment_order(out_trade_no)
+        import logging
 
-        if result.get("success"):
-            order = result.get("order", {})
-            status = order.get("status")
+        order = result.get("order", {})
+        status = order.get("status")
 
-            if status == "paid":
-                # 支付成功
-                self._stop_payment_polling()
+        logging.debug(f"[PAYMENT] Status check result: {status}")
 
-                QMessageBox.information(
-                    self,
-                    "支付成功",
-                    self.i18n.tr("config.membership.payment_success_restart")
-                )
+        if status == "paid":
+            # 支付成功
+            self._stop_payment_polling()
 
-                # 重新加载个人中心tab以刷新会员状态
-                self.account_tab_widget = None
-                self._load_account_tab()
+            QMessageBox.information(
+                self,
+                "支付成功",
+                self.i18n.tr("config.membership.payment_success_restart")
+            )
+
+            # 重新加载个人中心tab以刷新会员状态
+            self.account_tab_widget = None
+            self._load_account_tab()
+
+    def _on_payment_status_check_error(self, error_msg: str):
+        """支付状态查询失败回调(不中断轮询,静默记录)"""
+        import logging
+        logging.warning(f"[PAYMENT] Status check error (continuing polling): {error_msg}")
 
     def _stop_payment_polling(self):
         """停止支付状态轮询"""
@@ -6348,8 +6447,12 @@ class ConfigManager(QMainWindow):
         seconds = time_utils.time_str_to_seconds(time_str)
         return seconds // 60
 
-    def save_all(self):
-        """保存所有设置"""
+    def save_all(self) -> None:
+        """Save all settings to config file
+
+        Collects configuration from UI widgets and persists to disk using debounced save.
+        Also updates tasks.json with current task list.
+        """
         try:
             # 收集通知配置
             # 收集开始前提醒时间（安全检查，避免属性不存在）
@@ -6434,8 +6537,11 @@ class ConfigManager(QMainWindow):
                 }
             }
 
-            with open(self.config_file, 'w', encoding='utf-8') as f:
-                json.dump(config, f, indent=4, ensure_ascii=False)
+            # 使用防抖动保存（此处是save_all函数，通常是手动点击保存按钮触发）
+            # 更新内存中的配置
+            self.config = config
+            # 防抖动保存到磁盘
+            self.config_debouncer.save_debounced(config)
 
             # 获取主题颜色（如果用户选择了预设主题）
             theme_colors = []
@@ -7179,105 +7285,133 @@ del /f /q "%~f0"
             )
 
     def _check_for_updates(self):
-        """检查更新"""
-        from version import __version__, APP_METADATA
-        import requests
-        from PySide6.QtWidgets import QMessageBox
+        """检查更新 - 异步版本"""
+        from gaiya.core.async_worker import AsyncNetworkWorker
 
         # 更新按钮状态
         self.check_update_btn.setEnabled(False)
         self.check_update_btn.setText(self.i18n.tr("general.text_2760"))
 
-        try:
-            # 调用GitHub API获取最新版本
-            repo = APP_METADATA['repository'].replace('https://github.com/', '')
-            api_url = f"https://api.github.com/repos/{repo}/releases/latest"
+        # ✅ 性能优化: 使用异步Worker避免UI卡顿
+        self._update_check_worker = AsyncNetworkWorker(self._fetch_latest_release)
+        self._update_check_worker.success.connect(self._on_update_check_success)
+        self._update_check_worker.error.connect(self._on_update_check_error)
+        self._update_check_worker.start()
 
-            response = requests.get(api_url, timeout=10)
-            response.raise_for_status()
+    def _fetch_latest_release(self) -> dict:
+        """获取最新版本信息(在后台线程中执行)"""
+        from version import __version__, APP_METADATA
+        import requests
 
-            latest_release = response.json()
-            latest_version = latest_release['tag_name'].lstrip('v')
-            current_version = __version__
+        # 调用GitHub API获取最新版本
+        repo = APP_METADATA['repository'].replace('https://github.com/', '')
+        api_url = f"https://api.github.com/repos/{repo}/releases/latest"
 
-            # 比较版本号
-            if self._compare_versions(latest_version, current_version) > 0:
-                # 有新版本
-                self.check_update_btn.setText(self.i18n.tr("general.text_8527"))
-                self.check_update_btn.setStyleSheet("""
-                    QPushButton {
-                        background-color: #FF5722;
-                        color: white;
-                        font-size: 14px;
-                        font-weight: bold;
-                        border-radius: 20px;
-                        padding: 10px 20px;
-                    }
-                    QPushButton:hover {
-                        background-color: #E64A19;
-                    }
-                    QPushButton:pressed {
-                        background-color: #BF360C;
-                    }
-                """)
+        response = requests.get(api_url, timeout=10)
+        response.raise_for_status()
 
-                # 弹出更新提示
-                # 提取核心更新内容
-                changelog_highlights = self._extract_changelog_highlights(latest_release.get('body', ''))
+        latest_release = response.json()
+        latest_version = latest_release['tag_name'].lstrip('v')
+        current_version = __version__
 
-                msg = QMessageBox(self)
-                msg.setIcon(QMessageBox.Icon.Information)
-                msg.setWindowTitle(self.i18n.tr("general.text_377"))
-                msg.setText(self.i18n.tr("general.text_1975"))
-                msg.setInformativeText(f"当前版本: v{current_version}\n\n核心更新:\n{changelog_highlights}")
-                msg.setStandardButtons(QMessageBox.StandardButton.Cancel)
+        return {
+            "success": True,
+            "latest_release": latest_release,
+            "latest_version": latest_version,
+            "current_version": current_version,
+            "has_update": self._compare_versions(latest_version, current_version) > 0
+        }
 
-                # 添加两个按钮：立即更新 和 前往下载
-                auto_update_btn = msg.addButton(self.i18n.tr("general.text_2613"), QMessageBox.ButtonRole.AcceptRole)
-                manual_download_btn = msg.addButton(self.i18n.tr("general.text_7203"), QMessageBox.ButtonRole.ActionRole)
-                msg.exec()
+    def _on_update_check_success(self, result: dict):
+        """版本检查成功回调"""
+        from PySide6.QtWidgets import QMessageBox
+        from PySide6.QtGui import QDesktopServices
+        from PySide6.QtCore import QUrl
 
-                if msg.clickedButton() == auto_update_btn:
-                    # 自动更新
-                    self._auto_update(latest_release, latest_version)
-                elif msg.clickedButton() == manual_download_btn:
-                    # 打开下载页面
-                    from PySide6.QtGui import QDesktopServices
-                    from PySide6.QtCore import QUrl
-                    QDesktopServices.openUrl(QUrl(latest_release['html_url']))
-            else:
-                # 已是最新版本
-                QMessageBox.information(
-                    self,
-                    "已是最新版本",
-                    f"当前版本 v{current_version} 已是最新版本！"
-                )
-                self.check_update_btn.setText(self.i18n.tr("general.text_5645"))
+        latest_release = result["latest_release"]
+        latest_version = result["latest_version"]
+        current_version = result["current_version"]
+        has_update = result["has_update"]
 
-        except requests.exceptions.Timeout:
+        if has_update:
+            # 有新版本
+            self.check_update_btn.setText(self.i18n.tr("general.text_8527"))
+            self.check_update_btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #FF5722;
+                    color: white;
+                    font-size: 14px;
+                    font-weight: bold;
+                    border-radius: 20px;
+                    padding: 10px 20px;
+                }
+                QPushButton:hover {
+                    background-color: #E64A19;
+                }
+                QPushButton:pressed {
+                    background-color: #BF360C;
+                }
+            """)
+
+            # 弹出更新提示
+            # 提取核心更新内容
+            changelog_highlights = self._extract_changelog_highlights(latest_release.get('body', ''))
+
+            msg = QMessageBox(self)
+            msg.setIcon(QMessageBox.Icon.Information)
+            msg.setWindowTitle(self.i18n.tr("general.text_377"))
+            msg.setText(self.i18n.tr("general.text_1975"))
+            msg.setInformativeText(f"当前版本: v{current_version}\n\n核心更新:\n{changelog_highlights}")
+            msg.setStandardButtons(QMessageBox.StandardButton.Cancel)
+
+            # 添加两个按钮：立即更新 和 前往下载
+            auto_update_btn = msg.addButton(self.i18n.tr("general.text_2613"), QMessageBox.ButtonRole.AcceptRole)
+            manual_download_btn = msg.addButton(self.i18n.tr("general.text_7203"), QMessageBox.ButtonRole.ActionRole)
+            msg.exec()
+
+            if msg.clickedButton() == auto_update_btn:
+                # 自动更新
+                self._auto_update(latest_release, latest_version)
+            elif msg.clickedButton() == manual_download_btn:
+                # 打开下载页面
+                QDesktopServices.openUrl(QUrl(latest_release['html_url']))
+        else:
+            # 已是最新版本
+            QMessageBox.information(
+                self,
+                "已是最新版本",
+                f"当前版本 v{current_version} 已是最新版本！"
+            )
+            self.check_update_btn.setText(self.i18n.tr("general.text_5645"))
+
+        # 恢复按钮状态
+        self.check_update_btn.setEnabled(True)
+
+    def _on_update_check_error(self, error_msg: str):
+        """版本检查失败回调"""
+        from PySide6.QtWidgets import QMessageBox
+        from version import __version__, APP_METADATA
+        import logging
+
+        logging.error(f"检查更新失败: {error_msg}")
+
+        # 根据错误类型给出不同的提示
+        if "Timeout" in error_msg or "timeout" in error_msg:
             QMessageBox.warning(self, self.i18n.tr("message.text_8308"), "网络请求超时，请检查网络连接")
-            self.check_update_btn.setText(self.i18n.tr("general.text_5645"))
-        except requests.exceptions.HTTPError as e:
-            # 特殊处理 404：表示仓库还没有发布任何 Release
-            if e.response.status_code == 404:
-                QMessageBox.information(
-                    self,
-                    "暂无发布版本",
-                    f"当前版本: v{__version__}\n\n项目仓库暂未发布正式版本，敬请期待！\n\n您可以访问 GitHub 仓库查看最新开发进展：\n{APP_METADATA['repository']}"
-                )
-            else:
-                QMessageBox.warning(self, self.i18n.tr("message.text_8308"), f"无法连接到更新服务器\n\n{str(e)}")
-            self.check_update_btn.setText(self.i18n.tr("general.text_5645"))
-        except requests.exceptions.RequestException as e:
-            QMessageBox.warning(self, self.i18n.tr("message.text_8308"), f"无法连接到更新服务器\n\n{str(e)}")
-            self.check_update_btn.setText(self.i18n.tr("general.text_5645"))
-        except Exception as e:
-            import logging
-            logging.error(f"检查更新失败: {e}")
-            QMessageBox.warning(self, self.i18n.tr("message.text_8308"), f"发生未知错误\n\n{str(e)}")
-            self.check_update_btn.setText(self.i18n.tr("general.text_5645"))
-        finally:
-            self.check_update_btn.setEnabled(True)
+        elif "404" in error_msg:
+            # 仓库还没有发布任何 Release
+            QMessageBox.information(
+                self,
+                "暂无发布版本",
+                f"当前版本: v{__version__}\n\n项目仓库暂未发布正式版本，敬请期待！\n\n您可以访问 GitHub 仓库查看最新开发进展：\n{APP_METADATA['repository']}"
+            )
+        elif "HTTPError" in error_msg or "RequestException" in error_msg:
+            QMessageBox.warning(self, self.i18n.tr("message.text_8308"), f"无法连接到更新服务器\n\n{error_msg}")
+        else:
+            QMessageBox.warning(self, self.i18n.tr("message.text_8308"), f"发生未知错误\n\n{error_msg}")
+
+        self.check_update_btn.setText(self.i18n.tr("general.text_5645"))
+        self.check_update_btn.setEnabled(True)
 
     def _compare_versions(self, version1, version2):
         """比较版本号
@@ -7423,11 +7557,8 @@ del /f /q "%~f0"
             # 更新语言配置
             self.config['language'] = new_lang
 
-            # 保存完整配置
-            import json
-            config_path = self.app_dir / 'config.json'
-            with open(config_path, 'w', encoding='utf-8') as f:
-                json.dump(self.config, f, ensure_ascii=False, indent=4)
+            # 保存完整配置（使用防抖动保存）
+            self.config_debouncer.save_debounced(self.config)
 
             # Get language display name
             language_names = {
@@ -7593,7 +7724,15 @@ del /f /q "%~f0"
                 self.backend_manager.stop_backend()
             except Exception:
                 pass
-        
+
+        # ✅ 性能优化: 应用关闭时立即保存待处理的配置（防抖动刷新）
+        if hasattr(self, 'config_debouncer') and self.config_debouncer:
+            try:
+                if self.config_debouncer.flush():
+                    logging.info("ConfigDebouncer: 关闭时已刷新待处理的配置")
+            except Exception as e:
+                logging.error(f"ConfigDebouncer刷新失败: {e}")
+
         # 接受关闭事件
         event.accept()
         logging.info("配置管理器已关闭，资源已清理")
@@ -7607,7 +7746,7 @@ def main():
     try:
         apply_light_theme(app)
     except Exception as e:
-        print(f"[警告] 应用浅色主题失败: {e}，使用默认样式")
+        logging.warning(f"[警告] 应用浅色主题失败: {e}，使用默认样式")
         app.setStyle("Fusion")
 
     window = ConfigManager()

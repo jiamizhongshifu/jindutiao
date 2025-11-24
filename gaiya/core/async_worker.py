@@ -39,8 +39,11 @@ class AsyncNetworkWorker(QThread):
         self.args = args
         self.kwargs = kwargs
 
-    def run(self):
-        """在后台线程中执行网络请求"""
+    def run(self) -> None:
+        """Execute network request in background thread
+
+        Emits success signal with result dict on success, or error signal on failure.
+        """
         try:
             # 发出进度信号
             func_name = self.func.__name__
@@ -88,8 +91,11 @@ class AsyncAIWorker(QThread):
         self.ai_client = ai_client
         self.user_input = user_input
 
-    def run(self):
-        """在后台线程中执行AI请求"""
+    def run(self) -> None:
+        """Execute AI request in background thread
+
+        Emits finished signal with result dict on success, or error signal on failure.
+        """
         try:
             result = self.ai_client.plan_tasks(self.user_input, parent_widget=None)
             self.finished.emit(result)

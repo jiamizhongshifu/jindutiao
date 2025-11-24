@@ -1,15 +1,15 @@
 """
-路径处理工具函数
+Path utility functions for bundled and development environments
 """
 import sys
 from pathlib import Path
 
 
-def get_app_dir():
-    """获取应用程序目录(支持打包后的 exe)
+def get_app_dir() -> Path:
+    """Get application directory (supports bundled exe)
 
     Returns:
-        Path: 应用程序目录的Path对象
+        Path: Application root directory path
     """
     if getattr(sys, 'frozen', False):
         # 打包后的 exe,使用 exe 所在目录
@@ -20,16 +20,16 @@ def get_app_dir():
         return Path(__file__).parent.parent.parent
 
 
-def get_resource_path(relative_path):
-    """获取资源文件路径(支持打包后的 exe)
+def get_resource_path(relative_path: str) -> Path:
+    """Get resource file path (supports bundled exe)
 
-    PyInstaller 打包后,资源文件会被解压到 _MEIPASS 临时目录
+    When bundled with PyInstaller, resources are extracted to _MEIPASS temp directory.
 
     Args:
-        relative_path: 相对于应用根目录的相对路径
+        relative_path: Resource path relative to application root
 
     Returns:
-        Path: 资源文件的完整路径
+        Path: Absolute path to resource file
     """
     if getattr(sys, 'frozen', False):
         # 打包后的 exe,资源文件在临时目录

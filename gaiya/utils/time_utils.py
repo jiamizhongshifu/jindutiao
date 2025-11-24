@@ -1,19 +1,19 @@
 """
-时间处理工具函数
+Time processing utility functions
 """
 import re
 
 
-def validate_time_format(time_str):
-    """验证时间格式 HH:MM
+def validate_time_format(time_str: str) -> bool:
+    """Validate time string format HH:MM
 
-    允许 00:00-23:59 以及特殊的 24:00(表示午夜)
+    Accepts 00:00-23:59 and special 24:00 (midnight).
 
     Args:
-        time_str: 时间字符串,格式为 HH:MM
+        time_str: Time string in HH:MM format
 
     Returns:
-        bool: 如果格式有效返回 True,否则返回 False
+        bool: True if format is valid, False otherwise
     """
     # 允许 0-23 小时,以及特殊的 24:00
     pattern = r'^([0-1]?[0-9]|2[0-4]):([0-5][0-9])$'
@@ -26,14 +26,14 @@ def validate_time_format(time_str):
     return False
 
 
-def time_str_to_seconds(time_str):
-    """将 HH:MM 转换为秒数
+def time_str_to_seconds(time_str: str) -> int:
+    """Convert HH:MM to seconds since midnight
 
     Args:
-        time_str: 时间字符串,格式为 HH:MM
+        time_str: Time string in HH:MM format
 
     Returns:
-        int: 转换后的秒数,转换失败返回 0
+        int: Seconds since midnight, returns 0 on conversion failure
     """
     try:
         hours, minutes = map(int, time_str.split(':'))
@@ -45,14 +45,14 @@ def time_str_to_seconds(time_str):
         return 0
 
 
-def seconds_to_time_str(seconds):
-    """将秒数转换为 HH:MM 格式
+def seconds_to_time_str(seconds: int) -> str:
+    """Convert seconds since midnight to HH:MM format
 
     Args:
-        seconds: 秒数
+        seconds: Seconds since midnight
 
     Returns:
-        str: HH:MM 格式的时间字符串
+        str: Time string in HH:MM format
     """
     if seconds >= 86400:
         return "24:00"
@@ -61,17 +61,22 @@ def seconds_to_time_str(seconds):
     return f"{hours:02d}:{minutes:02d}"
 
 
-def time_to_percentage(time_str, time_range_start=0, time_range_end=86400, time_range_duration=86400):
-    """将 HH:MM 格式转换为 0.0-1.0 之间的百分比(基于任务时间范围)
+def time_to_percentage(
+    time_str: str,
+    time_range_start: int = 0,
+    time_range_end: int = 86400,
+    time_range_duration: int = 86400
+) -> float:
+    """Convert HH:MM to percentage (0.0-1.0) within time range
 
     Args:
-        time_str: 时间字符串,格式为 HH:MM
-        time_range_start: 时间范围起始秒数(默认0,即00:00)
-        time_range_end: 时间范围结束秒数(默认86400,即24:00)
-        time_range_duration: 时间范围持续时长(默认86400秒)
+        time_str: Time string in HH:MM format
+        time_range_start: Range start in seconds (default 0, i.e., 00:00)
+        time_range_end: Range end in seconds (default 86400, i.e., 24:00)
+        time_range_duration: Range duration in seconds (default 86400)
 
     Returns:
-        float: 0.0-1.0 之间的百分比
+        float: Percentage between 0.0-1.0
     """
     try:
         seconds = time_str_to_seconds(time_str)

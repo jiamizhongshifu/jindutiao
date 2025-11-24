@@ -2,18 +2,19 @@
 Config and task data loading utilities
 """
 import json
+import logging
 from pathlib import Path
+from typing import Dict, List, Any
 from . import time_utils, path_utils
 from ..core.template_manager import TemplateManager
 
 
-def init_i18n(config, logger):
-    """
-    Initialize i18n module based on config
+def init_i18n(config: Dict[str, Any], logger: logging.Logger) -> None:
+    """Initialize i18n module based on config
 
     Args:
-        config: Config dictionary
-        logger: Logger instance
+        config: Configuration dictionary
+        logger: Logger instance for diagnostic messages
     """
     try:
         from i18n import set_language, get_system_locale
@@ -36,15 +37,15 @@ def init_i18n(config, logger):
         logger.error(f"Failed to initialize i18n: {e}")
 
 
-def load_config(app_dir, logger):
-    """加载配置文件
+def load_config(app_dir: Path, logger: logging.Logger) -> Dict[str, Any]:
+    """Load configuration from config.json
 
     Args:
-        app_dir: 应用程序目录（Path对象）
-        logger: 日志记录器
+        app_dir: Application directory (Path object)
+        logger: Logger instance
 
     Returns:
-        dict: 配置字典
+        Dict: Configuration dictionary with merged defaults
     """
     config_file = app_dir / 'config.json'
 
@@ -115,15 +116,15 @@ def load_config(app_dir, logger):
         return default_config
 
 
-def load_tasks(app_dir, logger):
-    """加载并验证任务数据
+def load_tasks(app_dir: Path, logger: logging.Logger) -> List[Dict[str, str]]:
+    """Load and validate task data from tasks.json
 
     Args:
-        app_dir: 应用程序目录（Path对象）
-        logger: 日志记录器
+        app_dir: Application directory (Path object)
+        logger: Logger instance
 
     Returns:
-        list: 任务列表
+        List[Dict]: List of validated task dictionaries with keys: start, end, task, color
     """
     tasks_file = app_dir / 'tasks.json'
 

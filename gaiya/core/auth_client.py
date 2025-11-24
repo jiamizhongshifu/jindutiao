@@ -4,6 +4,7 @@ GaiYa每日进度条 - 认证客户端
 """
 import os
 import json
+import logging
 import requests
 from pathlib import Path
 from typing import Dict, Optional
@@ -16,13 +17,16 @@ import urllib.request
 import urllib.parse
 import urllib.error
 
+# ✅ 安全修复: 使用logger代替print语句
+logger = logging.getLogger(__name__)
+
 # ✅ 安全修复: 使用keyring进行Token加密存储
 try:
     import keyring
     KEYRING_AVAILABLE = True
 except ImportError:
     KEYRING_AVAILABLE = False
-    print("[SECURITY WARNING] keyring库不可用，Token将以明文存储！建议运行: pip install keyring")
+    logger.warning("keyring库不可用，Token将以明文存储！建议运行: pip install keyring")
 
 # ✅ 安全修复: 移除全局禁用SSL警告
 # SSL证书验证是关键安全措施，不应全局禁用
@@ -44,10 +48,11 @@ class SSLAdapter(HTTPAdapter):
             # 强制使用TLS 1.2或更高版本（兼容现代服务器）
             ctx.minimum_version = ssl.TLSVersion.TLSv1_2
 
-            # ✅ 安全修复: 仅在环境变量明确要求时禁用证书验证
+            # ✅ 安全修复: 仅在DEBUG模式且明确要求时禁用证书验证
+            is_debug = os.getenv("DEBUG", "false").lower() == "true"
             disable_ssl_verify = os.getenv("DISABLE_SSL_VERIFY", "false").lower() == "true"
 
-            if disable_ssl_verify:
+            if is_debug and disable_ssl_verify:
                 # 开发/调试模式：禁用证书验证
                 ctx.check_hostname = False
                 ctx.verify_mode = ssl.CERT_NONE
@@ -64,11 +69,12 @@ class SSLAdapter(HTTPAdapter):
             kwargs['ssl_context'] = ctx
         except Exception as e:
             # 如果高级配置失败，回退到基础配置
-            print(f"[AUTH] 高级SSL配置失败，使用基础配置: {e}")
+            logger.debug(f"高级SSL配置失败，使用基础配置: {e}")
             kwargs['ssl_version'] = ssl.PROTOCOL_TLS
-            # ✅ 安全修复: 默认启用证书验证
+            # ✅ 安全修复: 仅在DEBUG模式且明确要求时禁用证书验证
+            is_debug = os.getenv("DEBUG", "false").lower() == "true"
             disable_ssl_verify = os.getenv("DISABLE_SSL_VERIFY", "false").lower() == "true"
-            kwargs['cert_reqs'] = ssl.CERT_NONE if disable_ssl_verify else ssl.CERT_REQUIRED
+            kwargs['cert_reqs'] = ssl.CERT_NONE if (is_debug and disable_ssl_verify) else ssl.CERT_REQUIRED
 
         return super().init_poolmanager(*args, **kwargs)
 
@@ -95,10 +101,11 @@ class AuthClient:
             # 强制使用TLS 1.2或更高版本
             ctx.minimum_version = ssl.TLSVersion.TLSv1_2
 
-            # ✅ 安全修复: 仅在环境变量明确要求时禁用证书验证
+            # ✅ 安全修复: 仅在DEBUG模式且明确要求时禁用证书验证
+            is_debug = os.getenv("DEBUG", "false").lower() == "true"
             disable_ssl_verify = os.getenv("DISABLE_SSL_VERIFY", "false").lower() == "true"
 
-            if disable_ssl_verify:
+            if is_debug and disable_ssl_verify:
                 # 开发/调试模式：禁用证书验证
                 ctx.check_hostname = False
                 ctx.verify_mode = ssl.CERT_NONE
@@ -124,10 +131,10 @@ class AuthClient:
             )
 
             # 发送请求
-            print(f"[URLLIB-FALLBACK] Sending POST request to {url}")
+            logger.debug(f"[URLLIB-FALLBACK] Sending POST request to {url}")
             with urllib.request.urlopen(req, timeout=timeout, context=ctx) as response:
                 response_data = response.read().decode('utf-8')
-                print(f"[URLLIB-FALLBACK] Response status: {response.status}")
+                logger.debug(f"[URLLIB-FALLBACK] Response status: {response.status}")
 
                 result = json.loads(response_data)
                 result['_status_code'] = response.status
@@ -135,19 +142,19 @@ class AuthClient:
 
         except urllib.error.HTTPError as e:
             error_body = e.read().decode('utf-8')
-            print(f"[URLLIB-FALLBACK] HTTP Error {e.code}: {error_body}")
+            logger.error(f"[URLLIB-FALLBACK] HTTP Error {e.code}: {error_body}")
             try:
                 error_data = json.loads(error_body)
                 return error_data
-            except:
+            except (json.JSONDecodeError, ValueError):
                 return {"success": False, "error": f"HTTP {e.code}: {error_body}"}
 
         except urllib.error.URLError as e:
-            print(f"[URLLIB-FALLBACK] URL Error: {e.reason}")
+            logger.error(f"[URLLIB-FALLBACK] URL Error: {e.reason}")
             return {"success": False, "error": f"连接失败: {e.reason}"}
 
         except Exception as e:
-            print(f"[URLLIB-FALLBACK] Unknown error: {type(e).__name__}: {e}")
+            logger.error(f"[URLLIB-FALLBACK] Unknown error: {type(e).__name__}: {e}")
             return {"success": False, "error": str(e)}
 
     def __init__(self):
@@ -161,7 +168,7 @@ class AuthClient:
         # 必须先清除环境变量，才能让Session使用我们指定的SOCKS5代理
         for env_var in ['HTTP_PROXY', 'HTTPS_PROXY', 'http_proxy', 'https_proxy']:
             if env_var in os.environ:
-                print(f"[AUTH] 清除环境变量: {env_var}={os.environ[env_var]}")
+                logger.debug(f"清除环境变量: {env_var}={os.environ[env_var]}")
                 del os.environ[env_var]
 
         # 创建 Session 对象，配置SSL兼容性和重试机制
@@ -180,11 +187,12 @@ class AuthClient:
         self.session.mount("https://", ssl_adapter)
 
         # ✅ 安全修复: 默认启用SSL证书验证
-        # 仅在开发/调试环境下通过环境变量禁用（不推荐）
+        # 仅在DEBUG模式且明确要求时禁用（生产环境绝不应禁用）
+        is_debug = os.getenv("DEBUG", "false").lower() == "true"
         disable_ssl_verify = os.getenv("DISABLE_SSL_VERIFY", "false").lower() == "true"
 
-        if disable_ssl_verify:
-            print("[SECURITY WARNING] SSL证书验证已禁用！这仅应用于开发环境，生产环境绝不应禁用！")
+        if is_debug and disable_ssl_verify:
+            logger.warning("SSL证书验证已禁用！这仅应用于开发环境，生产环境绝不应禁用！")
             self.session.verify = False
         else:
             # 使用系统默认CA证书包
@@ -192,19 +200,22 @@ class AuthClient:
             try:
                 import certifi
                 self.session.verify = certifi.where()
-                print(f"[AUTH] 使用CA证书包: {certifi.where()}")
+                logger.info(f"使用CA证书包: {certifi.where()}")
             except ImportError:
                 self.session.verify = True  # 使用系统默认证书
-                print("[AUTH] 使用系统默认CA证书")
+                logger.info("使用系统默认CA证书")
 
-        # 强制使用SOCKS5代理而非HTTP代理（解决Clash HTTP代理干扰SSL的问题）
+        # ✅ 安全修复: 从环境变量读取代理配置（如果存在）
         # SOCKS5在TCP层工作，对SSL流量完全透明，不会干扰SSL握手
-        socks5_proxy = {
-            'http': 'socks5h://127.0.0.1:7898',
-            'https': 'socks5h://127.0.0.1:7898'
-        }
-        self.session.proxies = socks5_proxy
-        print("[AUTH] 使用SOCKS5代理: socks5h://127.0.0.1:7898")
+        proxy_url = os.getenv("GAIYA_PROXY")
+        if proxy_url:
+            self.session.proxies = {
+                'http': proxy_url,
+                'https': proxy_url
+            }
+            logger.info(f"使用代理: {proxy_url}")
+        else:
+            logger.info("未配置代理，使用直连")
 
         # 加载已保存的Token
         self.access_token = None
@@ -230,20 +241,20 @@ class AuthClient:
                         self.access_token = data.get("access_token")
                         self.refresh_token = data.get("refresh_token")
                         self.user_info = data.get("user_info")
-                        print("[AUTH] Token已从加密存储加载（keyring）")
+                        logger.info("Token已从加密存储加载（keyring）")
 
                         # ✅ 清理旧的明文文件（如果存在且之前删除失败）
                         if self.auth_file.exists():
                             try:
                                 self.auth_file.unlink()
-                                print("[AUTH] 已清理旧的明文Token文件")
-                            except Exception:
-                                # 忽略删除失败，下次再试
+                                logger.debug("已清理旧的明文Token文件")
+                            except (OSError, PermissionError):
+                                # 忽略删除失败（可能是文件锁定），下次再试
                                 pass
 
                         return
                 except Exception as keyring_error:
-                    print(f"[AUTH] keyring读取失败: {keyring_error}")
+                    logger.debug(f"keyring读取失败: {keyring_error}")
                     # 继续尝试从文件读取（可能是首次使用keyring）
 
             # ✅ 自动迁移: 如果keyring中没有数据，但文件存在，则迁移
@@ -256,13 +267,13 @@ class AuthClient:
 
                     # 如果keyring可用，自动迁移到加密存储
                     if KEYRING_AVAILABLE and self.access_token and self.refresh_token:
-                        print("[AUTH] 检测到明文Token文件，正在迁移到加密存储...")
+                        logger.info("检测到明文Token文件，正在迁移到加密存储...")
                         self._save_tokens(self.access_token, self.refresh_token, self.user_info)
                     else:
-                        print("[AUTH] Token已从明文文件加载（不安全）")
+                        logger.warning("Token已从明文文件加载（不安全）")
 
         except Exception as e:
-            print(f"[ERROR] 加载Token失败: {e}")
+            logger.error(f"加载Token失败: {e}")
 
     def _save_tokens(self, access_token: str, refresh_token: str, user_info: Dict = None):
         """
@@ -295,20 +306,20 @@ class AuthClient:
                     if self.auth_file.exists():
                         try:
                             self.auth_file.unlink()
-                            print("[AUTH] 已迁移到加密存储，旧的明文文件已删除")
-                        except Exception as delete_error:
+                            logger.info("已迁移到加密存储，旧的明文文件已删除")
+                        except (OSError, PermissionError) as delete_error:
                             # Windows文件锁定，稍后再删除
-                            print(f"[AUTH] 已迁移到加密存储，但明文文件删除失败（将在下次启动时重试）: {delete_error}")
+                            logger.debug(f"已迁移到加密存储，但明文文件删除失败（将在下次启动时重试）: {delete_error}")
 
-                    print("[AUTH] Token已使用加密存储（keyring）")
+                    logger.info("Token已使用加密存储（keyring）")
 
                 except Exception as keyring_error:
                     # keyring失败，fallback到明文文件
-                    print(f"[SECURITY WARNING] keyring存储失败，fallback到明文文件: {keyring_error}")
+                    logger.warning(f"keyring存储失败，fallback到明文文件: {keyring_error}")
                     self._save_tokens_to_file(data)
             else:
                 # keyring不可用，使用明文文件
-                print("[SECURITY WARNING] 使用明文文件存储Token（不安全）")
+                logger.warning("使用明文文件存储Token（不安全）")
                 self._save_tokens_to_file(data)
 
             # 更新内存中的Token
@@ -317,7 +328,7 @@ class AuthClient:
             self.user_info = user_info
 
         except Exception as e:
-            print(f"[ERROR] 保存Token失败: {e}")
+            logger.error(f"保存Token失败: {e}")
 
     def _save_tokens_to_file(self, data: dict):
         """Fallback方法: 保存Token到明文文件"""
@@ -335,16 +346,16 @@ class AuthClient:
             if KEYRING_AVAILABLE:
                 try:
                     keyring.delete_password("gaiya", "auth_data")
-                    print("[AUTH] 已清除加密存储中的Token")
+                    logger.info("已清除加密存储中的Token")
                 except Exception as e:
                     # Token可能不存在或keyring访问失败，记录但继续
                     if "not found" not in str(e).lower():
-                        print(f"[AUTH] 清除keyring失败: {e}")
+                        logger.debug(f"清除keyring失败: {e}")
 
             # ✅ 清除文件中的Token（如果存在）
             if self.auth_file.exists():
                 self.auth_file.unlink()
-                print("[AUTH] 已清除明文文件中的Token")
+                logger.info("已清除明文文件中的Token")
 
             # 清除内存中的Token
             self.access_token = None
@@ -352,7 +363,7 @@ class AuthClient:
             self.user_info = None
 
         except Exception as e:
-            print(f"[ERROR] 清除Token失败: {e}")
+            logger.error(f"清除Token失败: {e}")
 
     def is_logged_in(self) -> bool:
         """检查是否已登录"""
@@ -392,7 +403,7 @@ class AuthClient:
         """
         # 尝试使用requests（主要方案）
         try:
-            print(f"[AUTH-SIGNUP] 方案1: 使用requests库连接到 {self.backend_url}/api/auth-signup")
+            logger.info(f"[AUTH-SIGNUP] 方案1: 使用requests库连接到 {self.backend_url}/api/auth-signup")
 
             response = self.session.post(
                 f"{self.backend_url}/api/auth-signup",
@@ -405,7 +416,7 @@ class AuthClient:
                 # ✅ 安全修复: 移除verify=False，使用session的默认SSL验证配置
             )
 
-            print(f"[AUTH-SIGNUP] requests成功! 响应状态: {response.status_code}")
+            logger.info(f"[AUTH-SIGNUP] requests成功! 响应状态: {response.status_code}")
 
             if response.status_code == 200:
                 data = response.json()
@@ -426,26 +437,30 @@ class AuthClient:
 
                 return data
             else:
-                print(f"[AUTH-SIGNUP] Error response: {response.text}")
+                logger.error(f"[AUTH-SIGNUP] Error response: {response.text}")
                 return {"success": False, "error": f"HTTP {response.status_code}"}
 
         except requests.exceptions.Timeout as e:
-            print(f"[AUTH-SIGNUP] Timeout error: {e}")
+            logger.error(f"[AUTH-SIGNUP] Timeout error: {e}")
             return {"success": False, "error": "请求超时（30秒）- 请检查网络连接"}
         except requests.exceptions.SSLError as e:
-            print(f"[AUTH-SIGNUP] requests库SSL错误(schannel): {e}")
-            print(f"[AUTH-SIGNUP] 🔄 切换到方案2: 使用httpx库（OpenSSL后端，解决schannel兼容性问题）")
+            logger.warning(f"[AUTH-SIGNUP] requests库SSL错误(schannel): {e}")
+            logger.info(f"[AUTH-SIGNUP] 🔄 切换到方案2: 使用httpx库（OpenSSL后端，解决schannel兼容性问题）")
 
             # 方案2: 使用httpx（OpenSSL后端）
             try:
                 import httpx
 
-                # httpx的SOCKS5代理配置（注意httpx使用proxy而不是proxies）
-                proxy_url = "socks5://127.0.0.1:7898"
+                # ✅ 安全修复: 从环境变量读取代理配置（注意httpx使用proxy而不是proxies）
+                proxy_url = os.getenv("GAIYA_PROXY")
+                if proxy_url:
+                    # httpx需要socks5://格式，如果是socks5h://则需要转换
+                    if proxy_url.startswith("socks5h://"):
+                        proxy_url = proxy_url.replace("socks5h://", "socks5://")
 
-                print(f"[AUTH-SIGNUP-HTTPX] 使用httpx+OpenSSL连接到 {self.backend_url}/api/auth-signup")
+                logger.info(f"[AUTH-SIGNUP-HTTPX] 使用httpx+OpenSSL连接到 {self.backend_url}/api/auth-signup")
 
-                with httpx.Client(proxy=proxy_url, verify=False, timeout=30.0) as client:
+                with httpx.Client(proxy=proxy_url if proxy_url else None, verify=False, timeout=30.0) as client:
                     response = client.post(
                         f"{self.backend_url}/api/auth-signup",
                         json={
@@ -455,7 +470,7 @@ class AuthClient:
                         }
                     )
 
-                print(f"[AUTH-SIGNUP-HTTPX] httpx成功! 响应状态: {response.status_code}")
+                logger.info(f"[AUTH-SIGNUP-HTTPX] httpx成功! 响应状态: {response.status_code}")
 
                 if response.status_code == 200:
                     data = response.json()
@@ -474,13 +489,13 @@ class AuthClient:
 
                     return data
                 else:
-                    print(f"[AUTH-SIGNUP-HTTPX] Error response: {response.text}")
+                    logger.error(f"[AUTH-SIGNUP-HTTPX] Error response: {response.text}")
                     # httpx失败，继续尝试urllib
                     raise Exception(f"HTTP {response.status_code}")
 
             except Exception as httpx_error:
-                print(f"[AUTH-SIGNUP] httpx方案失败: {httpx_error}")
-                print(f"[AUTH-SIGNUP] 🔄 切换到方案3: 使用urllib标准库（最终降级方案）")
+                logger.warning(f"[AUTH-SIGNUP] httpx方案失败: {httpx_error}")
+                logger.info(f"[AUTH-SIGNUP] 🔄 切换到方案3: 使用urllib标准库（最终降级方案）")
 
                 # 方案3: urllib降级
                 try:
@@ -508,16 +523,16 @@ class AuthClient:
                     return result
 
                 except Exception as urllib_error:
-                    print(f"[AUTH-SIGNUP] urllib降级方案也失败: {urllib_error}")
+                    logger.error(f"[AUTH-SIGNUP] urllib降级方案也失败: {urllib_error}")
                     return {
                         "success": False,
                         "error": f"SSL证书验证失败（所有方案均失败）\n\nrequests错误: {str(e)}\nhttpx错误: {str(httpx_error)}\nurllib错误: {str(urllib_error)}"
                     }
         except requests.exceptions.ConnectionError as e:
-            print(f"[AUTH-SIGNUP] Connection error: {e}")
+            logger.error(f"[AUTH-SIGNUP] Connection error: {e}")
             return {"success": False, "error": f"无法连接到服务器: {str(e)}"}
         except Exception as e:
-            print(f"[AUTH-SIGNUP] Unexpected error: {e}")
+            logger.error(f"[AUTH-SIGNUP] Unexpected error: {e}")
             return {"success": False, "error": f"注册失败: {str(e)}"}
 
     def signin(self, email: str, password: str) -> Dict:
@@ -533,7 +548,7 @@ class AuthClient:
         """
         # 方案1: requests库（SOCKS5+schannel）
         try:
-            print(f"[AUTH-SIGNIN] 方案1: 使用requests库连接到 {self.backend_url}/api/auth-signin")
+            logger.info(f"[AUTH-SIGNIN] 方案1: 使用requests库连接到 {self.backend_url}/api/auth-signin")
 
             response = self.session.post(
                 f"{self.backend_url}/api/auth-signin",
@@ -545,7 +560,7 @@ class AuthClient:
                 # ✅ 安全修复: 使用session的默认SSL验证配置
             )
 
-            print(f"[AUTH-SIGNIN] requests成功! 响应状态: {response.status_code}")
+            logger.info(f"[AUTH-SIGNIN] requests成功! 响应状态: {response.status_code}")
 
             if response.status_code == 200:
                 data = response.json()
@@ -569,19 +584,23 @@ class AuthClient:
         except requests.exceptions.Timeout:
             return {"success": False, "error": "请求超时"}
         except requests.exceptions.SSLError as e:
-            print(f"[AUTH-SIGNIN] requests库SSL错误(schannel): {e}")
-            print(f"[AUTH-SIGNIN] 🔄 切换到方案2: 使用httpx库（OpenSSL后端）")
+            logger.warning(f"[AUTH-SIGNIN] requests库SSL错误(schannel): {e}")
+            logger.info(f"[AUTH-SIGNIN] 🔄 切换到方案2: 使用httpx库（OpenSSL后端）")
 
             # 方案2: httpx（OpenSSL后端）
             try:
                 import httpx
 
-                # httpx的SOCKS5代理配置（注意httpx使用proxy而不是proxies）
-                proxy_url = "socks5://127.0.0.1:7898"
+                # ✅ 安全修复: 从环境变量读取代理配置（注意httpx使用proxy而不是proxies）
+                proxy_url = os.getenv("GAIYA_PROXY")
+                if proxy_url:
+                    # httpx需要socks5://格式，如果是socks5h://则需要转换
+                    if proxy_url.startswith("socks5h://"):
+                        proxy_url = proxy_url.replace("socks5h://", "socks5://")
 
-                print(f"[AUTH-SIGNIN-HTTPX] 使用httpx+OpenSSL连接到 {self.backend_url}/api/auth-signin")
+                logger.info(f"[AUTH-SIGNIN-HTTPX] 使用httpx+OpenSSL连接到 {self.backend_url}/api/auth-signin")
 
-                with httpx.Client(proxy=proxy_url, verify=False, timeout=10.0) as client:
+                with httpx.Client(proxy=proxy_url if proxy_url else None, verify=False, timeout=10.0) as client:
                     response = client.post(
                         f"{self.backend_url}/api/auth-signin",
                         json={
@@ -590,7 +609,7 @@ class AuthClient:
                         }
                     )
 
-                print(f"[AUTH-SIGNIN-HTTPX] httpx成功! 响应状态: {response.status_code}")
+                logger.info(f"[AUTH-SIGNIN-HTTPX] httpx成功! 响应状态: {response.status_code}")
 
                 if response.status_code == 200:
                     data = response.json()
@@ -612,7 +631,7 @@ class AuthClient:
                     return {"success": False, "error": f"HTTP {response.status_code}"}
 
             except Exception as httpx_error:
-                print(f"[AUTH-SIGNIN] httpx方案也失败: {httpx_error}")
+                logger.error(f"[AUTH-SIGNIN] httpx方案也失败: {httpx_error}")
                 return {"success": False, "error": f"SSL连接失败（所有方案均失败）\n\nrequests错误: {str(e)}\nhttpx错误: {str(httpx_error)}"}
 
         except requests.exceptions.ConnectionError:
@@ -974,8 +993,8 @@ class AuthClient:
         """
         try:
             url = f"{self.backend_url}/api/auth-send-otp"
-            print(f"[OTP] 正在发送验证码到: {email}")
-            print(f"[OTP] 请求URL: {url}")
+            logger.info(f"[OTP] 正在发送验证码到: {email}")
+            logger.debug(f"[OTP] 请求URL: {url}")
 
             response = self.session.post(
                 url,
@@ -986,30 +1005,30 @@ class AuthClient:
                 timeout=10
             )
 
-            print(f"[OTP] 响应状态码: {response.status_code}")
+            logger.debug(f"[OTP] 响应状态码: {response.status_code}")
 
             if response.status_code == 200:
                 result = response.json()
-                print(f"[OTP] 发送成功: {result.get('message', '验证码已发送')}")
+                logger.info(f"[OTP] 发送成功: {result.get('message', '验证码已发送')}")
                 return result
             else:
                 error_msg = f"HTTP {response.status_code}"
-                print(f"[OTP] 发送失败: {error_msg}")
+                logger.error(f"[OTP] 发送失败: {error_msg}")
                 try:
                     error_detail = response.json()
-                    print(f"[OTP] 错误详情: {error_detail}")
-                except:
+                    logger.error(f"[OTP] 错误详情: {error_detail}")
+                except (json.JSONDecodeError, ValueError):
                     pass
                 return {"success": False, "error": error_msg}
 
         except requests.exceptions.Timeout:
-            print(f"[OTP] 错误: 请求超时（10秒）")
+            logger.error(f"[OTP] 错误: 请求超时（10秒）")
             return {"success": False, "error": "请求超时"}
         except requests.exceptions.ConnectionError as e:
-            print(f"[OTP] 错误: 无法连接到服务器 - {e}")
+            logger.error(f"[OTP] 错误: 无法连接到服务器 - {e}")
             return {"success": False, "error": "无法连接到服务器"}
         except Exception as e:
-            print(f"[OTP] 未知错误: {type(e).__name__}: {e}")
+            logger.error(f"[OTP] 未知错误: {type(e).__name__}: {e}")
             return {"success": False, "error": str(e)}
 
     def verify_otp(self, email: str, otp_code: str) -> Dict:

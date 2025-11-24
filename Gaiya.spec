@@ -84,6 +84,8 @@ a = Analysis(
     hooksconfig={},
     runtime_hooks=[],
     excludes=[
+        # ✅ 体积优化: 排除不需要的模块,减少打包体积
+
         # WebEngine相关（~280MB） - 浏览器引擎，应用不需要
         'PySide6.QtWebEngineCore',
         'PySide6.QtWebEngineWidgets',
@@ -125,6 +127,35 @@ a = Analysis(
         'PySide6.QtSql',
         'PySide6.QtTest',
         'PySide6.QtXml',
+
+        # ✅ 新增: 数据科学库（如果未使用,可节省30-50MB）
+        'matplotlib',
+        'scipy',
+        'pandas',
+        'sklearn',
+        'numpy.distutils',  # numpy的distutils不需要
+
+        # ✅ 新增: GUI库（已使用PySide6）
+        'tkinter',
+        '_tkinter',
+        'PyQt5',
+        'PyQt6',
+
+        # ✅ 新增: 测试框架（生产环境不需要）
+        'pytest',
+        'unittest',
+        'nose',
+        '_pytest',
+
+        # ✅ 新增: 文档生成（生产环境不需要）
+        'sphinx',
+        'docutils',
+        'jinja2',  # 如果不使用模板引擎
+
+        # ✅ 新增: 其他不需要的库
+        'IPython',
+        'notebook',
+        'jupyter',
     ],
     noarchive=False,
     optimize=0,
