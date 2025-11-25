@@ -352,6 +352,12 @@ class MembershipDialog(QDialog):
         self.selected_plan = None
         self.selected_pay_type = "alipay"
 
+        # 初始化支付轮询相关属性
+        self.payment_timer = None
+        self.payment_polling_dialog = None
+        self.polling_count = 0
+        self.polling_error_count = 0
+
         self.init_ui()
 
     def init_ui(self):

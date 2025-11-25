@@ -4637,10 +4637,24 @@ class ConfigManager(QMainWindow):
         # 支付方式选项
         payment_group = QButtonGroup(dialog)
 
+        # 支付宝选项
+        alipay_option = QRadioButton()
+        alipay_option.setProperty("pay_method", "alipay")
+        alipay_option.setChecked(True)  # 默认选中
+        payment_group.addButton(alipay_option)
+
+        alipay_container = self._create_payment_option_widget(
+            alipay_option,
+            "🔵 支付宝",
+            f"{plan['price_cny']}{plan['period']}",
+            ""
+        )
+        layout.addWidget(alipay_container)
+
         # 微信支付选项
         wxpay_option = QRadioButton()
         wxpay_option.setProperty("pay_method", "wxpay")
-        wxpay_option.setChecked(True)  # 默认选中
+        wxpay_option.setChecked(False)  # 不再默认选中
         payment_group.addButton(wxpay_option)
 
         wxpay_container = self._create_payment_option_widget(
@@ -4716,7 +4730,9 @@ class ConfigManager(QMainWindow):
                 pay_method = selected_button.property("pay_method")
                 dialog.accept()
 
-                if pay_method == "wxpay":
+                if pay_method == "alipay":
+                    self._on_alipay_selected(plan_id)
+                elif pay_method == "wxpay":
                     self._on_wxpay_selected(plan_id)
                 elif pay_method == "stripe":
                     self._on_stripe_selected(plan_id)
@@ -4821,6 +4837,99 @@ class ConfigManager(QMainWindow):
 
         return container
 
+    def _on_alipay_selected(self, plan_id: str):
+        """处理支付宝支付"""
+        from gaiya.core.auth_client import AuthClient
+        from gaiya.core.async_worker import AsyncNetworkWorker
+        import logging
+
+        pay_type = "alipay"
+        self._current_pay_type = pay_type  # 保存支付类型用于回调
+        self._current_plan_id = plan_id  # 保存套餐ID用于回调
+
+        logging.info(f"[支付调试] 支付宝支付 - plan_type: {plan_id}, pay_type: {pay_type}")
+
+        # ✅ 性能优化: 使用异步Worker避免UI卡顿
+        auth_client = AuthClient()
+        self._payment_worker = AsyncNetworkWorker(
+            auth_client.create_payment_order,
+            plan_type=plan_id,
+            pay_type=pay_type
+        )
+        self._payment_worker.success.connect(self._on_alipay_order_created)
+        self._payment_worker.error.connect(self._on_payment_error)
+        self._payment_worker.start()
+
+    def _on_alipay_order_created(self, result: dict):
+        """支付宝订单创建成功回调"""
+        from PySide6.QtWidgets import QMessageBox
+        from PySide6.QtCore import QUrl, QTimer
+        from PySide6.QtGui import QDesktopServices
+        from gaiya.core.auth_client import AuthClient
+        import logging
+
+        logging.info(f"[支付调试] 支付宝订单创建结果: {result}")
+
+        if result.get("success"):
+            payment_url = result.get("payment_url")
+            params = result.get("params", {})
+            out_trade_no = result.get("out_trade_no")
+
+            from urllib.parse import urlencode
+            query_string = urlencode(params)
+            full_payment_url = f"{payment_url}?{query_string}"
+
+            logging.info(f"[PAYMENT] Opening alipay payment URL: {full_payment_url[:100]}...")
+            logging.info(f"[PAYMENT] Order No: {out_trade_no}, Type: alipay")
+
+            QDesktopServices.openUrl(QUrl(full_payment_url))
+
+            # 显示等待支付对话框
+            self.payment_polling_dialog = QMessageBox(self)
+            self.payment_polling_dialog.setWindowTitle(self.i18n.tr("account.payment.waiting_payment"))
+            self.payment_polling_dialog.setText(
+                "正在等待支付完成...\n\n"
+                "请在打开的浏览器页面中完成支付宝支付。\n"
+                "支付完成后，此窗口将自动关闭。"
+            )
+            self.payment_polling_dialog.setStandardButtons(QMessageBox.StandardButton.Cancel)
+            self.payment_polling_dialog.setIcon(QMessageBox.Icon.Information)
+
+            # 创建定时器轮询支付状态
+            auth_client = AuthClient()
+            self.payment_timer = QTimer()
+            self.payment_timer.setInterval(3000)
+            self.payment_timer.timeout.connect(partial(self._check_payment_status, out_trade_no, auth_client))
+            self.payment_timer.start()
+
+            self.payment_polling_dialog.rejected.connect(self._stop_payment_polling)
+            self.payment_polling_dialog.show()
+        else:
+            error_msg = result.get("error", "创建订单失败")
+            plan_id = self._current_plan_id
+
+            if "MERCHANT_STATUS_NOT_NORMAL" in error_msg or "渠道" in error_msg:
+                detailed_msg = (
+                    f"支付渠道暂时不可用：{error_msg}\n\n"
+                    "可能的原因：\n"
+                    "• 支付渠道临时维护中\n"
+                    "• 需要在商户后台完成渠道签约\n\n"
+                    "建议操作：\n"
+                    "1. 稍后重试（5-10分钟后）\n"
+                    "2. 联系支付服务商客服（zpayz.cn）"
+                )
+                logging.error(f"[PAYMENT] Channel error: {error_msg}")
+            else:
+                detailed_msg = (
+                    f"创建订单失败：{error_msg}\n\n"
+                    f"调试信息：\n"
+                    f"• 套餐类型: {plan_id}\n"
+                    f"• 支付方式: alipay"
+                )
+                logging.error(f"[PAYMENT] Create order failed - plan_type: {plan_id}, error: {error_msg}")
+
+            QMessageBox.critical(self, self.i18n.tr("membership.payment.create_order_failed"), detailed_msg)
+
     def _on_wxpay_selected(self, plan_id: str):
         """处理微信支付"""
         from gaiya.core.auth_client import AuthClient
@@ -4864,7 +4973,7 @@ class ConfigManager(QMainWindow):
             full_payment_url = f"{payment_url}?{query_string}"
 
             logging.info(f"[PAYMENT] Opening payment URL: {full_payment_url[:100]}...")
-            logging.info(f"[PAYMENT] Order No: {out_trade_no}, Type: {pay_type}")
+            logging.info(f"[PAYMENT] Order No: {out_trade_no}, Type: wxpay")
 
             QDesktopServices.openUrl(QUrl(full_payment_url))
 
@@ -4906,7 +5015,7 @@ class ConfigManager(QMainWindow):
                     f"创建订单失败：{error_msg}\n\n"
                     f"调试信息：\n"
                     f"• 套餐类型: {plan_id}\n"
-                    f"• 支付方式: {pay_type}"
+                    f"• 支付方式: wxpay"
                 )
                 logging.error(f"[PAYMENT] Create order failed - plan_type: {plan_id}, error: {error_msg}")
 

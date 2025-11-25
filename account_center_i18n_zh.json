@@ -57,6 +57,7 @@
   "account.feature.times_per_day": "次/天",
   "account.feature.theme_customization": "主题自定义",
   "account.payment.select_payment_method": "选择支付方式",
+  "account.payment.alipay": "🔵 支付宝",
   "account.payment.wechat_pay": "💚 微信支付",
   "account.payment.stripe_pay": "💳 国际支付 (Stripe)",
   "account.payment.waiting_payment": "等待支付",

@@ -18,6 +18,28 @@
 import pytest
 from unittest.mock import Mock, MagicMock, patch
 import json
+import importlib.util
+from pathlib import Path
+
+
+# ============================================
+
+_payment_query_handler = None
+
+
+def _get_payment_query_handler():
+    """Lazy load payment-query handler despite hyphen in filename."""
+    global _payment_query_handler
+    if _payment_query_handler is not None:
+        return _payment_query_handler
+
+    repo_root = Path(__file__).resolve().parents[2]
+    module_path = repo_root / "api" / "payment-query.py"
+    spec = importlib.util.spec_from_file_location("payment_query_handler", module_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    _payment_query_handler = module.handler
+    return _payment_query_handler
 
 
 # ============================================

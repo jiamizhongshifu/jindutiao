@@ -57,6 +57,7 @@
   "account.feature.times_per_day": "/day",
   "account.feature.theme_customization": "Theme Customization",
   "account.payment.select_payment_method": "Select Payment Method",
+  "account.payment.alipay": "🔵 Alipay",
   "account.payment.wechat_pay": "💚 WeChat Pay",
   "account.payment.stripe_pay": "💳 International Payment (Stripe)",
   "account.payment.waiting_payment": "Waiting for Payment",

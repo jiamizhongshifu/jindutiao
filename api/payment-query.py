@@ -46,6 +46,7 @@ class handler(BaseHTTPRequestHandler):
 
             if result["success"]:
                 order = result["order"]
+                is_paid = self._is_paid_status(order.get("status"))
 
                 # 3. 返回订单信息
                 self._send_success({
@@ -55,14 +56,14 @@ class handler(BaseHTTPRequestHandler):
                         "trade_no": order.get("trade_no"),
                         "name": order.get("name"),
                         "money": order.get("money"),
-                        "status": "paid" if order.get("status") == 1 else "unpaid",
+                        "status": "paid" if is_paid else "unpaid",
                         "type": order.get("type"),
                         "addtime": order.get("addtime"),
                         "endtime": order.get("endtime")
                     }
                 })
 
-                print(f"[PAYMENT-QUERY] Order status: {'paid' if order.get('status') == 1 else 'unpaid'}", file=sys.stderr)
+                print(f"[PAYMENT-QUERY] Order status: {'paid' if is_paid else 'unpaid'}", file=sys.stderr)
             else:
                 self._send_error(404, result.get("error", "Order not found"))
 
@@ -90,3 +91,26 @@ class handler(BaseHTTPRequestHandler):
             "error": message
         }
         self.wfile.write(json.dumps(error_response).encode('utf-8'))
+
+    @staticmethod
+    def _is_paid_status(status_value) -> bool:
+        """
+        将ZPAY返回的status值统一转换为布尔标记。
+        ZPAY会把status序列化为"1"/"0"，这里同时兼容字符串和数值。
+        """
+        if status_value is None:
+            return False
+
+        if isinstance(status_value, str):
+            normalized = status_value.strip().lower()
+            if normalized in {"paid", "unpaid"}:
+                return normalized == "paid"
+            if normalized == "":
+                return False
+            status_value = normalized
+
+        try:
+            numeric_status = int(float(status_value))
+            return numeric_status == 1
+        except (ValueError, TypeError):
+            return False
