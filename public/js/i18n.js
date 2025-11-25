@@ -120,16 +120,32 @@ class I18n {
     /**
      * Switch to a different locale
      * @param {string} locale - Locale code
+     * @param {boolean} reload - Whether to reload the page (default: true for production)
      */
-    async setLocale(locale) {
+    async setLocale(locale, reload = true) {
         if (!['zh_CN', 'en_US'].includes(locale)) {
             console.warn(`[i18n] Unsupported locale: ${locale}`);
+            return;
+        }
+
+        // Don't switch if already on this locale
+        if (this.locale === locale) {
+            console.log(`[i18n] Already on locale: ${locale}`);
             return;
         }
 
         this.locale = locale;
         localStorage.setItem('gaiya_locale', locale);
 
+        console.log(`[i18n] Switching to locale: ${locale}`);
+
+        // Reload page for clean language switch (recommended for production)
+        if (reload) {
+            window.location.reload();
+            return;
+        }
+
+        // Alternative: Update page without reload (may have issues with dynamic content)
         // Load translations if not already loaded
         if (!this.translations[locale]) {
             await this.loadTranslations(locale);
