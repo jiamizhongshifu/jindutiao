@@ -5,16 +5,58 @@
 ### ❌ 之前的问题
 - `/locales/*.json` 文件返回 404 错误
 - 语言切换功能无法正常工作
+- Vercel 误识别项目为 Flask 应用(因为根目录有 main.py)
 
 ### 🔍 根本原因
-Vercel 配置文件(`vercel.json`)缺少关键配置:
-1. **没有指定输出目录**: Vercel 不知道从 `public/` 目录提供静态文件
-2. **没有配置 JSON 文件的响应头**: 可能导致 MIME 类型错误
+1. **Vercel 框架检测问题**:
+   - Vercel 在构建时扫描根目录,发现 `main.py` 后尝试部署为 Flask 应用
+   - 导致构建失败: "Error: No flask entrypoint found"
+
+2. **配置文件冲突**:
+   - `vercel.json` 中的 `outputDirectory` 和 `rewrites` 与 Root Directory 设置冲突
+   - 导致路径叠加错误 (如 `/public/public/locales/zh_CN.json`)
 
 ### ✅ 解决方案
-已更新 `vercel.json`,添加了:
-- `outputDirectory: "public"` - 告诉 Vercel 从 `public/` 目录提供文件
-- `headers` 配置 - 为 JSON 文件设置正确的 Content-Type 和缓存策略
+
+#### 关键步骤 1: 在 Vercel Dashboard 设置 Root Directory
+**这是最关键的一步!** 必须在 Vercel 项目设置中手动配置:
+
+1. 登录 [Vercel Dashboard](https://vercel.com/dashboard)
+2. 选择你的项目 (jindutiao)
+3. Settings → General
+4. **Root Directory** 设置为: `public`
+5. 点击 Save 保存
+
+#### 关键步骤 2: 简化 vercel.json 配置
+保持 `vercel.json` 配置最小化,仅包含必要的 headers:
+```json
+{
+  "headers": [
+    {
+      "source": "/locales/(.*)",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json; charset=utf-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, must-revalidate"
+        }
+      ]
+    }
+  ]
+}
+```
+
+#### 工作原理
+```
+Vercel 构建流程:
+1. 读取 Root Directory = "public" (从 Dashboard 设置)
+2. 仅扫描 public/ 目录内容 (忽略根目录的 Python 文件)
+3. 将 public/ 作为网站根目录部署
+4. public/locales/zh_CN.json → https://www.gaiyatime.com/locales/zh_CN.json ✅
+```
 
 ---
 
