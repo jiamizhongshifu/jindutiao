@@ -1,108 +1,46 @@
-# Vercel部署配置
-# 保留：api/目录（API接口）、public/目录（静态网站）、index.py（虚拟入口）
-
-# ============================================
-# 排除桌面应用相关文件（不需要部署到云端）
-# ============================================
-
-# 构建产物
-dist/
-build/
-*.exe
-*.pkg
-*.dmg
-*.deb
-*.rpm
-*.spec
-
-# 桌面应用主程序
-main.py
-config_gui.py
-statistics_gui.py
-backend_api.py
-backend_manager.py
-ai_client.py
-theme_manager.py
-theme_ai_helper.py
-timeline_editor.py
-api_key_manager.py
-statistics_manager.py
-proxy_server.py
-
-# 桌面应用模块
-gaiya/
-
-# 测试文件
-test_*.py
-*_test.py
-tests/
-
-# ============================================
-# 排除文档和配置（保留必要的）
-# ============================================
-
-# 文档（保留README.md）
-*.md
-!README.md
-
-# 配置文件（保留package.json和vercel.json）
-*.json
-!package.json
-!vercel.json
-!api/*/requirements.txt
-
-# 桌面应用资源（云端不需要）
-resources/
-templates/
-data/
-kun.webp
-
-# ============================================
-# 排除开发工具和缓存
-# ============================================
-
-# Python缓存
-__pycache__/
+# Python files
+*.py
 *.pyc
-*.pyo
-*.pyd
+__pycache__/
+.pytest_cache/
+.mypy_cache/
 
-# 日志和临时文件
-*.log
-*.tmp
-*.temp
-*.bak
-gaiya.log
-first_run.json
+# Git
+.git/
+.gitignore
 
-# IDE配置
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# 环境文件
+# Build artifacts
+build/
+dist/
+*.spec
+*.exe
+
+# Development files
 .env
 .env.local
-.venv/
-venv/
-env/
 
-# ============================================
-# 排除其他无关目录
-# ============================================
+# Documentation (keep only essentials)
+README.md
+QUICKREF.md
+CLAUDE.md
 
-docs/
-vercel_api/
-railway.json
-Procfile
-copy/
-backup/
-.benchmarks/
-.bmad-core/
-.claude/
+# Templates and config (desktop app only)
+tasks*.json
+templates*.json
+config.json
+first_run.json
+cache/
+scenes/
 
-# ============================================
-# 重要：不要排除public/目录中的任何文件！
-# public/目录包含网站的所有静态资源
-# ============================================
+# API (if you have a separate API deployment)
+# api/
+
+# Tests
+tests/
+**/test_*.py
