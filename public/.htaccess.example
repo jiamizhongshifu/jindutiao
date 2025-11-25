@@ -1,0 +1,43 @@
+# GaiYa 官网 Apache .htaccess 配置示例
+# 将此文件重命名为 .htaccess 并上传到网站根目录
+
+# ✅ 关键配置1: 确保 JSON 文件正确的 MIME 类型
+<FilesMatch "\.json$">
+    Header set Content-Type "application/json"
+    Header set Access-Control-Allow-Origin "*"
+</FilesMatch>
+
+# ✅ 关键配置2: locales 目录访问权限
+<Directory "locales">
+    Options -Indexes +FollowSymLinks
+    AllowOverride None
+    Require all granted
+
+    # JSON 缓存配置
+    <FilesMatch "\.json$">
+        Header set Cache-Control "public, max-age=3600"
+    </FilesMatch>
+</Directory>
+
+# 启用 mod_rewrite(用于SPA路由支持)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # 如果请求的是文件或目录，直接访问
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+
+    # 否则重定向到 index.html
+    RewriteRule . /index.html [L]
+</IfModule>
+
+# 静态资源缓存
+<FilesMatch "\.(js|css|png|jpg|jpeg|gif|ico|svg|webp)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+</FilesMatch>
+
+# 压缩优化
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+</IfModule>
