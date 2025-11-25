@@ -2,6 +2,22 @@
   "framework": null,
   "installCommand": "echo 'No dependencies needed for static site'",
   "buildCommand": "echo 'No build needed for static site'",
+  "outputDirectory": "public",
+  "headers": [
+    {
+      "source": "/locales/(.*).json",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json; charset=utf-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, must-revalidate"
+        }
+      ]
+    }
+  ],
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/:path*" }
   ]
