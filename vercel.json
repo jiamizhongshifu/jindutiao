@@ -1,6 +1,17 @@
 {
-  "buildCommand": "echo 'No build needed'",
-  "outputDirectory": "public",
+  "version": 2,
+  "builds": [
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/public/$1"
+    }
+  ],
   "cleanUrls": true,
   "trailingSlash": false,
   "headers": [
