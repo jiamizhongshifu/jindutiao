@@ -37,7 +37,7 @@ Vercel 配置文件(`vercel.json`)缺少关键配置:
    - 等待显示 "Ready" 状态
 
 3. **验证部署**
-   - 访问: https://gaiya.cloud/locales/zh_CN.json
+   - 访问: https://www.gaiyatime.com/locales/zh_CN.json
    - 应该看到 JSON 内容,而不是 404
 
 ---
@@ -47,12 +47,12 @@ Vercel 配置文件(`vercel.json`)缺少关键配置:
 ### 1. 检查 JSON 文件可访问性
 
 在浏览器中访问:
-- ✅ https://gaiya.cloud/locales/zh_CN.json - 应返回中文翻译
-- ✅ https://gaiya.cloud/locales/en_US.json - 应返回英文翻译
+- ✅ https://www.gaiyatime.com/locales/zh_CN.json - 应返回中文翻译
+- ✅ https://www.gaiyatime.com/locales/en_US.json - 应返回英文翻译
 
 ### 2. 测试语言切换功能
 
-1. 打开 https://gaiya.cloud
+1. 打开 https://www.gaiyatime.com
 2. 打开浏览器控制台(F12)
 3. 应该看到:
    ```
@@ -69,8 +69,8 @@ Vercel 配置文件(`vercel.json`)缺少关键配置:
 
 当一切正常时:
 
-1. ✅ https://gaiya.cloud/locales/zh_CN.json - 返回 JSON 内容
-2. ✅ https://gaiya.cloud/locales/en_US.json - 返回 JSON 内容
+1. ✅ https://www.gaiyatime.com/locales/zh_CN.json - 返回 JSON 内容
+2. ✅ https://www.gaiyatime.com/locales/en_US.json - 返回 JSON 内容
 3. ✅ 控制台显示 `[i18n] Loaded translations for zh_CN`
 4. ✅ 点击语言切换按钮后页面自动刷新
 5. ✅ 所有文本正确切换到对应语言
