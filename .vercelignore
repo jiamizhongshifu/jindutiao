@@ -1,7 +1,8 @@
 # Python files (EXCEPT api/ directory for Serverless Functions)
-# Use negation pattern to allow api/**/*.py
+# Ignore all .py files in root and public/, but allow api/**/*.py
 *.py
 !api/**/*.py
+public/**/*.py
 
 *.pyc
 __pycache__/
