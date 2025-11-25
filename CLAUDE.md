@@ -263,9 +263,313 @@
                     <core_rule>修改代码 → 清理build/dist → 重新打包 → 测试exe</core_rule>
                 </method>
 
+                <method name="PyInstaller Packaging Troubleshooting (打包故障诊断)">
+                    <when>PyInstaller 增量打包失败或 exe 未更新</when>
+                    <context>
+                        本项目使用 PyInstaller 打包 PySide6/Qt 桌面应用。
+                        核心挑战: 增量打包的缓存机制可能导致代码变更未生效。
+                    </context>
+
+                    <!-- 问题分类 -->
+                    <problem_categories>
+                        <category name="增量缓存失效">
+                            <symptom>多次 build-fast.bat 后,exe 文件时间戳不更新</symptom>
+                            <root_cause>PyInstaller 增量模式误判代码无变化,复用旧缓存</root_cause>
+                        </category>
+                        <category name="批处理脚本输出被隐藏">
+                            <symptom>build-fast.bat 看起来"完成"了,但没有任何输出</symptom>
+                            <root_cause>chcp 65001 >nul 将所有输出重定向到空设备</root_cause>
+                        </category>
+                        <category name="阻塞式等待用户输入">
+                            <symptom>build-clean.bat 执行后卡住,进程不退出</symptom>
+                            <root_cause>pause 命令等待用户按键,但在后台运行时无法响应</root_cause>
+                        </category>
+                        <category name="Qt 组件在打包环境中渲染异常">
+                            <symptom>代码在开发环境正常,打包后 UI 样式失效</symptom>
+                            <root_cause>Qt StyleSheet 选择器在 PyInstaller 环境不可靠,需要 QPainter 手动绘制</root_cause>
+                        </category>
+                    </problem_categories>
+
+                    <!-- 诊断步骤 -->
+                    <diagnosis_steps>
+                        <step n="1" name="确认代码变更已保存">
+                            <action>检查文件修改时间戳,确保代码已写入磁盘</action>
+                            <command>ls -lh config_gui.py</command>
+                        </step>
+                        <step n="2" name="验证 exe 文件时间戳">
+                            <action>对比 dist/*.exe 的时间戳与当前时间</action>
+                            <command>ls -lh dist/*.exe</command>
+                            <red_flag>如果时间戳是很久以前的,说明打包未真正执行</red_flag>
+                        </step>
+                        <step n="3" name="检查批处理脚本输出">
+                            <action>尝试手动运行批处理脚本,观察是否有输出</action>
+                            <command>cmd.exe /c build-fast.bat</command>
+                            <red_flag>如果输出为空或只有版本号,说明输出被隐藏</red_flag>
+                        </step>
+                        <step n="4" name="查看 PyInstaller 构建日志">
+                            <action>检查 build/ 目录下的日志文件</action>
+                            <files>
+                                <file>build/Gaiya/warn-Gaiya.txt (警告信息)</file>
+                                <file>build/Gaiya/xref-Gaiya.html (依赖关系图)</file>
+                            </files>
+                        </step>
+                        <step n="5" name="比对开发环境与打包环境差异">
+                            <action>如果 UI 样式问题,创建独立测试脚本验证</action>
+                            <reason>Qt 组件在打包后行为可能与开发环境不同</reason>
+                        </step>
+                    </diagnosis_steps>
+
+                    <!-- 根因定位方法 -->
+                    <root_cause_analysis>
+                        <technique name="时间戳三角验证法">
+                            <description>对比三个时间戳: 源代码修改时间 vs build/ 时间 vs dist/ 时间</description>
+                            <healthy_pattern>源代码 > build/ > dist/ (时间递减)</healthy_pattern>
+                            <problematic_pattern>源代码 > build/ = dist/ (build/ 未更新)</problematic_pattern>
+                        </technique>
+                        <technique name="最小化复现测试">
+                            <description>创建最简单的独立测试代码,验证问题是否在打包环境中复现</description>
+                            <example>
+                                独立创建 PaymentOptionCard 测试窗口,用 QPainter 绘制边框,
+                                验证 WA_StyledBackground 属性冲突问题。
+                            </example>
+                        </technique>
+                        <technique name="对比参考实现">
+                            <description>寻找项目中已成功运行的相似组件,对比其实现方式</description>
+                            <example>
+                                membership_ui.py 中的 SolidCardWidget 使用 QPainter 成功,
+                                对比其 Qt 属性配置,发现缺失或多余的属性设置。
+                            </example>
+                        </technique>
+                    </root_cause_analysis>
+
+                    <!-- 解决方案 (按优先级) -->
+                    <solutions>
+                        <solution priority="1" name="彻底清理缓存 + 直接调用 PyInstaller">
+                            <when>增量打包多次失败,exe 时间戳未更新</when>
+                            <steps>
+                                <step>手动删除 build/ 和 dist/ 目录 (不要依赖批处理)</step>
+                                <step>直接运行 pyinstaller Gaiya.spec (不通过批处理)</step>
+                                <step>验证输出中有 "Building EXE...completed successfully"</step>
+                                <step>再次检查 dist/*.exe 时间戳</step>
+                            </steps>
+                            <code_example>
+python -c "import os, shutil; [shutil.rmtree(d) for d in ['build', 'dist'] if os.path.exists(d)]"
+pyinstaller Gaiya.spec
+ls -lh dist/*.exe
+                            </code_example>
+                        </solution>
+
+                        <solution priority="2" name="修复批处理脚本的输出可见性">
+                            <when>build-fast.bat 执行后无输出,难以判断进度</when>
+                            <problem>chcp 65001 >nul 隐藏了所有输出</problem>
+                            <fix>
+                                方案A: 移除 >nul 重定向
+                                方案B: 使用 findstr 过滤关键信息
+                                方案C: 直接调用 pyinstaller,不使用批处理
+                            </fix>
+                            <recommendation>优先使用方案C (最可靠)</recommendation>
+                        </solution>
+
+                        <solution priority="3" name="移除批处理中的阻塞式交互">
+                            <when>build-clean.bat 后台运行时卡住不退出</when>
+                            <problem>pause 命令在后台运行时无法接收输入</problem>
+                            <fix>
+                                在自动化场景中,完全跳过 build-clean.bat,
+                                手动执行清理 + pyinstaller 命令。
+                            </fix>
+                        </solution>
+
+                        <solution priority="4" name="Qt 组件改用 QPainter 手动绘制">
+                            <when>StyleSheet 在打包后失效,边框/背景渲染错误</when>
+                            <root_cause>
+                                Qt StyleSheet 选择器 (class name, ID) 在 PyInstaller 环境不可靠。
+                                部分选择器可能被优化掉或路径解析失败。
+                            </root_cause>
+                            <solution_pattern>
+                                <step>移除 setStyleSheet() 中的复杂选择器</step>
+                                <step>重写 paintEvent() 方法,使用 QPainter 手动绘制</step>
+                                <step>设置 Qt 属性禁用系统默认渲染</step>
+                            </solution_pattern>
+                            <critical_attributes>
+                                <attribute>WA_NoSystemBackground (禁用系统背景)</attribute>
+                                <attribute>WA_OpaquePaintEvent (声明完全重绘)</attribute>
+                                <attribute>setAutoFillBackground(False) (禁用自动填充)</attribute>
+                                <attribute>NoFocus (禁用焦点框,防止黑边框)</attribute>
+                            </critical_attributes>
+                            <conflict_warning>
+                                ⚠️ WA_StyledBackground 与 WA_OpaquePaintEvent 冲突!
+                                使用 QPainter 手动绘制时,只能设置 WA_OpaquePaintEvent,
+                                不能同时设置 WA_StyledBackground。
+                            </conflict_warning>
+                        </solution>
+                    </solutions>
+
+                    <!-- 预防措施 -->
+                    <prevention_measures>
+                        <measure name="建立可靠的打包流程">
+                            <description>
+                                创建一个简单、可重复、无依赖批处理的打包流程:
+                                1. Python 脚本清理目录
+                                2. 直接调用 pyinstaller Gaiya.spec
+                                3. 自动验证 exe 时间戳和文件大小
+                            </description>
+                        </measure>
+                        <measure name="强制清理策略">
+                            <description>
+                                在遇到任何打包异常时,第一反应应该是:
+                                完全删除 build/ 和 dist/,然后全新构建。
+                                不要浪费时间调试增量构建的缓存问题。
+                            </description>
+                        </measure>
+                        <measure name="UI 组件开发规范">
+                            <description>
+                                对于自定义 QWidget 组件,尤其是需要特殊样式的:
+                                - 优先使用 QPainter 手动绘制,而非 StyleSheet
+                                - 参考项目中已有的成功案例 (如 SolidCardWidget)
+                                - 在打包前,用最小化测试验证渲染效果
+                            </description>
+                        </measure>
+                        <measure name="时间戳验证机制">
+                            <description>
+                                每次打包后,自动对比 exe 时间戳与当前时间:
+                                如果差距超过 2 分钟,说明打包可能失败,需要重试。
+                            </description>
+                        </measure>
+                    </prevention_measures>
+
+                    <!-- 黄金法则 -->
+                    <golden_rules>
+                        <rule>增量构建不可靠时,永远优先全新构建</rule>
+                        <rule>批处理脚本不是必须的,直接调用工具更可靠</rule>
+                        <rule>Qt StyleSheet 在打包环境不可靠,用 QPainter 更稳定</rule>
+                        <rule>时间戳是判断打包是否成功的最直接证据</rule>
+                        <rule>遇到打包问题不要盲目尝试,先验证 exe 是否真的更新了</rule>
+                    </golden_rules>
+
+                    <!-- 经验教训 (本次调试总结) -->
+                    <lessons_learned>
+                        <lesson date="2025-11-26" issue="PaymentOptionCard 边框分离问题">
+                            <problem>
+                                支付方式卡片在打包后显示分离的边框 (payment name 和 price 分别有边框),
+                                而不是一个统一的卡片边框。
+                            </problem>
+                            <failed_attempts>
+                                <attempt>使用 StyleSheet 类名选择器 → 不生效</attempt>
+                                <attempt>使用 ID 选择器 → 不生效</attempt>
+                                <attempt>添加 WA_StyledBackground 属性 → 与 WA_OpaquePaintEvent 冲突</attempt>
+                            </failed_attempts>
+                            <root_cause>
+                                同时设置了 WA_StyledBackground 和 WA_OpaquePaintEvent 两个冲突属性,
+                                导致 QPainter 手动绘制被系统默认渲染覆盖。
+                            </root_cause>
+                            <solution>
+                                移除 WA_StyledBackground,只保留:
+                                - WA_NoSystemBackground
+                                - WA_OpaquePaintEvent
+                                - setAutoFillBackground(False)
+                                完全禁用系统渲染,让 QPainter 完全接管绘制。
+                            </solution>
+                            <key_insight>
+                                Qt 属性之间可能存在冲突,不能盲目堆叠。
+                                必须参考项目中已成功运行的实现 (如 SolidCardWidget),
+                                使用完全相同的属性配置。
+                            </key_insight>
+                        </lesson>
+                        <lesson date="2025-11-26" issue="多次打包 exe 未更新">
+                            <problem>
+                                运行了 7-8 次 build-fast.bat,但 exe 文件时间戳始终停留在旧时间。
+                            </problem>
+                            <diagnosis_process>
+                                <step>检查批处理输出 → 发现输出被 >nul 隐藏</step>
+                                <step>尝试读取后台任务输出 → 只有编码错误</step>
+                                <step>检查 exe 时间戳 → 确认未更新</step>
+                                <step>手动删除 build/dist → 仍然卡住 (pause 命令)</step>
+                            </diagnosis_process>
+                            <solution>
+                                绕过所有批处理脚本,直接:
+                                1. Python 脚本删除目录
+                                2. pyinstaller Gaiya.spec
+                                3. 验证时间戳
+                            </solution>
+                            <lesson_learned>
+                                批处理脚本增加了复杂性,在故障排查时反而成为障碍。
+                                对于关键操作 (如打包),应该有绕过批处理的备用方案。
+                            </lesson_learned>
+                        </lesson>
+                    </lessons_learned>
+                </method>
+
+                <method name="Qt Custom Widget Styling in PyInstaller (Qt自定义组件样式打包问题)">
+                    <when>自定义 QWidget 组件在开发环境正常,但打包后样式失效或异常</when>
+                    <context>
+                        PySide6/Qt 应用在 PyInstaller 打包后,StyleSheet 样式可能不生效。
+                        典型症状: 边框消失、背景色错误、子组件各自显示边框(而非统一卡片边框)。
+                    </context>
+
+                    <!-- 问题根源 -->
+                    <root_causes>
+                        <cause name="StyleSheet 选择器失效">
+                            <description>
+                                Qt StyleSheet 的类名选择器和 ID 选择器在 PyInstaller 环境不可靠。
+                                可能被优化器移除或路径解析失败。
+                            </description>
+                        </cause>
+                        <cause name="Qt 属性冲突">
+                            <description>WA_StyledBackground + WA_OpaquePaintEvent = 冲突!</description>
+                        </cause>
+                    </root_causes>
+
+                    <!-- 诊断步骤 -->
+                    <diagnosis_steps>
+                        <step n="1">对比开发环境与打包环境</step>
+                        <step n="2">创建最小化复现测试</step>
+                        <step n="3">对比项目中的成功案例 (SolidCardWidget)</step>
+                        <step n="4">渐进式排查属性冲突</step>
+                    </diagnosis_steps>
+
+                    <!-- 解决方案 -->
+                    <solution name="使用 QPainter 手动绘制">
+                        <critical_attributes>
+                            <attribute>✅ WA_NoSystemBackground</attribute>
+                            <attribute>✅ WA_OpaquePaintEvent</attribute>
+                            <attribute>✅ setAutoFillBackground(False)</attribute>
+                            <attribute>✅ NoFocus (防止黑边框)</attribute>
+                            <attribute>❌ 不要添加 WA_StyledBackground (冲突!)</attribute>
+                        </critical_attributes>
+                        <code_template>
+class CustomCard(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        # Clear default styles
+        self.setStyleSheet("CustomCard { border: none; background: transparent; }")
+
+        # Disable system rendering
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground, True)
+        self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent, True)
+        self.setAutoFillBackground(False)
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        # Draw background and border manually...
+                        </code_template>
+                        <reference>参考: gaiya/ui/membership_ui.py 中的 SolidCardWidget</reference>
+                    </solution>
+
+                    <!-- 黄金法则 -->
+                    <golden_rules>
+                        <rule>自定义组件优先使用 QPainter,避免 StyleSheet 选择器</rule>
+                        <rule>参考项目成功案例,复用其属性配置</rule>
+                        <rule>WA_StyledBackground 与 WA_OpaquePaintEvent 不能共存</rule>
+                        <rule>子组件必须显式清除样式 (border: none; background: transparent;)</rule>
+                    </golden_rules>
+                </method>
+
                 <method name="UI State Synchronization Troubleshooting">
                     <when>配置更新后UI未刷新</when>
-                    <core_principle>追踪完整数据流：用户输入 → 组件A → 内存缓存 → 持久化 → 加载 → 组件B → UI显示</core_principle>
+                    <core_principle>追踪完整数据流:用户输入 → 组件A → 内存缓存 → 持久化 → 加载 → 组件B → UI显示</core_principle>
                 </method>
 
                 <method name="Performance Perception vs Reality Analysis">
