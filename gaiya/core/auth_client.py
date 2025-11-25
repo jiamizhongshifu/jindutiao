@@ -781,7 +781,7 @@ class AuthClient:
                 return {"success": False, "error": "未登录"}
 
             response = self.session.post(
-                f"{self.backend_url}/api/payment-create-order",
+                f"{self.backend_url}/api/payment-create-order.py",
                 json={
                     "user_id": self.get_user_id(),
                     "plan_type": plan_type,
@@ -810,7 +810,7 @@ class AuthClient:
         """
         try:
             response = self.session.get(
-                f"{self.backend_url}/api/payment-query",
+                f"{self.backend_url}/api/payment-query.py",
                 params={"out_trade_no": out_trade_no},
                 timeout=10
             )
