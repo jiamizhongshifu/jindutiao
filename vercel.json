@@ -1,5 +1,7 @@
 {
   "version": 2,
+  "buildCommand": null,
+  "installCommand": "echo 'Skip install'",
   "functions": {
     "api/**/*.py": {
       "runtime": "python3.9"
