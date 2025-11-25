@@ -77,10 +77,13 @@ class ZPayManager:
             if param:
                 params["param"] = param
 
-            # 临时方案：明确指定使用渠道8180（已确认可用的渠道）
-            # 渠道8191可能需要完成支付宝官方签约，暂时使用8180
-            params["cid"] = "8180"
-            print(f"[ZPAY] Using channel 8180 to avoid channel 8191 issue", file=sys.stderr)
+            # 根据支付方式选择渠道
+            if pay_type == "alipay":
+                params["cid"] = "8191"  # 支付宝渠道 (商户号: 2088170309246664)
+                print(f"[ZPAY] Using Alipay channel 8191", file=sys.stderr)
+            elif pay_type == "wxpay":
+                params["cid"] = "8180"  # 微信渠道
+                print(f"[ZPAY] Using WeChat channel 8180", file=sys.stderr)
 
             # 2. 生成签名
             sign = self._generate_sign(params)
