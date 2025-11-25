@@ -1,17 +1,5 @@
 {
-  "headers": [
-    {
-      "source": "/locales/(.*)",
-      "headers": [
-        {
-          "key": "Content-Type",
-          "value": "application/json; charset=utf-8"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=3600, must-revalidate"
-        }
-      ]
-    }
-  ]
+  "buildCommand": "echo 'Static site - no build needed'",
+  "outputDirectory": "public",
+  "installCommand": "echo 'No dependencies to install'"
 }
