@@ -1,5 +1,8 @@
-# Python files
+# Python files (EXCEPT api/ directory for Serverless Functions)
+# Use negation pattern to allow api/**/*.py
 *.py
+!api/**/*.py
+
 *.pyc
 __pycache__/
 .pytest_cache/
@@ -37,9 +40,6 @@ config.json
 first_run.json
 cache/
 scenes/
-
-# API (if you have a separate API deployment)
-# api/
 
 # Tests
 tests/

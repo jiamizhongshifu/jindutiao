@@ -1,7 +1,5 @@
 {
   "version": 2,
-  "framework": null,
-  "buildCommand": "echo 'No build step required for Serverless Functions'",
   "functions": {
     "api/**/*.py": {
       "runtime": "python3.9"
