@@ -272,6 +272,48 @@
                     <when>用户感知的性能问题与真实性能瓶颈不一致</when>
                     <golden_rule>感知优先于指标 - 用户感知到的"卡顿"才是真实问题</golden_rule>
                 </method>
+
+                <method name="Vercel Serverless Functions Deployment Troubleshooting">
+                    <when>Vercel 部署成功但 API 返回 404 或 Functions 未被识别</when>
+                    <context>本项目使用 Vercel 部署 Python Serverless Functions + 静态站点</context>
+                    <diagnosis_steps>
+                        1. **检查部署日志**: 查看是否有 "Installing dependencies" 和 Functions 列表
+                        2. **验证 Functions 页面**: Vercel 控制台应显示已部署的 Functions
+                        3. **检查项目配置**: Framework Preset, Root Directory, Build Command
+                        4. **验证文件结构**: .vercelignore 是否误排除了 api/ 目录
+                        5. **测试不同 URL**: 尝试 /api/test 和 /api/test.py
+                    </diagnosis_steps>
+                    <common_issues>
+                        <issue name="Framework Preset 错误">
+                            <symptom>构建时间极短(36ms),没有 Functions 输出</symptom>
+                            <cause>项目被检测为错误的框架(如 Flask)</cause>
+                            <solution>在 Vercel UI 中将 Framework Preset 改为 "Other"</solution>
+                        </issue>
+                        <issue name="Root Directory 设置错误">
+                            <symptom>Functions 被构建但未部署,日志正常但 404</symptom>
+                            <cause>Root Directory 设置为 public,导致 api/ 目录未被包含</cause>
+                            <solution>清空 Root Directory 设置,从项目根目录部署</solution>
+                        </issue>
+                        <issue name=".vercelignore 误排除">
+                            <symptom>部署日志显示 "Removed XX files",没有 Functions</symptom>
+                            <cause>*.py 全局忽略导致 api/*.py 被排除</cause>
+                            <solution>使用精确路径: /*.py (仅根目录), /gaiya/, 但不包含 api/</solution>
+                        </issue>
+                        <issue name="URL 路径问题">
+                            <symptom>Functions 已部署但 /api/test 返回 404</symptom>
+                            <cause>Vercel Python Functions 保留 .py 扩展名</cause>
+                            <solution>客户端 URL 需要改为 /api/test.py</solution>
+                        </issue>
+                    </common_issues>
+                    <best_practices>
+                        <practice>使用 builds + @vercel/python 配置,不要用 functions</practice>
+                        <practice>vercel.json 中指定 python3.9 或更高版本</practice>
+                        <practice>分别配置 API builds 和静态文件 builds</practice>
+                        <practice>routes 配置: /api/(.*) 优先于 /(.*)</practice>
+                        <practice>在 Vercel UI 中启用 "Include files outside root directory"</practice>
+                    </best_practices>
+                    <golden_rule>部署成功 ≠ Functions 可用。必须验证 Functions 页面有列表,且 API 实际可访问</golden_rule>
+                </method>
             </quick_reference>
         </debugging_methodology>
     </protocols>
