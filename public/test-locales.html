@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Locales Test</title>
+</head>
+<body>
+    <h1>Translation Files Test</h1>
+    <div id="results"></div>
+
+    <script>
+        const results = document.getElementById('results');
+
+        async function testFile(url) {
+            try {
+                const response = await fetch(url);
+                const status = response.status;
+                const text = await response.text();
+                const size = text.length;
+
+                results.innerHTML += '<div style="margin: 10px; padding: 10px; border: 1px solid #ccc;">' +
+                    '<h3>' + url + '</h3>' +
+                    '<p>Status: <strong>' + status + '</strong></p>' +
+                    '<p>Size: ' + size + ' bytes</p>' +
+                    '<p>Preview: ' + text.substr(0, 100) + '...</p>' +
+                    '</div>';
+            } catch (error) {
+                results.innerHTML += '<div style="margin: 10px; padding: 10px; border: 1px solid red;">' +
+                    '<h3>' + url + '</h3>' +
+                    '<p style="color: red;">Error: ' + error.message + '</p>' +
+                    '</div>';
+            }
+        }
+
+        testFile('/locales/zh_CN.json');
+        testFile('/locales/en_US.json');
+    </script>
+</body>
+</html>
