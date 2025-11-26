@@ -419,7 +419,7 @@
 
             try {
                 // Step 2: Try to register/login
-                const authResponse = await fetch(`${API_URL}/api/auth-signup`, {
+                const authResponse = await fetch(`${API_URL}/api/auth-signup.py`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -431,7 +431,7 @@
 
                 if (!authData.success) {
                     // If signup fails, try login
-                    const loginResponse = await fetch(`${API_URL}/api/auth-signin`, {
+                    const loginResponse = await fetch(`${API_URL}/api/auth-signin.py`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
