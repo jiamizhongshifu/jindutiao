@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "GaiYa Daily Progress Bar",
-    "tagline": "Visualize Every Minute of Your Day",
+    "tagline": "Make Every Day Visible",
     "description": "A desktop tool that makes time visible with progress bars",
     "version": "Version"
   },
