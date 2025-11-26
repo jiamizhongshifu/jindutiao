@@ -16,6 +16,18 @@
       "dest": "/api/$1"
     },
     {
+      "src": "/payment-success",
+      "dest": "/public/payment-success.html"
+    },
+    {
+      "src": "/payment-cancel",
+      "dest": "/public/payment-cancel.html"
+    },
+    {
+      "src": "/(.*)\\.html",
+      "dest": "/public/$1.html"
+    },
+    {
       "src": "/(.*)",
       "dest": "/public/$1"
     }
