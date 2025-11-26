@@ -111,6 +111,18 @@
             border-radius: var(--radius-md);
             padding: var(--spacing-md);
         }
+        .error-message {
+            color: #d32f2f;
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+        .error-message.show {
+            display: block;
+        }
+        .form-group input.error {
+            border-color: #d32f2f;
+        }
         .summary-row {
             display: flex;
             justify-content: space-between;
@@ -180,25 +192,28 @@
                     <div class="form-group">
                         <label for="email" data-i18n="checkout.email_label">邮箱地址 *</label>
                         <input type="email" id="email" data-i18n-placeholder="checkout.email_placeholder" placeholder="请输入邮箱地址" required>
+                        <div class="error-message" id="email-error">请输入有效的邮箱地址</div>
                     </div>
 
                     <div class="form-group">
                         <label for="password" data-i18n="checkout.password_label">密码 *</label>
                         <input type="password" id="password" data-i18n-placeholder="checkout.password_placeholder" placeholder="请输入密码（新用户将自动注册）" required>
+                        <div class="error-message" id="password-error">密码至少需要8个字符</div>
                     </div>
 
-                    <div class="form-group" style="display: flex; align-items: center; gap: 8px;">
-                        <input type="checkbox" id="agree-terms" required style="width: auto; margin: 0;">
+                    <div class="form-group" style="display: flex; align-items: flex-start; gap: 8px;">
+                        <input type="checkbox" id="agree-terms" required style="width: auto; margin: 4px 0 0 0;">
                         <label for="agree-terms" style="margin: 0; font-weight: normal; font-size: 14px;">
                             <span data-i18n="checkout.agree_terms_prefix">我已阅读并同意</span> <a href="#" style="color: var(--primary-color);" data-i18n="checkout.terms_of_service">《用户协议》</a> <span data-i18n="checkout.and">和</span> <a href="#" style="color: var(--primary-color);" data-i18n="checkout.privacy_policy">《隐私政策》</a>
                         </label>
+                        <div class="error-message" id="terms-error" style="margin-top: 0; margin-left: 28px;">请阅读并同意用户协议和隐私政策</div>
                     </div>
 
                     <p style="font-size: 12px; color: #999; margin-bottom: 16px;" data-i18n="checkout.email_verification_notice">
                         💡 新用户注册后需验证邮箱，验证链接将发送至您的邮箱
                     </p>
 
-                    <button class="btn btn-primary" style="width: 100%;" onclick="alert('此功能需要后端API支持，请使用GaiYa桌面应用登录')" data-i18n="checkout.login_button">
+                    <button class="btn btn-primary" id="login-submit-btn" style="width: 100%;" onclick="handleLoginAndPay()" data-i18n="checkout.login_button">
                         登录/注册并继续支付
                     </button>
                 </div>
@@ -207,29 +222,38 @@
                 <div class="checkout-card" style="margin-top: 24px;">
                     <h2 style="margin-bottom: 24px;" data-i18n="checkout.choose_payment_method">选择支付方式</h2>
 
-                    <div class="payment-option selected">
+                    <div class="payment-option selected" onclick="selectPayment('alipay')">
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <input type="radio" name="payment" value="wechat" checked>
+                            <input type="radio" name="payment" value="alipay" id="pay-alipay" checked>
                             <div style="flex: 1;">
-                                <h3 style="margin: 0; font-size: 16px;" data-i18n="checkout.wechat_pay">💚 微信支付（推荐）</h3>
+                                <h3 style="margin: 0; font-size: 16px;" data-i18n="checkout.alipay_pay">💙 支付宝（推荐）</h3>
+                                <p style="margin: 4px 0 0; font-size: 12px; color: #666;" data-i18n="checkout.alipay_pay_desc">安全快捷，支持花呗分期</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="payment-option" onclick="selectPayment('wechat')">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <input type="radio" name="payment" value="wechat" id="pay-wechat">
+                            <div style="flex: 1;">
+                                <h3 style="margin: 0; font-size: 16px;" data-i18n="checkout.wechat_pay">💚 微信支付</h3>
                                 <p style="margin: 4px 0 0; font-size: 12px; color: #666;" data-i18n="checkout.wechat_pay_desc">扫码支付，安全便捷</p>
                             </div>
                         </div>
                     </div>
 
-                    <div class="payment-option disabled">
+                    <div class="payment-option" onclick="selectPayment('stripe')">
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <input type="radio" name="payment" value="stripe" disabled>
+                            <input type="radio" name="payment" value="stripe" id="pay-stripe">
                             <div style="flex: 1;">
                                 <h3 style="margin: 0; font-size: 16px;" data-i18n="checkout.stripe_pay">💳 Stripe 国际支付</h3>
-                                <p style="margin: 4px 0 0; font-size: 12px; color: #666;" data-i18n="checkout.stripe_coming_soon">⏳ 准备中，即将上线...</p>
-                                <p style="margin: 4px 0 0; font-size: 11px; color: #999;" data-i18n="checkout.stripe_cards_supported">支持Visa/Mastercard等国际信用卡</p>
+                                <p style="margin: 4px 0 0; font-size: 12px; color: #666;" data-i18n="checkout.stripe_cards_supported">支持Visa/Mastercard等国际信用卡</p>
                             </div>
                         </div>
                     </div>
 
                     <p style="margin-top: 16px; padding: 12px; background: #e8f5e9; border-radius: 8px; font-size: 13px; color: #2e7d32;" data-i18n-html="checkout.payment_success_tip">
-                        💡 <strong>提示：</strong>支付成功后，会员权益将自动激活，重启应用即可使用
+                        💡 <strong>提示：</strong>支付成功后，会员权益将自动激活，无需重启应用
                     </p>
                 </div>
             </div>
@@ -284,15 +308,216 @@
         const planId = urlParams.get('plan') || 'pro_yearly';
 
         const plans = {
-            'pro_monthly': { nameKey: 'checkout.plan_pro_monthly', price: '¥29', validityKey: 'checkout.validity_30days' },
-            'pro_yearly': { nameKey: 'checkout.plan_pro_yearly', price: '¥199', validityKey: 'checkout.validity_365days' },
-            'lifetime': { nameKey: 'checkout.plan_lifetime', price: '¥599', validityKey: 'checkout.validity_forever' }
+            'pro_monthly': { nameKey: 'checkout.plan_pro_monthly', price: '¥29', validityKey: 'checkout.validity_30days', planType: 'pro_monthly' },
+            'pro_yearly': { nameKey: 'checkout.plan_pro_yearly', price: '¥199', validityKey: 'checkout.validity_365days', planType: 'pro_yearly' },
+            'lifetime': { nameKey: 'checkout.plan_lifetime', price: '¥599', validityKey: 'checkout.validity_forever', planType: 'lifetime' }
         };
 
         const plan = plans[planId];
         if (plan) {
             // Only set price here, name/validity will be translated by i18n script below
             document.getElementById('plan-price').textContent = plan.price;
+        }
+
+        // Backend API URL
+        const API_URL = 'https://api.gaiyatime.com';
+
+        // Form validation functions
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        function validatePassword(password) {
+            return password.length >= 8;
+        }
+
+        function showError(fieldId, show) {
+            const errorEl = document.getElementById(fieldId + '-error');
+            const inputEl = document.getElementById(fieldId);
+            if (show) {
+                errorEl.classList.add('show');
+                inputEl.classList.add('error');
+            } else {
+                errorEl.classList.remove('show');
+                inputEl.classList.remove('error');
+            }
+        }
+
+        function validateForm() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const agreeTerms = document.getElementById('agree-terms').checked;
+
+            let isValid = true;
+
+            // Validate email
+            if (!email || !validateEmail(email)) {
+                showError('email', true);
+                isValid = false;
+            } else {
+                showError('email', false);
+            }
+
+            // Validate password
+            if (!password || !validatePassword(password)) {
+                showError('password', true);
+                isValid = false;
+            } else {
+                showError('password', false);
+            }
+
+            // Validate terms agreement
+            if (!agreeTerms) {
+                showError('terms', true);
+                isValid = false;
+            } else {
+                showError('terms', false);
+            }
+
+            return isValid;
+        }
+
+        // Payment method selection
+        function selectPayment(method) {
+            // Remove selected class from all options
+            document.querySelectorAll('.payment-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            // Add selected class to clicked option
+            event.currentTarget.classList.add('selected');
+            // Check the radio button
+            document.getElementById('pay-' + method).checked = true;
+        }
+
+        // Main login and payment flow
+        async function handleLoginAndPay() {
+            // Step 1: Validate form
+            if (!validateForm()) {
+                return;
+            }
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const submitBtn = document.getElementById('login-submit-btn');
+
+            // Disable button and show loading
+            submitBtn.disabled = true;
+            submitBtn.textContent = '正在处理...';
+
+            try {
+                // Step 2: Try to register/login
+                const authResponse = await fetch(`${API_URL}/api/auth-signup`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const authData = await authResponse.json();
+
+                if (!authData.success) {
+                    // If signup fails, try login
+                    const loginResponse = await fetch(`${API_URL}/api/auth-signin`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ email, password })
+                    });
+
+                    const loginData = await loginResponse.json();
+                    if (!loginData.success) {
+                        alert('登录失败: ' + (loginData.error || '请检查邮箱和密码'));
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = '登录/注册并继续支付';
+                        return;
+                    }
+
+                    // Store token
+                    localStorage.setItem('access_token', loginData.access_token);
+                    localStorage.setItem('user_id', loginData.user_id);
+                } else {
+                    // Registration success, store token
+                    localStorage.setItem('access_token', authData.access_token);
+                    localStorage.setItem('user_id', authData.user_id);
+                }
+
+                // Step 3: Move to payment step
+                document.querySelector('.checkout-step.active').classList.remove('active');
+                document.querySelector('.checkout-step.active').classList.add('completed');
+                document.querySelectorAll('.checkout-step')[2].classList.add('active');
+
+                // Step 4: Create payment order
+                await createPaymentOrder();
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('处理失败: ' + error.message);
+                submitBtn.disabled = false;
+                submitBtn.textContent = '登录/注册并继续支付';
+            }
+        }
+
+        async function createPaymentOrder() {
+            const userId = localStorage.getItem('user_id');
+            const planType = plan.planType;
+            const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+
+            const submitBtn = document.getElementById('login-submit-btn');
+            submitBtn.textContent = '正在创建支付订单...';
+
+            try {
+                let paymentUrl;
+
+                if (paymentMethod === 'stripe') {
+                    // Stripe payment
+                    const response = await fetch(`${API_URL}/api/stripe-create-checkout`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            user_id: userId,
+                            plan_type: planType
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        paymentUrl = data.checkout_url;
+                    } else {
+                        throw new Error(data.error || 'Stripe支付创建失败');
+                    }
+                } else {
+                    // Alipay or WeChat
+                    const payType = paymentMethod === 'alipay' ? 'alipay' : 'wxpay';
+                    const response = await fetch(`${API_URL}/api/payment-create-order.py?plan_type=${planType}&pay_type=${payType}`, {
+                        method: 'GET'
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        paymentUrl = data.payment_url;
+                    } else {
+                        throw new Error(data.error || '支付订单创建失败');
+                    }
+                }
+
+                // Redirect to payment page
+                if (paymentUrl) {
+                    window.location.href = paymentUrl;
+                } else {
+                    throw new Error('未获取到支付链接');
+                }
+
+            } catch (error) {
+                console.error('Payment error:', error);
+                alert('支付失败: ' + error.message);
+                submitBtn.disabled = false;
+                submitBtn.textContent = '登录/注册并继续支付';
+            }
         }
     </script>
 

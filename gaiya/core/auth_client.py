@@ -757,6 +757,10 @@ class AuthClient:
                     self._save_tokens(self.access_token, self.refresh_token, self.user_info)
 
                 return data
+            elif response.status_code == 404:
+                # API端点未部署,静默失败(不影响功能,使用本地缓存的用户等级)
+                logger.debug(f"订阅状态API未部署(404),使用本地缓存")
+                return {"success": False, "error": "API未部署", "fallback": True}
             else:
                 return {"success": False, "error": f"HTTP {response.status_code}"}
 
@@ -875,8 +879,20 @@ class AuthClient:
 
             if response.status_code == 200:
                 return response.json()
+            elif response.status_code == 404:
+                # API端点未部署,静默返回默认配额(不影响功能)
+                logger.debug(f"配额状态API未部署(404),使用默认配额")
+                return {
+                    "remaining": {
+                        "daily_plan": 3 if user_tier == "free" else 50,
+                        "weekly_report": 1 if user_tier == "free" else 10,
+                        "chat": 10 if user_tier == "free" else 100
+                    },
+                    "user_tier": user_tier
+                }
             else:
                 # 返回默认配额
+                logger.debug(f"配额查询失败(HTTP {response.status_code}),使用默认配额")
                 return {
                     "remaining": {
                         "daily_plan": 3 if user_tier == "free" else 50,
@@ -888,6 +904,7 @@ class AuthClient:
 
         except Exception as e:
             # 返回默认配额
+            logger.debug(f"配额查询异常({e}),使用默认配额")
             user_tier = self.get_user_tier()
             return {
                 "remaining": {

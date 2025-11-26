@@ -6954,6 +6954,19 @@ class ConfigManager(QMainWindow):
                     )
                     if response.status_code == 200:
                         self.finished.emit(response.json())
+                    elif response.status_code == 404:
+                        # API未部署,使用本地默认配额(不显示错误)
+                        logging.debug(f"配额API未部署(404),使用默认配额")
+                        default_quota = {
+                            "remaining": {
+                                "daily_plan": 3 if self.user_tier == "free" else 50,
+                                "weekly_report": 1 if self.user_tier == "free" else 10,
+                                "chat": 10 if self.user_tier == "free" else 100
+                            },
+                            "user_tier": self.user_tier,
+                            "fallback": True  # 标记为fallback数据
+                        }
+                        self.finished.emit(default_quota)
                     else:
                         logging.warning(f"配额查询返回错误状态码: {response.status_code}")
                         self.finished.emit(None)
@@ -6983,10 +6996,11 @@ class ConfigManager(QMainWindow):
         """配额状态检查完成回调"""
         if not hasattr(self, 'quota_label'):
             return
-        
+
         if quota_info:
             remaining = quota_info.get('remaining', {})
             daily_plan_remaining = remaining.get('daily_plan', 0)
+            is_fallback = quota_info.get('fallback', False)
 
             if daily_plan_remaining > 0:
                 self.quota_label.setText(self.i18n.tr("account.message.quota_remaining", daily_plan_remaining=daily_plan_remaining))
@@ -6998,12 +7012,15 @@ class ConfigManager(QMainWindow):
                 self.quota_label.setStyleSheet("color: #FF9800; padding: 5px; font-weight: bold;")
                 if hasattr(self, 'generate_btn'):
                     self.generate_btn.setEnabled(False)
-            
-            # 配额检查成功，停止定时器（节省资源）
+
+            # 配额检查成功(包括fallback),停止定时器（节省资源）
             if hasattr(self, 'ai_status_timer') and self.ai_status_timer:
                 if self.ai_status_timer.isActive():
                     self.ai_status_timer.stop()
-                    logging.info("AI状态定时器已停止（配额检查成功）")
+                    if is_fallback:
+                        logging.debug("使用默认配额(API未部署),已停止定时器")
+                    else:
+                        logging.info("AI状态定时器已停止（配额检查成功）")
         else:
             # 配额检查失败，可能是云服务冷启动或网络问题
             self.quota_label.setText(self.i18n.tr("account.ui.cannot_connect_cloud"))
