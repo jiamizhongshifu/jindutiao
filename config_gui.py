@@ -7225,7 +7225,7 @@ class ConfigManager(QMainWindow):
         layout.addWidget(logo_label)
 
         # 应用名称
-        app_name_label = QLabel("GaiYa")
+        app_name_label = QLabel(self.i18n.tr("app.name"))
         app_name_label.setStyleSheet("""
             QLabel {
                 font-size: 36px;
