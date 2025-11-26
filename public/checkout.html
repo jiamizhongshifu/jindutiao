@@ -674,6 +674,29 @@
             }
         }
 
+        function submitPaymentForm(url, params) {
+            // Create a hidden form to submit payment parameters
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = url;
+            form.style.display = 'none';
+
+            // Add all parameters as hidden inputs
+            for (const [key, value] of Object.entries(params)) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = value;
+                form.appendChild(input);
+            }
+
+            // Append form to body and submit
+            document.body.appendChild(form);
+            console.log('Submitting payment form to:', url);
+            console.log('Parameters:', Object.keys(params));
+            form.submit();
+        }
+
         async function createPaymentOrder() {
             const userId = localStorage.getItem('user_id');
             const planType = plan.planType;
@@ -721,13 +744,19 @@
 
                     const data = await response.json();
                     if (data.success) {
-                        paymentUrl = data.payment_url;
+                        // For ZPAY (Alipay/WeChat), submit form with params
+                        if (data.params) {
+                            submitPaymentForm(data.payment_url, data.params);
+                            return; // Don't continue, form will auto-submit
+                        } else {
+                            paymentUrl = data.payment_url;
+                        }
                     } else {
                         throw new Error(data.error || '支付订单创建失败');
                     }
                 }
 
-                // Redirect to payment page
+                // Redirect to payment page (for Stripe or simple redirects)
                 if (paymentUrl) {
                     window.location.href = paymentUrl;
                 } else {
