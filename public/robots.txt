@@ -1,0 +1,13 @@
+# GaiYa Time Progress Bar - Robots.txt
+
+User-agent: *
+Allow: /
+
+# Disallow sensitive paths
+Disallow: /api/
+Disallow: /payment-success
+Disallow: /payment-cancel
+
+# Sitemap
+Sitemap: https://www.gaiyatime.com/sitemap.xml
+Sitemap: https://gaiyatime.com/sitemap.xml
