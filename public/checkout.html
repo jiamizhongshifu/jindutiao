@@ -198,7 +198,7 @@
                     <div class="form-group">
                         <label for="password" data-i18n="checkout.password_label">密码 *</label>
                         <input type="password" id="password" data-i18n-placeholder="checkout.password_placeholder" placeholder="请输入密码（新用户将自动注册）" required>
-                        <div class="error-message" id="password-error">密码至少需要8个字符</div>
+                        <div class="error-message" id="password-error">密码至少8位,必须包含大小写字母和数字</div>
                     </div>
 
                     <div class="form-group">
@@ -331,7 +331,14 @@
         }
 
         function validatePassword(password) {
-            return password.length >= 8;
+            if (password.length < 8) return false;
+            // Must contain uppercase letter
+            if (!/[A-Z]/.test(password)) return false;
+            // Must contain lowercase letter
+            if (!/[a-z]/.test(password)) return false;
+            // Must contain number
+            if (!/[0-9]/.test(password)) return false;
+            return true;
         }
 
         function showError(fieldId, show) {
