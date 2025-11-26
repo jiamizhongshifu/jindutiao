@@ -175,6 +175,88 @@
         .password-hint-item.invalid {
             color: #999;
         }
+        /* Toast notification styles */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            pointer-events: none;
+        }
+        .toast {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            min-width: 300px;
+            max-width: 400px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            pointer-events: auto;
+            animation: slideIn 0.3s ease-out;
+            border-left: 4px solid #2e7d32;
+        }
+        .toast.success {
+            border-left-color: #2e7d32;
+        }
+        .toast.info {
+            border-left-color: #1976d2;
+        }
+        .toast.warning {
+            border-left-color: #f57c00;
+        }
+        .toast.error {
+            border-left-color: #d32f2f;
+        }
+        .toast-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        .toast-content {
+            flex: 1;
+        }
+        .toast-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+        .toast-message {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.5;
+        }
+        .toast-close {
+            cursor: pointer;
+            font-size: 20px;
+            color: #999;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+        .toast-close:hover {
+            color: #333;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
         .summary-row {
             display: flex;
             justify-content: space-between;
@@ -191,6 +273,9 @@
     </style>
 </head>
 <body>
+    <!-- Toast notification container -->
+    <div class="toast-container" id="toast-container"></div>
+
     <!-- 导航栏 -->
     <nav class="navbar">
         <div class="navbar-container">
@@ -413,6 +498,41 @@
             return true;
         }
 
+        // Toast notification system
+        function showToast(title, message, type = 'success', duration = 5000) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+
+            const icons = {
+                success: '✓',
+                info: 'ℹ',
+                warning: '⚠',
+                error: '✕'
+            };
+
+            toast.innerHTML = `
+                <div class="toast-icon">${icons[type] || icons.success}</div>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+                <div class="toast-close" onclick="this.parentElement.remove()">×</div>
+            `;
+
+            container.appendChild(toast);
+
+            // Auto remove after duration
+            if (duration > 0) {
+                setTimeout(() => {
+                    toast.style.animation = 'slideOut 0.3s ease-out';
+                    setTimeout(() => toast.remove(), 300);
+                }, duration);
+            }
+
+            return toast;
+        }
+
         // Update password hints in real-time
         function updatePasswordHints(password) {
             const hintsContainer = document.getElementById('password-hints');
@@ -625,8 +745,12 @@
 
                 const authData = await authResponse.json();
 
+                let isNewUser = false; // Track if this is a new registration
+
                 if (!authData.success) {
                     // If signup fails, try login
+                    submitBtn.textContent = '正在登录...';
+
                     const loginResponse = await fetch(`${API_URL}/api/auth-signin.py`, {
                         method: 'POST',
                         headers: {
@@ -646,10 +770,35 @@
                     // Store token
                     localStorage.setItem('access_token', loginData.access_token);
                     localStorage.setItem('user_id', loginData.user_id);
+
+                    // Show login success message
+                    submitBtn.textContent = '✓ 登录成功，正在跳转支付...';
+                    console.log('User logged in successfully:', email);
+
+                    // Show toast notification
+                    showToast(
+                        '登录成功',
+                        '欢迎回来！即将跳转到支付页面...',
+                        'success',
+                        3000
+                    );
                 } else {
                     // Registration success, store token
                     localStorage.setItem('access_token', authData.access_token);
                     localStorage.setItem('user_id', authData.user_id);
+                    isNewUser = true;
+
+                    // Show registration success message with email verification reminder
+                    submitBtn.textContent = '✓ 注册成功，正在跳转支付...';
+                    console.log('New user registered:', email);
+
+                    // Show toast notification with email verification reminder
+                    showToast(
+                        '注册成功！',
+                        `验证邮件已发送至 ${email}。支付完成后，请及时查看邮箱并完成验证，以激活所有会员功能。（邮件可能在垃圾箱中）`,
+                        'success',
+                        8000
+                    );
                 }
 
                 // Step 3: Move to payment step
