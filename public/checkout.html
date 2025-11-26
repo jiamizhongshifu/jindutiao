@@ -123,6 +123,58 @@
         .form-group input.error {
             border-color: #d32f2f;
         }
+        .success-message {
+            color: #2e7d32;
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+        .success-message.show {
+            display: block;
+        }
+        .info-message {
+            color: #666;
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+        .info-message.show {
+            display: block;
+        }
+        .password-hints {
+            background: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 8px;
+            font-size: 12px;
+            display: none;
+        }
+        .password-hints.show {
+            display: block;
+        }
+        .password-hint-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+        .password-hint-item:last-child {
+            margin-bottom: 0;
+        }
+        .password-hint-item .icon {
+            width: 16px;
+            height: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .password-hint-item.valid {
+            color: #2e7d32;
+        }
+        .password-hint-item.invalid {
+            color: #999;
+        }
         .summary-row {
             display: flex;
             justify-content: space-between;
@@ -193,12 +245,32 @@
                         <label for="email" data-i18n="checkout.email_label">邮箱地址 *</label>
                         <input type="email" id="email" data-i18n-placeholder="checkout.email_placeholder" placeholder="请输入邮箱地址" required>
                         <div class="error-message" id="email-error">请输入有效的邮箱地址</div>
+                        <div class="success-message" id="email-success">✓ 该邮箱可以注册</div>
+                        <div class="info-message" id="email-checking">正在检查邮箱可用性...</div>
                     </div>
 
                     <div class="form-group">
                         <label for="password" data-i18n="checkout.password_label">密码 *</label>
                         <input type="password" id="password" data-i18n-placeholder="checkout.password_placeholder" placeholder="请输入密码（新用户将自动注册）" required>
                         <div class="error-message" id="password-error">密码至少8位,必须包含大小写字母和数字</div>
+                        <div class="password-hints" id="password-hints">
+                            <div class="password-hint-item" id="hint-length">
+                                <span class="icon">○</span>
+                                <span>至少8个字符</span>
+                            </div>
+                            <div class="password-hint-item" id="hint-uppercase">
+                                <span class="icon">○</span>
+                                <span>包含大写字母 (A-Z)</span>
+                            </div>
+                            <div class="password-hint-item" id="hint-lowercase">
+                                <span class="icon">○</span>
+                                <span>包含小写字母 (a-z)</span>
+                            </div>
+                            <div class="password-hint-item" id="hint-number">
+                                <span class="icon">○</span>
+                                <span>包含数字 (0-9)</span>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -341,6 +413,123 @@
             return true;
         }
 
+        // Update password hints in real-time
+        function updatePasswordHints(password) {
+            const hintsContainer = document.getElementById('password-hints');
+            const hintLength = document.getElementById('hint-length');
+            const hintUppercase = document.getElementById('hint-uppercase');
+            const hintLowercase = document.getElementById('hint-lowercase');
+            const hintNumber = document.getElementById('hint-number');
+
+            // Show hints when user starts typing
+            if (password.length > 0) {
+                hintsContainer.classList.add('show');
+            } else {
+                hintsContainer.classList.remove('show');
+                return;
+            }
+
+            // Check length
+            if (password.length >= 8) {
+                hintLength.classList.add('valid');
+                hintLength.classList.remove('invalid');
+                hintLength.querySelector('.icon').textContent = '✓';
+            } else {
+                hintLength.classList.add('invalid');
+                hintLength.classList.remove('valid');
+                hintLength.querySelector('.icon').textContent = '○';
+            }
+
+            // Check uppercase
+            if (/[A-Z]/.test(password)) {
+                hintUppercase.classList.add('valid');
+                hintUppercase.classList.remove('invalid');
+                hintUppercase.querySelector('.icon').textContent = '✓';
+            } else {
+                hintUppercase.classList.add('invalid');
+                hintUppercase.classList.remove('valid');
+                hintUppercase.querySelector('.icon').textContent = '○';
+            }
+
+            // Check lowercase
+            if (/[a-z]/.test(password)) {
+                hintLowercase.classList.add('valid');
+                hintLowercase.classList.remove('invalid');
+                hintLowercase.querySelector('.icon').textContent = '✓';
+            } else {
+                hintLowercase.classList.add('invalid');
+                hintLowercase.classList.remove('valid');
+                hintLowercase.querySelector('.icon').textContent = '○';
+            }
+
+            // Check number
+            if (/[0-9]/.test(password)) {
+                hintNumber.classList.add('valid');
+                hintNumber.classList.remove('invalid');
+                hintNumber.querySelector('.icon').textContent = '✓';
+            } else {
+                hintNumber.classList.add('invalid');
+                hintNumber.classList.remove('valid');
+                hintNumber.querySelector('.icon').textContent = '○';
+            }
+        }
+
+        // Check email availability (debounced)
+        let emailCheckTimeout = null;
+        async function checkEmailAvailability(email) {
+            // Clear previous timeout
+            if (emailCheckTimeout) {
+                clearTimeout(emailCheckTimeout);
+            }
+
+            // Hide all email messages first
+            document.getElementById('email-error').classList.remove('show');
+            document.getElementById('email-success').classList.remove('show');
+            document.getElementById('email-checking').classList.remove('show');
+
+            // Validate email format first
+            if (!email || !validateEmail(email)) {
+                return;
+            }
+
+            // Show checking message
+            document.getElementById('email-checking').classList.add('show');
+
+            // Debounce: wait 500ms before checking
+            emailCheckTimeout = setTimeout(async () => {
+                try {
+                    // Try to sign in with a fake password to check if email exists
+                    const response = await fetch(`${API_URL}/api/auth-signin.py`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            email: email,
+                            password: 'FakePassword123' // Fake password to trigger error
+                        })
+                    });
+
+                    document.getElementById('email-checking').classList.remove('show');
+
+                    if (response.status === 400) {
+                        // 400 = Invalid credentials = Email exists
+                        document.getElementById('email-error').textContent = '该邮箱已注册，请直接登录';
+                        document.getElementById('email-error').classList.add('show');
+                    } else if (response.status === 404 || response.status === 401) {
+                        // 404/401 = User not found = Email available
+                        document.getElementById('email-success').classList.add('show');
+                    } else {
+                        // Other errors, don't show anything
+                        console.log('Email check returned status:', response.status);
+                    }
+                } catch (error) {
+                    console.error('Email availability check failed:', error);
+                    document.getElementById('email-checking').classList.remove('show');
+                }
+            }, 500);
+        }
+
         function showError(fieldId, show) {
             const errorEl = document.getElementById(fieldId + '-error');
             const inputEl = document.getElementById(fieldId);
@@ -464,9 +653,15 @@
                 }
 
                 // Step 3: Move to payment step
-                document.querySelector('.checkout-step.active').classList.remove('active');
-                document.querySelector('.checkout-step.active').classList.add('completed');
-                document.querySelectorAll('.checkout-step')[2].classList.add('active');
+                const currentStep = document.querySelector('.checkout-step.active');
+                if (currentStep) {
+                    currentStep.classList.remove('active');
+                    currentStep.classList.add('completed');
+                }
+                const paymentStep = document.querySelectorAll('.checkout-step')[2];
+                if (paymentStep) {
+                    paymentStep.classList.add('active');
+                }
 
                 // Step 4: Create payment order
                 await createPaymentOrder();
@@ -579,7 +774,39 @@
             }
         }
         // Wait for DOMContentLoaded + i18n init
-        document.addEventListener('DOMContentLoaded', () => setTimeout(updatePlanInfo, 300));
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(updatePlanInfo, 300);
+
+            // Setup email and password input listeners
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+
+            // Email availability check on input
+            if (emailInput) {
+                emailInput.addEventListener('input', (e) => {
+                    checkEmailAvailability(e.target.value.trim());
+                });
+
+                // Also check on blur (when user leaves the field)
+                emailInput.addEventListener('blur', (e) => {
+                    checkEmailAvailability(e.target.value.trim());
+                });
+            }
+
+            // Password hints on input
+            if (passwordInput) {
+                passwordInput.addEventListener('input', (e) => {
+                    updatePasswordHints(e.target.value);
+                });
+
+                // Hide hints when password field loses focus and is empty
+                passwordInput.addEventListener('blur', (e) => {
+                    if (e.target.value.length === 0) {
+                        document.getElementById('password-hints').classList.remove('show');
+                    }
+                });
+            }
+        });
 
         // Listen for language change events and update plan info
         document.addEventListener('i18n:update', () => {
