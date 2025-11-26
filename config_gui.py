@@ -1350,7 +1350,7 @@ class ConfigManager(QMainWindow):
         if self.tabs.currentIndex() == 1:  # 任务管理标签页
             if hasattr(self, 'ai_status_timer') and self.ai_status_timer:
                 if not self.ai_status_timer.isActive():
-                    self.ai_status_timer.start(5000)  # 改为5秒检查一次，减少频率
+                    self.ai_status_timer.start(300000)  # 5分钟检查一次,大幅减少API调用频率(从162次/6小时降至~3次/6小时)
         else:
             # 如果不在任务管理标签页，停止定时器
             if hasattr(self, 'ai_status_timer') and self.ai_status_timer:
