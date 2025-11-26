@@ -1,0 +1,23 @@
+# GaiYa Desktop Application Core Dependencies
+
+# UI Framework
+PySide6>=6.10.0
+
+# HTTP Requests
+requests>=2.31.0
+
+# AI Integration
+openai>=1.12.0
+
+# Backend Services
+supabase>=2.23.0
+stripe>=7.0.0
+
+# Configuration Management
+python-dotenv>=1.0.0
+
+# Development Dependencies (for local testing)
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-mock>=3.11.1
+pytest-asyncio>=0.21.1
