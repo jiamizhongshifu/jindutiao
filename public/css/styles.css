@@ -535,6 +535,15 @@ section[id] {
         display: none;
     }
 
+    /* 窄屏设备显示简称 */
+    .brand-name-full {
+        display: none !important;
+    }
+
+    .brand-name-short {
+        display: inline !important;
+    }
+
     .hero-title {
         font-size: 36px;
     }
