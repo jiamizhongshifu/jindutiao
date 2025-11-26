@@ -544,6 +544,11 @@ section[id] {
         display: inline !important;
     }
 
+    /* 窄屏设备隐藏导航栏按钮 */
+    .navbar-download-btn {
+        display: none !important;
+    }
+
     .hero-title {
         font-size: 36px;
     }
