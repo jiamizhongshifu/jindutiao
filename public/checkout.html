@@ -707,8 +707,16 @@
                 } else {
                     // Alipay or WeChat
                     const payType = paymentMethod === 'alipay' ? 'alipay' : 'wxpay';
-                    const response = await fetch(`${API_URL}/api/payment-create-order.py?plan_type=${planType}&pay_type=${payType}`, {
-                        method: 'GET'
+                    const response = await fetch(`${API_URL}/api/payment-create-order.py`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            user_id: userId,
+                            plan_type: planType,
+                            pay_type: payType
+                        })
                     });
 
                     const data = await response.json();
