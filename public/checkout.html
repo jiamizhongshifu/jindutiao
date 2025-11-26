@@ -848,6 +848,7 @@
 
         async function createPaymentOrder() {
             const userId = localStorage.getItem('user_id');
+            const userEmail = document.getElementById('email').value.trim();
             const planType = plan.planType;
             const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
 
@@ -859,13 +860,14 @@
 
                 if (paymentMethod === 'stripe') {
                     // Stripe payment
-                    const response = await fetch(`${API_URL}/api/stripe-create-checkout`, {
+                    const response = await fetch(`${API_URL}/api/stripe-create-checkout.py`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
                             user_id: userId,
+                            user_email: userEmail,
                             plan_type: planType
                         })
                     });
