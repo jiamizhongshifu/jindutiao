@@ -14,6 +14,8 @@ ALLOWED_ORIGINS = [
     # 自定义域名（如果配置了）
     "https://gaiya.app",
     "https://www.gaiya.app",
+    "https://gaiyatime.com",
+    "https://www.gaiyatime.com",
 
     # 本地开发环境
     "http://localhost:3000",
