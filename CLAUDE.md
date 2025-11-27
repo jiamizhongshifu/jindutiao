@@ -618,6 +618,230 @@ class CustomCard(QWidget):
                     </best_practices>
                     <golden_rule>部署成功 ≠ Functions 可用。必须验证 Functions 页面有列表,且 API 实际可访问</golden_rule>
                 </method>
+
+                <method name="Gemini CLI Hybrid Analysis (Gemini CLI 混合分析法)">
+                    <when>需要快速理解大型代码库架构、技术栈调研、新接触的项目探索</when>
+                    <context>
+                        利用 Gemini CLI 的超大上下文窗口(100万 tokens)和 Claude Code 的精确工具调用能力,
+                        实现优势互补的代码分析工作流。
+                    </context>
+
+                    <!-- 核心理念 -->
+                    <core_concept>
+                        <principle>分层分析策略</principle>
+                        <description>
+                            使用 Gemini 快速构建"项目地图"(宏观架构),
+                            再用 Claude 的精确工具(Glob/Grep/Read)深入细节。
+                        </description>
+                        <analogy>
+                            类似于先用卫星地图了解地形,再用街景地图导航到具体地址。
+                        </analogy>
+                    </core_concept>
+
+                    <!-- 工作流程 -->
+                    <workflow>
+                        <step n="1" name="Gemini 宏观分析">
+                            <command>gemini "分析这个项目的技术栈和目录结构"</command>
+                            <output_type>
+                                - 技术栈识别(框架、库、工具)
+                                - 项目类型判断(Web/Desktop/Hybrid)
+                                - 核心模块列表
+                                - 主入口文件
+                                - 构建/部署方式
+                            </output_type>
+                            <duration>通常 30 秒内完成</duration>
+                            <context_cost>在 Gemini 侧消耗,不占用 Claude 上下文</context_cost>
+                        </step>
+
+                        <step n="2" name="基于地图精确定位">
+                            <instruction>
+                                根据 Gemini 提供的架构概览,使用 Claude 工具精确定位:
+                            </instruction>
+                            <tools>
+                                <tool>Glob: 定位特定模式的文件(如 **/*Manager.py)</tool>
+                                <tool>Grep: 搜索关键词、类定义、函数调用</tool>
+                                <tool>Read: 深入阅读目标文件完整代码</tool>
+                            </tools>
+                        </step>
+
+                        <step n="3" name="执行具体任务">
+                            <instruction>
+                                在完全理解上下文后,执行修改/调试/优化任务。
+                            </instruction>
+                            <advantage>
+                                Claude 此时已有完整上下文,可以安全地修改代码。
+                            </advantage>
+                        </step>
+                    </workflow>
+
+                    <!-- 适用场景 -->
+                    <use_cases>
+                        <case priority="high">
+                            <scenario>新接触的代码库,需要快速理解整体架构</scenario>
+                            <example>接手其他开发者的项目、评估开源项目可行性</example>
+                        </case>
+                        <case priority="high">
+                            <scenario>大型代码库(1000+ 文件)的技术栈调研</scenario>
+                            <example>判断项目使用的框架版本、依赖库清单</example>
+                        </case>
+                        <case priority="medium">
+                            <scenario>寻找特定功能的实现位置</scenario>
+                            <example>"这个项目的支付集成在哪里?" → Gemini 快速定位到 api/payments/</example>
+                        </case>
+                        <case priority="low">
+                            <scenario>生成项目文档的技术栈章节</scenario>
+                            <example>自动生成 README 的技术栈说明部分</example>
+                        </case>
+                    </use_cases>
+
+                    <!-- 不适用场景 -->
+                    <anti_patterns>
+                        <scenario>精确调试问题</scenario>
+                        <reason>Gemini 无法提供逐行追踪,Claude 必须直接阅读代码</reason>
+
+                        <scenario>多文件联动修改</scenario>
+                        <reason>需要同时理解多个文件间的调用关系,Claude 必须完整阅读</reason>
+
+                        <scenario>性能优化</scenario>
+                        <reason>需要分析具体实现细节,不能依赖宏观概览</reason>
+
+                        <scenario>单文件小修改</scenario>
+                        <reason>直接用 Read 工具更快,无需 Gemini 分析</reason>
+                    </anti_patterns>
+
+                    <!-- 命令模板 -->
+                    <command_templates>
+                        <template name="快速架构分析">
+                            <command>gemini "分析这个项目的技术栈和目录结构"</command>
+                            <use_case>初次接触项目</use_case>
+                        </template>
+
+                        <template name="定位特定功能">
+                            <command>gemini "这个项目的[功能名称]在哪里实现?列出相关文件路径"</command>
+                            <use_case>寻找支付集成、认证逻辑、数据库操作等</use_case>
+                        </template>
+
+                        <template name="依赖关系分析">
+                            <command>gemini "分析这个项目的依赖关系,列出核心库和它们的用途"</command>
+                            <use_case>评估项目健康度、寻找过时依赖</use_case>
+                        </template>
+
+                        <template name="API 端点清单">
+                            <command>gemini "列出这个项目的所有 API 端点及其功能"</command>
+                            <use_case>理解 API 架构、生成 API 文档</use_case>
+                        </template>
+                    </command_templates>
+
+                    <!-- 优势与局限 -->
+                    <pros_and_cons>
+                        <advantages>
+                            <pro>节省 Claude 上下文: 宏观分析不占用 Claude 的 token 额度</pro>
+                            <pro>快速理解: 30 秒内获得项目全貌,而非逐步探索</pro>
+                            <pro>准确性高: Gemini 能准确识别技术栈、框架、依赖</pro>
+                            <pro>中文友好: 可以用中文提问和接收结果</pro>
+                        </advantages>
+
+                        <limitations>
+                            <con>稳定性风险: Gemini API 可能不稳定,需重试机制</con>
+                            <con>细节缺失: 无法提供具体实现逻辑,只是"地图"而非"路线"</con>
+                            <con>推断性质: 部分信息是推断的,可能与实际代码有偏差</con>
+                            <con>外部依赖: 需要用户本地安装配置 Gemini CLI</con>
+                        </limitations>
+                    </pros_and_cons>
+
+                    <!-- 故障排查 -->
+                    <troubleshooting>
+                        <issue name="API Error: Cannot read properties of undefined">
+                            <symptom>Gemini 执行失败,报错信息含 "reading 'error'"</symptom>
+                            <cause>可能是提示词过长或 API 临时故障</cause>
+                            <solution>
+                                1. 简化提示词(如只问技术栈,不要列详细功能)
+                                2. 等待几秒后重试
+                                3. 检查 Gemini API 配额和凭据
+                            </solution>
+                        </issue>
+
+                        <issue name="输出被截断">
+                            <symptom>Gemini 只输出了部分结果就停止</symptom>
+                            <cause>响应过长,被 CLI 默认限制</cause>
+                            <solution>
+                                使用更具体的提示词,如 "仅列出核心模块,不要详细说明"
+                            </solution>
+                        </issue>
+
+                        <issue name="分析结果不准确">
+                            <symptom>Gemini 识别错技术栈或遗漏关键模块</symptom>
+                            <cause>推断错误或缺少关键配置文件</cause>
+                            <solution>
+                                将 Gemini 结果视为"初步地图",用 Claude 工具验证关键信息
+                            </solution>
+                        </issue>
+                    </troubleshooting>
+
+                    <!-- 最佳实践 -->
+                    <best_practices>
+                        <practice name="分层验证">
+                            <description>
+                                Gemini 提供概览后,用 Claude 工具抽查验证:
+                                - Read 主入口文件,确认 Gemini 识别正确
+                                - Grep 搜索关键类,验证模块列表完整性
+                            </description>
+                        </practice>
+
+                        <practice name="渐进式提问">
+                            <description>
+                                避免一次性问太多,分步提问:
+                                1. "分析技术栈"
+                                2. "列出核心模块"
+                                3. "支付集成在哪里"
+                                而非一次性问所有问题。
+                            </description>
+                        </practice>
+
+                        <practice name="结合项目文档">
+                            <description>
+                                如果项目有 README/QUICKREF,先用 Gemini 分析,
+                                再与文档对比,找出文档未覆盖的部分。
+                            </description>
+                        </practice>
+
+                        <practice name="缓存常用分析">
+                            <description>
+                                对于常用项目,可以将 Gemini 的分析结果保存为:
+                                .claude/project_map.md
+                                后续直接阅读,避免重复调用 Gemini。
+                            </description>
+                        </practice>
+                    </best_practices>
+
+                    <!-- 黄金法则 -->
+                    <golden_rules>
+                        <rule>Gemini 用于"探索",Claude 用于"执行"</rule>
+                        <rule>宏观用 Gemini,细节用 Claude 工具</rule>
+                        <rule>Gemini 结果需要验证,不能盲目信任</rule>
+                        <rule>单文件操作直接用 Read,无需 Gemini</rule>
+                        <rule>Gemini 失败时,直接用传统工具(Glob/Grep),不要浪费时间调试 API</rule>
+                    </golden_rules>
+
+                    <!-- 实验记录 -->
+                    <experiment_log>
+                        <experiment date="2025-11-27" project="GaiYa (Jindutiao)">
+                            <prompt>分析这个项目的技术栈和目录结构</prompt>
+                            <duration>约 30 秒</duration>
+                            <success_rate>第一次 API 错误,第二次成功</success_rate>
+                            <output_quality>
+                                ✅ 准确识别: PySide6, Flask, Vercel, Supabase, PyInstaller
+                                ✅ 正确定位: main.py, config_gui.py, api/ 目录
+                                ✅ 推断合理: gaiya/ 目录结构(虽是推断,但正确)
+                                ⚠️ 细节缺失: 未深入分析 Scene 系统实现机制
+                            </output_quality>
+                            <conclusion>
+                                对于初步架构理解非常有效,节省了逐步探索的时间。
+                                但后续仍需用 Read 工具深入阅读关键文件。
+                            </conclusion>
+                        </experiment>
+                    </experiment_log>
+                </method>
             </quick_reference>
         </debugging_methodology>
     </protocols>
