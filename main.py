@@ -31,7 +31,7 @@ from scene_editor import SceneEditorWindow
 from gaiya.core.pomodoro_state import PomodoroState
 from gaiya.core.notification_manager import NotificationManager
 from gaiya.ui.pomodoro_panel import PomodoroPanel, PomodoroSettingsDialog
-from gaiya.utils import time_utils, path_utils, data_loader, task_calculator
+from gaiya.utils import time_utils, path_utils, data_loader, task_calculator, window_utils
 from gaiya.scene import SceneLoader, SceneRenderer, SceneEventManager, ResourceCache, SceneManager
 
 # i18n support
@@ -303,41 +303,13 @@ class TimeProgressBar(QWidget):
         self.logger.info("强制显示窗口")
 
     def set_windows_topmost(self):
-        """Windows 特定:设置窗口始终置顶,在任务栏之上"""
+        """设置窗口始终置顶,在任务栏之上 (跨平台)"""
         try:
             hwnd = int(self.winId())
-
-            # Windows API 常量
-            HWND_TOPMOST = -1
-            SWP_NOMOVE = 0x0002
-            SWP_NOSIZE = 0x0001
-            SWP_NOACTIVATE = 0x0010
-            SWP_SHOWWINDOW = 0x0040
-
-            # 获取 Windows API 函数
-            user32 = ctypes.windll.user32
-
-            # 设置窗口为 TOPMOST
-            user32.SetWindowPos(
-                hwnd,
-                HWND_TOPMOST,
-                0, 0, 0, 0,
-                SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW
-            )
-
-            # 获取扩展窗口样式
-            GWL_EXSTYLE = -20
-            WS_EX_TOPMOST = 0x00000008
-            WS_EX_TOOLWINDOW = 0x00000080
-            WS_EX_NOACTIVATE = 0x08000000
-
-            ex_style = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
-            ex_style |= (WS_EX_TOPMOST | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE)
-            user32.SetWindowLongW(hwnd, GWL_EXSTYLE, ex_style)
-
-            self.logger.info("已设置 Windows TOPMOST 属性")
+            window_utils.set_always_on_top(hwnd, True)
+            self.logger.info("已设置 TOPMOST 属性")
         except Exception as e:
-            self.logger.error(f"设置 Windows TOPMOST 失败: {e}")
+            self.logger.error(f"设置 TOPMOST 失败: {e}")
 
     def setup_geometry(self):
         """设置窗口几何属性(位置和大小)"""

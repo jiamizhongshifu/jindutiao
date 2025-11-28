@@ -3,9 +3,67 @@
 # 导入版本信息
 import sys
 import os
+import platform
+
 # 将当前目录添加到 Python 路径，以便导入 version 模块
 sys.path.insert(0, os.getcwd())
-from version import get_exe_name
+from version import get_exe_name, __app_name__, __version__
+
+IS_MAC = platform.system() == 'Darwin'
+IS_WIN = platform.system() == 'Windows'
+
+# ========================================
+# 动态依赖配置
+# ========================================
+
+hidden_imports = [
+    'config_gui',
+    'scene_editor',  # 场景编辑器（集成到主应用）
+    'gaiya.core.theme_manager',
+    'gaiya.utils.window_utils', # 新增：跨平台窗口工具
+    'timeline_editor',
+    'statistics_manager',
+    'statistics_gui',
+    'ai_client',  # AI客户端（调用Vercel云服务）
+    'autostart_manager',  # 开机自启动管理器
+    'gaiya.core',  # 添加gaiya.core包
+    'gaiya.ui',  # 添加gaiya.ui包
+    'gaiya.core.auth_client',  # 添加auth_client
+    'gaiya.ui.auth_ui',  # 添加auth_ui
+    'gaiya.ui.membership_ui',  # 添加membership_ui
+    'i18n.translator',  # 添加translator
+    'requests',  # HTTP请求库
+    'httpx',  # HTTP请求库（OpenSSL后端，解决schannel SSL兼容性问题）
+    'httpcore',  # httpx依赖
+    'h2',  # HTTP/2支持
+    'h11',  # HTTP/1.1支持
+    'anyio',  # 异步I/O支持
+    'certifi',  # SSL证书
+    'socks',  # PySocks（SOCKS5代理支持）
+    'socksio',  # httpx的SOCKS5支持
+    'PySide6.QtWidgets',
+    'PySide6.QtCore',
+    'PySide6.QtGui',
+]
+
+# 平台特定依赖
+if IS_WIN:
+    hidden_imports.append('winreg')
+
+if IS_MAC:
+    # macOS特定库 (需要先安装 pyobjc)
+    hidden_imports.extend(['objc', 'Foundation', 'AppKit'])
+
+# 图标设置
+icon_file = 'gaiya-logo2.ico'
+if IS_MAC:
+    # macOS应优先使用 .icns
+    if os.path.exists('gaiya-logo2.icns'):
+        icon_file = 'gaiya-logo2.icns'
+
+# ========================================
+# 分析配置
+# ========================================
 
 a = Analysis(
     ['main.py'],
@@ -51,42 +109,14 @@ a = Analysis(
         # 开机自启动管理器
         ('autostart_manager.py', '.'),
     ],
-    hiddenimports=[
-        'config_gui',
-        'scene_editor',  # 场景编辑器（集成到主应用）
-        'gaiya.core.theme_manager',  # 修正路径
-        'timeline_editor',
-        'statistics_manager',
-        'statistics_gui',
-        'ai_client',  # AI客户端（调用Vercel云服务）
-        'autostart_manager',  # 开机自启动管理器
-        'gaiya.core',  # 添加gaiya.core包
-        'gaiya.ui',  # 添加gaiya.ui包
-        'gaiya.core.auth_client',  # 添加auth_client
-        'gaiya.ui.auth_ui',  # 添加auth_ui
-        'gaiya.ui.membership_ui',  # 添加membership_ui
-        'i18n.translator',  # 添加translator
-        'requests',  # HTTP请求库
-        'httpx',  # HTTP请求库（OpenSSL后端，解决schannel SSL兼容性问题）
-        'httpcore',  # httpx依赖
-        'h2',  # HTTP/2支持
-        'h11',  # HTTP/1.1支持
-        'anyio',  # 异步I/O支持
-        'certifi',  # SSL证书
-        'socks',  # PySocks（SOCKS5代理支持）
-        'socksio',  # httpx的SOCKS5支持
-        'winreg',  # Windows注册表操作
-        'PySide6.QtWidgets',
-        'PySide6.QtCore',
-        'PySide6.QtGui',
-    ],
+    hiddenimports=hidden_imports,
     hookspath=['.'],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[
         # ✅ 体积优化: 排除不需要的模块,减少打包体积
 
-        # WebEngine相关（~280MB） - 浏览器引擎，应用不需要
+        # WebEngine相关（~280MB）
         'PySide6.QtWebEngineCore',
         'PySide6.QtWebEngineWidgets',
         'PySide6.QtWebEngineQuick',
@@ -95,13 +125,13 @@ a = Analysis(
         'PySide6.QtPdf',
         'PySide6.QtPdfWidgets',
 
-        # QML/Quick相关（~20MB） - 声明式UI框架，应用使用传统Widget
+        # QML/Quick相关（~20MB）
         'PySide6.QtQuick',
         'PySide6.QtQuickControls2',
         'PySide6.QtQuickWidgets',
         'PySide6.QtQml',
 
-        # 3D和多媒体（~15MB） - 3D渲染和多媒体功能
+        # 3D和多媒体（~15MB）
         'PySide6.QtQuick3D',
         'PySide6.Qt3DAnimation',
         'PySide6.Qt3DCore',
@@ -112,7 +142,7 @@ a = Analysis(
         'PySide6.QtMultimedia',
         'PySide6.QtMultimediaWidgets',
 
-        # 设计和开发工具（~10MB） - 仅开发时使用
+        # 设计和开发工具（~10MB）
         'PySide6.QtDesigner',
         'PySide6.QtUiTools',
         'PySide6.QtHelp',
@@ -128,34 +158,20 @@ a = Analysis(
         'PySide6.QtTest',
         'PySide6.QtXml',
 
-        # ✅ 新增: 数据科学库（如果未使用,可节省30-50MB）
-        'matplotlib',
-        'scipy',
-        'pandas',
-        'sklearn',
-        'numpy.distutils',  # numpy的distutils不需要
+        # 数据科学库
+        'matplotlib', 'scipy', 'pandas', 'sklearn', 'numpy.distutils',
 
-        # ✅ 新增: GUI库（已使用PySide6）
-        'tkinter',
-        '_tkinter',
-        'PyQt5',
-        'PyQt6',
+        # 其他GUI库
+        'tkinter', '_tkinter', 'PyQt5', 'PyQt6',
 
-        # ✅ 新增: 测试框架（生产环境不需要）
-        'pytest',
-        'unittest',
-        'nose',
-        '_pytest',
+        # 测试框架
+        'pytest', 'unittest', 'nose', '_pytest',
 
-        # ✅ 新增: 文档生成（生产环境不需要）
-        'sphinx',
-        'docutils',
-        'jinja2',  # 如果不使用模板引擎
+        # 文档生成
+        'sphinx', 'docutils', 'jinja2',
 
-        # ✅ 新增: 其他不需要的库
-        'IPython',
-        'notebook',
-        'jupyter',
+        # 其他
+        'IPython', 'notebook', 'jupyter',
     ],
     noarchive=False,
     optimize=0,
@@ -168,20 +184,37 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name=get_exe_name(),  # 从 version.py 自动获取版本号
+    name=get_exe_name(),
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=False,  # 禁用UPX压缩,减少杀毒软件误报
+    upx=False,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,  # 禁用控制台窗口，提供更好的用户体验
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    # Windows版本信息（暂时禁用，后续测试）
-    # version='version_info.txt',
-    icon='gaiya-logo2.ico',  # 应用图标
+    icon=icon_file,
 )
+
+# ========================================
+# macOS BUNDLE 配置
+# ========================================
+if IS_MAC:
+    app = BUNDLE(
+        exe,
+        name=f'{__app_name__}.app',
+        icon=icon_file,
+        bundle_identifier='com.gaiya.desktop',
+        version=__version__,
+        info_plist={
+            'NSHighResolutionCapable': 'True',
+            'LSBackgroundOnly': 'False',
+            'CFBundleShortVersionString': __version__,
+            'CFBundleVersion': __version__,
+            'NSHumanReadableCopyright': 'Copyright © 2025 GaiYa Team. All rights reserved.',
+        },
+    )
