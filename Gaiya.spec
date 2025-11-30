@@ -31,7 +31,12 @@ hidden_imports = [
     'gaiya.core.auth_client',  # 添加auth_client
     'gaiya.ui.auth_ui',  # 添加auth_ui
     'gaiya.ui.membership_ui',  # 添加membership_ui
+    'gaiya.ui.pomodoro_panel',  # 番茄钟面板(红温专注仓)
+    'gaiya.core.pomodoro_state',  # 番茄钟状态
+    'gaiya.data.db_manager',  # 数据库管理器(专注会话)
     'i18n.translator',  # 添加translator
+    'sqlite3',  # SQLite数据库支持
+    'uuid',  # UUID生成
     'requests',  # HTTP请求库
     'httpx',  # HTTP请求库（OpenSSL后端，解决schannel SSL兼容性问题）
     'httpcore',  # httpx依赖

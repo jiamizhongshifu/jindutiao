@@ -11,6 +11,7 @@ from PySide6.QtGui import QPainter, QColor, QPen, QFont, QCursor
 from gaiya.core.pomodoro_state import PomodoroState
 from gaiya.core.theme_manager import ThemeManager
 from i18n.translator import tr
+# 延迟导入数据库管理器，避免循环依赖
 
 
 class PomodoroSettingsDialog(QDialog):
@@ -115,7 +116,7 @@ class PomodoroSettingsDialog(QDialog):
             self.accept()
 
         except Exception as e:
-            self.logger.error(tr("pomodoro.error.save_failed_log", e=e), exc_info=True)
+            self.logger.error(tr("pomodoro.error.save_failed_log", e=str(e)), exc_info=True)
             QMessageBox.critical(
                 self,
                 tr("pomodoro.error.error_title"),
@@ -128,11 +129,16 @@ class PomodoroPanel(QWidget):
 
     closed = Signal()  # 关闭信号
 
-    def __init__(self, config, tray_icon, logger, parent=None):
+    def __init__(self, config, tray_icon, logger, parent=None, time_block_id=None):
         super().__init__(parent)
         self.config = config
         self.tray_icon = tray_icon
         self.logger = logger
+        self.time_block_id = time_block_id  # 绑定的时间块ID
+
+        # 专注会话相关
+        self.current_focus_session_id = None  # 当前专注会话ID
+        self.focus_session_db = None  # 数据库管理器(延迟导入)
 
         # 番茄钟配置
         pomodoro_config = self.config.get('pomodoro', {})
@@ -152,6 +158,12 @@ class PomodoroPanel(QWidget):
         # 拖拽相关变量
         self.dragging = False
         self.drag_position = QPoint()
+
+        # 呼吸动画相关(红温专注仓)
+        self.focus_intensity = 0.0  # 0.0 - 1.0
+        self.breathing_direction = 1  # 1: 增强, -1: 减弱
+        self.breathing_timer = QTimer(self)
+        self.breathing_timer.timeout.connect(self._update_breathing_effect)
 
         # 初始化UI(先初始化UI组件)
         self.init_ui()
@@ -181,7 +193,11 @@ class PomodoroPanel(QWidget):
     def init_ui(self):
         """初始化用户界面"""
         # 设置窗口属性
-        self.setWindowTitle(tr("pomodoro.unit.panel_title"))
+        # 如果有时间块ID，显示红温专注仓标题
+        if self.time_block_id:
+            self.setWindowTitle("🔥 红温专注仓")
+        else:
+            self.setWindowTitle(tr("pomodoro.unit.panel_title"))
 
         # 窗口标志:无边框,始终置顶,不接受焦点
         flags = (
@@ -197,8 +213,11 @@ class PomodoroPanel(QWidget):
         # 启用鼠标追踪(用于按钮悬停效果)
         self.setMouseTracking(True)
 
-        # 设置固定大小
-        self.setFixedSize(280, 50)
+        # 设置固定大小 - 红温专注仓需要更高的面板来显示任务名称
+        if self.time_block_id:
+            self.setFixedSize(280, 70)  # 增加高度以显示任务名称
+        else:
+            self.setFixedSize(280, 50)
 
     def position_above_progress_bar(self, progress_bar_widget):
         """将番茄钟面板定位在进度条上方
@@ -214,15 +233,81 @@ class PomodoroPanel(QWidget):
         panel_y = bar_geometry.y() - self.height() - 10
 
         self.move(panel_x, panel_y)
-        self.logger.info(tr("pomodoro.log.panel_positioned", panel_x=panel_x, panel_y=panel_y))
+        self.logger.info(tr("pomodoro.log.panel_positioned", panel_x=str(panel_x), panel_y=str(panel_y)))
+
+    def _get_focus_session_db(self):
+        """获取数据库管理器实例（延迟导入）"""
+        if self.focus_session_db is None:
+            try:
+                from gaiya.data.db_manager import db
+                self.focus_session_db = db
+            except ImportError as e:
+                self.logger.error(f"无法导入数据库管理器: {e}")
+                return None
+        return self.focus_session_db
+
+    def _create_focus_session(self):
+        """创建专注会话"""
+        if not self.time_block_id:
+            return
+
+        db = self._get_focus_session_db()
+        if not db:
+            return
+
+        try:
+            self.current_focus_session_id = db.create_focus_session(self.time_block_id)
+            self.logger.info(f"创建专注会话: {self.current_focus_session_id}")
+        except Exception as e:
+            self.logger.error(f"创建专注会话失败: {e}")
+
+    def _complete_focus_session(self):
+        """完成专注会话"""
+        if not self.current_focus_session_id:
+            return
+
+        db = self._get_focus_session_db()
+        if not db:
+            return
+
+        try:
+            db.complete_focus_session(self.current_focus_session_id)
+            self.logger.info(f"完成专注会话: {self.current_focus_session_id}")
+            self.current_focus_session_id = None
+        except Exception as e:
+            self.logger.error(f"完成专注会话失败: {e}")
+
+    def _interrupt_focus_session(self):
+        """中断专注会话"""
+        if not self.current_focus_session_id:
+            return
+
+        db = self._get_focus_session_db()
+        if not db:
+            return
+
+        try:
+            db.interrupt_focus_session(self.current_focus_session_id)
+            self.logger.info(f"中断专注会话: {self.current_focus_session_id}")
+            self.current_focus_session_id = None
+        except Exception as e:
+            self.logger.error(f"中断专注会话失败: {e}")
 
     def start_work(self):
         """开始工作番茄钟"""
         self.state = PomodoroState.WORK
         self.time_remaining = self.work_duration
+
+        # 如果绑定了时间块，创建专注会话并启动呼吸动画
+        if self.time_block_id:
+            self._create_focus_session()
+            # 启动呼吸动画(100ms更新一次)
+            self.breathing_timer.start(100)
+
         self.countdown_timer.start(1000)  # 每秒更新一次
         self.update()
-        self.logger.info(tr("pomodoro.log.started_work"))
+        # 修正: 关键字参数应该传给tr()而非logger.info()
+        self.logger.info(tr("pomodoro.log.started_work", time_block_id=self.time_block_id or "None"))
 
     def start_short_break(self):
         """开始短休息"""
@@ -267,6 +352,12 @@ class PomodoroPanel(QWidget):
     def stop(self):
         """停止番茄钟"""
         self.countdown_timer.stop()
+        self.breathing_timer.stop()  # 停止呼吸动画
+
+        # 如果有活跃的专注会话，中断它
+        if self.current_focus_session_id:
+            self._interrupt_focus_session()
+
         self.state = PomodoroState.IDLE
         self.time_remaining = self.work_duration
         self.logger.info(tr("pomodoro.log.stopped"))
@@ -289,7 +380,7 @@ class PomodoroPanel(QWidget):
             self.logger.info(tr("pomodoro.log.settings_opened"))
 
         except Exception as e:
-            self.logger.error(tr("pomodoro.error.open_settings_failed_log", e=e), exc_info=True)
+            self.logger.error(tr("pomodoro.error.open_settings_failed_log", e=str(e)), exc_info=True)
             self.tray_icon.showMessage(
                 tr("pomodoro.error.error_title"),
                 tr("pomodoro.error.open_settings_failed_message", error=str(e)),
@@ -317,7 +408,7 @@ class PomodoroPanel(QWidget):
             )
 
         except Exception as e:
-            self.logger.error(tr("pomodoro.log.config_update_failed", e=e), exc_info=True)
+            self.logger.error(tr("pomodoro.log.config_update_failed", e=str(e)), exc_info=True)
 
     def update_countdown(self):
         """更新倒计时"""
@@ -336,12 +427,22 @@ class PomodoroPanel(QWidget):
         if self.state == PomodoroState.WORK:
             # 工作完成
             self.pomodoro_count += 1
-            self.logger.info(tr("pomodoro.log.completed", count=self.pomodoro_count))
+            self.logger.info(tr("pomodoro.log.completed", count=str(self.pomodoro_count)))
+
+            # 如果有专注会话,标记为完成
+            if self.current_focus_session_id:
+                self._complete_focus_session()
+                # 停止呼吸动画
+                self.breathing_timer.stop()
 
             # 发送通知
+            notification_msg = tr("pomodoro.notification.completed_message", count=self.pomodoro_count)
+            if self.time_block_id:
+                notification_msg += f"\n🔥 专注任务: {self.time_block_id}"
+
             self.tray_icon.showMessage(
                 tr("pomodoro.notification.completed_title"),
-                tr("pomodoro.notification.completed_message", count=self.pomodoro_count),
+                notification_msg,
                 QSystemTrayIcon.Information,
                 5000
             )
@@ -382,6 +483,26 @@ class PomodoroPanel(QWidget):
         minutes = seconds // 60
         secs = seconds % 60
         return f"{minutes:02d}:{secs:02d}"
+
+    def _update_breathing_effect(self):
+        """更新呼吸动画效果(仅红温专注仓)"""
+        if not self.time_block_id or self.state != PomodoroState.WORK:
+            return
+
+        # 呼吸周期: 0.0 -> 1.0 -> 0.0 (约2秒一个周期)
+        step = 0.05  # 每100ms增加/减少5%
+
+        self.focus_intensity += step * self.breathing_direction
+
+        # 反转方向
+        if self.focus_intensity >= 1.0:
+            self.focus_intensity = 1.0
+            self.breathing_direction = -1
+        elif self.focus_intensity <= 0.0:
+            self.focus_intensity = 0.0
+            self.breathing_direction = 1
+
+        self.update()  # 触发重绘
 
     def mouseMoveEvent(self, event):
         """鼠标移动事件 - 支持拖拽和按钮悬停"""
@@ -462,18 +583,21 @@ class PomodoroPanel(QWidget):
 
     def get_play_pause_button_rect(self):
         """获取开始/暂停按钮的矩形区域"""
-        # 按钮位置:倒计时文字右侧
-        return QRectF(150, 12, 30, 26)
+        # 按钮位置:倒计时文字右侧 (对于红温专注仓,位置稍微上移)
+        y_pos = 8 if self.time_block_id else 12
+        return QRectF(150, y_pos, 30, 26)
 
     def get_settings_button_rect(self):
         """获取设置按钮的矩形区域"""
         # 按钮位置:播放/暂停按钮和关闭按钮之间
-        return QRectF(190, 12, 30, 26)
+        y_pos = 8 if self.time_block_id else 12
+        return QRectF(190, y_pos, 30, 26)
 
     def get_close_button_rect(self):
         """获取关闭按钮的矩形区域"""
         # 按钮位置:右上角
-        return QRectF(250, 8, 20, 20)
+        y_pos = 4 if self.time_block_id else 8
+        return QRectF(250, y_pos, 20, 20)
 
     def paintEvent(self, event):
         """绘制番茄钟面板"""
@@ -483,22 +607,48 @@ class PomodoroPanel(QWidget):
         width = self.width()
         height = self.height()
 
+        # 判断是否为红温专注仓模式
+        is_focus_mode = bool(self.time_block_id)
+
         # 1. 绘制半透明背景(深色,带圆角)
-        if hasattr(self, 'theme_bg_color'):
+        if is_focus_mode:
+            # 红温专注仓：使用红色调背景 + 呼吸效果
+            base_red = 80
+            base_green = 30
+            base_blue = 30
+            base_alpha = 240
+
+            # 应用呼吸强度(仅在工作状态下)
+            if self.state == PomodoroState.WORK:
+                # 呼吸效果: 红色通道增强, alpha增强
+                intensity = self.focus_intensity
+                bg_color = QColor(
+                    min(255, int(base_red + 40 * intensity)),  # 红色增强
+                    base_green,
+                    base_blue,
+                    min(255, int(base_alpha + 15 * intensity))  # 透明度增强
+                )
+            else:
+                bg_color = QColor(base_red, base_green, base_blue, base_alpha)
+        elif hasattr(self, 'theme_bg_color'):
             bg_color = self.theme_bg_color
         else:
             bg_color = QColor(50, 50, 50, 230)  # 深灰色,半透明
+
         painter.setBrush(bg_color)
         painter.setPen(Qt.NoPen)
         painter.drawRoundedRect(0, 0, width, height, 10, 10)  # 圆角半径10px
 
-        # 2. 绘制番茄图标(emoji)
+        # 2. 绘制图标(emoji)
         font = QFont()
         font.setPointSize(20)
         painter.setFont(font)
         icon_color = QColor(self.theme_text_color) if hasattr(self, 'theme_text_color') else QColor(255, 255, 255)
         painter.setPen(icon_color)
-        painter.drawText(QRectF(10, 0, 40, height), Qt.AlignCenter, "🍅")
+
+        # 红温专注仓显示火焰图标,普通番茄钟显示番茄图标
+        icon_text = "🔥" if is_focus_mode else "🍅"
+        painter.drawText(QRectF(10, 0, 40, height), Qt.AlignCenter, icon_text)
 
         # 3. 绘制倒计时文字
         time_text = self.format_time(self.time_remaining)
@@ -508,7 +658,8 @@ class PomodoroPanel(QWidget):
 
         # 根据状态选择颜色
         if self.state == PomodoroState.WORK:
-            text_color = QColor(255, 99, 71)  # 番茄红
+            # 红温专注仓：使用更鲜明的橙红色
+            text_color = QColor(255, 120, 80) if is_focus_mode else QColor(255, 99, 71)
         elif self.state in [PomodoroState.SHORT_BREAK, PomodoroState.LONG_BREAK]:
             text_color = QColor(76, 175, 80)  # 绿色
         elif self.state == PomodoroState.PAUSED:
@@ -518,6 +669,21 @@ class PomodoroPanel(QWidget):
 
         painter.setPen(text_color)
         painter.drawText(QRectF(50, 0, 100, height), Qt.AlignCenter, time_text)
+
+        # 3.5 如果是红温专注仓,绘制任务名称
+        if is_focus_mode and self.time_block_id:
+            font.setPointSize(9)
+            font.setBold(False)
+            painter.setFont(font)
+            painter.setPen(QColor(200, 200, 200))  # 浅灰色
+
+            # 任务名称显示在底部
+            task_name = self.time_block_id
+            # 截断过长的任务名
+            if len(task_name) > 25:
+                task_name = task_name[:22] + "..."
+
+            painter.drawText(QRectF(10, height - 20, width - 20, 18), Qt.AlignCenter, f"📌 {task_name}")
 
         # 4. 绘制开始/暂停按钮
         play_pause_rect = self.get_play_pause_button_rect()

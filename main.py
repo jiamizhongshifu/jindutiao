@@ -12,10 +12,10 @@ import platform
 from pathlib import Path
 from datetime import datetime, date
 from version import __version__, VERSION_STRING, VERSION_STRING_ZH, get_version_info
-from PySide6.QtWidgets import (QApplication, QWidget, QSystemTrayIcon, QMenu, QToolTip, QLabel,
-                                QHBoxLayout, QVBoxLayout, QDialog, QFormLayout, QSpinBox, QPushButton, QMessageBox)
+from PySide6.QtWidgets import (QApplication, QWidget, QSystemTrayIcon, QMenu, QLabel,
+                                QHBoxLayout, QVBoxLayout, QDialog, QFormLayout, QSpinBox, QPushButton, QMessageBox, QToolTip)
 from PySide6.QtCore import Qt, QRectF, QTimer, QTime, QFileSystemWatcher, QPoint, Signal, QEventLoop, QSize
-from PySide6.QtGui import QPainter, QColor, QPen, QAction, QFont, QPixmap, QMovie, QCursor, QPainterPath
+from PySide6.QtGui import QPainter, QColor, QPen, QFont, QPixmap, QMovie, QCursor, QPainterPath, QAction
 from enum import Enum
 from statistics_manager import StatisticsManager
 # 已切换到Vercel云服务，无需本地后端管理器
@@ -31,6 +31,7 @@ from scene_editor import SceneEditorWindow
 from gaiya.core.pomodoro_state import PomodoroState
 from gaiya.core.notification_manager import NotificationManager
 from gaiya.ui.pomodoro_panel import PomodoroPanel, PomodoroSettingsDialog
+from gaiya.data.db_manager import db
 from gaiya.utils import time_utils, path_utils, data_loader, task_calculator, window_utils
 from gaiya.scene import SceneLoader, SceneRenderer, SceneEventManager, ResourceCache, SceneManager
 
@@ -107,6 +108,18 @@ class TimeProgressBar(QWidget):
         # 场景编辑器窗口实例
         self.scene_editor_window = None
 
+        # Focus session state management
+        self.active_focus_sessions = {}  # {time_block_id: session_id}
+        self.completed_focus_blocks = set()  # time_block_ids with completed sessions today
+
+        # Focus mode state (immersive pomodoro timer in progress bar)
+        self.focus_mode = False  # Whether focus mode is active
+        self.focus_mode_type = None  # 'work' or 'break'
+        self.focus_start_time = None  # When focus started (datetime)
+        self.focus_duration_minutes = 25  # Total duration in minutes
+        self.focus_task_name = None  # Name of the focused task
+        self.focus_session_id = None  # Database session ID
+
         # 初始化主题管理器（延迟加载主题，避免初始化时触发信号）
         self.theme_manager = ThemeManager(self.app_dir)
         # 暂时不注册UI组件，等窗口完全初始化后再注册
@@ -115,6 +128,10 @@ class TimeProgressBar(QWidget):
 
         # 初始化用户认证客户端
         self.auth_client = AuthClient()
+
+        # 初始化行为追踪服务
+        from gaiya.services.activity_tracker import ActivityTracker
+        self.activity_tracker = None
 
         # 初始化场景系统
         self.scene_manager = SceneManager()
@@ -148,6 +165,9 @@ class TimeProgressBar(QWidget):
 
         # 延迟检查是否首次运行，显示新手引导
         QTimer.singleShot(500, self.check_first_run)
+
+        # 延迟初始化行为追踪服务（确保所有组件都已加载完成）
+        QTimer.singleShot(1000, self.init_activity_tracker)
 
     def check_first_run(self):
         """检查是否首次运行，显示新手引导"""
@@ -261,6 +281,13 @@ class TimeProgressBar(QWidget):
         actual_geometry = self.geometry()
         self.logger.info(f"窗口显示事件触发")
         self.logger.info(f"[窗口验证] 实际窗口位置: x={actual_geometry.x()}, y={actual_geometry.y()}, w={actual_geometry.width()}, h={actual_geometry.height()}")
+
+        # Start focus state update timer (only once)
+        if not hasattr(self, 'focus_state_timer'):
+            self.focus_state_timer = QTimer(self)
+            self.focus_state_timer.timeout.connect(self.update_focus_state)
+            self.focus_state_timer.start(1000)  # Update every second
+            self.logger.info("Focus state timer started")
 
     def hideEvent(self, event):
         """窗口隐藏事件"""
@@ -652,6 +679,347 @@ class TimeProgressBar(QWidget):
         if not self.isVisible():
             self.logger.warning("检测到窗口不可见,强制显示")
             self.force_show()
+
+    def init_activity_tracker(self):
+        """初始化行为追踪服务"""
+        if not self.activity_tracker:
+            from gaiya.services.activity_tracker import ActivityTracker
+
+            # 检查是否启用行为追踪
+            activity_tracking_enabled = self.config.get('activity_tracking', {}).get('enabled', False)
+
+            if activity_tracking_enabled:
+                self.logger.info("启动行为追踪服务")
+                self.activity_tracker = ActivityTracker()
+                self.activity_tracker.session_ended.connect(self.on_activity_session_ended)
+                self.activity_tracker.start()
+            else:
+                self.logger.info("行为追踪服务已禁用")
+
+    def stop_activity_tracker(self):
+        """停止行为追踪服务"""
+        if self.activity_tracker:
+            self.logger.info("停止行为追踪服务")
+            self.activity_tracker.stop()
+            self.activity_tracker = None
+
+    def on_activity_session_ended(self, process_name, window_title, duration):
+        """处理行为会话结束事件"""
+        self.logger.debug(f"行为会话结束: {process_name} - {duration}秒")
+        # 这里可以添加实时UI更新逻辑
+        pass
+
+    def show_time_review_window(self):
+        """显示时间回放窗口"""
+        try:
+            from gaiya.ui.time_review_window import TimeReviewWindow
+
+            # 传递当前任务数据
+            time_review_window = TimeReviewWindow(self)
+            time_review_window.exec()
+
+        except Exception as e:
+            self.logger.error(f"显示时间回放窗口失败: {e}")
+            QMessageBox.warning(self, "错误", f"无法打开时间回放窗口: {e}")
+
+    def show_activity_settings_window(self):
+        """显示行为识别设置窗口"""
+        try:
+            from gaiya.ui.activity_settings_window import ActivitySettingsWindow
+
+            activity_settings_window = ActivitySettingsWindow(self)
+            activity_settings_window.settings_changed.connect(self.on_activity_settings_changed)
+            activity_settings_window.activity_tracking_toggled.connect(self.on_activity_tracking_toggled)
+            activity_settings_window.exec()
+
+        except Exception as e:
+            self.logger.error(f"显示行为识别设置窗口失败: {e}")
+            QMessageBox.warning(self, "错误", f"无法打开行为识别设置: {e}")
+
+    def on_activity_settings_changed(self):
+        """处理行为识别设置变更"""
+        self.logger.info("行为识别设置已更新")
+
+    def on_activity_tracking_toggled(self, enabled: bool):
+        """处理行为识别开关变更"""
+        self.logger.info(f"行为识别状态变更: {enabled}")
+        # 重新初始化行为追踪服务
+        if hasattr(self, 'activity_tracker') and self.activity_tracker:
+            self.stop_activity_tracker()
+
+        # 更新配置
+        if 'activity_tracking' not in self.config:
+            self.config['activity_tracking'] = {}
+        self.config['activity_tracking']['enabled'] = enabled
+
+        # 如果启用，延迟重新启动
+        if enabled:
+            QTimer.singleShot(2000, self.init_activity_tracker)
+
+    def update_focus_state(self):
+        """Update focus session state from database."""
+        try:
+            # Query active focus sessions
+            self.active_focus_sessions = db.get_active_focus_sessions()
+
+            # Query completed focus sessions for today
+            time_block_ids = [task.get('task') for task in self.tasks]
+            self.completed_focus_blocks = db.get_completed_focus_sessions_for_blocks(time_block_ids)
+
+            # Check if focus mode timer finished
+            if self.focus_mode and self.focus_start_time:
+                from datetime import datetime
+                elapsed_seconds = (datetime.now() - self.focus_start_time).total_seconds()
+                total_seconds = self.focus_duration_minutes * 60
+
+                if elapsed_seconds >= total_seconds:
+                    # Focus timer finished
+                    self._on_focus_timer_finished()
+
+            # Trigger repaint to show updated focus state
+            self.update()
+        except Exception as e:
+            self.logger.error(f"更新专注状态失败: {e}")
+
+    def _render_focus_mode(self, painter, width, height, bar_y_offset, bar_height):
+        """Render immersive focus mode progress bar."""
+        from datetime import datetime
+
+        # Calculate progress
+        if not self.focus_start_time:
+            return
+
+        elapsed_seconds = (datetime.now() - self.focus_start_time).total_seconds()
+        total_seconds = self.focus_duration_minutes * 60
+        progress = min(1.0, elapsed_seconds / total_seconds)
+
+        # Choose color based on focus type
+        if self.focus_mode_type == 'work':
+            # Red progress bar for work
+            progress_color = QColor(255, 80, 50, 200)
+            bg_color = QColor(50, 50, 50, 230)
+        else:  # break
+            # Green progress bar for break
+            progress_color = QColor(76, 175, 80, 200)
+            bg_color = QColor(50, 50, 50, 230)
+
+        # Draw background
+        painter.fillRect(0, bar_y_offset, width, bar_height, bg_color)
+
+        # Draw progress
+        progress_width = int(width * progress)
+        painter.fillRect(0, bar_y_offset, progress_width, bar_height, progress_color)
+
+        # Draw fire icon at progress position
+        icon = "🔥" if self.focus_mode_type == 'work' else "☕"
+        font = QFont("Segoe UI Emoji", 32, QFont.Bold)
+        painter.setFont(font)
+        painter.setPen(QColor(255, 255, 255))
+
+        # Icon position: follows progress from left to right, moved up above the bar
+        # Icon starts off-screen (negative x) at 0% and slides into view as progress increases
+        icon_width = 50
+        # No min/max constraints - allow icon to start off-screen
+        icon_x = progress_width - icon_width  # Can be negative at the start!
+        icon_y = bar_y_offset - 45  # Move up 45px above the bar to avoid clipping
+        icon_rect = QRectF(icon_x, icon_y, icon_width, 50)
+        painter.drawText(icon_rect, Qt.AlignCenter, icon)
+
+    def _update_focus_tooltip_text(self):
+        """Update focus mode tooltip text with current progress."""
+        from datetime import datetime
+
+        if not self.focus_start_time:
+            return
+
+        elapsed_seconds = (datetime.now() - self.focus_start_time).total_seconds()
+        elapsed_minutes = int(elapsed_seconds / 60)
+        elapsed_secs = int(elapsed_seconds % 60)
+        total_minutes = self.focus_duration_minutes
+
+        # Build tooltip with task name, elapsed time, and total duration
+        if self.focus_mode_type == 'work':
+            tooltip_text = f"🔥 {self.focus_task_name} | {elapsed_minutes:02d}:{elapsed_secs:02d} / {total_minutes}:00"
+        else:
+            tooltip_text = f"☕ 休息中 | {elapsed_minutes:02d}:{elapsed_secs:02d} / {total_minutes}:00"
+
+        # Always update tooltip to ensure it's fresh
+        self.setToolTip(tooltip_text)
+
+    def _start_focus_work(self, task):
+        """Start focus work mode for a task."""
+        from datetime import datetime
+
+        task_name = task.get('task', 'Unknown Task')
+        self.logger.info(f"开启红温专注仓: {task_name}")
+
+        # Hide pomodoro panel if exists
+        if self.pomodoro_panel:
+            self.pomodoro_panel.hide()
+            self.pomodoro_panel = None
+
+        # Create focus session in database
+        self.focus_session_id = db.create_focus_session(task_name)
+
+        # Set focus mode state
+        self.focus_mode = True
+        self.focus_mode_type = 'work'
+        self.focus_start_time = datetime.now()
+        self.focus_duration_minutes = 25
+        self.focus_task_name = task_name
+
+        # Trigger repaint
+        self.update()
+
+    def _on_focus_timer_finished(self):
+        """Handle focus timer completion."""
+        from datetime import datetime
+
+        if self.focus_mode_type == 'work':
+            # Work completed - mark session as completed
+            if self.focus_session_id:
+                db.complete_focus_session(self.focus_session_id)
+
+            # Show notification
+            self.show_notification(
+                "✅ 专注完成!",
+                f"已完成 {self.focus_duration_minutes} 分钟专注: {self.focus_task_name}\n\n开始 5 分钟休息"
+            )
+
+            # Start break
+            self.focus_mode_type = 'break'
+            self.focus_start_time = datetime.now()
+            self.focus_duration_minutes = 5
+            self.focus_session_id = None  # Break doesn't need session ID
+        else:
+            # Break completed - return to normal mode
+            self.show_notification(
+                "✅ 休息完成!",
+                "休息时间结束,恢复正常模式"
+            )
+            self._exit_focus_mode()
+
+    def _end_focus_mode(self):
+        """End focus mode with confirmation."""
+        from datetime import datetime
+
+        if not self.focus_mode:
+            return
+
+        # Calculate elapsed time
+        elapsed_seconds = (datetime.now() - self.focus_start_time).total_seconds()
+        elapsed_minutes = int(elapsed_seconds / 60)
+
+        # Show confirmation dialog
+        reply = QMessageBox.question(
+            self,
+            "⚠️ 确认结束专注?",
+            f"已专注 {elapsed_minutes} 分钟 / {self.focus_duration_minutes} 分钟\n\n确定要结束专注吗?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+
+        if reply == QMessageBox.Yes:
+            # Interrupt session
+            if self.focus_session_id:
+                db.interrupt_focus_session(self.focus_session_id)
+
+            self._exit_focus_mode()
+
+    def _skip_break(self):
+        """Skip break and return to normal mode."""
+        self._exit_focus_mode()
+
+    def _exit_focus_mode(self):
+        """Exit focus mode and return to normal."""
+        self.focus_mode = False
+        self.focus_mode_type = None
+        self.focus_start_time = None
+        self.focus_session_id = None
+        self.focus_task_name = None
+
+        # Trigger repaint
+        self.update()
+
+    def _adjust_focus_duration(self):
+        """Adjust focus duration while in focus mode."""
+        from PySide6.QtWidgets import QInputDialog
+
+        new_duration, ok = QInputDialog.getInt(
+            self,
+            "调整专注时长",
+            "请输入新的专注时长 (分钟):",
+            self.focus_duration_minutes,
+            5,
+            120,
+            5
+        )
+
+        if ok:
+            # Calculate remaining time with new duration
+            from datetime import datetime
+            elapsed_seconds = (datetime.now() - self.focus_start_time).total_seconds()
+            elapsed_minutes = int(elapsed_seconds / 60)
+
+            self.focus_duration_minutes = new_duration
+            self.logger.info(f"专注时长调整为: {new_duration} 分钟 (已用: {elapsed_minutes} 分钟)")
+            self.update()
+
+    def show_notification(self, title, message):
+        """Show system notification."""
+        try:
+            from PySide6.QtWidgets import QSystemTrayIcon
+            if hasattr(self, 'tray_icon') and self.tray_icon:
+                self.tray_icon.showMessage(title, message, QSystemTrayIcon.Information, 5000)
+        except Exception as e:
+            self.logger.error(f"显示通知失败: {e}")
+
+    def show_time_review_window(self):
+        """显示时间回放窗口"""
+        try:
+            from gaiya.ui.time_review_window import TimeReviewWindow
+
+            # 传递当前任务数据
+            time_review_window = TimeReviewWindow(self)
+            time_review_window.exec()
+
+        except Exception as e:
+            self.logger.error(f"显示时间回放窗口失败: {e}")
+            QMessageBox.warning(self, "错误", f"无法打开时间回放窗口: {e}")
+
+    def show_activity_settings_window(self):
+        """显示行为识别设置窗口"""
+        try:
+            from gaiya.ui.activity_settings_window import ActivitySettingsWindow
+
+            activity_settings_window = ActivitySettingsWindow(self)
+            activity_settings_window.settings_changed.connect(self.on_activity_settings_changed)
+            activity_settings_window.activity_tracking_toggled.connect(self.on_activity_tracking_toggled)
+            activity_settings_window.exec()
+
+        except Exception as e:
+            self.logger.error(f"显示行为识别设置窗口失败: {e}")
+            QMessageBox.warning(self, "错误", f"无法打开行为识别设置: {e}")
+
+    def on_activity_settings_changed(self):
+        """处理行为识别设置变更"""
+        self.logger.info("行为识别设置已更新")
+
+    def on_activity_tracking_toggled(self, enabled: bool):
+        """处理行为识别开关变更"""
+        self.logger.info(f"行为识别状态变更: {enabled}")
+        # 重新初始化行为追踪服务
+        if hasattr(self, 'activity_tracker') and self.activity_tracker:
+            self.stop_activity_tracker()
+
+        # 更新配置
+        if 'activity_tracking' not in self.config:
+            self.config['activity_tracking'] = {}
+        self.config['activity_tracking']['enabled'] = enabled
+
+        # 如果启用，延迟重新启动
+        if enabled:
+            QTimer.singleShot(2000, self.init_activity_tracker)
 
     def init_tray(self):
         """初始化系统托盘图标"""
@@ -1611,6 +1979,16 @@ class TimeProgressBar(QWidget):
         bar_height = self.config['bar_height']
         bar_y_offset = height - bar_height
 
+        # Focus mode tooltip - update tooltip text in real-time and show at cursor's top-right
+        if self.focus_mode and self.focus_start_time:
+            self._update_focus_tooltip_text()
+            # Show tooltip at cursor's top-right corner for better visibility
+            cursor_pos = self.mapToGlobal(event.position().toPoint())
+            tooltip_pos = QPoint(cursor_pos.x() + 15, cursor_pos.y() - 30)
+            QToolTip.showText(tooltip_pos, self.toolTip(), self)
+        elif not self.focus_mode:
+            self.setToolTip("")  # Clear tooltip when not in focus mode
+
         # 编辑模式下的拖拽处理
         if self.edit_mode:
             if self.dragging:
@@ -1671,6 +2049,19 @@ class TimeProgressBar(QWidget):
 
     def mousePressEvent(self, event):
         """鼠标按下事件 - 场景点击事件 + 编辑模式下检测边缘点击"""
+        # 检查右键事件 - 添加调试支持
+        if event.button() == Qt.RightButton:
+            print(f"[DEBUG] Right button clicked in mousePressEvent at: {event.globalPos()}")
+            try:
+                # 直接调用右键菜单方法
+                self.contextMenuEvent(event)
+                return
+            except Exception as e:
+                print(f"[DEBUG] Error handling right click in mousePressEvent: {e}")
+                import traceback
+                traceback.print_exc()
+                return
+
         # 场景事件检测(click) - 优先处理
         scene_config = self.scene_manager.get_current_scene_config()
         if self.scene_manager.is_enabled() and scene_config and event.button() == Qt.LeftButton:
@@ -1753,6 +2144,186 @@ class TimeProgressBar(QWidget):
             self.calculate_time_range()
             self.update()
         super().mouseReleaseEvent(event)
+
+    def contextMenuEvent(self, event):
+        """右键菜单事件 - 为时间块添加"开启红温专注仓"选项"""
+        try:
+            print(f"[DEBUG] contextMenuEvent triggered at position: {event.globalPos()}")
+
+            # 获取点击位置对应的时间块
+            mouse_pos = event.position()
+            task_index = self.get_task_at_position(mouse_pos.x(), mouse_pos.y())
+            print(f"[DEBUG] task_index at position: {task_index}")
+
+            # 创建右键菜单
+            menu = QMenu(self)
+            print(f"[DEBUG] Created menu: {menu}")
+
+            # Check if in focus mode first - only show focus controls
+            if self.focus_mode:
+                # In focus mode - ONLY show focus control options
+                if self.focus_mode_type == 'work':
+                    # In work mode
+                    adjust_action = QAction("⏱️ 调整专注时长", self)
+                    adjust_action.triggered.connect(self._adjust_focus_duration)
+                    menu.addAction(adjust_action)
+
+                    end_action = QAction("❌ 结束专注", self)
+                    end_action.triggered.connect(self._end_focus_mode)
+                    menu.addAction(end_action)
+                else:
+                    # In break mode
+                    skip_action = QAction("⏭️ 跳过休息", self)
+                    skip_action.triggered.connect(self._skip_break)
+                    menu.addAction(skip_action)
+            else:
+                # Not in focus mode - show normal menu
+                # Add general options first
+                time_review_action = QAction("⏰ 今日时间回放", self)
+                time_review_action.triggered.connect(self.show_time_review_window)
+                menu.addAction(time_review_action)
+
+                menu.addSeparator()
+
+                activity_settings_action = QAction("🔍 行为识别设置", self)
+                activity_settings_action.triggered.connect(self.show_activity_settings_window)
+                menu.addAction(activity_settings_action)
+
+                # If clicked on a task, add task-specific options
+                if task_index is not None:
+                    task = self.tasks[task_index]
+                    print(f"[DEBUG] Found task: {task.get('task', 'Unknown')}")
+
+                    menu.addSeparator()
+
+                    # 添加"开启红温专注仓"选项
+                    focus_action = QAction("🔥 开启红温专注仓 (25分钟)", self)
+                    focus_action.triggered.connect(lambda checked=False, t=task: self._start_focus_work(t))
+                    menu.addAction(focus_action)
+                    print(f"[DEBUG] Added focus action")
+
+                    # 添加分隔符
+                    menu.addSeparator()
+
+                    # 添加配置选项（如果需要的话）
+                    config_action = QAction("⚙️ 配置时间块", self)
+                    config_action.triggered.connect(lambda checked=False, t=task: self.configure_task(t))
+                    menu.addAction(config_action)
+                    print(f"[DEBUG] Added config action")
+                else:
+                    print(f"[DEBUG] No task found at clicked position")
+
+            # Calculate menu position - show at top-right of cursor
+            # This provides better UX: menu appears near cursor but doesn't obscure the progress bar
+            menu_pos = event.globalPos()
+
+            # Offset menu to top-right of cursor (slightly right and up)
+            menu_pos.setX(menu_pos.x() + 5)   # 5px to the right
+            menu_pos.setY(menu_pos.y() - 30)  # 30px upward
+
+            print(f"[DEBUG] About to show menu at adjusted position: {menu_pos}")
+            result = menu.exec_(menu_pos)
+            print(f"[DEBUG] Menu closed with result: {result}")
+
+        except Exception as e:
+            print(f"[DEBUG] Error in contextMenuEvent: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def get_task_at_position(self, x, y):
+        """获取指定位置对应的时间块索引"""
+        try:
+            # 检查鼠标是否在进度条区域内
+            width = self.width()
+            height = self.height()
+            bar_height = self.config['bar_height']
+            bar_y_offset = height - bar_height
+
+            if not (bar_y_offset <= y <= height):
+                return None
+
+            # 检查是否点击在时间块内
+            for i, pos in enumerate(self.task_positions):
+                start_pct = pos['compact_start_pct']
+                end_pct = pos['compact_end_pct']
+                start_x = start_pct * width
+                end_x = end_pct * width
+
+                if start_x <= x <= end_x:
+                    return i
+
+            return None
+        except Exception as e:
+            self.logger.error(f"获取时间块位置失败: {e}")
+            return None
+
+    def start_focus_mode(self, task):
+        """为指定时间块开启红温专注仓"""
+        try:
+            task_name = task.get('name', '未知任务')
+            self.logger.info(f"为时间块 '{task_name}' 开启红温专注仓")
+
+            # 如果番茄钟已经在运行，先停止它
+            if self.pomodoro_panel:
+                self.pomodoro_panel.stop()
+
+            # 创建绑定到时间块的番茄钟面板
+            # 使用任务的name作为ID，确保唯一性
+            task_id = str(task.get('name', task.get('task', f'任务_{task.get("start", "")}')))
+
+            self.pomodoro_panel = PomodoroPanel(
+                self.config,
+                self.tray_icon,
+                self.logger,
+                parent=None,  # 独立窗口
+                time_block_id=task_id  # 传递时间块ID
+            )
+
+            # 连接关闭信号
+            self.pomodoro_panel.closed.connect(self.on_pomodoro_closed)
+
+            # 定位面板（在进度条上方）
+            self.pomodoro_panel.position_above_progress_bar(self)
+
+            # 显示面板
+            self.pomodoro_panel.show()
+
+            # 自动开始工作
+            self.pomodoro_panel.start_work()
+
+            # 显示通知
+            self.tray_icon.showMessage(
+                "红温专注仓",
+                f"为「{task.get('task', '未知任务')}」开启了红温专注仓",
+                QSystemTrayIcon.Information,
+                3000
+            )
+
+        except Exception as e:
+            self.logger.error(f"开启红温专注仓失败: {e}", exc_info=True)
+            self.tray_icon.showMessage(
+                "错误",
+                f"开启红温专注仓失败: {str(e)}",
+                QSystemTrayIcon.Critical,
+                5000
+            )
+
+    def configure_task(self, task):
+        """配置指定时间块"""
+        self.logger.info(f"配置时间块: {task}")
+        # 这里可以打开时间块配置对话框
+        # 暂时显示提示
+        self.tray_icon.showMessage(
+            "配置",
+            f"时间块配置功能即将推出",
+            QSystemTrayIcon.Information,
+            2000
+        )
+
+    def on_pomodoro_closed(self):
+        """番茄钟面板关闭时的回调"""
+        self.logger.info("红温专注仓面板已关闭")
+        self.pomodoro_panel = None
 
     def update_hover_edge(self, mouse_x, mouse_y, bar_y_offset, bar_height):
         """更新边缘悬停状态（编辑模式）"""
@@ -1958,7 +2529,12 @@ class TimeProgressBar(QWidget):
             except Exception as e:
                 self.logger.error(f"场景渲染失败: {e}", exc_info=True)
 
-        # 2. 绘制任务色块(使用紧凑模式位置) - 先绘制所有色块,不绘制悬停文字
+        # 2. Check if in focus mode - if yes, render immersive pomodoro timer instead
+        if self.focus_mode:
+            self._render_focus_mode(painter, width, height, bar_y_offset, bar_height)
+            return  # Skip normal task rendering
+
+        # 3. 绘制任务色块(使用紧凑模式位置) - 先绘制所有色块,不绘制悬停文字
         # 如果场景已启用，跳过任务色块的绘制（但仍然处理悬停逻辑以显示提示）
         current_time = QTime.currentTime()
         current_seconds = current_time.hour() * 3600 + current_time.minute() * 60 + current_time.second()
@@ -2075,6 +2651,31 @@ class TimeProgressBar(QWidget):
                         handle_rect_right = QRectF(rect.right() - 12, rect.top(),
                                                    10, rect.height())
                         painter.drawText(handle_rect_right, Qt.AlignCenter, handle_text)
+
+                # Focus state visual feedback (Red Focus Chamber integration)
+                task_name = task.get('task', '')
+                is_focus_active = task_name in self.active_focus_sessions
+                is_focus_done = task_name in self.completed_focus_blocks
+
+                if is_focus_active:
+                    # Active focus: Red overlay + Fire icon
+                    focus_overlay = QColor(255, 80, 50, 60)  # Semi-transparent red
+                    painter.fillRect(rect, focus_overlay)
+
+                    # Draw fire icon
+                    if task_width > 30:  # Only if wide enough
+                        painter.setPen(QColor(255, 255, 255))
+                        painter.setFont(QFont("Segoe UI Emoji", 14, QFont.Bold))
+                        icon_rect = QRectF(rect.left() + 5, rect.top(), 30, rect.height())
+                        painter.drawText(icon_rect, Qt.AlignCenter, "🔥")
+
+                elif is_focus_done:
+                    # Completed focus: Small fire icon + subtle glow
+                    if task_width > 20:
+                        painter.setPen(QColor(255, 200, 150, 200))
+                        painter.setFont(QFont("Segoe UI Emoji", 10))
+                        icon_rect = QRectF(rect.right() - 18, rect.top() + 2, 16, 16)
+                        painter.drawText(icon_rect, Qt.AlignCenter, "🔥")
 
                 # 如果是悬停任务,保存信息稍后绘制
                 if i == self.hovered_task_index:
@@ -2465,6 +3066,9 @@ class TimeProgressBar(QWidget):
                 pass
             except Exception as e:
                 self.logger.debug(f"断开file_watcher信号时出错: {e}")
+
+        # 停止行为追踪服务
+        self.stop_activity_tracker()
 
         # 接受关闭事件
         event.accept()
