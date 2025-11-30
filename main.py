@@ -812,17 +812,18 @@ class TimeProgressBar(QWidget):
 
         # Draw fire icon at progress position
         icon = "🔥" if self.focus_mode_type == 'work' else "☕"
-        font = QFont("Segoe UI Emoji", 32, QFont.Bold)
+        font = QFont("Segoe UI Emoji", 16, QFont.Bold)
         painter.setFont(font)
         painter.setPen(QColor(255, 255, 255))
 
         # Icon position: follows progress from left to right, moved up above the bar
         # Icon starts off-screen (negative x) at 0% and slides into view as progress increases
-        icon_width = 50
+        icon_width = 25
+        icon_height = 25
         # No min/max constraints - allow icon to start off-screen
-        icon_x = progress_width - icon_width  # Can be negative at the start!
-        icon_y = bar_y_offset - 45  # Move up 45px above the bar to avoid clipping
-        icon_rect = QRectF(icon_x, icon_y, icon_width, 50)
+        icon_x = progress_width - icon_width + 17  # Offset slightly to the right
+        icon_y = bar_y_offset - icon_height + min(12, bar_height * 0.2) + 6
+        icon_rect = QRectF(icon_x, icon_y, icon_width, icon_height)
         painter.drawText(icon_rect, Qt.AlignCenter, icon)
 
     def _update_focus_tooltip_text(self):
@@ -2665,16 +2666,18 @@ class TimeProgressBar(QWidget):
                     # Draw fire icon
                     if task_width > 30:  # Only if wide enough
                         painter.setPen(QColor(255, 255, 255))
-                        painter.setFont(QFont("Segoe UI Emoji", 14, QFont.Bold))
-                        icon_rect = QRectF(rect.left() + 5, rect.top(), 30, rect.height())
+                        painter.setFont(QFont("Segoe UI Emoji", 11, QFont.Bold))
+                        icon_height = rect.height() + 24
+                        icon_rect = QRectF(rect.left() + 12, rect.top() - 17, 16, icon_height)
                         painter.drawText(icon_rect, Qt.AlignCenter, "🔥")
 
                 elif is_focus_done:
                     # Completed focus: Small fire icon + subtle glow
                     if task_width > 20:
-                        painter.setPen(QColor(255, 200, 150, 200))
-                        painter.setFont(QFont("Segoe UI Emoji", 10))
-                        icon_rect = QRectF(rect.right() - 18, rect.top() + 2, 16, 16)
+                        painter.setPen(QColor(255, 255, 255))
+                        painter.setFont(QFont("Segoe UI Emoji", 11, QFont.Bold))
+                        icon_height = rect.height() + 24
+                        icon_rect = QRectF(rect.left() + 12, rect.top() - 17, 16, icon_height)
                         painter.drawText(icon_rect, Qt.AlignCenter, "🔥")
 
                 # 如果是悬停任务,保存信息稍后绘制
