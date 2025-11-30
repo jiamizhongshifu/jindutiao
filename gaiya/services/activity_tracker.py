@@ -92,10 +92,11 @@ class ActivityTracker(QThread):
     """
     session_ended = Signal(str, str, int) # process_name, title, duration
     
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, polling_interval=5, min_session_duration=5):
         super().__init__(parent)
         self.is_running = False
-        self.polling_interval = 5 # seconds
+        self.polling_interval = max(1, int(polling_interval))  # seconds
+        self.min_session_duration = max(1, int(min_session_duration))  # seconds
         
         # Current tracking state
         self.current_process = None
@@ -177,7 +178,7 @@ class ActivityTracker(QThread):
         duration_seconds = int((end_time - self.current_start_time).total_seconds())
         
         # Ignore very short sessions (noise)
-        if duration_seconds < 1:
+        if duration_seconds < self.min_session_duration:
             return
             
         try:

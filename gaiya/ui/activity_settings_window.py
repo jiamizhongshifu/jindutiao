@@ -12,9 +12,10 @@ from PySide6.QtWidgets import (
     QGroupBox, QSlider, QSpinBox, QMessageBox,
     QProgressBar, QTextEdit, QSplitter, QWidget
 )
-from PySide6.QtCore import Qt, Signal, QTimer
+from PySide6.QtCore import Qt, Signal, QTimer, QSignalBlocker
 from PySide6.QtGui import QFont, QIcon
 
+from gaiya.data.db_manager import db
 from gaiya.services.app_category_manager import app_category_manager
 
 logger = logging.getLogger("gaiya.ui.activity_settings_window")
@@ -115,7 +116,7 @@ class ActivitySettingsWindow(QDialog):
         self.min_session_duration_spinbox = QSpinBox()
         self.min_session_duration_spinbox.setRange(1, 300)
         self.min_session_duration_spinbox.setSuffix(" 秒")
-        self.min_session_duration_spinbox.setValue(1)
+        self.min_session_duration_spinbox.setValue(5)
         basic_layout.addRow("最小会话:", self.min_session_duration_spinbox)
 
         layout.addWidget(basic_group)
@@ -250,10 +251,32 @@ class ActivitySettingsWindow(QDialog):
             # 加载分类统计
             self.update_category_stats()
 
+            # 加载行为识别配置
+            self.load_tracking_settings()
+
             self.logger.info("已加载行为识别设置数据")
         except Exception as e:
             self.logger.error(f"加载数据失败: {e}")
             QMessageBox.critical(self, "错误", f"加载数据失败: {e}")
+
+    def _get_parent_config(self):
+        parent = self.parent()
+        if parent and hasattr(parent, 'config'):
+            return parent.config
+        return None
+
+    def load_tracking_settings(self):
+        """根据父窗口配置更新UI控件"""
+        config = self._get_parent_config()
+        if not config:
+            return
+
+        settings = config.get('activity_tracking', {})
+        with QSignalBlocker(self.activity_tracking_checkbox):
+            self.activity_tracking_checkbox.setChecked(settings.get('enabled', False))
+        self.polling_interval_spinbox.setValue(int(settings.get('polling_interval', 5)))
+        self.min_session_duration_spinbox.setValue(int(settings.get('min_session_duration', 5)))
+        self.data_retention_days_spinbox.setValue(int(settings.get('data_retention_days', 90)))
 
     def refresh_category_table(self):
         """刷新分类表格"""
@@ -407,7 +430,7 @@ class ActivitySettingsWindow(QDialog):
 
         if reply == QMessageBox.Yes:
             try:
-                # 这里需要调用数据库清理方法
+                db.clear_activity_data()
                 QMessageBox.information(self, "成功", "已清除所有历史数据")
             except Exception as e:
                 self.logger.error(f"清除数据失败: {e}")
@@ -416,7 +439,32 @@ class ActivitySettingsWindow(QDialog):
     def save_settings(self):
         """保存设置"""
         try:
-            # 这里需要保存设置到配置文件
+            config = self._get_parent_config()
+            if not config:
+                QMessageBox.warning(self, "提示", "无法获取配置文件，设置未保存。")
+                return
+
+            tracking_config = config.setdefault('activity_tracking', {})
+            retention_days = self.data_retention_days_spinbox.value()
+
+            tracking_config.update({
+                'enabled': self.activity_tracking_checkbox.isChecked(),
+                'polling_interval': self.polling_interval_spinbox.value(),
+                'min_session_duration': self.min_session_duration_spinbox.value(),
+                'data_retention_days': retention_days
+            })
+
+            parent = self.parent()
+            if parent and hasattr(parent, 'init_activity_tracker'):
+                # 保存配置并应用新的追踪参数
+                parent.save_config()
+                parent.init_activity_tracker()
+
+            try:
+                db.cleanup_old_data(retention_days)
+            except Exception as cleanup_error:
+                self.logger.error(f"按保留策略清理数据失败: {cleanup_error}")
+
             self.settings_changed.emit()
             QMessageBox.information(self, "成功", "设置已保存")
         except Exception as e:
@@ -436,5 +484,5 @@ class ActivitySettingsWindow(QDialog):
         """设置当前配置"""
         self.activity_tracking_checkbox.setChecked(settings.get('activity_tracking_enabled', False))
         self.polling_interval_spinbox.setValue(settings.get('polling_interval', 5))
-        self.min_session_duration_spinbox.setValue(settings.get('min_session_duration', 1))
+        self.min_session_duration_spinbox.setValue(settings.get('min_session_duration', 5))
         self.data_retention_days_spinbox.setValue(settings.get('data_retention_days', 90))

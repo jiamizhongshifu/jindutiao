@@ -33,6 +33,7 @@ from gaiya.core.notification_manager import NotificationManager
 from gaiya.ui.pomodoro_panel import PomodoroPanel, PomodoroSettingsDialog
 from gaiya.data.db_manager import db
 from gaiya.utils import time_utils, path_utils, data_loader, task_calculator, window_utils
+from gaiya.utils.time_block_utils import generate_time_block_id, legacy_time_block_keys
 from gaiya.scene import SceneLoader, SceneRenderer, SceneEventManager, ResourceCache, SceneManager
 
 # i18n support
@@ -111,6 +112,7 @@ class TimeProgressBar(QWidget):
         # Focus session state management
         self.active_focus_sessions = {}  # {time_block_id: session_id}
         self.completed_focus_blocks = set()  # time_block_ids with completed sessions today
+        self.task_focus_states = {}  # {time_block_id: focus_state}
 
         # Focus mode state (immersive pomodoro timer in progress bar)
         self.focus_mode = False  # Whether focus mode is active
@@ -659,6 +661,16 @@ class TimeProgressBar(QWidget):
         self.time_range_end = result['time_range_end']
         self.time_range_duration = result['time_range_duration']
 
+    def save_config(self):
+        """Persist current configuration to config.json."""
+        try:
+            config_file = self.app_dir / 'config.json'
+            with open(config_file, 'w', encoding='utf-8') as f:
+                json.dump(self.config, f, indent=4, ensure_ascii=False)
+            self.logger.info("配置文件已更新")
+        except Exception as e:
+            self.logger.error(f"保存配置失败: {e}")
+
     def init_timer(self):
         """初始化定时器"""
         self.timer = QTimer(self)
@@ -682,19 +694,28 @@ class TimeProgressBar(QWidget):
 
     def init_activity_tracker(self):
         """初始化行为追踪服务"""
-        if not self.activity_tracker:
-            from gaiya.services.activity_tracker import ActivityTracker
+        if self.activity_tracker:
+            self.stop_activity_tracker()
 
-            # 检查是否启用行为追踪
-            activity_tracking_enabled = self.config.get('activity_tracking', {}).get('enabled', False)
+        settings = self.config.get('activity_tracking', {})
+        activity_tracking_enabled = settings.get('enabled', False)
 
-            if activity_tracking_enabled:
-                self.logger.info("启动行为追踪服务")
-                self.activity_tracker = ActivityTracker()
-                self.activity_tracker.session_ended.connect(self.on_activity_session_ended)
-                self.activity_tracker.start()
-            else:
-                self.logger.info("行为追踪服务已禁用")
+        if not activity_tracking_enabled:
+            self.logger.info("行为追踪服务已禁用")
+            return
+
+        from gaiya.services.activity_tracker import ActivityTracker
+
+        polling_interval = max(1, int(settings.get('polling_interval', 5)))
+        min_session_duration = max(1, int(settings.get('min_session_duration', 5)))
+
+        self.logger.info(f"启动行为追踪服务 (间隔{polling_interval}s, 最短会话{min_session_duration}s)")
+        self.activity_tracker = ActivityTracker(
+            polling_interval=polling_interval,
+            min_session_duration=min_session_duration
+        )
+        self.activity_tracker.session_ended.connect(self.on_activity_session_ended)
+        self.activity_tracker.start()
 
     def stop_activity_tracker(self):
         """停止行为追踪服务"""
@@ -751,6 +772,7 @@ class TimeProgressBar(QWidget):
         if 'activity_tracking' not in self.config:
             self.config['activity_tracking'] = {}
         self.config['activity_tracking']['enabled'] = enabled
+        self.save_config()
 
         # 如果启用，延迟重新启动
         if enabled:
@@ -760,11 +782,50 @@ class TimeProgressBar(QWidget):
         """Update focus session state from database."""
         try:
             # Query active focus sessions
-            self.active_focus_sessions = db.get_active_focus_sessions()
+            self.active_focus_sessions = db.get_active_focus_sessions() or {}
 
             # Query completed focus sessions for today
-            time_block_ids = [task.get('task') for task in self.tasks]
-            self.completed_focus_blocks = db.get_completed_focus_sessions_for_blocks(time_block_ids)
+            block_candidates = []
+            query_ids = []
+            for idx, task in enumerate(self.tasks):
+                primary_id = generate_time_block_id(task, idx)
+                legacy_ids = legacy_time_block_keys(task)
+                block_candidates.append((primary_id, legacy_ids))
+                query_ids.append(primary_id)
+                query_ids.extend(legacy_ids)
+
+            # 去重查询ID，避免SQL语句过长
+            if query_ids:
+                query_ids = list(dict.fromkeys(query_ids))
+            completed_raw = db.get_completed_focus_sessions_for_blocks(query_ids)
+
+            normalized_completed = set()
+            task_focus_states = {}
+            for primary_id, legacy_ids in block_candidates:
+                is_active = (
+                    primary_id in self.active_focus_sessions or
+                    any(key in self.active_focus_sessions for key in legacy_ids)
+                )
+                is_completed = (
+                    primary_id in completed_raw or
+                    any(key in completed_raw for key in legacy_ids)
+                )
+
+                if is_active:
+                    task_focus_states[primary_id] = 'FOCUS_ACTIVE'
+                elif is_completed:
+                    task_focus_states[primary_id] = 'FOCUS_DONE'
+                    normalized_completed.add(primary_id)
+                else:
+                    task_focus_states[primary_id] = 'NORMAL'
+
+            self.completed_focus_blocks = normalized_completed
+            self.task_focus_states = task_focus_states
+
+            # 如果没有任务，确保状态被清空
+            if not self.tasks:
+                self.completed_focus_blocks = set()
+                self.task_focus_states = {}
 
             # Check if focus mode timer finished
             if self.focus_mode and self.focus_start_time:
@@ -852,6 +913,7 @@ class TimeProgressBar(QWidget):
         from datetime import datetime
 
         task_name = task.get('task', 'Unknown Task')
+        time_block_id = generate_time_block_id(task)
         self.logger.info(f"开启红温专注仓: {task_name}")
 
         # Hide pomodoro panel if exists
@@ -860,7 +922,7 @@ class TimeProgressBar(QWidget):
             self.pomodoro_panel = None
 
         # Create focus session in database
-        self.focus_session_id = db.create_focus_session(task_name)
+        self.focus_session_id = db.create_focus_session(time_block_id)
 
         # Set focus mode state
         self.focus_mode = True
@@ -2269,8 +2331,7 @@ class TimeProgressBar(QWidget):
                 self.pomodoro_panel.stop()
 
             # 创建绑定到时间块的番茄钟面板
-            # 使用任务的name作为ID，确保唯一性
-            task_id = str(task.get('name', task.get('task', f'任务_{task.get("start", "")}')))
+            task_id = generate_time_block_id(task)
 
             self.pomodoro_panel = PomodoroPanel(
                 self.config,
@@ -2654,9 +2715,10 @@ class TimeProgressBar(QWidget):
                         painter.drawText(handle_rect_right, Qt.AlignCenter, handle_text)
 
                 # Focus state visual feedback (Red Focus Chamber integration)
-                task_name = task.get('task', '')
-                is_focus_active = task_name in self.active_focus_sessions
-                is_focus_done = task_name in self.completed_focus_blocks
+                task_id = generate_time_block_id(task, i)
+                focus_state = self.task_focus_states.get(task_id, 'NORMAL')
+                is_focus_active = focus_state == 'FOCUS_ACTIVE'
+                is_focus_done = focus_state == 'FOCUS_DONE'
 
                 if is_focus_active:
                     # Active focus: Red overlay + Fire icon

@@ -12,6 +12,7 @@ from PySide6.QtGui import QColor, QFont, QPainter, QPen
 from statistics_manager import StatisticsManager
 from gaiya.core.theme_manager import ThemeManager
 from i18n.translator import tr
+from gaiya.data.db_manager import db
 from pathlib import Path
 import logging
 import sys
@@ -198,6 +199,40 @@ class StatisticsWindow(QWidget):
 
         content_widget = QWidget()
         content_layout = QVBoxLayout(content_widget)
+
+        # 行为识别摘要
+        behavior_group = QGroupBox("⚡ 今日行为摘要")
+        behavior_layout = QVBoxLayout(behavior_group)
+
+        self.behavior_summary_label = QLabel("行为识别未启用或暂无数据")
+        self.behavior_summary_label.setStyleSheet("font-weight: bold; color: #2c3e50;")
+        behavior_layout.addWidget(self.behavior_summary_label)
+
+        self.behavior_ratio_bar = QProgressBar()
+        self.behavior_ratio_bar.setRange(0, 100)
+        self.behavior_ratio_bar.setValue(0)
+        self.behavior_ratio_bar.setFormat("🎯 生产力 0%")
+        self.behavior_ratio_bar.setStyleSheet("""
+            QProgressBar {
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                text-align: center;
+            }
+            QProgressBar::chunk {
+                background-color: #4CAF50;
+                border-radius: 3px;
+            }
+        """)
+        behavior_layout.addWidget(self.behavior_ratio_bar)
+
+        self.behavior_ratio_detail_label = QLabel("🎯 生产力 0% | 🎮 摸鱼 0% | ⚙️ 中性 0% | ❓ 未分类 0%")
+        self.behavior_ratio_detail_label.setStyleSheet("color: #6c757d;")
+        behavior_layout.addWidget(self.behavior_ratio_detail_label)
+
+        self.behavior_top_label = QLabel("🏆 Top 应用：暂无数据")
+        behavior_layout.addWidget(self.behavior_top_label)
+
+        content_layout.addWidget(behavior_group)
 
         # 统计卡片容器
         self.today_cards_layout = QHBoxLayout()
@@ -449,6 +484,72 @@ class StatisticsWindow(QWidget):
                 "not_started": tr("statistics.status.not_started")
             }.get(task_info['status'], task_info['status'])
             self.today_table.setItem(row, 4, QTableWidgetItem(status_text))
+
+        # 更新行为摘要
+        activity_stats = db.get_today_activity_stats() or {}
+        self.update_behavior_summary(activity_stats)
+
+    def update_behavior_summary(self, activity_stats: dict):
+        """刷新行为识别摘要"""
+        total_seconds = activity_stats.get('total_seconds', 0) or 0
+        categories = activity_stats.get('categories', {}) or {}
+
+        productive_seconds = categories.get('PRODUCTIVE', 0) or 0
+        leisure_seconds = categories.get('LEISURE', 0) or 0
+        neutral_seconds = categories.get('NEUTRAL', 0) or 0
+        unknown_seconds = categories.get('UNKNOWN', 0) or 0
+
+        if total_seconds > 0:
+            self.behavior_summary_label.setText(f"今日活跃用机：{self._format_duration(total_seconds)}")
+            productive_pct = (productive_seconds / total_seconds) * 100
+            leisure_pct = (leisure_seconds / total_seconds) * 100
+            neutral_pct = (neutral_seconds / total_seconds) * 100
+            unknown_pct = max(0.0, 100 - productive_pct - leisure_pct - neutral_pct)
+
+            self.behavior_ratio_bar.setValue(int(round(productive_pct)))
+            self.behavior_ratio_bar.setFormat(f"🎯 生产力 {productive_pct:.1f}%")
+            self.behavior_ratio_detail_label.setText(
+                f"🎯 生产力 {productive_pct:.1f}% | "
+                f"🎮 摸鱼 {leisure_pct:.1f}% | "
+                f"⚙️ 中性 {neutral_pct:.1f}% | "
+                f"❓ 未分类 {unknown_pct:.1f}%"
+            )
+
+            top_apps = activity_stats.get('top_apps', []) or []
+            if top_apps:
+                top = top_apps[0]
+                category_map = {
+                    'PRODUCTIVE': '生产力',
+                    'LEISURE': '摸鱼',
+                    'NEUTRAL': '中性',
+                    'UNKNOWN': '未分类'
+                }
+                category_cn = category_map.get(top.get('category', 'UNKNOWN'), '未分类')
+                self.behavior_top_label.setText(
+                    f"🏆 Top 应用：{top.get('name', 'Unknown')} "
+                    f"{self._format_duration(top.get('duration', 0))}（{category_cn}）"
+                )
+            else:
+                self.behavior_top_label.setText("🏆 Top 应用：暂无数据")
+        else:
+            self.behavior_summary_label.setText("行为识别未启用或暂无数据")
+            self.behavior_ratio_bar.setValue(0)
+            self.behavior_ratio_bar.setFormat("🎯 生产力 0%")
+            self.behavior_ratio_detail_label.setText(
+                "🎯 生产力 0% | 🎮 摸鱼 0% | ⚙️ 中性 0% | ❓ 未分类 0%"
+            )
+            self.behavior_top_label.setText("🏆 Top 应用：暂无数据")
+
+    def _format_duration(self, seconds: int) -> str:
+        if seconds < 60:
+            return f"{seconds}秒"
+        if seconds < 3600:
+            minutes = seconds // 60
+            secs = seconds % 60
+            return f"{minutes}分{secs}秒"
+        hours = seconds // 3600
+        minutes = (seconds % 3600) // 60
+        return f"{hours}小时{minutes}分"
 
     def load_weekly_statistics(self):
         """加载本周统计"""

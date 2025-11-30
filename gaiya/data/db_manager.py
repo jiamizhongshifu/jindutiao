@@ -1,6 +1,6 @@
 import sqlite3
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 import logging
 import uuid
@@ -234,6 +234,24 @@ class DatabaseManager:
             VALUES (?, ?, ?)
             ON CONFLICT(process_name) DO UPDATE SET category = ?, is_ignored = ?
         ''', (process_name, category, is_ignored, category, is_ignored))
+        conn.commit()
+        conn.close()
+
+    def clear_activity_data(self):
+        """Delete all recorded activity sessions."""
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM activity_sessions')
+        conn.commit()
+        conn.close()
+
+    def cleanup_old_data(self, days: int = 90):
+        """Remove focus/activity sessions older than N days."""
+        cutoff = datetime.now() - timedelta(days=days)
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM focus_sessions WHERE start_time < ?', (cutoff,))
+        cursor.execute('DELETE FROM activity_sessions WHERE start_time < ?', (cutoff,))
         conn.commit()
         conn.close()
 

@@ -68,6 +68,12 @@ def load_config(app_dir: Path, logger: logging.Logger) -> Dict[str, Any]:
         "update_interval": 1000,
         "enable_shadow": True,
         "corner_radius": 0,
+        "activity_tracking": {
+            "enabled": False,
+            "polling_interval": 5,
+            "min_session_duration": 5,
+            "data_retention_days": 90
+        },
         # 通知配置
         "notification": {
             "enabled": True,                    # 通知总开关

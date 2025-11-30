@@ -17,6 +17,8 @@ from PySide6.QtGui import QFont, QPainter, QColor, QPen
 
 from gaiya.data.db_manager import db
 from gaiya.services.app_category_manager import app_category_manager
+from gaiya.utils import data_loader, path_utils, time_utils
+from gaiya.utils.time_block_utils import generate_time_block_id
 
 logger = logging.getLogger("gaiya.ui.time_review_window")
 
@@ -156,6 +158,40 @@ class TimeReviewWindow(QDialog):
         layout = QVBoxLayout(widget)
         layout.setSpacing(10)
 
+        # 行为识别摘要
+        summary_group = QGroupBox("⚡ 行为识别摘要")
+        summary_layout = QVBoxLayout(summary_group)
+
+        self.behavior_summary_label = QLabel("行为识别未启用或暂无数据")
+        self.behavior_summary_label.setStyleSheet("font-weight: bold; color: #2c3e50;")
+        summary_layout.addWidget(self.behavior_summary_label)
+
+        self.behavior_ratio_bar = QProgressBar()
+        self.behavior_ratio_bar.setRange(0, 100)
+        self.behavior_ratio_bar.setValue(0)
+        self.behavior_ratio_bar.setFormat("🎯 生产力 0%")
+        self.behavior_ratio_bar.setStyleSheet("""
+            QProgressBar {
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                text-align: center;
+            }
+            QProgressBar::chunk {
+                background-color: #4CAF50;
+                border-radius: 3px;
+            }
+        """)
+        summary_layout.addWidget(self.behavior_ratio_bar)
+
+        self.behavior_ratio_detail_label = QLabel("🎯 生产力 0% | 🎮 摸鱼 0% | ⚙️ 中性 0% | ❓ 未分类 0%")
+        self.behavior_ratio_detail_label.setStyleSheet("color: #6c757d;")
+        summary_layout.addWidget(self.behavior_ratio_detail_label)
+
+        self.behavior_top_label = QLabel("🏆 Top 应用：暂无数据")
+        summary_layout.addWidget(self.behavior_top_label)
+
+        layout.addWidget(summary_group)
+
         # 活跃用机统计
         active_time_group = QGroupBox("💻 今日用机统计")
         active_time_layout = QFormLayout(active_time_group)
@@ -222,41 +258,91 @@ class TimeReviewWindow(QDialog):
         except Exception as e:
             self.logger.error(f"加载今日数据失败: {e}")
 
+    def _get_tasks(self):
+        """获取用于统计的时间块列表。"""
+        parent = self.parent()
+        if parent and hasattr(parent, 'tasks'):
+            tasks = getattr(parent, 'tasks', [])
+            if tasks:
+                return tasks
+
+        try:
+            app_dir = path_utils.get_app_dir()
+            return data_loader.load_tasks(app_dir, self.logger)
+        except Exception as e:
+            self.logger.error(f"加载任务数据失败: {e}")
+            return []
+
+    def _calculate_plan_minutes(self, task: Dict) -> int:
+        """根据任务开始结束时间计算计划分钟数。"""
+        try:
+            start_seconds = time_utils.time_str_to_seconds(task.get('start', '00:00'))
+            end_seconds = time_utils.time_str_to_seconds(task.get('end', '00:00'))
+            duration = max(0, end_seconds - start_seconds)
+            return duration // 60
+        except Exception as e:
+            self.logger.warning(f"计算任务时长失败: {e}")
+            return 0
+
+    def _resolve_time_block_id(self, task: Dict, index: int) -> str:
+        """生成与主窗口相同的时间块ID。"""
+        try:
+            return generate_time_block_id(task, index)
+        except Exception as e:
+            self.logger.warning(f"生成时间块ID失败: {e}")
+            return f"time-block-{index}"
+
     def load_focus_data(self, start_time: datetime, end_time: datetime):
         """加载专注数据"""
         try:
-            # 这里需要从数据库获取时间块和专注会话数据
-            # 暂时使用模拟数据
+            tasks = self._get_tasks()
+            focus_stats = db.get_today_focus_stats() or {}
+            focus_by_block = focus_stats.get('by_block', {})
+            total_focus_minutes = focus_stats.get('total_minutes', 0) or 0
+
+            time_blocks = []
+            total_plan_minutes = 0
+            matched_block_ids = set()
+
+            for idx, task in enumerate(tasks):
+                plan_minutes = self._calculate_plan_minutes(task)
+                total_plan_minutes += plan_minutes
+                block_id = self._resolve_time_block_id(task, idx)
+                matched_block_ids.add(block_id)
+
+                focus_info = focus_by_block.get(block_id, {})
+                focus_minutes = focus_info.get('duration', 0) or 0
+                focus_sessions = focus_info.get('count', 0) or 0
+
+                time_blocks.append({
+                    'name': task.get('task') or task.get('name') or f'任务 {idx + 1}',
+                    'plan_minutes': plan_minutes,
+                    'focus_minutes': focus_minutes,
+                    'focus_sessions': focus_sessions
+                })
+
+            unmatched_blocks = [
+                (block_id, info) for block_id, info in focus_by_block.items()
+                if block_id not in matched_block_ids
+            ]
+            for extra_idx, (block_id, info) in enumerate(unmatched_blocks, start=1):
+                time_blocks.append({
+                    'name': f'未匹配时间块 #{extra_idx}',
+                    'plan_minutes': 0,
+                    'focus_minutes': info.get('duration', 0) or 0,
+                    'focus_sessions': info.get('count', 0) or 0
+                })
+
+            focus_execution_rate = (
+                (total_focus_minutes / total_plan_minutes) * 100
+                if total_plan_minutes > 0 else 0
+            )
+
             self.review_data = {
-                'total_plan_minutes': 480,  # 8小时
-                'total_focus_minutes': 180,  # 3小时
-                'focus_execution_rate': 37.5,
-                'time_blocks': [
-                    {
-                        'name': '写方案',
-                        'plan_minutes': 120,
-                        'focus_minutes': 80,
-                        'focus_sessions': 2
-                    },
-                    {
-                        'name': '开会',
-                        'plan_minutes': 90,
-                        'focus_minutes': 60,
-                        'focus_sessions': 1
-                    },
-                    {
-                        'name': '写副业项目',
-                        'plan_minutes': 150,
-                        'focus_minutes': 0,
-                        'focus_sessions': 0
-                    },
-                    {
-                        'name': '学习',
-                        'plan_minutes': 120,
-                        'focus_minutes': 40,
-                        'focus_sessions': 1
-                    }
-                ]
+                'total_plan_minutes': total_plan_minutes,
+                'total_focus_minutes': total_focus_minutes,
+                'focus_execution_rate': focus_execution_rate,
+                'time_blocks': time_blocks
             }
         except Exception as e:
             self.logger.error(f"加载专注数据失败: {e}")
@@ -336,6 +422,47 @@ class TimeReviewWindow(QDialog):
         leisure_seconds = categories.get('LEISURE', 0)
         neutral_seconds = categories.get('NEUTRAL', 0)
         unknown_seconds = categories.get('UNKNOWN', 0)
+
+        # 行为识别摘要
+        if total_seconds > 0:
+            self.behavior_summary_label.setText(f"今日活跃用机：{self.format_duration(total_seconds)}")
+            productive_pct = (productive_seconds / total_seconds) * 100 if total_seconds else 0
+            leisure_pct = (leisure_seconds / total_seconds) * 100 if total_seconds else 0
+            neutral_pct = (neutral_seconds / total_seconds) * 100 if total_seconds else 0
+            unknown_pct = max(0.0, 100 - productive_pct - leisure_pct - neutral_pct)
+
+            self.behavior_ratio_bar.setValue(int(round(productive_pct)))
+            self.behavior_ratio_bar.setFormat(f"🎯 生产力 {productive_pct:.1f}%")
+            self.behavior_ratio_detail_label.setText(
+                f"🎯 生产力 {productive_pct:.1f}% | "
+                f"🎮 摸鱼 {leisure_pct:.1f}% | "
+                f"⚙️ 中性 {neutral_pct:.1f}% | "
+                f"❓ 未分类 {unknown_pct:.1f}%"
+            )
+
+            if top_apps:
+                top = top_apps[0]
+                category_map = {
+                    'PRODUCTIVE': '生产力',
+                    'LEISURE': '摸鱼',
+                    'NEUTRAL': '中性',
+                    'UNKNOWN': '未分类'
+                }
+                category_cn = category_map.get(top.get('category', 'UNKNOWN'), '未分类')
+                self.behavior_top_label.setText(
+                    f"🏆 Top 应用：{top.get('name', 'Unknown')} "
+                    f"{self.format_duration(top.get('duration', 0))}（{category_cn}）"
+                )
+            else:
+                self.behavior_top_label.setText("🏆 Top 应用：暂无数据")
+        else:
+            self.behavior_summary_label.setText("行为识别未启用或暂无数据")
+            self.behavior_ratio_bar.setValue(0)
+            self.behavior_ratio_bar.setFormat("🎯 生产力 0%")
+            self.behavior_ratio_detail_label.setText(
+                "🎯 生产力 0% | 🎮 摸鱼 0% | ⚙️ 中性 0% | ❓ 未分类 0%"
+            )
+            self.behavior_top_label.setText("🏆 Top 应用：暂无数据")
 
         # 更新时间显示
         self.total_active_time_label.setText(self.format_duration(total_seconds))
