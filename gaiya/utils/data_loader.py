@@ -52,7 +52,7 @@ def load_config(app_dir: Path, logger: logging.Logger) -> Dict[str, Any]:
     # Default config
     default_config = {
         "language": "auto",  # "auto", "zh_CN", "en_US"
-        "bar_height": 10,
+        "bar_height": 6,
         "position": "bottom",
         "background_color": "#505050",
         "background_opacity": 180,
@@ -69,7 +69,7 @@ def load_config(app_dir: Path, logger: logging.Logger) -> Dict[str, Any]:
         "enable_shadow": True,
         "corner_radius": 0,
         "activity_tracking": {
-            "enabled": False,
+            "enabled": True,  # 默认开启行为识别
             "polling_interval": 5,
             "min_session_duration": 5,
             "data_retention_days": 90
@@ -77,9 +77,9 @@ def load_config(app_dir: Path, logger: logging.Logger) -> Dict[str, Any]:
         # 通知配置
         "notification": {
             "enabled": True,                    # 通知总开关
-            "before_start_minutes": [10, 5],   # 任务开始前N分钟提醒
+            "before_start_minutes": [],         # 任务开始前N分钟提醒 (默认不提醒)
             "on_start": True,                   # 任务开始时提醒
-            "before_end_minutes": [5],          # 任务结束前N分钟提醒
+            "before_end_minutes": [],           # 任务结束前N分钟提醒 (默认不提醒)
             "on_end": False,                    # 任务结束时提醒
             "sound_enabled": True,              # 声音开关
             "sound_file": "",                   # 自定义提示音路径

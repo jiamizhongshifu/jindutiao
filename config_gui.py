@@ -1410,25 +1410,12 @@ class ConfigManager(QMainWindow):
         """后端健康检查完成回调"""
         if not hasattr(self, 'quota_label'):
             return
-        
-        if not is_healthy:
-            # 代理服务器未响应，继续显示"正在启动"状态
-            self.quota_label.setText(self.i18n.tr("ai.text_9377"))
-            self.quota_label.setStyleSheet("color: #ff9800; padding: 5px; font-weight: bold;")
-            if hasattr(self, 'generate_btn'):
-                self.generate_btn.setEnabled(False)
-            
-            # 注意：使用代理服务器时，不需要启动本地后端服务
-            # 如果代理服务器不可用，可能是网络问题或服务器暂时不可用
-            
-            # 不停止定时器，继续检查（每5秒检查一次）
-            return
 
-        # 代理服务器已响应,异步更新配额状态
+        # Always try to refresh quota, even if health check fails
+        # The quota API might be ready even if health endpoint is not
         self.refresh_quota_status_async()
 
-        # 注意：不在这里停止定时器，等配额检查成功后再停止
-        # 这样可以确保如果代理服务器崩溃，定时器会继续检查
+        # Note: Timer will be stopped in _on_quota_status_finished if quota check succeeds
 
     def _update_ai_status_error(self, error_msg):
         """显示AI服务错误状态"""
@@ -1586,14 +1573,22 @@ class ConfigManager(QMainWindow):
             return  # 已经加载过了
 
         try:
+            # Block signals to prevent recursive tab change events
+            self.tabs.blockSignals(True)
+
             self.scene_tab_widget = self.create_scene_tab()
             self.tabs.setTabEnabled(2, True)  # 确保标签页可用
             # 替换占位widget
             self.tabs.removeTab(2)
             self.tabs.insertTab(2, self.scene_tab_widget, "🎬 " + self.i18n.tr("config.tabs.scene"))
             self.tabs.setCurrentIndex(2)  # 切换到场景设置标签页
+
+            # Restore signals
+            self.tabs.blockSignals(False)
         except Exception as e:
             logging.error(f"加载场景设置标签页失败: {e}")
+            # Ensure signals are restored even on error
+            self.tabs.blockSignals(False)
             # 显示错误提示
             from PySide6.QtWidgets import QLabel
             error_widget = QWidget()
@@ -1611,14 +1606,22 @@ class ConfigManager(QMainWindow):
             return  # 已经加载过了
 
         try:
+            # Block signals to prevent recursive tab change events
+            self.tabs.blockSignals(True)
+
             self.notification_tab_widget = self.create_notification_tab()
             self.tabs.setTabEnabled(3, True)  # 确保标签页可用
             # 替换占位widget
             self.tabs.removeTab(3)
             self.tabs.insertTab(3, self.notification_tab_widget, "🔔 " + self.i18n.tr("config.tabs.notifications"))
             self.tabs.setCurrentIndex(3)  # 切换到通知设置标签页
+
+            # Restore signals
+            self.tabs.blockSignals(False)
         except Exception as e:
             logging.error(f"加载通知设置标签页失败: {e}")
+            # Ensure signals are restored even on error
+            self.tabs.blockSignals(False)
             # 显示错误提示
             from PySide6.QtWidgets import QLabel
             error_widget = QWidget()
@@ -1637,15 +1640,23 @@ class ConfigManager(QMainWindow):
             return  # 已经加载过了
 
         try:
+            # Block signals to prevent recursive tab change events
+            self.tabs.blockSignals(True)
+
             self.account_tab_widget = self._create_account_tab()
             self.tabs.setTabEnabled(4, True)  # 确保标签页可用
             # 替换占位widget
             self.tabs.removeTab(4)
             self.tabs.insertTab(4, self.account_tab_widget, tr("account.tab_title"))
             self.tabs.setCurrentIndex(4)  # 切换到个人中心标签页
+
+            # Restore signals
+            self.tabs.blockSignals(False)
         except Exception as e:
             import logging
             logging.error(f"加载个人中心标签页失败: {e}")
+            # Ensure signals are restored even on error
+            self.tabs.blockSignals(False)
             from PySide6.QtWidgets import QLabel
             error_widget = QWidget()
             error_layout = QVBoxLayout(error_widget)
@@ -1662,17 +1673,25 @@ class ConfigManager(QMainWindow):
             return  # 已经加载过了
 
         try:
+            # Block signals to prevent recursive tab change events
+            self.tabs.blockSignals(True)
+
             self.about_tab_widget = self.create_about_tab()
             self.tabs.setTabEnabled(5, True)  # 确保标签页可用
             # 替换占位widget
             self.tabs.removeTab(5)
             self.tabs.insertTab(5, self.about_tab_widget, "📖 " + self.i18n.tr("tabs.about"))
             self.tabs.setCurrentIndex(5)  # 切换到关于标签页
+
+            # Restore signals
+            self.tabs.blockSignals(False)
         except Exception as e:
             import logging
             import traceback
             logging.error(f"加载关于标签页失败: {e}")
             logging.error(traceback.format_exc())
+            # Ensure signals are restored even on error
+            self.tabs.blockSignals(False)
             from PySide6.QtWidgets import QLabel
             error_widget = QWidget()
             error_layout = QVBoxLayout(error_widget)
@@ -6881,10 +6900,17 @@ class ConfigManager(QMainWindow):
                         )
                         return
 
+                    # Generate stable ID based on time and task name
+                    import hashlib
+                    task_name = name_item.text()
+                    stable_key = f"{start_time}|{end_time}|{task_name}"
+                    task_id = hashlib.sha1(stable_key.encode('utf-8')).hexdigest()
+
                     task = {
+                        "id": task_id,  # Stable ID for focus session tracking
                         "start": start_time,
                         "end": end_time,
-                        "task": name_item.text(),
+                        "task": task_name,
                         "color": task_color,  # 使用主题颜色或用户自定义颜色
                         "text_color": text_color_input.text() if text_color_input else "#FFFFFF"
                     }

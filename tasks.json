@@ -1,5 +1,6 @@
 [
     {
+        "id": "d85b59052d950a357e5c72ecf9ff234708753b7d",
         "start": "00:00",
         "end": "06:00",
         "task": "深度睡眠",
@@ -7,6 +8,7 @@
         "text_color": "#FFFFFF"
     },
     {
+        "id": "740061d1ba95f966991c970dbca2f801b1d22647",
         "start": "06:00",
         "end": "07:00",
         "task": "起床准备",
@@ -14,6 +16,7 @@
         "text_color": "#FFFFFF"
     },
     {
+        "id": "29f7822f8f0c9eff0923283061d979602aee69aa",
         "start": "07:00",
         "end": "08:00",
         "task": "早餐时间",
@@ -21,6 +24,7 @@
         "text_color": "#FFFFFF"
     },
     {
+        "id": "91b45ad12a01f32dd68465034718a88b9fc3f867",
         "start": "08:00",
         "end": "09:00",
         "task": "晨间通勤",
@@ -28,6 +32,7 @@
         "text_color": "#FFFFFF"
     },
     {
+        "id": "343750af5ff754792284859cdef4f2737165c2c1",
         "start": "09:00",
         "end": "12:00",
         "task": "上午工作",
@@ -35,6 +40,7 @@
         "text_color": "#FFFFFF"
     },
     {
+        "id": "4515f513f1637103faa9c40823f2e1a468344c9e",
         "start": "12:00",
         "end": "13:00",
         "task": "午餐休息",
@@ -42,6 +48,7 @@
         "text_color": "#FFFFFF"
     },
     {
+        "id": "9e25a11da123f3bd9ec66c8ddb2aba929ce6c05b",
         "start": "13:00",
         "end": "14:00",
         "task": "午休小憩",
@@ -49,6 +56,7 @@
         "text_color": "#FFFFFF"
     },
     {
+        "id": "ade5f36bbb673efa353206e103c0fc47c2c8f007",
         "start": "14:00",
         "end": "18:00",
         "task": "下午工作",
@@ -56,6 +64,7 @@
         "text_color": "#FFFFFF"
     },
     {
+        "id": "0be94eee377c279f70001a3de384edcf0e124b40",
         "start": "18:00",
         "end": "19:00",
         "task": "晚间通勤",
@@ -63,6 +72,7 @@
         "text_color": "#FFFFFF"
     },
     {
+        "id": "c4f12a358c96049b313f87958732dd7335f7bf3b",
         "start": "19:00",
         "end": "20:00",
         "task": "晚餐时间",
@@ -70,6 +80,7 @@
         "text_color": "#FFFFFF"
     },
     {
+        "id": "39cb8500dcc25317431f4e683702c4a121ced3f1",
         "start": "20:00",
         "end": "21:00",
         "task": "健身运动",
@@ -77,6 +88,7 @@
         "text_color": "#FFFFFF"
     },
     {
+        "id": "f3fd163a23a61f73016261b156611bbe3400f5d8",
         "start": "21:00",
         "end": "22:00",
         "task": "学习充电",
@@ -84,6 +96,7 @@
         "text_color": "#FFFFFF"
     },
     {
+        "id": "b778e4d6b04123d6b17e1c32f45fc5e2b599014c",
         "start": "22:00",
         "end": "23:00",
         "task": "休闲娱乐",
@@ -91,6 +104,7 @@
         "text_color": "#FFFFFF"
     },
     {
+        "id": "63777fc95ff696da1f0d3934f0a0d6cd9a86ff2c",
         "start": "23:00",
         "end": "24:00",
         "task": "洗漱准备",

@@ -46,17 +46,14 @@ class TimeReviewWindow(QDialog):
     def init_ui(self):
         """初始化UI"""
         layout = QVBoxLayout(self)
-        layout.setSpacing(15)
-        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(8)  # 减小间距
+        layout.setContentsMargins(10, 10, 10, 10)  # 减小边距
 
-        # 标题
-        title_label = QLabel(f"⏰ {datetime.now().strftime('%Y年%m月%d日')} 时间回放")
-        title_label.setFont(QFont("Microsoft YaHei", 16, QFont.Bold))
-        title_label.setStyleSheet("color: #2c3e50; margin-bottom: 10px;")
-        title_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(title_label)
+        # 将日期信息移到窗口标题
+        date_str = datetime.now().strftime('%Y年%m月%d日')
+        self.setWindowTitle(f"⏰ 今日时间回放 - {date_str}")
 
-        # 创建分割器
+        # 创建分割器(移除大标题,直接使用分割器)
         splitter = QSplitter(Qt.Horizontal)
         layout.addWidget(splitter)
 
@@ -73,6 +70,12 @@ class TimeReviewWindow(QDialog):
 
         # 底部按钮
         button_layout = QHBoxLayout()
+
+        # 左侧按钮：行为识别设置
+        activity_settings_button = QPushButton("🔍 行为识别设置")
+        activity_settings_button.clicked.connect(self.show_activity_settings)
+        button_layout.addWidget(activity_settings_button)
+
         button_layout.addStretch()
 
         refresh_button = QPushButton("🔄 刷新数据")
@@ -93,62 +96,56 @@ class TimeReviewWindow(QDialog):
         """创建专注回放面板"""
         widget = QWidget()
         layout = QVBoxLayout(widget)
-        layout.setSpacing(10)
+        layout.setSpacing(8)
+        layout.setContentsMargins(0, 0, 0, 0)
 
-        # 计划vs专注概览
-        overview_group = QGroupBox("📋 今日专注概览")
-        overview_layout = QFormLayout(overview_group)
+        # 红温专注概览 - 简洁版
+        overview_group = QGroupBox("🔥 红温专注概览")
+        overview_layout = QVBoxLayout(overview_group)
+        overview_layout.setSpacing(8)
+        overview_layout.setContentsMargins(10, 10, 10, 10)
 
-        # 计划时间
-        self.total_plan_time_label = QLabel("0小时0分钟")
-        overview_layout.addRow("计划时间:", self.total_plan_time_label)
+        # 总专注时间 (大字号显示)
+        focus_time_container = QWidget()
+        focus_time_layout = QHBoxLayout(focus_time_container)
+        focus_time_layout.setContentsMargins(0, 0, 0, 0)
 
-        # 专注时间
+        focus_time_label = QLabel("今日专注:")
+        focus_time_label.setStyleSheet("font-size: 14px; font-weight: bold;")
+
         self.total_focus_time_label = QLabel("0小时0分钟")
-        overview_layout.addRow("红温专注:", self.total_focus_time_label)
+        self.total_focus_time_label.setStyleSheet("font-size: 18px; font-weight: bold; color: #e74c3c;")
 
-        # 专注执行率
-        self.focus_execution_rate_label = QLabel("0%")
-        overview_layout.addRow("专注执行率:", self.focus_execution_rate_label)
+        focus_time_layout.addWidget(focus_time_label)
+        focus_time_layout.addWidget(self.total_focus_time_label)
+        focus_time_layout.addStretch()
 
-        # 执行率进度条
-        self.focus_rate_progress = QProgressBar()
-        self.focus_rate_progress.setRange(0, 100)
-        self.focus_rate_progress.setValue(0)
-        self.focus_rate_progress.setStyleSheet("""
-            QProgressBar {
-                border: 2px solid grey;
-                border-radius: 5px;
-                text-align: center;
-                font-weight: bold;
-            }
-            QProgressBar::chunk {
-                background-color: #e74c3c;
-                border-radius: 3px;
-            }
-        """)
-        overview_layout.addRow("执行进度:", self.focus_rate_progress)
+        overview_layout.addWidget(focus_time_container)
 
         layout.addWidget(overview_group)
 
-        # 时间块详细列表
-        time_blocks_group = QGroupBox("📅 时间块详情")
-        time_blocks_layout = QVBoxLayout(time_blocks_group)
+        # 专注任务列表
+        tasks_group = QGroupBox("📝 专注任务")
+        tasks_layout = QVBoxLayout(tasks_group)
+        tasks_layout.setSpacing(3)
+        tasks_layout.setContentsMargins(5, 5, 5, 5)
 
         # 创建滚动区域
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        scroll_area.setMinimumHeight(400)
 
-        self.time_blocks_widget = QWidget()
-        self.time_blocks_layout = QVBoxLayout(self.time_blocks_widget)
-        self.time_blocks_layout.setSpacing(5)
+        self.focus_tasks_widget = QWidget()
+        self.focus_tasks_layout = QVBoxLayout(self.focus_tasks_widget)
+        self.focus_tasks_layout.setSpacing(4)
+        self.focus_tasks_layout.setContentsMargins(0, 0, 0, 0)
 
-        scroll_area.setWidget(self.time_blocks_widget)
-        time_blocks_layout.addWidget(scroll_area)
+        scroll_area.setWidget(self.focus_tasks_widget)
+        tasks_layout.addWidget(scroll_area)
 
-        layout.addWidget(time_blocks_group)
+        layout.addWidget(tasks_group)
 
         return widget
 
@@ -156,11 +153,13 @@ class TimeReviewWindow(QDialog):
         """创建行为回放面板"""
         widget = QWidget()
         layout = QVBoxLayout(widget)
-        layout.setSpacing(10)
+        layout.setSpacing(5)  # 减小间距
+        layout.setContentsMargins(0, 0, 0, 0)  # 移除边距
 
         # 行为识别摘要
-        summary_group = QGroupBox("⚡ 行为识别摘要")
+        summary_group = QGroupBox("⚡ 行为摘要")  # 简化标题
         summary_layout = QVBoxLayout(summary_group)
+        summary_layout.setSpacing(5)  # 减小间距
 
         self.behavior_summary_label = QLabel("行为识别未启用或暂无数据")
         self.behavior_summary_label.setStyleSheet("font-weight: bold; color: #2c3e50;")
@@ -193,8 +192,9 @@ class TimeReviewWindow(QDialog):
         layout.addWidget(summary_group)
 
         # 活跃用机统计
-        active_time_group = QGroupBox("💻 今日用机统计")
+        active_time_group = QGroupBox("💻 用机统计")  # 简化标题
         active_time_layout = QFormLayout(active_time_group)
+        active_time_layout.setSpacing(4)  # 减小间距
 
         # 总活跃时间
         self.total_active_time_label = QLabel("0小时0分钟")
@@ -218,19 +218,23 @@ class TimeReviewWindow(QDialog):
 
         layout.addWidget(active_time_group)
 
-        # Top App排行榜
-        top_apps_group = QGroupBox("🏆 Top应用排行")
+        # Top App排行榜 (增加高度)
+        top_apps_group = QGroupBox("🏆 应用排行")  # 简化标题
         top_apps_layout = QVBoxLayout(top_apps_group)
+        top_apps_layout.setSpacing(3)  # 减小间距
+        top_apps_layout.setContentsMargins(5, 5, 5, 5)  # 减小边距
 
         # 创建应用排行榜
         self.top_apps_widget = QWidget()
         self.top_apps_layout = QVBoxLayout(self.top_apps_widget)
         self.top_apps_layout.setSpacing(3)
+        self.top_apps_layout.setContentsMargins(0, 0, 0, 0)
 
         top_apps_scroll = QScrollArea()
         top_apps_scroll.setWidget(self.top_apps_widget)
         top_apps_scroll.setWidgetResizable(True)
-        top_apps_scroll.setMaximumHeight(200)
+        top_apps_scroll.setMinimumHeight(250)  # 增加最小高度
+        # 移除最大高度限制,让它自动扩展
 
         top_apps_layout.addWidget(top_apps_scroll)
         layout.addWidget(top_apps_group)
@@ -390,24 +394,37 @@ class TimeReviewWindow(QDialog):
         if not self.review_data:
             return
 
-        # 更新概览数据
-        total_plan = self.review_data['total_plan_minutes']
+        # 更新总专注时间
         total_focus = self.review_data['total_focus_minutes']
-        execution_rate = self.review_data['focus_execution_rate']
+        hours = total_focus // 60
+        minutes = total_focus % 60
 
-        self.total_plan_time_label.setText(f"{total_plan // 60}小时{total_plan % 60}分钟")
-        self.total_focus_time_label.setText(f"{total_focus // 60}小时{total_focus % 60}分钟")
-        self.focus_execution_rate_label.setText(f"{execution_rate:.1f}%")
-        self.focus_rate_progress.setValue(int(execution_rate))
+        if hours > 0:
+            self.total_focus_time_label.setText(f"{hours}小时{minutes}分钟")
+        else:
+            self.total_focus_time_label.setText(f"{minutes}分钟")
 
-        # 清空并重建时间块列表
-        self.clear_layout(self.time_blocks_layout)
+        # 清空并重建专注任务列表 (只显示有专注记录的任务)
+        self.clear_layout(self.focus_tasks_layout)
 
-        for block in self.review_data['time_blocks']:
-            block_widget = self.create_time_block_widget(block)
-            self.time_blocks_layout.addWidget(block_widget)
+        # 筛选有专注记录的任务
+        focused_tasks = [
+            block for block in self.review_data['time_blocks']
+            if block['focus_minutes'] > 0
+        ]
 
-        self.time_blocks_layout.addStretch()
+        if focused_tasks:
+            for block in focused_tasks:
+                task_widget = self.create_focus_task_item(block)
+                self.focus_tasks_layout.addWidget(task_widget)
+        else:
+            # 无专注记录时显示提示
+            no_data_label = QLabel("今日尚无专注记录")
+            no_data_label.setStyleSheet("color: gray; font-style: italic; padding: 10px;")
+            no_data_label.setAlignment(Qt.AlignCenter)
+            self.focus_tasks_layout.addWidget(no_data_label)
+
+        self.focus_tasks_layout.addStretch()
 
     def update_activity_review(self):
         """更新行为回放显示"""
@@ -440,6 +457,8 @@ class TimeReviewWindow(QDialog):
                 f"❓ 未分类 {unknown_pct:.1f}%"
             )
 
+            # 获取top_apps数据
+            top_apps = self.activity_data.get('top_apps', [])
             if top_apps:
                 top = top_apps[0]
                 category_map = {
@@ -534,6 +553,58 @@ class TimeReviewWindow(QDialog):
                 }
             """)
             layout.addWidget(progress_bar)
+
+        layout.addStretch()
+        return widget
+
+    def create_focus_task_item(self, block_data: Dict) -> QWidget:
+        """创建专注任务条目 (简洁版)"""
+        widget = QFrame()
+        widget.setFrameStyle(QFrame.Box)
+        widget.setStyleSheet("""
+            QFrame {
+                border: 1px solid #ffcccb;
+                border-radius: 5px;
+                background-color: #fff5f5;
+                padding: 8px;
+            }
+        """)
+
+        layout = QHBoxLayout(widget)
+        layout.setSpacing(12)
+        layout.setContentsMargins(8, 5, 8, 5)
+
+        # 火焰图标
+        icon_label = QLabel("🔥")
+        icon_label.setStyleSheet("font-size: 16px;")
+        layout.addWidget(icon_label)
+
+        # 任务名称
+        name_label = QLabel(block_data['name'])
+        name_label.setFont(QFont("Microsoft YaHei", 10, QFont.Bold))
+        name_label.setMinimumWidth(120)
+        layout.addWidget(name_label)
+
+        # 专注时长
+        focus_minutes = block_data['focus_minutes']
+        hours = focus_minutes // 60
+        minutes = focus_minutes % 60
+
+        if hours > 0:
+            time_text = f"{hours}小时{minutes}分钟"
+        else:
+            time_text = f"{minutes}分钟"
+
+        time_label = QLabel(time_text)
+        time_label.setStyleSheet("color: #e74c3c; font-size: 12px; font-weight: bold;")
+        time_label.setMinimumWidth(80)
+        layout.addWidget(time_label)
+
+        # 专注次数
+        sessions = block_data['focus_sessions']
+        sessions_label = QLabel(f"共 {sessions} 次")
+        sessions_label.setStyleSheet("color: #6c757d; font-size: 11px;")
+        layout.addWidget(sessions_label)
 
         layout.addStretch()
         return widget
@@ -648,9 +719,34 @@ class TimeReviewWindow(QDialog):
             if child.widget():
                 child.widget().deleteLater()
 
+    def show_activity_settings(self):
+        """显示行为识别设置窗口"""
+        try:
+            from gaiya.ui.activity_settings_window import ActivitySettingsWindow
+
+            # Get main window reference (parent of this dialog)
+            main_window = self.parent()
+            if main_window:
+                activity_settings_window = ActivitySettingsWindow(main_window)
+                activity_settings_window.settings_changed.connect(self.on_activity_settings_changed)
+                activity_settings_window.exec_()
+            else:
+                from PySide6.QtWidgets import QMessageBox
+                QMessageBox.warning(self, "错误", "无法打开行为识别设置窗口")
+        except Exception as e:
+            from PySide6.QtWidgets import QMessageBox
+            self.logger.error(f"打开行为识别设置窗口失败: {e}", exc_info=True)
+            QMessageBox.warning(self, "错误", f"无法打开行为识别设置窗口: {e}")
+
+    def on_activity_settings_changed(self):
+        """行为识别设置更改后的回调"""
+        self.logger.info("行为识别设置已更改，刷新数据")
+        self.load_today_data()
+
     def export_report(self):
         """导出时间报告"""
         try:
+            from PySide6.QtWidgets import QMessageBox
             # 这里可以实现导出为PDF、图片等功能
             QMessageBox.information(self, "提示", "报告导出功能开发中...")
         except Exception as e:

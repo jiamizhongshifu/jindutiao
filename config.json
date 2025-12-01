@@ -1,6 +1,5 @@
 {
-    "language": "en_US",
-    "bar_height": 10,
+    "bar_height": 6,
     "position": "bottom",
     "background_color": "#1E1E1E",
     "background_opacity": 220,
@@ -39,7 +38,8 @@
         }
     },
     "scene": {
-        "enabled": true,
-        "current_scene": "default"
+        "enabled": false,
+        "current_scene": "default",
+        "show_progress_bar": false
     }
 }

@@ -113,6 +113,7 @@ class TimeProgressBar(QWidget):
         self.active_focus_sessions = {}  # {time_block_id: session_id}
         self.completed_focus_blocks = set()  # time_block_ids with completed sessions today
         self.task_focus_states = {}  # {time_block_id: focus_state}
+        self.completed_focus_start_times = {}  # {time_block_id: actual_start_time (datetime)}
 
         # Focus mode state (immersive pomodoro timer in progress bar)
         self.focus_mode = False  # Whether focus mode is active
@@ -686,11 +687,25 @@ class TimeProgressBar(QWidget):
         self.visibility_timer.timeout.connect(self.check_visibility)
         self.visibility_timer.start(500)  # 从1000ms优化到500ms
 
+        # 添加窗口置顶刷新定时器(每3秒刷新一次,确保始终在最上层)
+        self.topmost_timer = QTimer(self)
+        self.topmost_timer.timeout.connect(self.refresh_topmost)
+        self.topmost_timer.start(3000)  # 每3秒刷新一次置顶状态
+
     def check_visibility(self):
         """检查并确保窗口始终可见"""
         if not self.isVisible():
             self.logger.warning("检测到窗口不可见,强制显示")
             self.force_show()
+
+    def refresh_topmost(self):
+        """定期刷新窗口置顶状态,确保始终在最上层"""
+        if platform.system() == 'Windows':
+            try:
+                hwnd = int(self.winId())
+                window_utils.set_always_on_top(hwnd, True)
+            except Exception as e:
+                self.logger.debug(f"刷新置顶状态失败: {e}")
 
     def init_activity_tracker(self):
         """初始化行为追踪服务"""
@@ -798,9 +813,12 @@ class TimeProgressBar(QWidget):
             if query_ids:
                 query_ids = list(dict.fromkeys(query_ids))
             completed_raw = db.get_completed_focus_sessions_for_blocks(query_ids)
+            # Also get actual start times for completed sessions
+            completed_with_times = db.get_completed_focus_sessions_with_time(query_ids)
 
             normalized_completed = set()
             task_focus_states = {}
+            completed_start_times = {}
             for primary_id, legacy_ids in block_candidates:
                 is_active = (
                     primary_id in self.active_focus_sessions or
@@ -816,11 +834,34 @@ class TimeProgressBar(QWidget):
                 elif is_completed:
                     task_focus_states[primary_id] = 'FOCUS_DONE'
                     normalized_completed.add(primary_id)
+                    # Store actual start time
+                    if primary_id in completed_with_times:
+                        completed_start_times[primary_id] = completed_with_times[primary_id]
+                    else:
+                        # Check legacy IDs
+                        for legacy_id in legacy_ids:
+                            if legacy_id in completed_with_times:
+                                completed_start_times[primary_id] = completed_with_times[legacy_id]
+                                break
                 else:
                     task_focus_states[primary_id] = 'NORMAL'
 
             self.completed_focus_blocks = normalized_completed
             self.task_focus_states = task_focus_states
+            # Use task-specific completed times for task state (original logic)
+            self.task_completed_focus_start_times = completed_start_times
+
+            # Also load ALL completed focus sessions for today (for global fire markers)
+            all_completed_today = db.get_all_completed_focus_sessions_today()
+            self.completed_focus_start_times = all_completed_today
+
+            # Debug: Log completed focus sessions
+            if all_completed_today:
+                self.logger.info(f"✅ 全局加载到 {len(all_completed_today)} 个已完成的专注记录")
+                for session_key, start_time in all_completed_today.items():
+                    self.logger.info(f"  - {session_key}: {start_time.strftime('%H:%M:%S')}")
+            else:
+                self.logger.info("📝 今日暂无已完成的专注记录")
 
             # 如果没有任务，确保状态被清空
             if not self.tasks:
@@ -931,6 +972,9 @@ class TimeProgressBar(QWidget):
         self.focus_duration_minutes = 25
         self.focus_task_name = task_name
 
+        # Update tray menu visibility
+        self._update_tray_menu_for_focus_mode()
+
         # Trigger repaint
         self.update()
 
@@ -954,6 +998,9 @@ class TimeProgressBar(QWidget):
             self.focus_start_time = datetime.now()
             self.focus_duration_minutes = 5
             self.focus_session_id = None  # Break doesn't need session ID
+
+            # Update tray menu to show skip break option
+            self._update_tray_menu_for_focus_mode()
         else:
             # Break completed - return to normal mode
             self.show_notification(
@@ -989,6 +1036,32 @@ class TimeProgressBar(QWidget):
 
             self._exit_focus_mode()
 
+    def _update_tray_menu_for_focus_mode(self):
+        """Update tray menu visibility based on focus mode state."""
+        if not hasattr(self, 'focus_work_action'):
+            return
+
+        if self.focus_mode:
+            # In focus mode
+            self.focus_work_action.setVisible(False)
+
+            if self.focus_mode_type == 'work':
+                # Work phase: show adjust and end actions
+                self.adjust_focus_action.setVisible(True)
+                self.end_focus_action.setVisible(True)
+                self.skip_break_action.setVisible(False)
+            elif self.focus_mode_type == 'break':
+                # Break phase: show skip break action only
+                self.adjust_focus_action.setVisible(False)
+                self.end_focus_action.setVisible(False)
+                self.skip_break_action.setVisible(True)
+        else:
+            # Not in focus mode: show start action, hide all others
+            self.focus_work_action.setVisible(True)
+            self.adjust_focus_action.setVisible(False)
+            self.end_focus_action.setVisible(False)
+            self.skip_break_action.setVisible(False)
+
     def _skip_break(self):
         """Skip break and return to normal mode."""
         self._exit_focus_mode()
@@ -1000,6 +1073,9 @@ class TimeProgressBar(QWidget):
         self.focus_start_time = None
         self.focus_session_id = None
         self.focus_task_name = None
+
+        # Update tray menu visibility
+        self._update_tray_menu_for_focus_mode()
 
         # Trigger repaint
         self.update()
@@ -1151,10 +1227,31 @@ class TimeProgressBar(QWidget):
         config_action.triggered.connect(self.open_config_gui)
         tray_menu.addAction(config_action)
 
-        # Pomodoro action
-        pomodoro_action = QAction(tr('menu.pomodoro'), self)
-        pomodoro_action.triggered.connect(self.start_pomodoro)
-        tray_menu.addAction(pomodoro_action)
+        # Time review action
+        time_review_action = QAction("⏰ 今日时间回放", self)
+        time_review_action.triggered.connect(self.show_time_review_window)
+        tray_menu.addAction(time_review_action)
+
+        # Focus work action (红温专注仓)
+        self.focus_work_action = QAction("🔥 开启红温专注仓", self)
+        self.focus_work_action.triggered.connect(self.start_focus_from_tray)
+        tray_menu.addAction(self.focus_work_action)
+
+        # Focus mode controls (only visible when in focus mode)
+        self.adjust_focus_action = QAction("⏱️ 调整专注时长", self)
+        self.adjust_focus_action.triggered.connect(self._adjust_focus_duration)
+        self.adjust_focus_action.setVisible(False)
+        tray_menu.addAction(self.adjust_focus_action)
+
+        self.end_focus_action = QAction("⏹️ 结束专注", self)
+        self.end_focus_action.triggered.connect(self._end_focus_mode)
+        self.end_focus_action.setVisible(False)
+        tray_menu.addAction(self.end_focus_action)
+
+        self.skip_break_action = QAction("⏭️ 跳过休息", self)
+        self.skip_break_action.triggered.connect(self._skip_break)
+        self.skip_break_action.setVisible(False)
+        tray_menu.addAction(self.skip_break_action)
 
         # Statistics report
         statistics_action = QAction(tr('menu.statistics'), self)
@@ -1165,23 +1262,6 @@ class TimeProgressBar(QWidget):
         scene_editor_action = QAction(tr('menu.scene_editor'), self)
         scene_editor_action.triggered.connect(self.open_scene_editor)
         tray_menu.addAction(scene_editor_action)
-
-        tray_menu.addSeparator()
-
-        # Notification submenu
-        notification_menu = QMenu(tr('menu.notification'), self)
-
-        # Send test notification
-        test_notify_action = QAction(tr('menu.test_notification'), self)
-        test_notify_action.triggered.connect(self.send_test_notification)
-        notification_menu.addAction(test_notify_action)
-
-        # View notification history
-        history_action = QAction(tr('menu.notification_history'), self)
-        history_action.triggered.connect(self.show_notification_history)
-        notification_menu.addAction(history_action)
-
-        tray_menu.addMenu(notification_menu)
 
         tray_menu.addSeparator()
 
@@ -1281,6 +1361,73 @@ class TimeProgressBar(QWidget):
             5000
         )
 
+    def start_focus_from_tray(self):
+        """从托盘启动红温专注仓 - 使用当前时间块"""
+        try:
+            # Check if already in focus mode
+            if self.focus_mode:
+                self.tray_icon.showMessage(
+                    "红温专注仓",
+                    "已在专注模式中",
+                    QSystemTrayIcon.Information,
+                    3000
+                )
+                return
+
+            # Find current task at current time
+            from datetime import datetime
+            now = datetime.now()
+            current_hour = now.hour
+            current_minute = now.minute
+            current_time_minutes = current_hour * 60 + current_minute
+
+            current_task = None
+            for task in self.tasks:
+                start_parts = task['start'].split(':')
+                end_parts = task['end'].split(':')
+
+                start_minutes = int(start_parts[0]) * 60 + int(start_parts[1])
+                end_minutes = int(end_parts[0]) * 60 + int(end_parts[1])
+
+                # Handle overnight tasks
+                if end_minutes <= start_minutes:
+                    end_minutes += 24 * 60
+                    if current_time_minutes < start_minutes:
+                        current_time_minutes += 24 * 60
+
+                if start_minutes <= current_time_minutes < end_minutes:
+                    current_task = task
+                    break
+
+            if not current_task:
+                self.tray_icon.showMessage(
+                    "红温专注仓",
+                    "当前时间没有对应的任务块",
+                    QSystemTrayIcon.Warning,
+                    3000
+                )
+                return
+
+            # Start focus work with current task
+            self._start_focus_work(current_task)
+
+            # Show notification
+            self.tray_icon.showMessage(
+                "红温专注仓",
+                f"为「{current_task.get('task', '未知任务')}」开启了红温专注仓 (25分钟)",
+                QSystemTrayIcon.Information,
+                3000
+            )
+
+        except Exception as e:
+            self.logger.error(f"从托盘启动红温专注仓失败: {e}", exc_info=True)
+            self.tray_icon.showMessage(
+                "错误",
+                f"启动红温专注仓失败: {str(e)}",
+                QSystemTrayIcon.Critical,
+                5000
+            )
+
     def start_pomodoro(self):
         """启动番茄钟"""
         try:
@@ -1333,35 +1480,7 @@ class TimeProgressBar(QWidget):
     def show_statistics(self):
         """显示统计报告窗口"""
         try:
-            # 检查会员权限（免费用户需要引导购买）
-            user_tier = self.auth_client.get_user_tier()
-
-            if user_tier == "free":
-                # 免费用户，弹出引导对话框
-                reply = QMessageBox.question(
-                    None,  # 托盘菜单没有父窗口
-                    "💡 统计报告功能需要会员权限",
-                    "登录并升级会员后，您将享有：\n\n"
-                    "• 📊 完整的任务统计报告\n"
-                    "• 📈 数据可视化分析\n"
-                    "• 🗂️ 历史统计数据云同步\n"
-                    "• 🎯 更多高级功能和服务\n\n"
-                    "是否前往个人中心升级会员？",
-                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                    QMessageBox.StandardButton.Yes
-                )
-
-                if reply == QMessageBox.StandardButton.Yes:
-                    # 用户选择"是"，打开个人中心（会自动切换到购买会员标签页）
-                    self.open_config_gui()
-                    # 切换到个人中心标签页
-                    if hasattr(self, 'config_manager') and self.config_manager:
-                        self.config_manager.tabs.setCurrentIndex(4)  # 个人中心是第5个标签页（索引4）
-
-                # 无论用户选择什么，都不打开统计窗口
-                return
-
-            # 付费会员，继续原有逻辑
+            # 统计报告功能对所有用户开放
             # 如果窗口已经打开,则激活它
             if self.statistics_window is not None and self.statistics_window.isVisible():
                 self.statistics_window.activateWindow()
@@ -2246,12 +2365,6 @@ class TimeProgressBar(QWidget):
                 time_review_action.triggered.connect(self.show_time_review_window)
                 menu.addAction(time_review_action)
 
-                menu.addSeparator()
-
-                activity_settings_action = QAction("🔍 行为识别设置", self)
-                activity_settings_action.triggered.connect(self.show_activity_settings_window)
-                menu.addAction(activity_settings_action)
-
                 # If clicked on a task, add task-specific options
                 if task_index is not None:
                     task = self.tasks[task_index]
@@ -2264,15 +2377,6 @@ class TimeProgressBar(QWidget):
                     focus_action.triggered.connect(lambda checked=False, t=task: self._start_focus_work(t))
                     menu.addAction(focus_action)
                     print(f"[DEBUG] Added focus action")
-
-                    # 添加分隔符
-                    menu.addSeparator()
-
-                    # 添加配置选项（如果需要的话）
-                    config_action = QAction("⚙️ 配置时间块", self)
-                    config_action.triggered.connect(lambda checked=False, t=task: self.configure_task(t))
-                    menu.addAction(config_action)
-                    print(f"[DEBUG] Added config action")
                 else:
                     print(f"[DEBUG] No task found at clicked position")
 
@@ -2369,18 +2473,6 @@ class TimeProgressBar(QWidget):
                 QSystemTrayIcon.Critical,
                 5000
             )
-
-    def configure_task(self, task):
-        """配置指定时间块"""
-        self.logger.info(f"配置时间块: {task}")
-        # 这里可以打开时间块配置对话框
-        # 暂时显示提示
-        self.tray_icon.showMessage(
-            "配置",
-            f"时间块配置功能即将推出",
-            QSystemTrayIcon.Information,
-            2000
-        )
 
     def on_pomodoro_closed(self):
         """番茄钟面板关闭时的回调"""
@@ -2733,14 +2825,8 @@ class TimeProgressBar(QWidget):
                         icon_rect = QRectF(rect.left() + 12, rect.top() - 17, 16, icon_height)
                         painter.drawText(icon_rect, Qt.AlignCenter, "🔥")
 
-                elif is_focus_done:
-                    # Completed focus: Small fire icon + subtle glow
-                    if task_width > 20:
-                        painter.setPen(QColor(255, 255, 255))
-                        painter.setFont(QFont("Segoe UI Emoji", 11, QFont.Bold))
-                        icon_height = rect.height() + 24
-                        icon_rect = QRectF(rect.left() + 12, rect.top() - 17, 16, icon_height)
-                        painter.drawText(icon_rect, Qt.AlignCenter, "🔥")
+                # Note: Completed focus fire icons are now drawn globally after all tasks
+                # to prevent being covered by other task blocks
 
                 # 如果是悬停任务,保存信息稍后绘制
                 if i == self.hovered_task_index:
@@ -2833,6 +2919,37 @@ class TimeProgressBar(QWidget):
             marker_pen.setWidth(self.config['marker_width'])
             painter.setPen(marker_pen)
             painter.drawLine(int(marker_x), bar_y_offset, int(marker_x), height)
+
+        # 3.5. 绘制所有完成的专注火焰标记(全局覆盖层,不受任务块限制)
+        # TODO: 暂时注释掉火焰标记功能,后续优化后再启用
+        # if hasattr(self, 'completed_focus_start_times') and self.completed_focus_start_times:
+        #     from datetime import datetime
+        #     painter.setPen(QColor(255, 255, 255))
+        #     painter.setFont(QFont("Segoe UI Emoji", 11, QFont.Bold))
+        #
+        #     # Debug: Log once per paint cycle (use frame counter to avoid spam)
+        #     if not hasattr(self, '_fire_log_count'):
+        #         self._fire_log_count = 0
+        #     self._fire_log_count += 1
+        #     if self._fire_log_count % 100 == 1:  # Log every 100 frames
+        #         self.logger.info(f"🔥 绘制 {len(self.completed_focus_start_times)} 个火焰标记")
+        #
+        #     for task_id, start_time in self.completed_focus_start_times.items():
+        #         # Convert time to minutes since midnight
+        #         start_minutes = start_time.hour * 60 + start_time.minute
+        #         # Calculate percentage within the day
+        #         time_percentage = start_minutes / (24 * 60)
+        #         # Calculate X position on the bar
+        #         fire_x = time_percentage * width
+        #
+        #         # Draw fire icon at actual completion time
+        #         icon_height = bar_height + 24
+        #         icon_rect = QRectF(fire_x - 8, bar_y_offset - 17, 16, icon_height)
+        #         painter.drawText(icon_rect, Qt.AlignCenter, "🔥")
+        #
+        #         # Debug: Log position once
+        #         if self._fire_log_count % 100 == 1:
+        #             self.logger.info(f"  - 火焰位置: {start_time.strftime('%H:%M')} → X={fire_x:.1f}px ({time_percentage*100:.1f}%)")
 
         # 4. 最后绘制悬停文字(确保在最上层,不被时间标记遮挡)
         if hover_info:
