@@ -177,11 +177,20 @@ class handler(BaseHTTPRequestHandler):
                     if attempt < max_retries - 1:
                         continue  # 重试
             else:
-                # 所有重试都失败
-                self._send_json_response(500, {
-                    'success': False,
-                    'error': 'AI分析服务暂时不可用',
-                    'details': last_error
+                # 所有重试都失败 - 返回降级响应
+                print(f"[ANALYZE-COMPLETION] All retries failed, returning fallback response", file=sys.stderr)
+
+                # 不扣配额,返回降级分析
+                fallback_analysis = self._generate_fallback_analysis(task_completions, date)
+
+                self._send_json_response(200, {
+                    'success': True,
+                    'analysis': fallback_analysis,
+                    'date': date,
+                    'task_count': len(task_completions),
+                    'fallback': True,
+                    'quota_info': quota_status,  # 不扣配额,返回原状态
+                    'note': 'AI服务暂时不可用,这是基于规则的简化分析'
                 })
                 return
 
@@ -246,6 +255,58 @@ class handler(BaseHTTPRequestHandler):
             )
 
         return '\n'.join(lines)
+
+    def _generate_fallback_analysis(self, tasks, date):
+        """生成基于规则的降级分析(当AI服务不可用时)"""
+        if not tasks:
+            return "📊 今日暂无任务完成记录"
+
+        # 统计数据
+        total_tasks = len(tasks)
+        high_completion = sum(1 for t in tasks if t.get('completion_percentage', 0) >= 80)
+        medium_completion = sum(1 for t in tasks if 50 <= t.get('completion_percentage', 0) < 80)
+        low_completion = sum(1 for t in tasks if t.get('completion_percentage', 0) < 50)
+
+        avg_completion = sum(t.get('completion_percentage', 0) for t in tasks) / total_tasks
+
+        # 生成分析文本
+        analysis_parts = []
+
+        # 1. 完成度总结
+        analysis_parts.append(f"📊 **完成度总结** ({date})")
+        analysis_parts.append(f"共完成 {total_tasks} 项任务,平均完成度 {avg_completion:.0f}%")
+        analysis_parts.append(f"✅ 高完成度: {high_completion}项 | ⏳ 中等: {medium_completion}项 | ❌ 待改进: {low_completion}项")
+        analysis_parts.append("")
+
+        # 2. 亮点发现
+        analysis_parts.append("✨ **亮点发现**")
+        if high_completion > 0:
+            analysis_parts.append(f"- 有 {high_completion} 项任务完成度超过80%,执行力不错!")
+        if avg_completion >= 70:
+            analysis_parts.append(f"- 整体完成度达到 {avg_completion:.0f}%,保持这个节奏!")
+        else:
+            analysis_parts.append("- 今天有些任务未能充分完成,不要气馁,明天再接再厉!")
+        analysis_parts.append("")
+
+        # 3. 改进建议
+        analysis_parts.append("💡 **改进建议**")
+        if low_completion > 0:
+            analysis_parts.append(f"- 有 {low_completion} 项任务完成度较低,考虑调整任务难度或时间分配")
+        if avg_completion < 50:
+            analysis_parts.append("- 建议减少任务数量,专注于完成质量")
+        else:
+            analysis_parts.append("- 继续保持当前节奏,适当休息避免疲劳")
+        analysis_parts.append("")
+
+        # 4. 明日计划
+        analysis_parts.append("🎯 **明日建议**")
+        analysis_parts.append("- 基于今日经验调整任务时长")
+        analysis_parts.append("- 优先处理重要且紧急的任务")
+        analysis_parts.append("")
+
+        analysis_parts.append("ℹ️ _注: AI深度分析暂时不可用,以上为基于规则的简化分析_")
+
+        return '\n'.join(analysis_parts)
 
     def _send_json_response(self, status_code, data, rate_info=None):
         """发送JSON响应"""
