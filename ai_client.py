@@ -201,6 +201,90 @@ class GaiyaAIClient:
         except Exception:
             return None
 
+    def analyze_task_completion(self, date: str, task_completions: List[Dict], parent_widget=None) -> Optional[str]:
+        """
+        分析任务完成情况
+
+        Args:
+            date: 日期 (YYYY-MM-DD)
+            task_completions: 任务完成数据列表
+            parent_widget: 父窗口
+
+        Returns:
+            AI分析文本 或 None
+        """
+        try:
+            response = requests.post(
+                f"{self.backend_url}/api/analyze-task-completion",
+                json={
+                    "user_id": self.user_id,
+                    "date": date,
+                    "task_completions": task_completions,
+                    "user_tier": self.user_tier
+                },
+                timeout=self.timeout
+            )
+
+            # 检查响应状态
+            if response.status_code == 404:
+                self._show_error_dialog(
+                    "AI分析功能暂未部署\n\n"
+                    "该功能需要在Vercel后端部署 analyze-task-completion.py\n"
+                    "当前仅支持本地推理引擎",
+                    parent_widget
+                )
+                return None
+
+            if response.status_code == 429:
+                # 配额用尽或速率限制
+                try:
+                    data = response.json()
+                    self._show_quota_exceeded_dialog(data, parent_widget)
+                except:
+                    self._show_error_dialog("API配额已用尽，请稍后重试", parent_widget)
+                return None
+
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    return data.get("analysis", "")
+                except ValueError:
+                    self._show_error_dialog("服务器返回了无效的响应格式", parent_widget)
+                    return None
+            else:
+                # 其他错误状态码
+                try:
+                    error_data = response.json()
+                    error_msg = error_data.get('error', f'HTTP {response.status_code}')
+                except:
+                    error_msg = f"HTTP {response.status_code}: {response.text[:100]}"
+
+                self._show_error_dialog(
+                    f"分析失败: {error_msg}",
+                    parent_widget
+                )
+                return None
+
+        except requests.exceptions.Timeout:
+            self._show_error_dialog("分析请求超时,请稍后重试", parent_widget)
+            return None
+        except requests.exceptions.ConnectionError:
+            self._show_error_dialog(
+                "无法连接到AI云服务\n请检查网络连接",
+                parent_widget
+            )
+            return None
+        except ValueError as e:
+            # JSON解析错误
+            self._show_error_dialog(
+                f"响应解析失败\n可能是服务端返回了非JSON格式数据\n\n错误: {str(e)}",
+                parent_widget
+            )
+            return None
+        except Exception as e:
+            self._show_error_dialog(f"发生错误: {str(e)}", parent_widget)
+            return None
+
     def check_backend_health(self) -> bool:
         """
         检查后端服务器健康状态
