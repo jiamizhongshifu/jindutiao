@@ -3520,10 +3520,13 @@ class ConfigManager(QMainWindow):
 
     def _on_refresh_success(self, result: dict, loading_dialog):
         """刷新成功回调"""
-        from PySide6.QtWidgets import QMessageBox
+        from PySide6.QtWidgets import QMessageBox, QApplication
         import logging
 
+        # ⚠️ 关键修复：先关闭加载对话框,确保UI更新
         loading_dialog.close()
+        loading_dialog.deleteLater()  # 立即释放资源
+        QApplication.processEvents()  # 强制处理UI事件,确保对话框关闭
 
         if result.get("success"):
             user_tier = result.get("user_tier", "free")
@@ -3552,10 +3555,13 @@ class ConfigManager(QMainWindow):
 
     def _on_refresh_error(self, error_msg: str, loading_dialog):
         """刷新失败回调"""
-        from PySide6.QtWidgets import QMessageBox
+        from PySide6.QtWidgets import QMessageBox, QApplication
         import logging
 
+        # ⚠️ 关键修复：先关闭加载对话框,确保UI更新
         loading_dialog.close()
+        loading_dialog.deleteLater()  # 立即释放资源
+        QApplication.processEvents()  # 强制处理UI事件,确保对话框关闭
 
         logging.error(f"[ACCOUNT] 刷新出错: {error_msg}")
 
