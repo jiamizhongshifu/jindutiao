@@ -222,7 +222,17 @@ class ZPayManager:
                 timeout=10
             )
 
-            result = response.json()
+            # ✅ 修复: 添加JSON解析错误处理
+            try:
+                result = response.json()
+            except json.JSONDecodeError as e:
+                print(f"[ZPAY-QUERY] Error: Invalid JSON response from ZPAY", file=sys.stderr)
+                print(f"[ZPAY-QUERY] Response text (first 500 chars): {response.text[:500]}", file=sys.stderr)
+                print(f"[ZPAY-QUERY] JSON error: {e}", file=sys.stderr)
+                return {
+                    "success": False,
+                    "error": f"Invalid JSON response from payment gateway"
+                }
 
             if result.get("code") == 1:
                 print(f"[ZPAY-QUERY] Order found: {out_trade_no or trade_no}, status: {result.get('status')}", file=sys.stderr)
