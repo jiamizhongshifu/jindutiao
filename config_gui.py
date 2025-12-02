@@ -3170,8 +3170,17 @@ class ConfigManager(QMainWindow):
             info_label.setStyleSheet("color: #333333; font-size: 14px;")
             header_layout.addWidget(info_label)
 
+            # 添加刷新按钮（用于支付成功后手动刷新会员状态）
+            header_layout.addSpacing(10)
+            refresh_btn = QPushButton("🔄 " + self.i18n.tr("button.refresh"))
+            refresh_btn.setFixedSize(100, 28)
+            refresh_btn.setStyleSheet(StyleManager.button_minimal())
+            refresh_btn.setToolTip(self.i18n.tr("account.refresh_tooltip"))
+            refresh_btn.clicked.connect(self._on_refresh_account_clicked)
+            header_layout.addWidget(refresh_btn)
+
             # 添加退出登录按钮
-            header_layout.addSpacing(15)
+            header_layout.addSpacing(10)
             logout_btn = QPushButton(self.i18n.tr("button.logout"))
             logout_btn.setFixedSize(100, 28)  # 增加宽度以防止文字被截断
             logout_btn.setStyleSheet(StyleManager.button_minimal())
@@ -3472,6 +3481,89 @@ class ConfigManager(QMainWindow):
         # 重新加载个人中心tab以显示登录后的内容
         self.account_tab_widget = None
         self._load_account_tab()
+
+    def _on_refresh_account_clicked(self):
+        """
+        处理刷新账户按钮点击
+
+        ⚠️ 关键功能：用于支付成功后手动刷新会员状态
+        流程：
+        1. 调用后端API获取最新订阅状态
+        2. 更新本地缓存的用户信息
+        3. 重新加载个人中心页面显示最新状态
+        """
+        from PySide6.QtWidgets import QMessageBox
+        from gaiya.core.auth_client import AuthClient
+        from gaiya.core.async_worker import AsyncNetworkWorker
+        import logging
+
+        logging.info("[ACCOUNT] 用户手动刷新会员状态...")
+
+        # 显示加载提示
+        loading_dialog = QMessageBox(self)
+        loading_dialog.setWindowTitle("刷新中")
+        loading_dialog.setText("正在刷新会员状态，请稍候...")
+        loading_dialog.setStandardButtons(QMessageBox.StandardButton.NoButton)
+        loading_dialog.setIcon(QMessageBox.Icon.Information)
+        loading_dialog.show()
+
+        # 强制刷新UI
+        QApplication.processEvents()
+
+        auth_client = AuthClient()
+
+        # 创建异步Worker获取订阅状态
+        self._refresh_worker = AsyncNetworkWorker(auth_client.get_subscription_status)
+        self._refresh_worker.success.connect(lambda result: self._on_refresh_success(result, loading_dialog))
+        self._refresh_worker.error.connect(lambda error: self._on_refresh_error(error, loading_dialog))
+        self._refresh_worker.start()
+
+    def _on_refresh_success(self, result: dict, loading_dialog):
+        """刷新成功回调"""
+        from PySide6.QtWidgets import QMessageBox
+        import logging
+
+        loading_dialog.close()
+
+        if result.get("success"):
+            user_tier = result.get("user_tier", "free")
+            is_active = result.get("is_active", False)
+
+            logging.info(f"[ACCOUNT] 会员状态刷新成功: tier={user_tier}, active={is_active}")
+
+            # 重新加载个人中心tab以显示最新状态
+            self.account_tab_widget = None
+            self._load_account_tab()
+
+            QMessageBox.information(
+                self,
+                "刷新成功",
+                f"会员状态已更新！\n\n当前等级: {user_tier.upper()}"
+            )
+        else:
+            error_msg = result.get("error", "未知错误")
+            logging.error(f"[ACCOUNT] 刷新失败: {error_msg}")
+
+            QMessageBox.warning(
+                self,
+                "刷新失败",
+                f"无法获取最新会员状态：{error_msg}\n\n请稍后重试或联系客服。"
+            )
+
+    def _on_refresh_error(self, error_msg: str, loading_dialog):
+        """刷新失败回调"""
+        from PySide6.QtWidgets import QMessageBox
+        import logging
+
+        loading_dialog.close()
+
+        logging.error(f"[ACCOUNT] 刷新出错: {error_msg}")
+
+        QMessageBox.warning(
+            self,
+            "刷新失败",
+            f"网络错误：{error_msg}\n\n请检查网络连接后重试。"
+        )
 
     def _on_logout_clicked(self):
         """处理退出登录按钮点击"""

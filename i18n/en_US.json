@@ -412,6 +412,7 @@
     "register_success": "Registration successful",
     "register_failed": "Registration failed",
     "logout_confirm": "Are you sure you want to logout?",
+    "refresh_tooltip": "Refresh membership status (Click here after payment)",
     "text_7480": "Email: {email}  |  Membership: {tier_name}",
     "text_789": "Log in to access AI Smart Planning, cloud sync and more advanced features",
     "text_9039": "🔑 Click to Login / Register",

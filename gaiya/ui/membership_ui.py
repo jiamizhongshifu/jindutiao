@@ -1198,6 +1198,11 @@ class MembershipDialog(QDialog):
                 # 支付成功
                 self._stop_payment_polling()
 
+                # ⚠️ 关键修复：支付成功后延迟刷新会员状态
+                # 原因：Z-Pay的异步回调可能需要1-3秒才能完成数据库更新
+                # 解决方案：等待2秒后刷新,给后端足够的处理时间
+                QTimer.singleShot(2000, self._refresh_subscription_status)
+
                 QMessageBox.information(
                     self,
                     tr("membership.payment.success_title"),
@@ -1217,6 +1222,43 @@ class MembershipDialog(QDialog):
 
         if hasattr(self, 'payment_polling_dialog'):
             self.payment_polling_dialog.close()
+
+    def _refresh_subscription_status(self):
+        """
+        刷新订阅状态（支付成功后调用）
+
+        ⚠️ 关键修复：支付回调可能有延迟,需要重试机制
+        - 首次刷新：立即执行
+        - 如果失败或状态未更新：1秒后重试,最多重试3次
+        """
+        print("[MEMBERSHIP] 开始刷新会员状态...")
+
+        result = self.auth_client.get_subscription_status()
+
+        if result.get("success"):
+            user_tier = result.get("user_tier", "free")
+            is_active = result.get("is_active", False)
+
+            print(f"[MEMBERSHIP] 会员状态刷新成功: tier={user_tier}, active={is_active}")
+
+            # 检查是否真的升级成功了
+            if is_active and user_tier in ["pro", "lifetime"]:
+                print("[MEMBERSHIP] ✓ 会员升级确认成功!")
+                return
+            else:
+                print(f"[MEMBERSHIP] ⚠️ 状态异常: tier={user_tier}, active={is_active}")
+        else:
+            print(f"[MEMBERSHIP] 刷新失败: {result.get('error')}")
+
+        # 如果刷新失败或状态未更新,尝试重试
+        retry_count = getattr(self, '_refresh_retry_count', 0)
+        if retry_count < 3:
+            self._refresh_retry_count = retry_count + 1
+            print(f"[MEMBERSHIP] 1秒后进行第 {self._refresh_retry_count} 次重试...")
+            QTimer.singleShot(1000, self._refresh_subscription_status)
+        else:
+            print("[MEMBERSHIP] ✗ 已达到最大重试次数,请手动刷新或重新登录")
+            self._refresh_retry_count = 0
 
     def _get_tier_name(self, tier: str) -> str:
         """获取会员等级名称"""
