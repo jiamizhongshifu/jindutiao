@@ -128,30 +128,62 @@ class handler(BaseHTTPRequestHandler):
                 "max_tokens": 1000
             }
 
-            # 调用AI API
+            # 调用AI API (带重试和更长超时)
             print(f"Calling AI API for task completion analysis", file=sys.stderr)
-            api_response = requests.post(
-                api_url,
-                headers={
-                    "Authorization": f"Bearer {TUZI_API_KEY}",
-                    "Content-Type": "application/json"
-                },
-                json=api_request_body,
-                timeout=30
-            )
 
-            if api_response.status_code != 200:
-                error_message = api_response.text
-                print(f"AI API error: {error_message}", file=sys.stderr)
+            max_retries = 2
+            last_error = None
+
+            for attempt in range(max_retries):
+                try:
+                    api_response = requests.post(
+                        api_url,
+                        headers={
+                            "Authorization": f"Bearer {TUZI_API_KEY}",
+                            "Content-Type": "application/json"
+                        },
+                        json=api_request_body,
+                        timeout=60  # 增加到60秒
+                    )
+
+                    if api_response.status_code != 200:
+                        error_message = api_response.text
+                        print(f"AI API error (attempt {attempt+1}): {error_message}", file=sys.stderr)
+                        last_error = f"API返回错误状态码: {api_response.status_code}"
+
+                        if attempt < max_retries - 1:
+                            continue  # 重试
+                        else:
+                            self._send_json_response(500, {
+                                'success': False,
+                                'error': 'AI服务暂时不可用',
+                                'details': error_message[:200]
+                            })
+                            return
+
+                    # 成功
+                    api_result = api_response.json()
+                    analysis_text = api_result['choices'][0]['message']['content']
+                    break  # 成功,跳出循环
+
+                except requests.exceptions.Timeout:
+                    print(f"[ANALYZE-COMPLETION] API timeout (attempt {attempt+1}/{max_retries})", file=sys.stderr)
+                    last_error = "AI服务响应超时"
+                    if attempt < max_retries - 1:
+                        continue  # 重试
+                except requests.exceptions.RequestException as e:
+                    print(f"[ANALYZE-COMPLETION] API request failed: {e}", file=sys.stderr)
+                    last_error = f"网络请求失败: {str(e)}"
+                    if attempt < max_retries - 1:
+                        continue  # 重试
+            else:
+                # 所有重试都失败
                 self._send_json_response(500, {
                     'success': False,
-                    'error': 'AI服务暂时不可用',
-                    'details': error_message[:200]
+                    'error': 'AI分析服务暂时不可用',
+                    'details': last_error
                 })
                 return
-
-            api_result = api_response.json()
-            analysis_text = api_result['choices'][0]['message']['content']
 
             # 扣除配额
             quota_manager.use_quota(user_id, user_tier, 'daily_plan', 1)
