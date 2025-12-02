@@ -429,32 +429,43 @@ class ZPayManager:
         """
         获取订阅计划信息
 
+        ⚠️ 关键修复: 从SubscriptionManager读取价格,确保价格统一管理
+
         Args:
             plan_type: 计划类型 (pro_monthly, pro_yearly, lifetime)
 
         Returns:
             计划信息
         """
-        plans = {
-            "pro_monthly": {
-                "name": "GaiYa 高级版 月度会员",
-                "price": 29.0,
-                "description": "解锁所有高级版功能，按月订阅"
-            },
-            "pro_yearly": {
-                "name": "GaiYa 高级版 年度会员",
-                "price": 199.0,
-                "description": "解锁所有高级版功能，年度订阅享17%折扣"
-            },
-            "lifetime": {
-                "name": "GaiYa 会员合伙人",
-                "price": 599.0,
-                "description": "一次性购买，成为会员合伙人，共享价值"
+        # ✅ 修复: 从SubscriptionManager导入,确保价格一致
+        try:
+            from subscription_manager import SubscriptionManager
+        except ImportError:
+            import os
+            import sys
+            sys.path.insert(0, os.path.dirname(__file__))
+            from subscription_manager import SubscriptionManager
+
+        sm = SubscriptionManager()
+
+        # 从SubscriptionManager读取价格
+        plan_data = sm.PLANS.get(plan_type)
+        if not plan_data:
+            return {
+                "name": "未知套餐",
+                "price": 0.0,
+                "description": ""
             }
+
+        # 构造描述文字
+        descriptions = {
+            "pro_monthly": "解锁所有高级版功能，按月订阅",
+            "pro_yearly": "解锁所有高级版功能，年度订阅享17%折扣",
+            "lifetime": "一次性购买，成为会员合伙人，共享价值"
         }
 
-        return plans.get(plan_type, {
-            "name": "未知套餐",
-            "price": 0.0,
-            "description": ""
-        })
+        return {
+            "name": plan_data["name"],
+            "price": plan_data["price"],
+            "description": descriptions.get(plan_type, "")
+        }
