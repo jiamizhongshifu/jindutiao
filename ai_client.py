@@ -214,6 +214,7 @@ class GaiyaAIClient:
             AI分析文本 或 None
         """
         try:
+            # AI分析需要更长的超时时间(后端可能重试多次)
             response = requests.post(
                 f"{self.backend_url}/api/analyze-task-completion",
                 json={
@@ -222,7 +223,7 @@ class GaiyaAIClient:
                     "task_completions": task_completions,
                     "user_tier": self.user_tier
                 },
-                timeout=self.timeout
+                timeout=150  # 增加到150秒,确保后端有足够时间重试
             )
 
             # 检查响应状态
@@ -266,7 +267,14 @@ class GaiyaAIClient:
                 return None
 
         except requests.exceptions.Timeout:
-            self._show_error_dialog("分析请求超时,请稍后重试", parent_widget)
+            self._show_error_dialog(
+                "AI分析服务响应超时\n\n"
+                "可能原因:\n"
+                "- AI服务正在处理中,请稍后重试\n"
+                "- 网络连接不稳定\n\n"
+                "建议使用'手动生成推理'功能(本地分析,速度更快)",
+                parent_widget
+            )
             return None
         except requests.exceptions.ConnectionError:
             self._show_error_dialog(
