@@ -100,26 +100,32 @@ def validate_plan_type(plan_type: str) -> Tuple[bool, str, Optional[float]]:
     """
     验证订阅计划类型并返回正确的价格
 
+    ⚠️ 关键修复: 从SubscriptionManager读取价格,确保全局统一
+
     Args:
         plan_type: 计划类型
 
     Returns:
         (是否有效, 错误消息, 正确的价格)
     """
-    # ✅ 安全：定义合法的计划和对应的价格
-    VALID_PLANS = {
-        "pro_monthly": 29.0,
-        "pro_yearly": 199.0,
-        "lifetime": 599.0
-    }
+    # ✅ 修复: 从SubscriptionManager导入,确保价格一致
+    try:
+        from subscription_manager import SubscriptionManager
+    except ImportError:
+        import os
+        import sys
+        sys.path.insert(0, os.path.dirname(__file__))
+        from subscription_manager import SubscriptionManager
+
+    sm = SubscriptionManager()
 
     if not plan_type:
         return False, "计划类型不能为空", None
 
-    if plan_type not in VALID_PLANS:
+    if plan_type not in sm.PLANS:
         return False, f"无效的计划类型: {plan_type}", None
 
-    return True, "", VALID_PLANS[plan_type]
+    return True, "", sm.PLANS[plan_type]["price"]
 
 
 def validate_payment_amount(plan_type: str, submitted_amount: float) -> Tuple[bool, str]:
