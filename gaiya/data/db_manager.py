@@ -67,6 +67,53 @@ class DatabaseManager:
             )
         ''')
 
+        # Task Completions Table (Task completion tracking)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS task_completions (
+                id TEXT PRIMARY KEY,
+                date DATE NOT NULL,
+                time_block_id TEXT NOT NULL,
+                task_name TEXT NOT NULL,
+                task_type TEXT,
+
+                planned_start_time TEXT,
+                planned_end_time TEXT,
+                planned_duration_minutes INTEGER,
+
+                actual_start_time TEXT,
+                actual_end_time TEXT,
+                actual_duration_minutes INTEGER,
+
+                completion_percentage INTEGER,
+                confidence_level TEXT,
+                inference_data TEXT,
+
+                user_confirmed BOOLEAN DEFAULT 0,
+                user_corrected BOOLEAN DEFAULT 0,
+                user_correction_type TEXT,
+                user_note TEXT,
+
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
+        # Create indexes for task_completions
+        cursor.execute('''
+            CREATE INDEX IF NOT EXISTS idx_task_completions_date
+            ON task_completions(date)
+        ''')
+
+        cursor.execute('''
+            CREATE INDEX IF NOT EXISTS idx_task_completions_time_block
+            ON task_completions(time_block_id)
+        ''')
+
+        cursor.execute('''
+            CREATE INDEX IF NOT EXISTS idx_task_completions_confirmed
+            ON task_completions(user_confirmed)
+        ''')
+
         conn.commit()
         conn.close()
 
@@ -468,6 +515,235 @@ class DatabaseManager:
             "total_seconds": total_seconds,
             "categories": category_totals,
             "top_apps": top_apps
+        }
+
+    # --- Task Completion Methods ---
+
+    def create_task_completion(self, date, time_block_id, task_data, inference_result):
+        """Create a new task completion record."""
+        completion_id = str(uuid.uuid4())
+
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute('''
+            INSERT INTO task_completions (
+                id, date, time_block_id, task_name, task_type,
+                planned_start_time, planned_end_time, planned_duration_minutes,
+                actual_start_time, actual_end_time, actual_duration_minutes,
+                completion_percentage, confidence_level, inference_data
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            completion_id,
+            date,
+            time_block_id,
+            task_data['name'],
+            task_data.get('task_type'),
+            task_data['start_time'],
+            task_data['end_time'],
+            task_data['duration_minutes'],
+            inference_result.get('actual_start'),
+            inference_result.get('actual_end'),
+            inference_result.get('actual_duration'),
+            inference_result['completion'],
+            inference_result['confidence'],
+            str(inference_result.get('inference_data', {}))
+        ))
+
+        conn.commit()
+        conn.close()
+
+        return completion_id
+
+    def get_task_completion(self, completion_id):
+        """Get a task completion record by ID."""
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute('''
+            SELECT * FROM task_completions WHERE id = ?
+        ''', (completion_id,))
+
+        row = cursor.fetchone()
+        conn.close()
+
+        if not row:
+            return None
+
+        return self._row_to_task_completion_dict(row)
+
+    def get_today_task_completions(self, date=None):
+        """Get all task completions for a specific date."""
+        if date is None:
+            date = datetime.now().date()
+
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute('''
+            SELECT * FROM task_completions
+            WHERE date = ?
+            ORDER BY planned_start_time
+        ''', (date,))
+
+        rows = cursor.fetchall()
+        conn.close()
+
+        return [self._row_to_task_completion_dict(row) for row in rows]
+
+    def get_unconfirmed_task_completions(self, date=None):
+        """Get unconfirmed task completions for a specific date."""
+        if date is None:
+            date = datetime.now().date()
+
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute('''
+            SELECT * FROM task_completions
+            WHERE date = ? AND user_confirmed = 0
+            ORDER BY planned_start_time
+        ''', (date,))
+
+        rows = cursor.fetchall()
+        conn.close()
+
+        return [self._row_to_task_completion_dict(row) for row in rows]
+
+    def get_task_completion_by_block(self, date, time_block_id):
+        """
+        Get task completion record by date and time_block_id.
+
+        Args:
+            date: Date string (YYYY-MM-DD)
+            time_block_id: Time block identifier
+
+        Returns:
+            Task completion dict or None
+        """
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute('''
+            SELECT * FROM task_completions
+            WHERE date = ? AND time_block_id = ?
+        ''', (date, time_block_id))
+
+        row = cursor.fetchone()
+        conn.close()
+
+        if not row:
+            return None
+
+        return self._row_to_task_completion_dict(row)
+
+    def update_task_completion_confirmation(self, completion_id, user_confirmed,
+                                           user_corrected=False, user_note=''):
+        """
+        Update task completion confirmation status.
+
+        Args:
+            completion_id: Completion record ID
+            user_confirmed: Whether user confirmed
+            user_corrected: Whether user made corrections
+            user_note: Optional user note
+        """
+        self.update_task_completion(completion_id, {
+            'user_confirmed': 1 if user_confirmed else 0,
+            'user_corrected': 1 if user_corrected else 0,
+            'user_note': user_note
+        })
+
+    def update_task_completion(self, completion_id, updates):
+        """Update a task completion record."""
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        # Build dynamic UPDATE query
+        set_clauses = []
+        values = []
+
+        for key, value in updates.items():
+            set_clauses.append(f"{key} = ?")
+            values.append(value)
+
+        # Always update updated_at
+        set_clauses.append("updated_at = CURRENT_TIMESTAMP")
+
+        values.append(completion_id)
+
+        query = f'''
+            UPDATE task_completions
+            SET {', '.join(set_clauses)}
+            WHERE id = ?
+        '''
+
+        cursor.execute(query, values)
+        conn.commit()
+        conn.close()
+
+    def confirm_task_completion(self, completion_id, new_completion, note=''):
+        """User confirms task completion with optional correction."""
+        original = self.get_task_completion(completion_id)
+        if not original:
+            return False
+
+        # Determine correction type
+        original_pct = original['completion_percentage']
+        correction_type = 'accurate'
+        if new_completion > original_pct + 10:
+            correction_type = 'underestimated'
+        elif new_completion < original_pct - 10:
+            correction_type = 'overestimated'
+
+        self.update_task_completion(completion_id, {
+            'completion_percentage': new_completion,
+            'user_confirmed': 1,
+            'user_corrected': 1 if correction_type != 'accurate' else 0,
+            'user_correction_type': correction_type,
+            'user_note': note,
+            'confidence_level': 'confirmed'
+        })
+
+        return True
+
+    def cleanup_old_task_completions(self, days=30):
+        """Remove task completions older than N days."""
+        cutoff = datetime.now() - timedelta(days=days)
+        cutoff_date = cutoff.date()
+
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM task_completions WHERE date < ?', (cutoff_date,))
+        deleted_count = cursor.rowcount
+        conn.commit()
+        conn.close()
+
+        return deleted_count
+
+    def _row_to_task_completion_dict(self, row):
+        """Convert database row to task completion dictionary."""
+        return {
+            'id': row[0],
+            'date': row[1],
+            'time_block_id': row[2],
+            'task_name': row[3],
+            'task_type': row[4],
+            'planned_start_time': row[5],
+            'planned_end_time': row[6],
+            'planned_duration_minutes': row[7],
+            'actual_start_time': row[8],
+            'actual_end_time': row[9],
+            'actual_duration_minutes': row[10],
+            'completion_percentage': row[11],
+            'confidence_level': row[12],
+            'inference_data': row[13],
+            'user_confirmed': bool(row[14]),
+            'user_corrected': bool(row[15]),
+            'user_correction_type': row[16],
+            'user_note': row[17],
+            'created_at': row[18],
+            'updated_at': row[19]
         }
 
 # Global instance

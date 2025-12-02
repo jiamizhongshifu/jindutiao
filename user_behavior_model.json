@@ -1,0 +1,28 @@
+{
+  "version": "1.0",
+  "user_id": null,
+  "last_updated": "2025-12-02T09:20:51.945317",
+  "last_synced": null,
+  "task_patterns": {},
+  "global_patterns": {
+    "time_efficiency": {
+      "morning": 0.75,
+      "afternoon": 0.65,
+      "evening": 0.7
+    },
+    "average_focus_duration": 30,
+    "typical_break_pattern": "每90分钟休息一次",
+    "frequent_distractions": []
+  },
+  "learning_quality": {
+    "total_corrections": 0,
+    "accurate_predictions": 0,
+    "accuracy_rate": 0.0,
+    "needs_relearning": false
+  },
+  "data_retention": {
+    "keep_days": 30,
+    "oldest_data": null,
+    "cleanup_last_run": null
+  }
+}

@@ -163,6 +163,9 @@ class PaymentOptionCard(QWidget):
         path_border.addRoundedRect(QRectF(adjusted_rect), border_radius, border_radius)
         painter.drawPath(path_border)
 
+        # 确保 painter 正确结束,防止 QBackingStore::endPaint() 错误
+        painter.end()
+
 
 class SaveTemplateDialog(QDialog):
     """保存模板对话框 - 智能适应有无历史模板的情况"""

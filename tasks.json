@@ -106,7 +106,7 @@
     {
         "id": "63777fc95ff696da1f0d3934f0a0d6cd9a86ff2c",
         "start": "23:00",
-        "end": "24:00",
+        "end": "23:59",
         "task": "洗漱准备",
         "color": "#388E3C",
         "text_color": "#FFFFFF"

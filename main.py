@@ -62,6 +62,9 @@ if platform.system() == 'Windows':
 class TimeProgressBar(QWidget):
     """时间进度条主窗口"""
 
+    # 定义信号：从工作线程触发任务回顾窗口（必须在主线程中显示UI）
+    task_review_requested = Signal(str, list)  # (date, unconfirmed_tasks)
+
     def __init__(self):
         super().__init__()
         self.app_dir = path_utils.get_app_dir()  # Get app directory
@@ -153,6 +156,7 @@ class TimeProgressBar(QWidget):
         self.init_tray()  # 初始化托盘
         self.init_notification_manager()  # 初始化通知管理器
         self.init_statistics_manager()  # 初始化统计管理器
+        self.init_task_tracking_system()  # 初始化任务完成追踪系统
         self.init_file_watcher()  # 初始化文件监视器
         self.installEventFilter(self)  # 安装事件过滤器
         self.setMouseTracking(True)  # 启用鼠标追踪
@@ -1232,6 +1236,12 @@ class TimeProgressBar(QWidget):
         time_review_action.triggered.connect(self.show_time_review_window)
         tray_menu.addAction(time_review_action)
 
+        # Task completion review action
+        # 注释掉: 已集成到统计报告界面,不需要独立入口
+        # task_review_action = QAction("✅ 任务完成回顾", self)
+        # task_review_action.triggered.connect(self.show_today_task_review)
+        # tray_menu.addAction(task_review_action)
+
         # Focus work action (红温专注仓)
         self.focus_work_action = QAction("🔥 开启红温专注仓", self)
         self.focus_work_action.triggered.connect(self.start_focus_from_tray)
@@ -1318,6 +1328,58 @@ class TimeProgressBar(QWidget):
             self.logger
         )
         self.logger.info("统计管理器初始化完成")
+
+    def init_task_tracking_system(self):
+        """初始化任务完成追踪系统"""
+        self.logger.info("="*60)
+        self.logger.info("开始初始化任务完成追踪系统...")
+        self.logger.info("="*60)
+        try:
+            self.logger.info("正在导入任务追踪系统模块...")
+            from gaiya.utils.data_migration import DataMigration
+            from gaiya.services.user_behavior_model import UserBehaviorModel
+            from gaiya.services.task_inference_engine import SignalCollector, InferenceEngine
+            from gaiya.services.task_completion_scheduler import TaskCompletionScheduler
+            self.logger.info("模块导入成功")
+
+            # 运行数据迁移检查
+            self.logger.info("开始数据迁移检查...")
+            migration = DataMigration(db, self.app_dir)
+            if not migration.check_and_run_migrations():
+                self.logger.warning("任务完成追踪系统初始化失败")
+                return
+
+            self.logger.info("任务完成追踪系统数据迁移完成")
+
+            # 初始化用户行为模型
+            model_path = self.app_dir / "user_behavior_model.json"
+            self.behavior_model = UserBehaviorModel(model_path)
+            self.logger.info("用户行为模型已加载")
+
+            # 初始化推理引擎
+            signal_collector = SignalCollector(db, self.behavior_model)
+            self.inference_engine = InferenceEngine(signal_collector)
+            self.logger.info("任务推理引擎已初始化")
+
+            # 初始化调度器
+            scheduler_config = self.config.get('task_completion_scheduler', {})
+            self.task_completion_scheduler = TaskCompletionScheduler(
+                db_manager=db,
+                behavior_model=self.behavior_model,
+                inference_engine=self.inference_engine,
+                config=scheduler_config,
+                ui_trigger_callback=self.show_task_review_window
+            )
+
+            # 连接任务回顾信号到槽（确保在主线程中显示UI）
+            self.task_review_requested.connect(self._show_task_review_window_slot)
+
+            # 启动调度器
+            self.task_completion_scheduler.start()
+            self.logger.info("任务完成推理调度器已启动")
+
+        except Exception as e:
+            self.logger.error(f"任务完成追踪系统初始化异常: {e}", exc_info=True)
 
     def send_test_notification(self):
         """发送测试通知"""
@@ -1477,6 +1539,201 @@ class TimeProgressBar(QWidget):
         self.logger.info("番茄钟面板已关闭")
         self.pomodoro_panel = None
 
+    def show_today_task_review(self):
+        """从托盘菜单显示今日任务回顾"""
+        try:
+            from datetime import datetime
+
+            # 获取今日日期
+            today = datetime.now().strftime('%Y-%m-%d')
+
+            # 获取所有任务(不仅仅是未确认的)
+            all_tasks = db.get_today_task_completions(today)
+
+            if not all_tasks:
+                self.tray_icon.showMessage(
+                    "任务完成回顾",
+                    f"今天({today})还没有任务完成记录\n\n提示: 系统会在每天 {self.config.get('task_completion_scheduler', {}).get('trigger_time', '21:00')} 自动推理任务完成情况",
+                    QSystemTrayIcon.Information,
+                    5000
+                )
+                return
+
+            # 显示回顾窗口
+            self.show_task_review_window(today, all_tasks)
+
+        except Exception as e:
+            self.logger.error(f"显示今日任务回顾失败: {e}", exc_info=True)
+            self.tray_icon.showMessage(
+                "错误",
+                f"显示任务回顾失败: {str(e)}",
+                QSystemTrayIcon.Critical,
+                3000
+            )
+
+    def show_task_review_window(self, date: str, unconfirmed_tasks: list):
+        """
+        显示任务完成回顾窗口（线程安全版本）
+
+        此方法可能从工作线程调用，因此发射信号到主线程处理
+
+        Args:
+            date: 日期 (YYYY-MM-DD)
+            unconfirmed_tasks: 未确认的任务列表
+        """
+        try:
+            # 发射信号，让主线程显示窗口（避免跨线程UI操作）
+            self.task_review_requested.emit(date, unconfirmed_tasks)
+            self.logger.info(f"任务回顾请求已发送: {date}, {len(unconfirmed_tasks)} 个任务")
+
+        except Exception as e:
+            self.logger.error(f"发送任务回顾请求失败: {e}", exc_info=True)
+
+    def _show_task_review_window_slot(self, date: str, unconfirmed_tasks: list):
+        """
+        实际显示任务回顾窗口（槽函数，在主线程中执行）
+
+        Args:
+            date: 日期 (YYYY-MM-DD)
+            unconfirmed_tasks: 未确认的任务列表
+        """
+        try:
+            from gaiya.ui.task_review_window import TaskReviewWindow
+
+            # 创建回顾窗口（现在在主线程中）
+            review_window = TaskReviewWindow(
+                date=date,
+                task_completions=unconfirmed_tasks,
+                on_confirm=self.on_task_review_confirmed,
+                parent=self  # 设置父窗口为主窗口
+            )
+
+            # 显示窗口（非模态）
+            review_window.show()
+
+            self.logger.info(f"任务回顾窗口已显示: {date}, {len(unconfirmed_tasks)} 个任务")
+
+        except Exception as e:
+            self.logger.error(f"显示任务回顾窗口失败: {e}", exc_info=True)
+
+    def on_task_review_confirmed(self, results: list):
+        """
+        任务回顾确认回调
+
+        Args:
+            results: 确认结果列表
+                [{
+                    'completion_id': str,
+                    'new_completion': int,
+                    'original_completion': int,
+                    'is_modified': bool,
+                    'note': str
+                }]
+        """
+        try:
+            modified_count = 0
+            learned_count = 0
+
+            for result in results:
+                completion_id = result['completion_id']
+                new_completion = result['new_completion']
+                is_modified = result['is_modified']
+
+                if is_modified:
+                    # 用户修改了完成度
+                    original_completion = result['original_completion']
+
+                    # 更新数据库
+                    db.confirm_task_completion(
+                        completion_id=completion_id,
+                        new_completion=new_completion,
+                        note=result.get('note', '')
+                    )
+
+                    modified_count += 1
+
+                    # 触发学习反馈
+                    # 获取任务详情用于学习
+                    task_completion = db.get_task_completion(completion_id)
+                    if task_completion:
+                        self._trigger_learning_from_correction(
+                            task_completion,
+                            original_completion,
+                            new_completion
+                        )
+                        learned_count += 1
+
+                else:
+                    # 用户未修改,直接确认
+                    db.update_task_completion_confirmation(
+                        completion_id=completion_id,
+                        user_confirmed=True,
+                        user_corrected=False
+                    )
+
+            self.logger.info(
+                f"任务回顾完成: 共 {len(results)} 个任务, "
+                f"修改 {modified_count} 个, 学习 {learned_count} 个"
+            )
+
+        except Exception as e:
+            self.logger.error(f"任务回顾确认处理失败: {e}", exc_info=True)
+
+    def _trigger_learning_from_correction(self, task_completion: dict,
+                                         original_completion: int,
+                                         new_completion: int):
+        """
+        从用户修正中触发学习
+
+        Args:
+            task_completion: 任务完成记录
+            original_completion: AI推理的原始完成度
+            new_completion: 用户修正后的完成度
+        """
+        try:
+            # 判断修正类型
+            if new_completion > original_completion + 10:
+                correction_type = 'underestimated'
+            elif new_completion < original_completion - 10:
+                correction_type = 'overestimated'
+            else:
+                correction_type = 'accurate'
+
+            # 解析推理数据,获取使用的应用列表
+            import json
+            inference_data = json.loads(task_completion.get('inference_data', '{}'))
+            details = inference_data.get('details', {})
+
+            # 构建应用使用列表
+            apps_used = []
+
+            # 从主要应用中提取
+            primary_apps = details.get('primary_apps', [])
+            for app_str in primary_apps:
+                # 格式: "Cursor.exe(90min)"
+                import re
+                match = re.match(r'(.+?)\((\d+)min\)', app_str)
+                if match:
+                    app_name = match.group(1)
+                    duration = int(match.group(2))
+                    apps_used.append({'app': app_name, 'duration': duration})
+
+            # 调用行为模型学习
+            if apps_used:
+                self.behavior_model.learn_from_correction(
+                    task_name=task_completion['task_name'],
+                    apps_used=apps_used,
+                    correction_type=correction_type
+                )
+
+                self.logger.info(
+                    f"学习反馈: {task_completion['task_name']} - {correction_type}, "
+                    f"{len(apps_used)} 个应用"
+                )
+
+        except Exception as e:
+            self.logger.error(f"学习反馈失败: {e}", exc_info=True)
+
     def show_statistics(self):
         """显示统计报告窗口"""
         try:
@@ -1494,7 +1751,7 @@ class TimeProgressBar(QWidget):
             self.statistics_window = StatisticsWindow(
                 self.statistics_manager,
                 self.logger,
-                parent=None
+                parent=self  # 设置parent为self,以便访问task_completion_scheduler
             )
 
             # 连接关闭信号
@@ -3251,6 +3508,14 @@ class TimeProgressBar(QWidget):
 
         # 停止行为追踪服务
         self.stop_activity_tracker()
+
+        # 停止任务完成推理调度器
+        if hasattr(self, 'task_completion_scheduler') and self.task_completion_scheduler:
+            try:
+                self.task_completion_scheduler.stop()
+                self.logger.info("任务完成推理调度器已停止")
+            except Exception as e:
+                self.logger.warning(f"停止调度器时出错: {e}")
 
         # 接受关闭事件
         event.accept()
