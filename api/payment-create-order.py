@@ -129,18 +129,24 @@ class handler(BaseHTTPRequestHandler):
             # 注意：这里需要替换为实际的域名
             base_url = "https://jindutiao.vercel.app"  # 或从环境变量获取
             notify_url = f"{base_url}/api/payment-notify"
-            return_url = f"gaiya://payment-success?out_trade_no={out_trade_no}"
 
-            # 6. 创建支付订单
-            # 注意：不指定cid，让ZPAY自动选择可用渠道
-            # 如果遇到特定渠道问题，ZPAY会自动切换到其他可用渠道
-            result = zpay.create_order(
+            # 6. 获取客户端IP地址 (用于API方式创建订单)
+            # 优先从X-Forwarded-For获取真实IP (Vercel会自动设置)
+            client_ip = self.headers.get('X-Forwarded-For', '').split(',')[0].strip()
+            if not client_ip:
+                client_ip = self.headers.get('X-Real-IP', '')
+            if not client_ip:
+                client_ip = self.client_address[0]  # 回退到直连IP
+
+            # 7. 创建支付订单 (使用API方式 mapi.php 而非页面跳转方式 submit.php)
+            # ✅ 关键修复: API方式更可靠,回调通知成功率更高
+            result = zpay.create_api_order(
                 out_trade_no=out_trade_no,
                 name=plan_info["name"],
                 money=plan_info["price"],
                 pay_type=pay_type,
                 notify_url=notify_url,
-                return_url=return_url,
+                clientip=client_ip,
                 param=json.dumps({
                     "user_id": user_id,
                     "plan_type": plan_type
@@ -148,11 +154,12 @@ class handler(BaseHTTPRequestHandler):
             )
 
             if result["success"]:
-                # 7. 返回支付信息（包含速率限制信息）
+                # 8. 返回支付信息（包含速率限制信息）
+                # ⚠️ API方式返回 payurl 而非 payment_url
                 self._send_success({
                     "success": True,
-                    "payment_url": result["payment_url"],
-                    "params": result["params"],
+                    "payment_url": result["payurl"],  # API方式使用payurl
+                    "qrcode": result.get("qrcode", ""),  # 二维码链接
                     "out_trade_no": out_trade_no,
                     "amount": plan_info["price"],
                     "plan_name": plan_info["name"]
