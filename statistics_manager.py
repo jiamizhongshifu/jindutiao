@@ -9,6 +9,7 @@ from pathlib import Path
 from datetime import datetime, date, timedelta
 from typing import Dict, List, Optional
 from collections import defaultdict
+from gaiya.data.db_manager import db
 
 
 class StatisticsManager:
@@ -215,6 +216,99 @@ class StatisticsManager:
             "completed_at": datetime.now().isoformat()
         })
 
+    def _calculate_summary_from_completions(
+        self, date_str: str, task_completions: List[Dict]
+    ) -> dict:
+        """从任务完成推理数据计算统计摘要
+
+        Args:
+            date_str: 日期字符串
+            task_completions: 任务完成推理数据列表
+
+        Returns:
+            dict: 统计摘要
+        """
+        total_tasks = len(task_completions)
+        completed_tasks = 0  # 完成度 >= 80% 的任务
+        in_progress_tasks = 0  # 进行中的任务（基于当前时间）
+        not_started_tasks = 0  # 未开始的任务（基于当前时间）
+        high_confidence_tasks = 0  # 高置信度任务数
+        total_planned_minutes = 0
+        total_completed_minutes = 0
+        avg_completion = 0
+
+        # 获取当前时间（仅用于今天的统计）
+        now = datetime.now()
+        current_time = now.time()
+        is_today = (date_str == date.today().isoformat())
+
+        for completion in task_completions:
+            # 计划时长
+            planned_duration = completion.get('planned_duration_minutes', 0)
+            total_planned_minutes += planned_duration
+
+            # 实际完成度
+            completion_pct = completion.get('completion_percentage', 0)
+            avg_completion += completion_pct
+
+            # 实际完成时长 = 计划时长 * 完成度
+            actual_minutes = int(planned_duration * completion_pct / 100)
+            total_completed_minutes += actual_minutes
+
+            # 判断任务状态
+            if is_today:
+                # 仅对今天的任务根据当前时间判断状态
+                try:
+                    start_time_str = completion.get('planned_start_time', '00:00')
+                    end_time_str = completion.get('planned_end_time', '00:00')
+
+                    # 解析时间
+                    start_time = datetime.strptime(start_time_str, '%H:%M').time()
+                    end_time = datetime.strptime(end_time_str, '%H:%M').time()
+
+                    # 判断任务状态（基于时间，不考虑完成度）
+                    if current_time < start_time:
+                        # 未到开始时间 → 未开始
+                        not_started_tasks += 1
+                    elif start_time <= current_time < end_time:
+                        # 在时间范围内 → 进行中
+                        in_progress_tasks += 1
+                    else:
+                        # 已过结束时间 → 已完成（无论完成度如何）
+                        completed_tasks += 1
+                except Exception:
+                    # 解析失败，默认算已完成
+                    completed_tasks += 1
+            else:
+                # 历史日期的任务，全部算已完成
+                completed_tasks += 1
+
+            # 统计高置信度任务
+            if completion.get('confidence_level') == 'high':
+                high_confidence_tasks += 1
+
+        # 计算平均完成度
+        avg_completion = round(avg_completion / total_tasks, 2) if total_tasks > 0 else 0
+
+        # 计算完成率 (基于时长)
+        completion_rate = (
+            round(total_completed_minutes / total_planned_minutes * 100, 2)
+            if total_planned_minutes > 0 else 0
+        )
+
+        return {
+            "total_tasks": total_tasks,
+            "completed_tasks": completed_tasks,  # 完成度 >= 80%
+            "high_confidence_tasks": high_confidence_tasks,
+            "in_progress_tasks": in_progress_tasks,  # 基于当前时间判断
+            "not_started_tasks": not_started_tasks,  # 基于当前时间判断
+            "total_planned_minutes": total_planned_minutes,
+            "total_completed_minutes": total_completed_minutes,
+            "completion_rate": completion_rate,
+            "avg_completion_percentage": avg_completion,  # 新增: 平均完成度
+            "data_source": "task_completions"  # 标记数据来源
+        }
+
     def _calculate_duration(self, start_time: str, end_time: str) -> int:
         """计算时间段的分钟数
 
@@ -299,7 +393,95 @@ class StatisticsManager:
         """
         today = date.today().isoformat()
         self._ensure_today_record()
-        return self.statistics["daily_records"][today]["summary"]
+
+        # 尝试从 task_completions 表获取真实完成度数据
+        summary = self.statistics["daily_records"][today]["summary"].copy()
+
+        try:
+            # 获取今日的任务完成推理数据
+            task_completions = db.get_today_task_completions(today)
+
+            if task_completions:
+                # 如果有推理数据,重新计算摘要
+                summary = self._calculate_summary_from_completions(
+                    today, task_completions
+                )
+        except Exception as e:
+            self.logger.warning(f"读取任务完成推理数据失败,使用默认统计: {e}")
+
+        return summary
+
+    def get_today_tasks_with_completions(self) -> List[Dict]:
+        """获取今日任务及其完成度数据
+
+        优先返回 task_completions 数据,如果没有则返回 statistics.json 数据
+
+        Returns:
+            List[Dict]: 任务列表,每个任务包含:
+                - task_name: 任务名称
+                - start_time: 开始时间
+                - end_time: 结束时间
+                - planned_duration: 计划时长(分钟)
+                - completion_percentage: 完成度 (0-100)
+                - confidence_level: 置信度 (high/medium/low/unknown)
+                - user_confirmed: 是否已确认
+                - data_source: 数据来源 (task_completions 或 statistics)
+        """
+        today = date.today().isoformat()
+        tasks = []
+
+        try:
+            # 尝试从 task_completions 获取
+            task_completions = db.get_today_task_completions(today)
+
+            if task_completions:
+                for completion in task_completions:
+                    tasks.append({
+                        'task_name': completion.get('task_name', '未命名'),
+                        'start_time': completion.get('planned_start_time', '00:00'),
+                        'end_time': completion.get('planned_end_time', '00:00'),
+                        'planned_duration': completion.get('planned_duration_minutes', 0),
+                        'completion_percentage': completion.get('completion_percentage', 0),
+                        'confidence_level': completion.get('confidence_level', 'unknown'),
+                        'user_confirmed': completion.get('user_confirmed', False),
+                        'user_corrected': completion.get('user_corrected', False),
+                        'completion_id': completion.get('id'),
+                        'data_source': 'task_completions'
+                    })
+                return tasks
+        except Exception as e:
+            self.logger.warning(f"读取任务完成数据失败: {e}")
+
+        # 退回到 statistics.json
+        self._ensure_today_record()
+        daily_record = self.statistics["daily_records"].get(today, {})
+        tasks_dict = daily_record.get("tasks", {})
+
+        for task_name, task_info in tasks_dict.items():
+            duration = self._calculate_duration(task_info['start'], task_info['end'])
+
+            # 根据 status 推断完成度
+            if task_info['status'] == 'completed':
+                completion_pct = 100
+            elif task_info['status'] == 'in_progress':
+                completion_pct = 50
+            else:  # not_started
+                completion_pct = 0
+
+            tasks.append({
+                'task_name': task_name,
+                'start_time': task_info['start'],
+                'end_time': task_info['end'],
+                'planned_duration': duration,
+                'completion_percentage': completion_pct,
+                'confidence_level': 'unknown',
+                'user_confirmed': False,
+                'user_corrected': False,
+                'completion_id': None,
+                'data_source': 'statistics'
+            })
+
+        return tasks
 
     def get_weekly_summary(self) -> dict:
         """获取本周统计摘要
