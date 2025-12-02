@@ -44,7 +44,15 @@ class handler(BaseHTTPRequestHandler):
             for key, value in parse_qs(parsed_url.query).items():
                 params[key] = value[0] if len(value) == 1 else value
 
-            print(f"[PAYMENT-NOTIFY] Received notification: {params.get('out_trade_no')}", file=sys.stderr)
+            # ✅ 增强日志: 记录完整回调信息
+            print(f"[PAYMENT-NOTIFY] ========== NEW NOTIFICATION ==========", file=sys.stderr)
+            print(f"[PAYMENT-NOTIFY] Order ID: {params.get('out_trade_no', 'N/A')}", file=sys.stderr)
+            print(f"[PAYMENT-NOTIFY] Trade NO: {params.get('trade_no', 'N/A')}", file=sys.stderr)
+            print(f"[PAYMENT-NOTIFY] Status: {params.get('trade_status', 'N/A')}", file=sys.stderr)
+            print(f"[PAYMENT-NOTIFY] Amount: ¥{params.get('money', 'N/A')}", file=sys.stderr)
+            print(f"[PAYMENT-NOTIFY] Pay Type: {params.get('type', 'N/A')}", file=sys.stderr)
+            print(f"[PAYMENT-NOTIFY] Param: {params.get('param', 'N/A')}", file=sys.stderr)
+            print(f"[PAYMENT-NOTIFY] Full URL: {self.path}", file=sys.stderr)
 
             # 2. 验证签名
             zpay = ZPayManager()

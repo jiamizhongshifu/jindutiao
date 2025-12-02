@@ -160,7 +160,20 @@ class ZPayManager:
                 timeout=10
             )
 
-            result = response.json()
+            # ✅ 添加响应调试信息
+            print(f"[ZPAY-API] Response status: {response.status_code}", file=sys.stderr)
+            print(f"[ZPAY-API] Response text (first 200 chars): {response.text[:200]}", file=sys.stderr)
+
+            # ✅ 修复: 添加JSON解析错误处理
+            try:
+                result = response.json()
+            except json.JSONDecodeError as e:
+                print(f"[ZPAY-API] Error: Invalid JSON response", file=sys.stderr)
+                print(f"[ZPAY-API] Full response text: {response.text}", file=sys.stderr)
+                return {
+                    "success": False,
+                    "error": f"Invalid JSON response from payment gateway: {response.text[:100]}"
+                }
 
             if result.get("code") == 1:
                 print(f"[ZPAY-API] Order created: {out_trade_no}", file=sys.stderr)
