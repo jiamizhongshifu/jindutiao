@@ -3207,7 +3207,7 @@ class ConfigManager(QMainWindow):
                     {
                         "id": "pro_monthly",
                         "name": self.i18n.tr("account.plan_monthly_name"),
-                        "price": "¥29",
+                        "price": "¥0.1",  # ⚠️ 测试价格 (原价: ¥29)
                         "period": self.i18n.tr("account.plan_period_month"),
                         "validity": self.i18n.tr("account.plan_validity_30days"),
                         "renewal": self.i18n.tr("account.plan_no_auto_renewal"),
@@ -3217,10 +3217,10 @@ class ConfigManager(QMainWindow):
                     {
                         "id": "pro_yearly",
                         "name": self.i18n.tr("account.plan_yearly_name"),
-                        "price": "¥199",
+                        "price": "¥0.1",  # ⚠️ 测试价格 (原价: ¥199)
                         "period": self.i18n.tr("account.plan_period_year"),
-                        "monthly_price": "¥16.6",
-                        "original_price": "¥348",
+                        "monthly_price": "¥0.1",  # ⚠️ 测试价格
+                        "original_price": "¥0.2",  # ⚠️ 测试价格
                         "discount_badge": self.i18n.tr("account.plan_save_40_percent"),
                         "validity": self.i18n.tr("account.plan_validity_365days"),
                         "renewal": self.i18n.tr("account.plan_no_auto_renewal"),
@@ -3230,7 +3230,7 @@ class ConfigManager(QMainWindow):
                     {
                         "id": "lifetime",
                         "name": self.i18n.tr("account.plan_lifetime_name"),
-                        "price": "¥599",
+                        "price": "¥0.1",  # ⚠️ 测试价格 (原价: ¥599)
                         "period": "",
                         "validity": self.i18n.tr("account.plan_validity_lifetime"),
                         "renewal": self.i18n.tr("account.plan_one_time_payment"),
