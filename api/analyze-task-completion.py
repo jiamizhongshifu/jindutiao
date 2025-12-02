@@ -195,7 +195,7 @@ class handler(BaseHTTPRequestHandler):
                 return
 
             # 扣除配额
-            quota_manager.use_quota(user_id, user_tier, 'daily_plan', 1)
+            quota_manager.use_quota(user_id, 'daily_plan', 1)
             updated_quota = quota_manager.get_quota_status(user_id, user_tier)
 
             print(f"Analysis completed successfully", file=sys.stderr)
