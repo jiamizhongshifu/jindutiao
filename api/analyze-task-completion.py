@@ -64,7 +64,7 @@ class handler(BaseHTTPRequestHandler):
 
             # 速率限制检查 (10次/24小时)
             limiter = RateLimiter()
-            is_allowed, rate_info = limiter.check_rate_limit("analyze_completion", user_id, max_requests=10)
+            is_allowed, rate_info = limiter.check_rate_limit("analyze_completion", user_id)
 
             if not is_allowed:
                 print(f"[ANALYZE-COMPLETION] 🚫 Rate limit exceeded for user: {user_id}", file=sys.stderr)

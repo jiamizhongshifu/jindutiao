@@ -80,6 +80,11 @@ class RateLimiter:
             "max_requests": 50,
             "window_seconds": 3600,  # 1小时
             "key_type": "user_id"
+        },
+        "analyze_completion": {
+            "max_requests": 10,
+            "window_seconds": 86400,  # 24小时
+            "key_type": "user_id"
         }
     }
 
