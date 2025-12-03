@@ -40,9 +40,27 @@ class handler(BaseHTTPRequestHandler):
 
             print(f"[PAYMENT-QUERY] Querying order: {out_trade_no}", file=sys.stderr)
 
-            # 2. 查询订单
+            # 2. 查询订单(带重试机制,解决Z-Pay数据库复制延迟)
             zpay = ZPayManager()
-            result = zpay.query_order(out_trade_no=out_trade_no)
+
+            # ✅ 修复: 添加重试逻辑,最多重试3次,每次间隔2秒
+            import time
+            max_retries = 3
+            result = None
+
+            for attempt in range(max_retries):
+                result = zpay.query_order(out_trade_no=out_trade_no)
+
+                if result["success"]:
+                    print(f"[PAYMENT-QUERY] Order found on attempt {attempt + 1}", file=sys.stderr)
+                    break
+
+                # 如果不是最后一次尝试,等待2秒后重试
+                if attempt < max_retries - 1:
+                    print(f"[PAYMENT-QUERY] Order not found, retry {attempt + 2}/{max_retries} in 2s...", file=sys.stderr)
+                    time.sleep(2)
+                else:
+                    print(f"[PAYMENT-QUERY] Order not found after {max_retries} attempts", file=sys.stderr)
 
             if result["success"]:
                 order = result["order"]

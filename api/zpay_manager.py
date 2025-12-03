@@ -229,18 +229,27 @@ class ZPayManager:
             if trade_no:
                 params["trade_no"] = trade_no
 
+            # ✅ 增强日志: 输出完整请求URL用于调试
+            query_url = f"{self.api_url}/api.php"
+            print(f"[ZPAY-QUERY] Request URL: {query_url}", file=sys.stderr)
+            print(f"[ZPAY-QUERY] Request params: act={params['act']}, pid={params['pid'][:6]}..., out_trade_no={params.get('out_trade_no', 'N/A')}", file=sys.stderr)
+
             response = requests.get(
-                f"{self.api_url}/api.php",
+                query_url,
                 params=params,
                 timeout=10
             )
+
+            # ✅ 增强日志: 输出响应状态和内容预览
+            print(f"[ZPAY-QUERY] Response status: {response.status_code}", file=sys.stderr)
+            print(f"[ZPAY-QUERY] Response preview (first 200 chars): {response.text[:200]}", file=sys.stderr)
 
             # ✅ 修复: 添加JSON解析错误处理
             try:
                 result = response.json()
             except json.JSONDecodeError as e:
                 print(f"[ZPAY-QUERY] Error: Invalid JSON response from ZPAY", file=sys.stderr)
-                print(f"[ZPAY-QUERY] Response text (first 500 chars): {response.text[:500]}", file=sys.stderr)
+                print(f"[ZPAY-QUERY] Full response text: {response.text}", file=sys.stderr)
                 print(f"[ZPAY-QUERY] JSON error: {e}", file=sys.stderr)
                 return {
                     "success": False,
