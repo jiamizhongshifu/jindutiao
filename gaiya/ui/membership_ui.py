@@ -21,8 +21,8 @@ import os
 
 # 添加父目录到路径以导入core模块
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from core.auth_client import AuthClient
-from i18n.translator import tr
+from gaiya.core.auth_client import AuthClient
+from gaiya.i18n.translator import tr
 
 
 class GradientCardWidget(QWidget):
