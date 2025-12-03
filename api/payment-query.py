@@ -59,7 +59,8 @@ class handler(BaseHTTPRequestHandler):
                         "status": "paid" if is_paid else "unpaid",
                         "type": order.get("type"),
                         "addtime": order.get("addtime"),
-                        "endtime": order.get("endtime")
+                        "endtime": order.get("endtime"),
+                        "param": order.get("param", "")  # ✅ 关键修复: 必须包含param字段,客户端需要从中提取user_id和plan_type
                     }
                 })
 
