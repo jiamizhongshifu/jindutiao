@@ -1198,10 +1198,39 @@ class MembershipDialog(QDialog):
                 # 支付成功
                 self._stop_payment_polling()
 
-                # ⚠️ 关键修复：支付成功后延迟刷新会员状态
-                # 原因：Z-Pay的异步回调可能需要1-3秒才能完成数据库更新
-                # 解决方案：等待2秒后刷新,给后端足够的处理时间
-                QTimer.singleShot(2000, self._refresh_subscription_status)
+                print(f"[MEMBERSHIP] Payment detected as paid: {out_trade_no}")
+
+                # ✅ 方案A：主动触发会员升级(不依赖Z-Pay回调)
+                # 从订单的param参数中获取user_id和plan_type
+                try:
+                    import json
+                    param_str = order.get("param", "{}")
+                    param_data = json.loads(param_str) if param_str else {}
+                    user_id = param_data.get("user_id")
+                    plan_type = param_data.get("plan_type")
+
+                    if user_id and plan_type:
+                        print(f"[MEMBERSHIP] Triggering manual upgrade: user={user_id}, plan={plan_type}")
+
+                        # 调用后端API手动更新会员状态
+                        upgrade_result = self.auth_client.manual_upgrade_subscription(
+                            user_id=user_id,
+                            plan_type=plan_type,
+                            out_trade_no=out_trade_no
+                        )
+
+                        if upgrade_result.get("success"):
+                            print("[MEMBERSHIP] Manual upgrade successful!")
+                        else:
+                            print(f"[MEMBERSHIP] Manual upgrade failed: {upgrade_result.get('error')}")
+                    else:
+                        print(f"[MEMBERSHIP] Warning: Missing user_id or plan_type in order param")
+
+                except Exception as e:
+                    print(f"[MEMBERSHIP] Error during manual upgrade: {e}")
+
+                # 延迟刷新会员状态以显示最新数据
+                QTimer.singleShot(1000, self._refresh_subscription_status)
 
                 QMessageBox.information(
                     self,

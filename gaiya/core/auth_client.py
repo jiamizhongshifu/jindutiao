@@ -827,6 +827,49 @@ class AuthClient:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
+    def manual_upgrade_subscription(self, user_id: str, plan_type: str, out_trade_no: str) -> Dict:
+        """
+        手动升级订阅(主动查询方案A - 不依赖Z-Pay回调)
+
+        当检测到支付成功时,主动调用此API更新用户会员状态
+
+        Args:
+            user_id: 用户ID
+            plan_type: 订阅类型(pro_monthly/pro_yearly/lifetime)
+            out_trade_no: 订单号
+
+        Returns:
+            {"success": True/False, "user_tier": "...", ...}
+        """
+        try:
+            logger.info(f"[AUTH] Manual upgrade subscription: user={user_id}, plan={plan_type}, order={out_trade_no}")
+
+            response = self.session.post(
+                f"{self.backend_url}/api/manual-upgrade-subscription",
+                json={
+                    "user_id": user_id,
+                    "plan_type": plan_type,
+                    "out_trade_no": out_trade_no
+                },
+                headers={"Authorization": f"Bearer {self.access_token}"},
+                timeout=15
+            )
+
+            if response.status_code == 200:
+                result = response.json()
+                if result.get("success"):
+                    logger.info(f"[AUTH] Manual upgrade successful: new_tier={result.get('user_tier')}")
+                    # 刷新用户信息
+                    self._refresh_user_info()
+                return result
+            else:
+                logger.error(f"[AUTH] Manual upgrade failed: HTTP {response.status_code}")
+                return {"success": False, "error": f"HTTP {response.status_code}"}
+
+        except Exception as e:
+            logger.error(f"[AUTH] Manual upgrade error: {e}")
+            return {"success": False, "error": str(e)}
+
     def create_stripe_checkout_session(self, plan_type: str, user_id: str, user_email: str) -> Dict:
         """
         创建Stripe Checkout Session（国际支付）
