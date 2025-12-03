@@ -40,16 +40,17 @@ class handler(BaseHTTPRequestHandler):
 
             print(f"[PAYMENT-QUERY] Querying order: {out_trade_no}", file=sys.stderr)
 
-            # 2. 查询订单(带重试机制,解决Z-Pay数据库复制延迟)
+            # 2. 查询订单(使用mapi.php方式查询API订单)
             zpay = ZPayManager()
 
-            # ✅ 修复: 添加重试逻辑,最多重试3次,每次间隔2秒
+            # ✅ 修复: 使用query_api_order查询mapi.php创建的订单
+            # mapi.php创建的订单必须通过mapi.php查询,不能用api.php
             import time
             max_retries = 3
             result = None
 
             for attempt in range(max_retries):
-                result = zpay.query_order(out_trade_no=out_trade_no)
+                result = zpay.query_api_order(out_trade_no=out_trade_no)
 
                 if result["success"]:
                     print(f"[PAYMENT-QUERY] Order found on attempt {attempt + 1}", file=sys.stderr)

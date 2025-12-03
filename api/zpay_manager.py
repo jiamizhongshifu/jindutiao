@@ -280,6 +280,66 @@ class ZPayManager:
                 "error": str(e)
             }
 
+    def query_api_order(self, out_trade_no: str) -> Dict:
+        """
+        查询API订单状态（mapi.php创建的订单）
+
+        Args:
+            out_trade_no: 商户订单号
+
+        Returns:
+            订单信息
+        """
+        try:
+            # 构建查询参数
+            params = {
+                "act": "order",
+                "pid": self.pid,
+                "key": self.pkey,
+                "out_trade_no": out_trade_no
+            }
+
+            print(f"[ZPAY-API-QUERY] Querying order via mapi.php: {out_trade_no}", file=sys.stderr)
+
+            response = requests.get(
+                f"{self.api_url}/mapi.php",
+                params=params,
+                timeout=10
+            )
+
+            print(f"[ZPAY-API-QUERY] Response status: {response.status_code}", file=sys.stderr)
+            print(f"[ZPAY-API-QUERY] Response text: {response.text[:200]}", file=sys.stderr)
+
+            try:
+                result = response.json()
+                print(f"[ZPAY-API-QUERY] Full response: {result}", file=sys.stderr)
+            except json.JSONDecodeError as e:
+                print(f"[ZPAY-API-QUERY] Invalid JSON response", file=sys.stderr)
+                return {
+                    "success": False,
+                    "error": "Invalid JSON response from payment gateway"
+                }
+
+            if result.get("code") == 1:
+                print(f"[ZPAY-API-QUERY] Order found, status: {result.get('status')}", file=sys.stderr)
+                return {
+                    "success": True,
+                    "order": result
+                }
+            else:
+                print(f"[ZPAY-API-QUERY] Order not found: {result.get('msg')}", file=sys.stderr)
+                return {
+                    "success": False,
+                    "error": result.get("msg", "Order not found")
+                }
+
+        except Exception as e:
+            print(f"[ZPAY-API-QUERY] Error: {e}", file=sys.stderr)
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
     def verify_notify(self, params: Dict) -> bool:
         """
         验证支付回调签名（增强安全版本）
