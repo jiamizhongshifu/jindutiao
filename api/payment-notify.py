@@ -74,11 +74,24 @@ class handler(BaseHTTPRequestHandler):
             money = float(params.get("money", "0"))
             param_str = params.get("param", "{}")
 
-            # 解析附加参数
+            # 解析附加参数 (支持两种格式)
             try:
-                param_data = json.loads(param_str)
-                user_id = param_data.get("user_id")
-                plan_type = param_data.get("plan_type")
+                # ✅ 新格式: 简单分隔符 "user_id|plan_type"
+                if "|" in param_str:
+                    parts = param_str.split("|")
+                    if len(parts) == 2:
+                        user_id, plan_type = parts
+                        print(f"[PAYMENT-NOTIFY] Parsed param (delimiter format): user={user_id}, plan={plan_type}", file=sys.stderr)
+                    else:
+                        print(f"[PAYMENT-NOTIFY] Invalid delimiter param format: {param_str}", file=sys.stderr)
+                        self._send_response("fail")
+                        return
+                else:
+                    # 旧格式: JSON
+                    param_data = json.loads(param_str) if param_str and param_str != "{}" else {}
+                    user_id = param_data.get("user_id")
+                    plan_type = param_data.get("plan_type")
+                    print(f"[PAYMENT-NOTIFY] Parsed param (JSON format): user={user_id}, plan={plan_type}", file=sys.stderr)
             except json.JSONDecodeError as e:
                 print(f"[PAYMENT-NOTIFY] Invalid JSON param: {param_str}, error: {e}", file=sys.stderr)
                 self._send_response("fail")
