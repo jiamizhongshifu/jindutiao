@@ -1139,19 +1139,16 @@ class MembershipDialog(QDialog):
         if result.get("success"):
             # 订单创建成功
             payment_url = result.get("payment_url")
-            params = result.get("params", {})  # 获取支付参数
             out_trade_no = result.get("out_trade_no")
             amount = result.get("amount")
             plan_name = result.get("plan_name")
 
-            # ⚠️ 关键修复：拼接支付参数到URL
-            # 将params字典转换为URL查询字符串
-            from urllib.parse import urlencode
-            query_string = urlencode(params)
-            full_payment_url = f"{payment_url}?{query_string}"
+            # ✅ 修复: mapi.php方式返回完整payurl,无需拼接参数
+            # payment_url已经包含所有必要参数
+            print(f"[MEMBERSHIP] Opening payment URL: {payment_url[:100]}...")
 
-            # 直接在浏览器中打开完整的支付URL（不再显示确认对话框）
-            QDesktopServices.openUrl(QUrl(full_payment_url))
+            # 直接在浏览器中打开支付URL
+            QDesktopServices.openUrl(QUrl(payment_url))
 
             # 开始轮询支付状态
             self._start_payment_polling(out_trade_no)

@@ -131,35 +131,43 @@ class handler(BaseHTTPRequestHandler):
             notify_url = f"{base_url}/api/payment-notify"
             return_url = f"gaiya://payment-success?out_trade_no={out_trade_no}"
 
-            # 6. 创建支付订单 (使用页面跳转方式 submit.php)
-            # ⚠️ 注意: 尝试使用API方式(mapi.php)但Z-Pay返回HTTP 500错误
-            # 原因: 可能商户账户未启用API方式或配置问题
-            # 当前使用submit.php方式,回调机制相同
-            print(f"[PAYMENT-CREATE] Creating order via submit.php for user {user_id}", file=sys.stderr)
+            # 6. 创建支付订单
+            # ✅ 修复: 必须使用API方式(mapi.php)才能创建可查询的订单
+            # submit.php只返回支付URL,不在Z-Pay系统中创建订单记录
+            print(f"[PAYMENT-CREATE] Creating order via mapi.php for user {user_id}", file=sys.stderr)
 
-            result = zpay.create_order(
+            # 获取客户端IP (Vercel环境)
+            client_ip = self.headers.get('x-forwarded-for', '').split(',')[0].strip() or \
+                       self.headers.get('x-real-ip', '127.0.0.1')
+
+            result = zpay.create_api_order(
                 out_trade_no=out_trade_no,
                 name=plan_info["name"],
                 money=plan_info["price"],
                 pay_type=pay_type,
                 notify_url=notify_url,
-                return_url=return_url,
+                clientip=client_ip,
                 param=f"{user_id}|{plan_type}"  # ✅ 使用简单分隔符,避免JSON嵌套导致Z-Pay返回数据解析失败
             )
 
             if result["success"]:
                 # 7. 返回支付信息（包含速率限制信息）
+                # ✅ API方式返回payurl而非payment_url+params
+                payment_url = result.get("payurl", "")
+                trade_no = result.get("trade_no", "")
+
                 self._send_success({
                     "success": True,
-                    "payment_url": result["payment_url"],
-                    "params": result["params"],
+                    "payment_url": payment_url,
+                    "trade_no": trade_no,  # ✅ 新增: Z-Pay内部订单号
                     "out_trade_no": out_trade_no,
                     "amount": plan_info["price"],
                     "plan_name": plan_info["name"]
                 }, rate_info)
 
-                print(f"[PAYMENT-CREATE] Order created: {out_trade_no}", file=sys.stderr)
+                print(f"[PAYMENT-CREATE] ✓ Order created via API: {out_trade_no}, trade_no: {trade_no}", file=sys.stderr)
             else:
+                print(f"[PAYMENT-CREATE] ✗ API order creation failed: {result.get('error')}", file=sys.stderr)
                 self._send_error(500, result.get("error", "Failed to create order"), rate_info)
 
         except json.JSONDecodeError:
