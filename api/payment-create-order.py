@@ -155,12 +155,13 @@ class handler(BaseHTTPRequestHandler):
 
             if result["success"]:
                 # 7. 返回支付信息（包含二维码URL）
-                qrcode_url = result.get("payurl", "")
+                # ✅ 修复: 使用img字段(二维码图片URL),而不是payurl(支付链接)
+                qrcode_url = result.get("img") or result.get("qrcode") or result.get("payurl", "")
                 trade_no = result.get("trade_no", "")
 
                 self._send_success({
                     "success": True,
-                    "qrcode_url": qrcode_url,  # 二维码URL供客户端显示
+                    "qrcode_url": qrcode_url,  # 二维码图片URL供客户端显示
                     "trade_no": trade_no,
                     "out_trade_no": out_trade_no,
                     "amount": plan_info["price"],
@@ -168,7 +169,7 @@ class handler(BaseHTTPRequestHandler):
                 }, rate_info)
 
                 print(f"[PAYMENT-CREATE] ✓ Order created via mapi.php: {out_trade_no}, trade_no: {trade_no}", file=sys.stderr)
-                print(f"[PAYMENT-CREATE] ℹ️ QR code URL: {qrcode_url[:80]}...", file=sys.stderr)
+                print(f"[PAYMENT-CREATE] ℹ️ QR code URL: {qrcode_url}", file=sys.stderr)
             else:
                 print(f"[PAYMENT-CREATE] ✗ Order creation failed: {result.get('error')}", file=sys.stderr)
                 self._send_error(500, result.get("error", "Failed to create order"), rate_info)
