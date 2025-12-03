@@ -1137,7 +1137,7 @@ class AuthClient:
             升级结果
         """
         try:
-            url = f"{self.api_base}/api/payment-manual-upgrade"
+            url = f"{self.backend_url}/api/payment-manual-upgrade"
             data = {
                 "out_trade_no": out_trade_no,
                 "user_id": user_id,
