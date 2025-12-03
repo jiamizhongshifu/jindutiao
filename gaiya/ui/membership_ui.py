@@ -1139,54 +1139,61 @@ class MembershipDialog(QDialog):
         if result.get("success"):
             # 订单创建成功
             payment_url = result.get("payment_url")
+            params = result.get("params", {})
             out_trade_no = result.get("out_trade_no")
             amount = result.get("amount")
             plan_name = result.get("plan_name")
 
-            # ✅ 修复: mapi.php方式返回完整payurl,无需拼接参数
-            # payment_url已经包含所有必要参数
-            print(f"[MEMBERSHIP] Opening payment URL: {payment_url[:100]}...")
+            # ✅ 修复: submit.php方式需要拼接参数
+            # 构建完整的支付URL
+            from urllib.parse import urlencode
+            if params:
+                query_string = urlencode(params)
+                full_payment_url = f"{payment_url}?{query_string}"
+            else:
+                full_payment_url = payment_url
 
-            # 直接在浏览器中打开支付URL
-            QDesktopServices.openUrl(QUrl(payment_url))
+            print(f"[MEMBERSHIP] Opening payment URL: {full_payment_url[:100]}...")
 
-            # 开始轮询支付状态
-            self._start_payment_polling(out_trade_no)
+            # 在浏览器中打开支付URL
+            QDesktopServices.openUrl(QUrl(full_payment_url))
+
+            # ✅ 关键: 不再轮询查询订单状态
+            # submit.php不创建可查询的订单,依赖Z-Pay回调通知(payment-notify.py)更新会员状态
+            # 显示提示信息,告知用户支付完成后会自动更新
+            self._show_payment_waiting_info(out_trade_no)
 
         else:
             # 订单创建失败
             error_msg = result.get("error", tr("membership.error.order_creation_failed_title"))
             QMessageBox.critical(self, tr("membership.error.order_creation_failed_title"), tr("membership.error.order_creation_failed", error_msg=error_msg))
 
-    def _start_payment_polling(self, out_trade_no: str):
-        """开始轮询支付状态"""
-        # 显示等待对话框
-        self.payment_polling_dialog = QMessageBox(self)
-        self.payment_polling_dialog.setWindowTitle(tr("membership.payment.waiting_title"))
-        self.payment_polling_dialog.setText(
-            tr("membership.payment.waiting_line1") +
-            tr("membership.payment.waiting_line2") +
-            tr("membership.payment.waiting_line3")
+    def _show_payment_waiting_info(self, out_trade_no: str):
+        """显示支付等待提示信息"""
+        # ✅ 新方案: 不轮询查询,依赖Z-Pay回调通知
+        # 显示提示对话框告知用户支付完成后会自动更新
+        info_dialog = QMessageBox(self)
+        info_dialog.setWindowTitle(tr("membership.payment.waiting_title"))
+        info_dialog.setText(
+            "请在浏览器中完成支付。\n\n"
+            "支付成功后,会员状态将在几秒内自动更新。\n\n"
+            "如果长时间未更新,请尝试:\n"
+            "1. 重启应用\n"
+            "2. 联系客服处理"
         )
-        self.payment_polling_dialog.setStandardButtons(QMessageBox.StandardButton.Cancel)
-        self.payment_polling_dialog.setIcon(QMessageBox.Icon.Information)
+        info_dialog.setStandardButtons(QMessageBox.StandardButton.Ok)
+        info_dialog.setIcon(QMessageBox.Icon.Information)
 
-        # 创建定时器轮询支付状态
-        self.payment_timer = QTimer()
-        self.payment_timer.setInterval(3000)  # 每3秒查询一次
-        self.payment_timer.timeout.connect(lambda: self._check_payment_status(out_trade_no))
+        print(f"[MEMBERSHIP] Payment initiated: {out_trade_no}")
+        print(f"[MEMBERSHIP] Waiting for Z-Pay callback notification...")
 
-        # ✅ 修复: 延迟5秒后开始轮询
-        # 原因: submit.php只返回支付URL,订单是在用户访问支付页面时才由Z-Pay创建
-        # 需要给用户时间打开页面和Z-Pay系统创建订单
-        print(f"[MEMBERSHIP] Payment polling will start in 5 seconds for order: {out_trade_no}")
-        QTimer.singleShot(5000, self.payment_timer.start)
+        info_dialog.exec()
 
-        # 监听取消按钮
-        self.payment_polling_dialog.rejected.connect(self._stop_payment_polling)
-
-        # 显示对话框（非阻塞）
-        self.payment_polling_dialog.show()
+    def _start_payment_polling(self, out_trade_no: str):
+        """开始轮询支付状态（已弃用,保留以防回退需要）"""
+        # ⚠️ 此方法已弃用: submit.php不创建可查询的订单
+        # 现在依赖Z-Pay回调通知(payment-notify.py)更新会员状态
+        pass
 
     def _check_payment_status(self, out_trade_no: str):
         """检查支付状态"""
