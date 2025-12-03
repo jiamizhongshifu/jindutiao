@@ -9,12 +9,12 @@ import sys
 from datetime import datetime, timedelta
 
 try:
-    from supabase_client import get_supabase_client
+    from auth_manager import AuthManager
     from cors_config import get_cors_origin
 except ImportError:
     import os
     sys.path.insert(0, os.path.dirname(__file__))
-    from supabase_client import get_supabase_client
+    from auth_manager import AuthManager
     from cors_config import get_cors_origin
 
 
@@ -39,11 +39,11 @@ class handler(BaseHTTPRequestHandler):
             request_origin = self.headers.get('Origin', '')
             self.allowed_origin = get_cors_origin(request_origin)
 
-            # 1. 验证Authorization (暂时注释,先确保基本功能工作)
-            # auth_header = self.headers.get('Authorization', '')
-            # if not auth_header or not auth_header.startswith('Bearer '):
-            #     self._send_error(401, "未授权")
-            #     return
+            # 1. 验证Authorization
+            auth_header = self.headers.get('Authorization', '')
+            if not auth_header or not auth_header.startswith('Bearer '):
+                self._send_error(401, "未授权")
+                return
 
             # 2. 解析请求数据
             content_length = int(self.headers['Content-Length'])
@@ -60,8 +60,11 @@ class handler(BaseHTTPRequestHandler):
 
             print(f"[MANUAL-UPGRADE] Processing manual upgrade: {out_trade_no}, user: {user_id}, plan: {plan_type}", file=sys.stderr)
 
-            # 3. 获取Supabase客户端
-            supabase = get_supabase_client()
+            # 3. 获取AuthManager客户端
+            auth_manager = AuthManager()
+            if not auth_manager.client:
+                self._send_error(500, "数据库连接失败")
+                return
 
             # 4. 计算会员到期时间
             plan_durations = {
@@ -81,7 +84,7 @@ class handler(BaseHTTPRequestHandler):
                 "updated_at": now.isoformat()
             }
 
-            result = supabase.table("users").update(update_data).eq("id", user_id).execute()
+            result = auth_manager.client.table("users").update(update_data).eq("id", user_id).execute()
 
             if result.data:
                 print(f"[MANUAL-UPGRADE] ✓ User upgraded successfully: {user_id}", file=sys.stderr)
