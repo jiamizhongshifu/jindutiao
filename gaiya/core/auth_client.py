@@ -1123,3 +1123,42 @@ class AuthClient:
             return {"success": False, "error": "无法连接到服务器"}
         except Exception as e:
             return {"success": False, "error": str(e)}
+
+    def trigger_manual_upgrade(self, out_trade_no: str, user_id: str, plan_type: str) -> Dict:
+        """
+        手动触发会员升级（用于支付完成后手动确认）
+
+        Args:
+            out_trade_no: 订单号
+            user_id: 用户ID
+            plan_type: 套餐类型
+
+        Returns:
+            升级结果
+        """
+        try:
+            url = f"{self.api_base}/api/payment-manual-upgrade"
+            data = {
+                "out_trade_no": out_trade_no,
+                "user_id": user_id,
+                "plan_type": plan_type
+            }
+
+            response = requests.post(
+                url,
+                json=data,
+                headers={"Authorization": f"Bearer {self.access_token}"},
+                timeout=15
+            )
+
+            if response.status_code == 200:
+                return response.json()
+            else:
+                return {"success": False, "error": f"HTTP {response.status_code}"}
+
+        except requests.exceptions.Timeout:
+            return {"success": False, "error": "请求超时"}
+        except requests.exceptions.ConnectionError:
+            return {"success": False, "error": "无法连接到服务器"}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
