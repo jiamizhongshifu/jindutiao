@@ -1178,7 +1178,12 @@ class MembershipDialog(QDialog):
         self.payment_timer = QTimer()
         self.payment_timer.setInterval(3000)  # 每3秒查询一次
         self.payment_timer.timeout.connect(lambda: self._check_payment_status(out_trade_no))
-        self.payment_timer.start()
+
+        # ✅ 修复: 延迟5秒后开始轮询
+        # 原因: submit.php只返回支付URL,订单是在用户访问支付页面时才由Z-Pay创建
+        # 需要给用户时间打开页面和Z-Pay系统创建订单
+        print(f"[MEMBERSHIP] Payment polling will start in 5 seconds for order: {out_trade_no}")
+        QTimer.singleShot(5000, self.payment_timer.start)
 
         # 监听取消按钮
         self.payment_polling_dialog.rejected.connect(self._stop_payment_polling)
