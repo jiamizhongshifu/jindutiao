@@ -167,6 +167,8 @@ class ZPayManager:
             # ✅ 修复: 添加JSON解析错误处理
             try:
                 result = response.json()
+                # ✅ 调试: 输出完整的Z-Pay API响应
+                print(f"[ZPAY-API] Full Z-Pay response: {result}", file=sys.stderr)
             except json.JSONDecodeError as e:
                 print(f"[ZPAY-API] Error: Invalid JSON response", file=sys.stderr)
                 print(f"[ZPAY-API] Full response text: {response.text}", file=sys.stderr)
@@ -247,6 +249,8 @@ class ZPayManager:
             # ✅ 修复: 添加JSON解析错误处理
             try:
                 result = response.json()
+                # ✅ 调试: 输出完整的Z-Pay响应用于诊断
+                print(f"[ZPAY-QUERY] Full Z-Pay response: {result}", file=sys.stderr)
             except json.JSONDecodeError as e:
                 print(f"[ZPAY-QUERY] Error: Invalid JSON response from ZPAY", file=sys.stderr)
                 print(f"[ZPAY-QUERY] Full response text: {response.text}", file=sys.stderr)
