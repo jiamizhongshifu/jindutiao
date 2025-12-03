@@ -15,7 +15,8 @@ from PySide6.QtWidgets import (
     QFrame, QApplication
 )
 from PySide6.QtCore import Qt, Signal, QTimer, QUrl, QSize, qVersion, __version__ as pyside_version, QRect, QRectF
-from PySide6.QtGui import QFont, QDesktopServices, QPainter, QColor, QPen, QBrush, QLinearGradient, QPainterPath
+from PySide6.QtGui import QFont, QDesktopServices, QPainter, QColor, QPen, QBrush, QLinearGradient, QPainterPath, QPixmap
+from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
 import sys
 import os
 
@@ -1137,36 +1138,130 @@ class MembershipDialog(QDialog):
         self.purchase_button.setText(tr("membership.btn_buy_now"))
 
         if result.get("success"):
-            # 订单创建成功
-            payment_url = result.get("payment_url")
-            params = result.get("params", {})
+            # 订单创建成功 - mapi.php方式返回二维码URL
+            qrcode_url = result.get("qrcode_url")
             out_trade_no = result.get("out_trade_no")
+            trade_no = result.get("trade_no")
             amount = result.get("amount")
             plan_name = result.get("plan_name")
 
-            # ✅ 修复: submit.php方式需要拼接参数
-            # 构建完整的支付URL
-            from urllib.parse import urlencode
-            if params:
-                query_string = urlencode(params)
-                full_payment_url = f"{payment_url}?{query_string}"
-            else:
-                full_payment_url = payment_url
+            print(f"[MEMBERSHIP] Order created: {out_trade_no}, trade_no: {trade_no}")
+            print(f"[MEMBERSHIP] QR code URL: {qrcode_url[:80]}...")
 
-            print(f"[MEMBERSHIP] Opening payment URL: {full_payment_url[:100]}...")
-
-            # 在浏览器中打开支付URL
-            QDesktopServices.openUrl(QUrl(full_payment_url))
-
-            # ✅ 关键: 不再轮询查询订单状态
-            # submit.php不创建可查询的订单,依赖Z-Pay回调通知(payment-notify.py)更新会员状态
-            # 显示提示信息,告知用户支付完成后会自动更新
-            self._show_payment_waiting_info(out_trade_no)
+            # 显示二维码支付对话框
+            self._show_qrcode_dialog(qrcode_url, out_trade_no, amount, plan_name)
 
         else:
             # 订单创建失败
             error_msg = result.get("error", tr("membership.error.order_creation_failed_title"))
             QMessageBox.critical(self, tr("membership.error.order_creation_failed_title"), tr("membership.error.order_creation_failed", error_msg=error_msg))
+
+    def _show_qrcode_dialog(self, qrcode_url: str, out_trade_no: str, amount: float, plan_name: str):
+        """显示二维码支付对话框并启动轮询"""
+        # 创建对话框
+        dialog = QDialog(self)
+        dialog.setWindowTitle("扫码支付")
+        dialog.setModal(True)
+        dialog.setMinimumSize(400, 500)
+
+        layout = QVBoxLayout(dialog)
+        layout.setSpacing(20)
+        layout.setContentsMargins(30, 30, 30, 30)
+
+        # 标题
+        title = QLabel(f"购买 {plan_name}")
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title.setStyleSheet("font-size: 18px; font-weight: bold;")
+        layout.addWidget(title)
+
+        # 金额
+        amount_label = QLabel(f"¥{amount:.2f}")
+        amount_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        amount_label.setStyleSheet("font-size: 24px; color: #FF6B35; font-weight: bold;")
+        layout.addWidget(amount_label)
+
+        # 二维码占位符
+        qr_label = QLabel("正在加载二维码...")
+        qr_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        qr_label.setMinimumSize(300, 300)
+        qr_label.setStyleSheet("background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 8px;")
+        layout.addWidget(qr_label)
+
+        # 提示信息
+        hint = QLabel("请使用支付宝或微信扫描二维码完成支付")
+        hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        hint.setStyleSheet("color: #666; font-size: 14px;")
+        layout.addWidget(hint)
+
+        # 订单号
+        order_label = QLabel(f"订单号: {out_trade_no}")
+        order_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        order_label.setStyleSheet("color: #999; font-size: 12px;")
+        layout.addWidget(order_label)
+
+        # 取消按钮
+        cancel_btn = QPushButton("取消支付")
+        cancel_btn.clicked.connect(lambda: self._cancel_payment(dialog))
+        layout.addWidget(cancel_btn)
+
+        # 保存对话框引用以便后续关闭
+        self.payment_polling_dialog = dialog
+        self.current_out_trade_no = out_trade_no
+
+        # 下载并显示二维码
+        self._download_qrcode(qrcode_url, qr_label)
+
+        # 启动支付状态轮询
+        self._start_payment_polling(out_trade_no)
+
+        # 显示对话框
+        dialog.exec()
+
+    def _download_qrcode(self, url: str, label: QLabel):
+        """下载二维码图片并显示"""
+        # 创建网络管理器
+        if not hasattr(self, 'network_manager'):
+            self.network_manager = QNetworkAccessManager(self)
+
+        # 发起请求
+        request = QNetworkRequest(QUrl(url))
+        reply = self.network_manager.get(request)
+
+        # 处理响应
+        def on_finished():
+            if reply.error() == QNetworkReply.NetworkError.NoError:
+                # 下载成功
+                data = reply.readAll()
+                pixmap = QPixmap()
+                pixmap.loadFromData(data)
+
+                if not pixmap.isNull():
+                    # 缩放到合适大小
+                    scaled_pixmap = pixmap.scaled(280, 280, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                    label.setPixmap(scaled_pixmap)
+                    print(f"[MEMBERSHIP] QR code loaded successfully")
+                else:
+                    label.setText("二维码加载失败\n请刷新重试")
+                    print(f"[MEMBERSHIP] Failed to parse QR code image")
+            else:
+                # 下载失败
+                error_msg = reply.errorString()
+                label.setText(f"二维码加载失败\n{error_msg}")
+                print(f"[MEMBERSHIP] Failed to download QR code: {error_msg}")
+
+            reply.deleteLater()
+
+        reply.finished.connect(on_finished)
+
+    def _cancel_payment(self, dialog: QDialog):
+        """取消支付"""
+        # 停止轮询
+        self._stop_payment_polling()
+
+        # 关闭对话框
+        dialog.close()
+
+        print(f"[MEMBERSHIP] Payment cancelled by user")
 
     def _show_payment_waiting_info(self, out_trade_no: str):
         """显示支付等待提示信息"""
@@ -1190,10 +1285,17 @@ class MembershipDialog(QDialog):
         info_dialog.exec()
 
     def _start_payment_polling(self, out_trade_no: str):
-        """开始轮询支付状态（已弃用,保留以防回退需要）"""
-        # ⚠️ 此方法已弃用: submit.php不创建可查询的订单
-        # 现在依赖Z-Pay回调通知(payment-notify.py)更新会员状态
-        pass
+        """开始轮询支付状态"""
+        # 创建定时器，每3秒查询一次
+        if not hasattr(self, 'payment_timer'):
+            self.payment_timer = QTimer(self)
+            self.payment_timer.timeout.connect(lambda: self._check_payment_status(out_trade_no))
+
+        # 设置轮询间隔为3秒
+        self.payment_timer.start(3000)
+
+        print(f"[MEMBERSHIP] Started payment polling for order: {out_trade_no}")
+        print(f"[MEMBERSHIP] Polling interval: 3 seconds")
 
     def _check_payment_status(self, out_trade_no: str):
         """检查支付状态"""

@@ -137,34 +137,38 @@ class handler(BaseHTTPRequestHandler):
             #       不适合桌面浏览器支付,会导致重定向到支付宝错误页面
             # submit.php返回网页支付URL,适合浏览器打开
             # 支付完成通过Z-Pay回调通知(payment-notify.py)更新会员状态,无需轮询查询
-            print(f"[PAYMENT-CREATE] Creating order via submit.php for user {user_id}", file=sys.stderr)
+            print(f"[PAYMENT-CREATE] Creating order via mapi.php for user {user_id}", file=sys.stderr)
 
-            result = zpay.create_order(
+            # 获取客户端IP
+            client_ip = self.headers.get('x-forwarded-for', '').split(',')[0].strip() or \
+                       self.headers.get('x-real-ip', '127.0.0.1')
+
+            result = zpay.create_api_order(
                 out_trade_no=out_trade_no,
                 name=plan_info["name"],
                 money=plan_info["price"],
                 pay_type=pay_type,
                 notify_url=notify_url,
-                return_url=return_url,
-                param=f"{user_id}|{plan_type}"  # ✅ 使用分隔符格式(payment-notify.py已支持)
+                clientip=client_ip,
+                param=f"{user_id}|{plan_type}"
             )
 
             if result["success"]:
-                # 7. 返回支付信息（包含速率限制信息）
-                payment_url = result.get("payment_url", "")
-                params = result.get("params", {})
+                # 7. 返回支付信息（包含二维码URL）
+                qrcode_url = result.get("payurl", "")
+                trade_no = result.get("trade_no", "")
 
                 self._send_success({
                     "success": True,
-                    "payment_url": payment_url,
-                    "params": params,  # ✅ submit.php返回需要拼接的参数
+                    "qrcode_url": qrcode_url,  # 二维码URL供客户端显示
+                    "trade_no": trade_no,
                     "out_trade_no": out_trade_no,
                     "amount": plan_info["price"],
                     "plan_name": plan_info["name"]
                 }, rate_info)
 
-                print(f"[PAYMENT-CREATE] ✓ Order created via submit.php: {out_trade_no}", file=sys.stderr)
-                print(f"[PAYMENT-CREATE] ℹ️ Payment status will be updated via Z-Pay callback", file=sys.stderr)
+                print(f"[PAYMENT-CREATE] ✓ Order created via mapi.php: {out_trade_no}, trade_no: {trade_no}", file=sys.stderr)
+                print(f"[PAYMENT-CREATE] ℹ️ QR code URL: {qrcode_url[:80]}...", file=sys.stderr)
             else:
                 print(f"[PAYMENT-CREATE] ✗ Order creation failed: {result.get('error')}", file=sys.stderr)
                 self._send_error(500, result.get("error", "Failed to create order"), rate_info)
