@@ -1203,11 +1203,24 @@ class MembershipDialog(QDialog):
                 # ✅ 方案A：主动触发会员升级(不依赖Z-Pay回调)
                 # 从订单的param参数中获取user_id和plan_type
                 try:
-                    import json
-                    param_str = order.get("param", "{}")
-                    param_data = json.loads(param_str) if param_str else {}
-                    user_id = param_data.get("user_id")
-                    plan_type = param_data.get("plan_type")
+                    param_str = order.get("param", "")
+
+                    # ✅ 新格式: 使用简单分隔符 "user_id|plan_type"
+                    if "|" in param_str:
+                        parts = param_str.split("|")
+                        if len(parts) == 2:
+                            user_id, plan_type = parts
+                        else:
+                            user_id = plan_type = None
+                    else:
+                        # 兼容旧格式: JSON
+                        try:
+                            import json
+                            param_data = json.loads(param_str) if param_str else {}
+                            user_id = param_data.get("user_id")
+                            plan_type = param_data.get("plan_type")
+                        except:
+                            user_id = plan_type = None
 
                     if user_id and plan_type:
                         print(f"[MEMBERSHIP] Triggering manual upgrade: user={user_id}, plan={plan_type}")
@@ -1224,7 +1237,7 @@ class MembershipDialog(QDialog):
                         else:
                             print(f"[MEMBERSHIP] Manual upgrade failed: {upgrade_result.get('error')}")
                     else:
-                        print(f"[MEMBERSHIP] Warning: Missing user_id or plan_type in order param")
+                        print(f"[MEMBERSHIP] Warning: Missing user_id or plan_type in order param: {param_str}")
 
                 except Exception as e:
                     print(f"[MEMBERSHIP] Error during manual upgrade: {e}")

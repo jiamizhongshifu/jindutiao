@@ -144,10 +144,7 @@ class handler(BaseHTTPRequestHandler):
                 pay_type=pay_type,
                 notify_url=notify_url,
                 return_url=return_url,
-                param=json.dumps({
-                    "user_id": user_id,
-                    "plan_type": plan_type
-                })  # 附加参数，用于回调时识别用户和套餐
+                param=f"{user_id}|{plan_type}"  # ✅ 使用简单分隔符,避免JSON嵌套导致Z-Pay返回数据解析失败
             )
 
             if result["success"]:
