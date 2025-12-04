@@ -1657,7 +1657,9 @@ class ConfigManager(QMainWindow):
             self.tabs.blockSignals(False)
         except Exception as e:
             import logging
+            import traceback
             logging.error(f"加载个人中心标签页失败: {e}")
+            traceback.print_exc()
             # Ensure signals are restored even on error
             self.tabs.blockSignals(False)
             from PySide6.QtWidgets import QLabel
@@ -5781,7 +5783,21 @@ class ConfigManager(QMainWindow):
             )
 
             if result.get("success"):
-                QMessageBox.information(self, "支付成功", f"{plan_name}已成功激活!\n\n请重启应用以刷新会员状态。")
+                # 刷新会员状态
+                from gaiya.core.auth_client import AuthClient
+                auth_client = AuthClient()
+                subscription_result = auth_client.get_subscription_status()
+
+                if subscription_result.get("success"):
+                    logging.info(f"[PAYMENT] Subscription status refreshed: {subscription_result.get('user_tier')}")
+                    QMessageBox.information(self, "支付成功", f"{plan_name}已成功激活!\n\n会员状态已更新")
+
+                    # 刷新UI显示
+                    if hasattr(self, 'update_account_display'):
+                        self.update_account_display()
+                else:
+                    QMessageBox.information(self, "支付成功", f"{plan_name}已成功激活!\n\n请重启应用以刷新会员状态。")
+
                 logging.info(f"[PAYMENT] Manual upgrade successful: {out_trade_no}")
             else:
                 error_msg = result.get("error", "激活失败")
