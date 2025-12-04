@@ -509,7 +509,13 @@ class AuthManager:
             return {"success": False, "error": "Supabase not configured"}
 
         try:
-            self.client.auth.reset_password_for_email(email)
+            # ✅ 修复: 添加redirect_to参数,确保邮件能正确发送
+            self.client.auth.reset_password_for_email(
+                email,
+                options={
+                    "redirect_to": "https://jindutiao.vercel.app/password-reset"
+                }
+            )
 
             print(f"Password reset requested for: {email}", file=sys.stderr)
 
