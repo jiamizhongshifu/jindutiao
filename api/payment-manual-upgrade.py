@@ -84,8 +84,7 @@ class handler(BaseHTTPRequestHandler):
                 self._send_success({
                     "success": True,
                     "message": "会员升级成功",
-                    "membership_tier": update_data["membership_tier"],
-                    "membership_expire_at": update_data["membership_expire_at"]
+                    "membership_tier": update_data["membership_tier"]
                 })
             else:
                 print(f"[MANUAL-UPGRADE] ✗ Failed to upgrade user: {user_id}", file=sys.stderr)
