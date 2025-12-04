@@ -66,22 +66,13 @@ class handler(BaseHTTPRequestHandler):
                 self._send_error(500, "数据库连接失败")
                 return
 
-            # 4. 计算会员到期时间
-            plan_durations = {
-                "pro_monthly": 30,
-                "pro_yearly": 365,
-                "team_partner": 36500  # 100年,相当于永久
-            }
-            days = plan_durations.get(plan_type, 30)
+            # 4. 更新用户会员状态
+            # 注意: users表中没有membership_expire_at字段,只更新membership_tier
+            membership_tier = "pro" if plan_type != "team_partner" else "team_partner"
 
-            now = datetime.utcnow()
-            expire_at = now + timedelta(days=days)
-
-            # 5. 更新用户会员状态
             update_data = {
-                "membership_tier": "pro" if plan_type != "team_partner" else "team_partner",
-                "membership_expire_at": expire_at.isoformat(),
-                "updated_at": now.isoformat()
+                "membership_tier": membership_tier,
+                "updated_at": datetime.utcnow().isoformat()
             }
 
             result = auth_manager.client.table("users").update(update_data).eq("id", user_id).execute()
