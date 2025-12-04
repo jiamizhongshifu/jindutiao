@@ -75,7 +75,9 @@ class handler(BaseHTTPRequestHandler):
                 "user_tier": user_tier
             }
 
+            print(f"[MANUAL-UPGRADE] Updating user {user_id} with data: {update_data}", file=sys.stderr)
             result = auth_manager.admin_client.table("users").update(update_data).eq("id", user_id).execute()
+            print(f"[MANUAL-UPGRADE] Update result: {result}", file=sys.stderr)
 
             if result.data:
                 print(f"[MANUAL-UPGRADE] ✓ User upgraded successfully: {user_id}", file=sys.stderr)
@@ -87,8 +89,8 @@ class handler(BaseHTTPRequestHandler):
                     "user_tier": update_data["user_tier"]
                 })
             else:
-                print(f"[MANUAL-UPGRADE] ✗ Failed to upgrade user: {user_id}", file=sys.stderr)
-                self._send_error(500, "升级失败")
+                print(f"[MANUAL-UPGRADE] ✗ Failed to upgrade user: {user_id}, result.data is empty", file=sys.stderr)
+                self._send_error(500, f"升级失败: result.data为空")
 
         except json.JSONDecodeError:
             self._send_error(400, "Invalid JSON")
