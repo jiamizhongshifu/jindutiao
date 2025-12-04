@@ -11,6 +11,7 @@ try:
     from auth_manager import AuthManager
     from rate_limiter import RateLimiter
     from cors_config import get_cors_origin
+    from validators_enhanced import validate_email
 except ImportError:
     import os
     import sys
@@ -18,6 +19,7 @@ except ImportError:
     from auth_manager import AuthManager
     from rate_limiter import RateLimiter
     from cors_config import get_cors_origin
+    from validators_enhanced import validate_email
 
 
 class handler(BaseHTTPRequestHandler):
@@ -90,7 +92,14 @@ class handler(BaseHTTPRequestHandler):
                 self._send_error(400, "Missing email", rate_info)
                 return
 
-            print(f"[AUTH-RESET-PASSWORD] Password reset requested for: {email}", file=sys.stderr)
+            # ✅ 安全增强: 使用RFC 5322严格邮箱验证
+            is_valid_email, email_error = validate_email(email)
+            if not is_valid_email:
+                self._send_error(400, email_error, rate_info)
+                print(f"[AUTH-RESET-PASSWORD] Invalid email format: {email}", file=sys.stderr)
+                return
+
+            print(f"[AUTH-RESET-PASSWORD] Password reset requested for: {email} from IP: {client_ip}", file=sys.stderr)
 
             # 3. 调用认证管理器
             auth_manager = AuthManager()
@@ -99,10 +108,13 @@ class handler(BaseHTTPRequestHandler):
             # 4. 返回响应（为了安全，即使邮箱不存在也返回成功）
             self._send_success({
                 "success": True,
-                "message": "If the email exists, a password reset link has been sent"
+                "message": "如果该邮箱已注册,您将收到密码重置邮件"
             }, rate_info)
 
-            print(f"[AUTH-RESET-PASSWORD] Password reset email sent to: {email}", file=sys.stderr)
+            if result.get("success"):
+                print(f"[AUTH-RESET-PASSWORD] ✅ Password reset email sent to: {email}", file=sys.stderr)
+            else:
+                print(f"[AUTH-RESET-PASSWORD] ⚠️ Password reset failed (hidden from client): {result.get('error')}", file=sys.stderr)
 
         except json.JSONDecodeError:
             self._send_error(400, "Invalid JSON")
