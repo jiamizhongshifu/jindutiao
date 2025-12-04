@@ -62,19 +62,20 @@ class handler(BaseHTTPRequestHandler):
 
             # 3. 获取AuthManager客户端
             auth_manager = AuthManager()
-            if not auth_manager.client:
-                self._send_error(500, "数据库连接失败")
+            if not auth_manager.admin_client:
+                self._send_error(500, "数据库连接失败(需要admin权限)")
                 return
 
             # 4. 更新用户会员状态
             # 使用user_tier字段(参考subscription_manager.py:118)
+            # 必须使用admin_client绕过RLS策略
             user_tier = "lifetime" if plan_type == "team_partner" else "pro"
 
             update_data = {
                 "user_tier": user_tier
             }
 
-            result = auth_manager.client.table("users").update(update_data).eq("id", user_id).execute()
+            result = auth_manager.admin_client.table("users").update(update_data).eq("id", user_id).execute()
 
             if result.data:
                 print(f"[MANUAL-UPGRADE] ✓ User upgraded successfully: {user_id}", file=sys.stderr)
