@@ -1409,6 +1409,8 @@
     "confirm_password_label": "确认密码",
     "confirm_password_placeholder": "请再次输入密码",
     "password_hint": "至少6个字符",
+    "password_requirements": "密码要求：至少8位，包含大写字母、小写字母和数字",
+    "password_requirements_short": "8位以上，含大小写字母和数字",
     "switch_to_email": "使用邮箱登录 >",
     "signin": {
       "btn_login": "登录",
@@ -1432,7 +1434,7 @@
       "input_error": "输入错误",
       "empty_fields": "请输入邮箱和密码",
       "invalid_email": "邮箱格式不正确",
-      "password_too_short": "密码至少需要6个字符",
+      "password_too_short": "密码至少需要8个字符，且包含大写字母、小写字母和数字",
       "passwords_mismatch": "两次输入的密码不一致",
       "login_failed_title": "登录失败",
       "login_failed": "登录失败：{error_msg}",

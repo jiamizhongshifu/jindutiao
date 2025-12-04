@@ -1409,6 +1409,8 @@
     "confirm_password_label": "Confirm Password",
     "confirm_password_placeholder": "Re-enter your password",
     "password_hint": "At least 6 characters",
+    "password_requirements": "Password requirements: At least 8 characters, including uppercase, lowercase, and numbers",
+    "password_requirements_short": "8+ chars, uppercase, lowercase & numbers",
     "switch_to_email": "Use Email Login >",
     "signin": {
       "btn_login": "Login",
@@ -1432,7 +1434,7 @@
       "input_error": "Input Error",
       "empty_fields": "Please enter email and password",
       "invalid_email": "Invalid email format",
-      "password_too_short": "Password must be at least 6 characters",
+      "password_too_short": "Password must be at least 8 characters and include uppercase, lowercase, and numbers",
       "passwords_mismatch": "Passwords do not match",
       "login_failed_title": "Login Failed",
       "login_failed": "Login failed: {error_msg}",

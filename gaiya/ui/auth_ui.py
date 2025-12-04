@@ -206,6 +206,11 @@ class AuthDialog(QDialog):
         self.signup_password_input.setEchoMode(QLineEdit.EchoMode.Password)
         self.signup_password_input.setMinimumHeight(35)
 
+        # 密码要求提示
+        password_req_label = QLabel(tr("auth.password_requirements_short"))
+        password_req_label.setStyleSheet("color: #666; font-size: 11px;")
+        password_req_label.setWordWrap(True)
+
         # 确认密码
         confirm_password_label = QLabel(tr("auth.confirm_password_label"))
         self.signup_confirm_password_input = QLineEdit()
@@ -263,6 +268,8 @@ class AuthDialog(QDialog):
         layout.addWidget(self.signup_email_input)
         layout.addWidget(password_label)
         layout.addWidget(self.signup_password_input)
+        layout.addWidget(password_req_label)  # 添加密码要求提示
+        layout.addSpacing(5)
         layout.addWidget(confirm_password_label)
         layout.addWidget(self.signup_confirm_password_input)
         layout.addSpacing(10)
@@ -352,7 +359,23 @@ class AuthDialog(QDialog):
             QMessageBox.warning(self, tr("auth.error.input_error"), tr("auth.error.invalid_email"))
             return
 
-        if len(password) < 6:
+        # 密码验证: 至少8位,包含大写字母、小写字母和数字
+        if len(password) < 8:
+            QMessageBox.warning(self, tr("auth.error.input_error"), tr("auth.error.password_too_short"))
+            return
+
+        # 检查是否包含大写字母
+        if not any(c.isupper() for c in password):
+            QMessageBox.warning(self, tr("auth.error.input_error"), tr("auth.error.password_too_short"))
+            return
+
+        # 检查是否包含小写字母
+        if not any(c.islower() for c in password):
+            QMessageBox.warning(self, tr("auth.error.input_error"), tr("auth.error.password_too_short"))
+            return
+
+        # 检查是否包含数字
+        if not any(c.isdigit() for c in password):
             QMessageBox.warning(self, tr("auth.error.input_error"), tr("auth.error.password_too_short"))
             return
 

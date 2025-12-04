@@ -1199,10 +1199,22 @@ class MembershipDialog(QDialog):
         order_label.setStyleSheet("color: #999; font-size: 12px;")
         layout.addWidget(order_label)
 
+        # 按钮布局
+        from PySide6.QtWidgets import QHBoxLayout
+        button_layout = QHBoxLayout()
+
         # 取消按钮
         cancel_btn = QPushButton("取消支付")
         cancel_btn.clicked.connect(lambda: self._cancel_payment(dialog))
-        layout.addWidget(cancel_btn)
+        button_layout.addWidget(cancel_btn)
+
+        # 已完成支付按钮
+        confirm_btn = QPushButton("已完成支付")
+        confirm_btn.setStyleSheet("background-color: #4CAF50; color: white; font-weight: bold;")
+        confirm_btn.clicked.connect(lambda: self._confirm_payment_manually(dialog, out_trade_no, plan_name))
+        button_layout.addWidget(confirm_btn)
+
+        layout.addLayout(button_layout)
 
         # 保存对话框引用以便后续关闭
         self.payment_polling_dialog = dialog
@@ -1252,6 +1264,55 @@ class MembershipDialog(QDialog):
             reply.deleteLater()
 
         reply.finished.connect(on_finished)
+
+    def _confirm_payment_manually(self, dialog: QDialog, out_trade_no: str, plan_name: str):
+        """手动确认支付完成"""
+        from PySide6.QtWidgets import QMessageBox
+
+        # 停止轮询
+        self._stop_payment_polling()
+
+        # 关闭对话框
+        dialog.close()
+
+        print(f"[MEMBERSHIP] User manually confirmed payment: {out_trade_no}")
+
+        # 直接触发会员升级
+        try:
+            # 提取user_id和plan_type
+            user_id = self.auth_client.get_user_id()
+
+            # 从plan_name推断plan_type
+            plan_type_map = {
+                "Pro月度订阅": "pro_monthly",
+                "Pro年度订阅": "pro_yearly",
+                "团队合伙人": "team_partner"
+            }
+            plan_type = plan_type_map.get(plan_name, "pro_monthly")
+
+            print(f"[MEMBERSHIP] Triggering manual upgrade for user {user_id}, plan {plan_type}")
+
+            # 调用手动升级API
+            result = self.auth_client.trigger_manual_upgrade(
+                out_trade_no=out_trade_no,
+                user_id=user_id,
+                plan_type=plan_type
+            )
+
+            if result.get("success"):
+                QMessageBox.information(self, "支付成功", f"{plan_name}已成功激活!")
+                print(f"[MEMBERSHIP] Manual upgrade successful: {out_trade_no}")
+
+                # 刷新会员信息
+                self._load_membership_info()
+            else:
+                error_msg = result.get("error", "激活失败")
+                QMessageBox.warning(self, "激活失败", f"会员激活失败: {error_msg}\n\n请联系客服处理")
+                print(f"[MEMBERSHIP] Manual upgrade failed: {error_msg}")
+
+        except Exception as e:
+            print(f"[MEMBERSHIP] Manual upgrade error: {e}")
+            QMessageBox.critical(self, "错误", f"激活过程出错: {str(e)}\n\n请联系客服处理")
 
     def _cancel_payment(self, dialog: QDialog):
         """取消支付"""

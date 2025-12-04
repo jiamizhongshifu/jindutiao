@@ -437,8 +437,16 @@ class AuthClient:
 
                 return data
             else:
+                # 解析详细错误信息
                 logger.error(f"[AUTH-SIGNUP] Error response: {response.text}")
-                return {"success": False, "error": f"HTTP {response.status_code}"}
+                try:
+                    error_data = response.json()
+                    # API返回的error字段包含详细错误信息
+                    error_msg = error_data.get("error", f"HTTP {response.status_code}")
+                    return {"success": False, "error": error_msg}
+                except (ValueError, json.JSONDecodeError):
+                    # 如果响应不是JSON格式,返回状态码
+                    return {"success": False, "error": f"HTTP {response.status_code}"}
 
         except requests.exceptions.Timeout as e:
             logger.error(f"[AUTH-SIGNUP] Timeout error: {e}")
@@ -489,9 +497,15 @@ class AuthClient:
 
                     return data
                 else:
+                    # 解析详细错误信息
                     logger.error(f"[AUTH-SIGNUP-HTTPX] Error response: {response.text}")
-                    # httpx失败，继续尝试urllib
-                    raise Exception(f"HTTP {response.status_code}")
+                    try:
+                        error_data = response.json()
+                        error_msg = error_data.get("error", f"HTTP {response.status_code}")
+                        # 返回详细错误而不是抛出异常（让调用者处理）
+                        return {"success": False, "error": error_msg}
+                    except (ValueError, json.JSONDecodeError):
+                        return {"success": False, "error": f"HTTP {response.status_code}"}
 
             except Exception as httpx_error:
                 logger.warning(f"[AUTH-SIGNUP] httpx方案失败: {httpx_error}")

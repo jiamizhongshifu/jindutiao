@@ -1,0 +1,131 @@
+311 INFO: PyInstaller: 6.16.0, contrib hooks: 2025.9
+311 INFO: Python: 3.11.9
+333 INFO: Platform: Windows-10-10.0.26200-SP0
+333 INFO: Python environment: C:\Users\Sats\AppData\Local\Programs\Python\Python311
+342 INFO: Module search paths (PYTHONPATH):
+['c:\\Users\\Sats\\Downloads\\jindutiao',
+ 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\pyinstaller.exe',
+ 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\python311.zip',
+ 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\DLLs',
+ 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib',
+ 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311',
+ 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages',
+ 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\win32',
+ 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\win32\\lib',
+ 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\Pythonwin',
+ 'c:\\Users\\Sats\\Downloads\\jindutiao',
+ 'c:\\Users\\Sats\\Downloads\\jindutiao']
+366 WARNING: qt_material must be imported after PySide or PyQt!
+896 INFO: Appending 'datas' from .spec
+908 INFO: checking Analysis
+923 INFO: Building because excludes changed
+923 INFO: Looking for Python shared library...
+923 INFO: Using Python shared library: C:\Users\Sats\AppData\Local\Programs\Python\Python311\python311.dll
+923 INFO: Running Analysis Analysis-00.toc
+923 INFO: Target bytecode optimization level: 0
+923 INFO: Initializing module dependency graph...
+924 INFO: Initializing module graph hook caches...
+938 INFO: Analyzing modules for base_library.zip ...
+2406 INFO: Processing standard module hook 'hook-heapq.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+2449 INFO: Processing standard module hook 'hook-encodings.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+3588 INFO: Processing standard module hook 'hook-pickle.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+4438 INFO: Caching module dependency graph...
+4481 INFO: Analyzing c:\Users\Sats\Downloads\jindutiao\main.py
+4574 INFO: Processing standard module hook 'hook-platform.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+4581 INFO: Processing standard module hook 'hook-PySide6.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+4747 INFO: Processing standard module hook 'hook-shiboken6.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+4858 INFO: Processing standard module hook 'hook-PySide6.QtNetwork.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+5570 INFO: Processing standard module hook 'hook-PySide6.QtCore.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+6260 INFO: Processing standard module hook 'hook-PySide6.QtWidgets.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+6917 INFO: Processing standard module hook 'hook-PySide6.QtGui.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+7323 INFO: Processing standard module hook 'hook-sqlite3.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+7783 INFO: Processing standard module hook 'hook-_ctypes.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+7804 INFO: Processing standard module hook 'hook-urllib3.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+7896 INFO: Processing pre-safe-import-module hook 'hook-typing_extensions.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+7896 INFO: SetuptoolsInfo: initializing cached setuptools info...
+8647 INFO: Processing standard module hook 'hook-multiprocessing.util.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+8704 INFO: Processing standard module hook 'hook-xml.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+9850 INFO: Processing standard module hook 'hook-charset_normalizer.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+9946 INFO: Processing standard module hook 'hook-cryptography.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+11123 INFO: hook-cryptography: cryptography does not seem to be using dynamically linked OpenSSL.
+11346 INFO: Processing standard module hook 'hook-certifi.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+11429 INFO: Processing standard module hook 'hook-keyring.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+12124 INFO: Processing pre-safe-import-module hook 'hook-jaraco.context.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+12129 INFO: Processing pre-safe-import-module hook 'hook-backports.tarfile.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+12172 INFO: Processing standard module hook 'hook-backports.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+12177 INFO: Processing pre-safe-import-module hook 'hook-jaraco.functools.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+12181 INFO: Processing pre-safe-import-module hook 'hook-more_itertools.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+12279 INFO: Processing pre-safe-import-module hook 'hook-importlib_metadata.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+12291 INFO: Processing standard module hook 'hook-importlib_metadata.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+12307 INFO: Processing pre-safe-import-module hook 'hook-zipp.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+12476 INFO: Processing standard module hook 'hook-anyio.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+13638 INFO: Processing standard module hook 'hook-difflib.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+13729 INFO: Processing standard module hook 'hook-pygments.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+15892 INFO: Processing standard module hook 'hook-sysconfig.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+16249 INFO: Processing standard module hook 'hook-config_gui.py' from 'c:\\Users\\Sats\\Downloads\\jindutiao'
+16250 WARNING: collect_data_files - skipping data collection for module 'config_gui' as it is not a package.
+16250 WARNING: collect_dynamic_libs - skipping library collection for module 'config_gui' as it is not a package.
+17184 INFO: Analyzing hidden import 'gaiya.ui.membership_ui'
+17203 INFO: Processing module hooks (post-graph stage)...
+17314 INFO: Processing standard module hook 'hook-win32ctypes.core.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+18496 INFO: Processing standard module hook 'hook-pycparser.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+18762 INFO: Processing standard module hook 'hook-setuptools.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+18766 INFO: Processing pre-safe-import-module hook 'hook-distutils.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+18766 INFO: Processing pre-find-module-path hook 'hook-distutils.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks\\pre_find_module_path'
+19281 INFO: Processing standard module hook 'hook-distutils.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+19311 INFO: Processing standard module hook 'hook-distutils.util.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+19330 INFO: Processing standard module hook 'hook-_osx_support.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+19435 INFO: Processing standard module hook 'hook-pkg_resources.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+20784 INFO: Processing pre-safe-import-module hook 'hook-packaging.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+21279 INFO: Processing standard module hook 'hook-pywintypes.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+21365 INFO: Processing pre-safe-import-module hook 'hook-gi.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+21378 INFO: Processing pre-safe-import-module hook 'hook-win32com.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\pre_safe_import_module'
+21451 INFO: Processing standard module hook 'hook-win32com.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+21452 INFO: Processing standard module hook 'hook-pythoncom.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+21935 INFO: Processing standard module hook 'hook-PIL.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+21998 INFO: Processing standard module hook 'hook-PIL.Image.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+22654 INFO: Processing standard module hook 'hook-numpy.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+23311 INFO: Processing standard module hook 'hook-psutil.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+24220 INFO: Processing standard module hook 'hook-PIL.ImageFilter.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+25413 INFO: Processing standard module hook 'hook-setuptools._vendor.importlib_metadata.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+25479 INFO: Processing standard module hook 'hook-setuptools._vendor.jaraco.text.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+26473 INFO: Processing standard module hook 'hook-PIL.SpiderImagePlugin.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+26505 INFO: Performing binary vs. data reclassification (242 entries)
+26545 INFO: Looking for ctypes DLLs
+26557 WARNING: Library GetUserDefaultUILanguage.dll required via ctypes not found
+26730 INFO: Analyzing run-time hooks ...
+26735 INFO: Including run-time hook 'pyi_rth_inspect.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+26736 INFO: Including run-time hook 'pyi_rth_pkgutil.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+26739 INFO: Including run-time hook 'pyi_rth_multiprocessing.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+26740 INFO: Including run-time hook 'pyi_rth_setuptools.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+26741 INFO: Including run-time hook 'pyi_rth_pkgres.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+26743 INFO: Including run-time hook 'pyi_rth_pywintypes.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\rthooks'
+26744 INFO: Including run-time hook 'pyi_rth_pythoncom.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\rthooks'
+26745 INFO: Including run-time hook 'pyi_rth_cryptography_openssl.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\rthooks'
+26745 INFO: Including run-time hook 'pyi_rth_pyside6.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+26746 INFO: Processing pre-find-module-path hook 'hook-_pyi_rth_utils.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks\\pre_find_module_path'
+26748 INFO: Processing standard module hook 'hook-_pyi_rth_utils.py' from 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PyInstaller\\hooks'
+26766 INFO: Creating base_library.zip...
+26778 INFO: Looking for dynamic libraries
+28124 INFO: Extra DLL search directories (AddDllDirectory): ['C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\shiboken6', 'C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\numpy.libs']
+28124 INFO: Extra DLL search directories (PATH): ['C:\\Users\\Sats\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\PySide6']
+30080 INFO: Warnings written to c:\Users\Sats\Downloads\jindutiao\build\Gaiya\warn-Gaiya.txt
+30170 INFO: Graph cross-reference written to c:\Users\Sats\Downloads\jindutiao\build\Gaiya\xref-Gaiya.html
+30201 INFO: checking PYZ
+30344 INFO: checking PKG
+30346 INFO: Building because toc changed
+30346 INFO: Building PKG (CArchive) GaiYa-v1.6.pkg
+43990 INFO: Building PKG (CArchive) GaiYa-v1.6.pkg completed successfully.
+43995 INFO: Bootloader C:\Users\Sats\AppData\Local\Programs\Python\Python311\Lib\site-packages\PyInstaller\bootloader\Windows-64bit-intel\runw.exe
+43995 INFO: checking EXE
+43997 INFO: Building because toc changed
+43997 INFO: Building EXE from EXE-00.toc
+44004 INFO: Copying bootloader EXE to c:\Users\Sats\Downloads\jindutiao\dist\GaiYa-v1.6.exe
+44009 WARNING: Execution of 'remove_all_resources' failed on attempt #1 / 20: error(110, 'EndUpdateResourceW', '系统无法打开指定的设备或文件。'). Retrying in 0.05 second(s)...
+44067 INFO: Copying icon to EXE
+44072 INFO: Copying 0 resources to EXE
+44072 INFO: Embedding manifest in EXE
+44076 INFO: Appending PKG archive to EXE
+44134 INFO: Fixing EXE headers
+44407 INFO: Building EXE from EXE-00.toc completed successfully.
+44415 INFO: Build complete! The results are available in: c:\Users\Sats\Downloads\jindutiao\dist

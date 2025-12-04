@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>邮箱验证成功 - GaiYa</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            padding: 48px 32px;
+            text-align: center;
+        }
+
+        .icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: scaleIn 0.5s ease-out;
+        }
+
+        .icon svg {
+            width: 48px;
+            height: 48px;
+            stroke: white;
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+            }
+            to {
+                transform: scale(1);
+            }
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 16px;
+        }
+
+        p {
+            font-size: 16px;
+            color: #718096;
+            line-height: 1.6;
+            margin-bottom: 32px;
+        }
+
+        .instructions {
+            background: #f7fafc;
+            border-left: 4px solid #667eea;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: left;
+            margin-bottom: 32px;
+        }
+
+        .instructions h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 12px;
+        }
+
+        .instructions ol {
+            padding-left: 20px;
+            color: #4a5568;
+            font-size: 14px;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+        }
+
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 14px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .footer {
+            margin-top: 32px;
+            font-size: 14px;
+            color: #a0aec0;
+        }
+
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .countdown {
+            display: inline-block;
+            font-weight: 600;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">
+            <svg viewBox="0 0 24 24">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+        </div>
+
+        <h1>✅ 邮箱验证成功!</h1>
+
+        <p>恭喜您,您的邮箱已成功验证。现在可以返回客户端使用邮箱和密码登录了。</p>
+
+        <div class="instructions">
+            <h3>📱 下一步操作:</h3>
+            <ol>
+                <li>返回 GaiYa 客户端</li>
+                <li>在登录界面输入您的邮箱和密码</li>
+                <li>点击"登录"按钮</li>
+            </ol>
+        </div>
+
+        <a href="#" class="button" onclick="closeWindow()">关闭此页面</a>
+
+        <div class="footer">
+            <p>此页面将在 <span class="countdown" id="countdown">10</span> 秒后自动关闭</p>
+            <p>有问题? <a href="https://gaiyatime.com/support" target="_blank">联系技术支持</a></p>
+        </div>
+    </div>
+
+    <script>
+        // 自动倒计时关闭
+        let seconds = 10;
+        const countdownElement = document.getElementById('countdown');
+
+        const timer = setInterval(() => {
+            seconds--;
+            countdownElement.textContent = seconds;
+
+            if (seconds <= 0) {
+                clearInterval(timer);
+                window.close();
+            }
+        }, 1000);
+
+        // 手动关闭按钮
+        function closeWindow() {
+            window.close();
+            // 如果无法关闭(不是由脚本打开的窗口),显示提示
+            setTimeout(() => {
+                alert('请手动关闭此浏览器标签页');
+            }, 100);
+        }
+
+        // 提取URL中的token信息(可选,用于调试)
+        const hash = window.location.hash;
+        if (hash) {
+            console.log('Verification successful, tokens received');
+            // 可以在这里发送确认信息到客户端
+        }
+    </script>
+</body>
+</html>
