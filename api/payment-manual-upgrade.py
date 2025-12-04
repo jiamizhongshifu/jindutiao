@@ -67,12 +67,11 @@ class handler(BaseHTTPRequestHandler):
                 return
 
             # 4. 更新用户会员状态
-            # 注意: users表中没有membership_expire_at字段,只更新membership_tier
-            membership_tier = "pro" if plan_type != "team_partner" else "team_partner"
+            # 使用user_tier字段(参考subscription_manager.py:118)
+            user_tier = "lifetime" if plan_type == "team_partner" else "pro"
 
             update_data = {
-                "membership_tier": membership_tier,
-                "updated_at": datetime.utcnow().isoformat()
+                "user_tier": user_tier
             }
 
             result = auth_manager.client.table("users").update(update_data).eq("id", user_id).execute()
@@ -84,7 +83,7 @@ class handler(BaseHTTPRequestHandler):
                 self._send_success({
                     "success": True,
                     "message": "会员升级成功",
-                    "membership_tier": update_data["membership_tier"]
+                    "user_tier": update_data["user_tier"]
                 })
             else:
                 print(f"[MANUAL-UPGRADE] ✗ Failed to upgrade user: {user_id}", file=sys.stderr)
