@@ -17,6 +17,12 @@ import urllib.request
 import urllib.parse
 import urllib.error
 
+# Optional: load environment variables from .env when available
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
 # ✅ 安全修复: 使用logger代替print语句
 logger = logging.getLogger(__name__)
 
