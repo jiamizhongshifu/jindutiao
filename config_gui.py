@@ -5674,6 +5674,7 @@ class ConfigManager(QMainWindow):
         payment_url = result.get("payment_url")
         params = result.get("params", {})
         out_trade_no = result.get("out_trade_no")
+        trade_no = result.get("trade_no")
 
         # 拼接支付参数到URL
         query_string = urlencode(params)
@@ -5704,8 +5705,9 @@ class ConfigManager(QMainWindow):
         auth_client = AuthClient()
 
         # 使用 partial 避免 Lambda 循环引用
-        self.payment_timer.timeout.connect(partial(self._check_payment_status, out_trade_no, auth_client))
+        self.payment_timer.timeout.connect(partial(self._check_payment_status, out_trade_no, trade_no, auth_client))
         self.payment_timer.start()
+        logging.info(f"[PAYMENT] Started payment polling for order: {out_trade_no}")
 
         # 监听取消按钮
         self.payment_polling_dialog.rejected.connect(self._stop_payment_polling)
@@ -5721,8 +5723,12 @@ class ConfigManager(QMainWindow):
         # 如果上一次查询还在进行中，跳过本次查询
         if hasattr(self, '_status_check_worker') and self._status_check_worker.isRunning():
             import logging
-            logging.debug("[PAYMENT] Previous status check still running, skipping...")
+            logging.info("[PAYMENT] Previous status check still running, skipping...")
             return
+        
+        # 记录轮询开始
+        import logging
+        logging.info(f"[PAYMENT] Checking payment status for order: {out_trade_no}")
 
         # 创建异步Worker
         self._status_check_worker = AsyncNetworkWorker(
@@ -5742,7 +5748,7 @@ class ConfigManager(QMainWindow):
         order = result.get("order", {})
         status = order.get("status")
 
-        logging.debug(f"[PAYMENT] Status check result: {status}")
+        logging.info(f"[PAYMENT] Status check result: {status}")
 
         if status and status.lower() in ("paid", "success", "successful", "completed", "pay_success", "payment_success"):
             # 支付成功
