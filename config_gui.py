@@ -5129,6 +5129,10 @@ class ConfigManager(QMainWindow):
             trade_no = result.get("trade_no")
             amount = result.get("amount")
             plan_name = result.get("plan_name", "Pro月度订阅")
+            pay_type = getattr(self, "_current_pay_type", "") or result.get("pay_type", "") or "wxpay"
+            pay_type_name = "支付宝" if pay_type == "alipay" else "微信支付" if pay_type == "wxpay" else "支付宝或微信"
+            pay_type = getattr(self, "_current_pay_type", "") or result.get("pay_type", "")
+            pay_type_name = "支付宝" if pay_type == "alipay" else "微信支付" if pay_type == "wxpay" else "支付宝或微信"
 
             logging.info(f"[PAYMENT] Order created: {out_trade_no}, trade_no: {trade_no}")
             logging.info(f"[PAYMENT] QR code URL: {qrcode_url[:80] if qrcode_url else 'None'}...")
@@ -5163,7 +5167,7 @@ class ConfigManager(QMainWindow):
             layout.addWidget(qr_label)
 
             # 提示信息
-            hint = QLabel("请使用支付宝或微信扫描二维码完成支付")
+            hint = QLabel(f"请使用{pay_type_name}扫描二维码完成支付")
             hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
             hint.setStyleSheet("color: #666; font-size: 14px;")
             layout.addWidget(hint)
@@ -5354,7 +5358,7 @@ class ConfigManager(QMainWindow):
             layout.addWidget(qr_label)
 
             # 提示信息
-            hint = QLabel("请使用支付宝或微信扫描二维码完成支付")
+            hint = QLabel(f"请使用{pay_type_name}扫描二维码完成支付")
             hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
             hint.setStyleSheet("color: #666; font-size: 14px;")
             layout.addWidget(hint)
