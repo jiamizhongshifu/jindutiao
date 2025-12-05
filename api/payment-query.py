@@ -44,14 +44,10 @@ class handler(BaseHTTPRequestHandler):
             # 2. 查询订单
             zpay = ZPayManager()
 
-            # ✅ 修复: mapi.php创建的订单优先通过mapi.php查询
-            # 如果mapi.php查不到,再尝试api.php
-            print(f"[PAYMENT-QUERY] Trying mapi.php first (order created via mapi)", file=sys.stderr)
-            result = zpay.query_api_order(out_trade_no=out_trade_no, trade_no=trade_no)
-
-            if not result.get("success"):
-                print(f"[PAYMENT-QUERY] mapi.php failed, fallback to api.php", file=sys.stderr)
-                result = zpay.query_order(out_trade_no=out_trade_no, trade_no=trade_no)
+            # ✅ 修复: mapi.php 不支持查询操作,统一使用 api.php 查询
+            # mapi.php 创建的订单可以通过 api.php 查询(已验证)
+            print(f"[PAYMENT-QUERY] Querying order via api.php: out_trade_no={out_trade_no}, trade_no={trade_no}", file=sys.stderr)
+            result = zpay.query_order(out_trade_no=out_trade_no, trade_no=trade_no)
 
             if result["success"]:
                 order = result["order"]
