@@ -575,14 +575,59 @@ class AuthManager:
             return {"success": False, "error": "Supabase not configured"}
 
         try:
-            # 使用access_token更新密码
-            self.client.auth.update_user({
-                "password": new_password
-            })
+            # 优先使用 Admin API，避免客户端 session 丢失导致“Auth session missing”
+            if self.admin_client:
+                try:
+                    # 从 access_token 解出 user_id（JWT payload 第2段）
+                    import base64
+                    import json as jsonlib
 
-            print("Password updated successfully", file=sys.stderr)
+                    parts = access_token.split(".")
+                    if len(parts) >= 2:
+                        payload = parts[1] + "=" * (-len(parts[1]) % 4)
+                        data = jsonlib.loads(base64.urlsafe_b64decode(payload))
+                        user_id = data.get("sub")
+                    else:
+                        user_id = None
 
-            return {"success": True}
+                    if user_id:
+                        self.admin_client.auth.admin.update_user_by_id(
+                            user_id,
+                            {"password": new_password}
+                        )
+                        print("Password updated via admin API", file=sys.stderr)
+                        return {"success": True}
+                    else:
+                        print("Failed to parse user_id from token, fallback to bearer update", file=sys.stderr)
+                except Exception as admin_err:
+                    print(f"[AUTH-UPDATE] admin update failed: {admin_err}", file=sys.stderr)
+
+            # Fallback: 直接调用 Supabase Auth REST 接口，带上 access_token 作为 Bearer
+            supabase_url = os.getenv("SUPABASE_URL", "").rstrip("/")
+            if not supabase_url:
+                return {"success": False, "error": "Supabase URL missing"}
+
+            resp = requests.put(
+                f"{supabase_url}/auth/v1/user",
+                headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "apikey": os.getenv("SUPABASE_ANON_KEY", "")
+                },
+                json={"password": new_password},
+                timeout=10
+            )
+
+            if resp.status_code == 200:
+                print("Password updated via REST API", file=sys.stderr)
+                return {"success": True}
+
+            try:
+                err_detail = resp.json()
+            except Exception:
+                err_detail = resp.text
+            error_msg = f"HTTP {resp.status_code}: {err_detail}"
+            print(f"[AUTH-UPDATE] REST update failed: {error_msg}", file=sys.stderr)
+            return {"success": False, "error": error_msg}
 
         except Exception as e:
             print(f"Error updating password: {e}", file=sys.stderr)
