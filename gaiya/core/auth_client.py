@@ -805,7 +805,8 @@ class AuthClient:
                     "plan_type": plan_type,
                     "pay_type": pay_type
                 },
-                timeout=10
+                # 延长超时时间，避免网络抖动下轻易报超时
+                timeout=20
             )
 
             if response.status_code == 200:
