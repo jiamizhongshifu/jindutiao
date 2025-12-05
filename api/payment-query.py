@@ -33,12 +33,13 @@ class handler(BaseHTTPRequestHandler):
             params = parse_qs(parsed_url.query)
 
             out_trade_no = params.get("out_trade_no", [None])[0]
+            trade_no = params.get("trade_no", [None])[0]
 
             if not out_trade_no:
                 self._send_error(400, "Missing out_trade_no parameter")
                 return
 
-            print(f"[PAYMENT-QUERY] Querying order: {out_trade_no}", file=sys.stderr)
+            print(f"[PAYMENT-QUERY] Querying order: out_trade_no={out_trade_no}, trade_no={trade_no}", file=sys.stderr)
 
             # 2. 查询订单(使用mapi.php方式查询API订单)
             zpay = ZPayManager()
@@ -50,7 +51,7 @@ class handler(BaseHTTPRequestHandler):
             result = None
 
             for attempt in range(max_retries):
-                result = zpay.query_api_order(out_trade_no=out_trade_no)
+                result = zpay.query_api_order(out_trade_no=out_trade_no, trade_no=trade_no)
 
                 if result["success"]:
                     print(f"[PAYMENT-QUERY] Order found on attempt {attempt + 1} (mapi)", file=sys.stderr)
@@ -66,7 +67,7 @@ class handler(BaseHTTPRequestHandler):
             # 如果mapi查询失败, 再尝试 api.php 查询
             if not result or not result.get("success"):
                 print(f"[PAYMENT-QUERY] Fallback to api.php query", file=sys.stderr)
-                result = zpay.query_order(out_trade_no=out_trade_no)
+                result = zpay.query_order(out_trade_no=out_trade_no, trade_no=trade_no)
                 if result.get("success"):
                     print(f"[PAYMENT-QUERY] Order found via api.php", file=sys.stderr)
 

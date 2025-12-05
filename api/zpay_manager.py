@@ -280,12 +280,13 @@ class ZPayManager:
                 "error": str(e)
             }
 
-    def query_api_order(self, out_trade_no: str) -> Dict:
+    def query_api_order(self, out_trade_no: Optional[str] = None, trade_no: Optional[str] = None) -> Dict:
         """
         查询API订单状态（mapi.php创建的订单）
 
         Args:
             out_trade_no: 商户订单号
+            trade_no: ZPAY订单号
 
         Returns:
             订单信息
@@ -296,8 +297,12 @@ class ZPayManager:
                 "act": "order",
                 "pid": self.pid,
                 "key": self.pkey,
-                "out_trade_no": out_trade_no
             }
+
+            if out_trade_no:
+                params["out_trade_no"] = out_trade_no
+            if trade_no:
+                params["trade_no"] = trade_no
 
             # 补充签名参数（部分网关会校验 sign/sign_type）
             params["sign_type"] = "MD5"
