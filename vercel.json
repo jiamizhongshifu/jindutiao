@@ -17,6 +17,14 @@
       "destination": "/api/password-reset"
     },
     {
+      "source": "/email-verified",
+      "destination": "/api/email-verified"
+    },
+    {
+      "source": "/email-verified/(.*)",
+      "destination": "/api/email-verified"
+    },
+    {
       "source": "/(.*).html",
       "destination": "/public/$1.html"
     },
