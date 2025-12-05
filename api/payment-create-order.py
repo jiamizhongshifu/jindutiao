@@ -126,8 +126,9 @@ class handler(BaseHTTPRequestHandler):
             out_trade_no = self._generate_order_no(user_id)
 
             # 5. 构建回调URL
-            # 注意：这里需要替换为实际的域名
-            base_url = "https://jindutiao.vercel.app"  # 或从环境变量获取
+            # 从环境变量读取域名,支持灵活配置
+            import os
+            base_url = os.getenv("FRONTEND_URL", "https://jindutiao.vercel.app")
             notify_url = f"{base_url}/api/payment-notify"
             return_url = f"gaiya://payment-success?out_trade_no={out_trade_no}"
 
