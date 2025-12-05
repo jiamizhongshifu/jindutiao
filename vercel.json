@@ -10,11 +10,11 @@
     },
     {
       "source": "/password-reset",
-      "destination": "/public/password-reset.html"
+      "destination": "/api/password-reset"
     },
     {
       "source": "/password-reset/(.*)",
-      "destination": "/public/password-reset.html"
+      "destination": "/api/password-reset"
     },
     {
       "source": "/(.*).html",
