@@ -41,35 +41,13 @@ class handler(BaseHTTPRequestHandler):
 
             print(f"[PAYMENT-QUERY] Querying order: out_trade_no={out_trade_no}, trade_no={trade_no}", file=sys.stderr)
 
-            # 2. 查询订单(使用mapi.php方式查询API订单)
+            # 2. 查询订单
             zpay = ZPayManager()
 
-            # ✅ 修复: 使用query_api_order查询mapi.php创建的订单
-            # mapi.php创建的订单必须通过mapi.php查询,不能用api.php
-            import time
-            max_retries = 3
-            result = None
-
-            for attempt in range(max_retries):
-                result = zpay.query_api_order(out_trade_no=out_trade_no, trade_no=trade_no)
-
-                if result["success"]:
-                    print(f"[PAYMENT-QUERY] Order found on attempt {attempt + 1} (mapi)", file=sys.stderr)
-                    break
-
-                # 如果不是最后一次尝试,等待2秒后重试
-                if attempt < max_retries - 1:
-                    print(f"[PAYMENT-QUERY] Order not found on mapi, retry {attempt + 2}/{max_retries} in 2s...", file=sys.stderr)
-                    time.sleep(2)
-                else:
-                    print(f"[PAYMENT-QUERY] Order not found after {max_retries} attempts (mapi)", file=sys.stderr)
-
-            # 如果mapi查询失败, 再尝试 api.php 查询
-            if not result or not result.get("success"):
-                print(f"[PAYMENT-QUERY] Fallback to api.php query", file=sys.stderr)
-                result = zpay.query_order(out_trade_no=out_trade_no, trade_no=trade_no)
-                if result.get("success"):
-                    print(f"[PAYMENT-QUERY] Order found via api.php", file=sys.stderr)
+            # ✅ 优化: mapi.php创建的订单只能通过api.php查询(Z-Pay限制)
+            # 直接使用api.php避免无效的mapi重试(节省6秒)
+            print(f"[PAYMENT-QUERY] Querying order via api.php", file=sys.stderr)
+            result = zpay.query_order(out_trade_no=out_trade_no, trade_no=trade_no)
 
             if result["success"]:
                 order = result["order"]

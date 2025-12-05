@@ -19,11 +19,15 @@ from PySide6.QtGui import QFont, QDesktopServices, QPainter, QColor, QPen, QBrus
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
 import sys
 import os
+import logging
 
 # 添加父目录到路径以导入core模块
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from gaiya.core.auth_client import AuthClient
 from gaiya.i18n.translator import tr
+
+# ✅ 修复: 使用logging替代print，确保PyInstaller环境中日志可见
+logger = logging.getLogger(__name__)
 
 
 class GradientCardWidget(QWidget):
@@ -1349,89 +1353,97 @@ class MembershipDialog(QDialog):
     def _start_payment_polling(self, out_trade_no: str):
         """开始轮询支付状态"""
         # 创建定时器，每3秒查询一次
+        # ✅ 修复: 不传递parent参数，避免模态对话框事件循环冲突
         if not hasattr(self, 'payment_timer'):
-            self.payment_timer = QTimer(self)
+            self.payment_timer = QTimer()
             self.payment_timer.timeout.connect(lambda: self._check_payment_status(out_trade_no))
 
         # 设置轮询间隔为3秒
         self.payment_timer.start(3000)
 
-        print(f"[MEMBERSHIP] Started payment polling for order: {out_trade_no}")
-        print(f"[MEMBERSHIP] Polling interval: 3 seconds")
+        logger.info(f"[MEMBERSHIP] Started payment polling for order: {out_trade_no}")
+        logger.info(f"[MEMBERSHIP] Polling interval: 3 seconds")
 
     def _check_payment_status(self, out_trade_no: str):
         """检查支付状态"""
-        print(f"[MEMBERSHIP] Checking payment status for order: {out_trade_no}")
-        result = self.auth_client.query_payment_order(out_trade_no)
+        try:
+            logger.info(f"[MEMBERSHIP] Checking payment status for order: {out_trade_no}")
+            result = self.auth_client.query_payment_order(out_trade_no)
 
-        print(f"[MEMBERSHIP] Query result: success={result.get('success')}, status={result.get('order', {}).get('status')}")
+            logger.info(f"[MEMBERSHIP] Query result: success={result.get('success')}, status={result.get('order', {}).get('status')}")
 
-        if result.get("success"):
-            order = result.get("order", {})
-            status = order.get("status")
+            if result.get("success"):
+                order = result.get("order", {})
+                status = order.get("status")
 
-            if status == "paid":
-                # 支付成功
-                self._stop_payment_polling()
+                if status == "paid":
+                    # 支付成功
+                    self._stop_payment_polling()
 
-                print(f"[MEMBERSHIP] Payment detected as paid: {out_trade_no}")
+                    logger.info(f"[MEMBERSHIP] Payment detected as paid: {out_trade_no}")
 
-                # ✅ 方案A：主动触发会员升级(不依赖Z-Pay回调)
-                # 从订单的param参数中获取user_id和plan_type
-                try:
-                    param_str = order.get("param", "")
+                    # ✅ 方案A：主动触发会员升级(不依赖Z-Pay回调)
+                    # 从订单的param参数中获取user_id和plan_type
+                    try:
+                        param_str = order.get("param", "")
 
-                    # ✅ 新格式: 使用简单分隔符 "user_id|plan_type"
-                    if "|" in param_str:
-                        parts = param_str.split("|")
-                        if len(parts) == 2:
-                            user_id, plan_type = parts
+                        # ✅ 新格式: 使用简单分隔符 "user_id|plan_type"
+                        if "|" in param_str:
+                            parts = param_str.split("|")
+                            if len(parts) == 2:
+                                user_id, plan_type = parts
+                            else:
+                                user_id = plan_type = None
                         else:
-                            user_id = plan_type = None
-                    else:
-                        # 兼容旧格式: JSON
-                        try:
-                            import json
-                            param_data = json.loads(param_str) if param_str else {}
-                            user_id = param_data.get("user_id")
-                            plan_type = param_data.get("plan_type")
-                        except:
-                            user_id = plan_type = None
+                            # 兼容旧格式: JSON
+                            try:
+                                import json
+                                param_data = json.loads(param_str) if param_str else {}
+                                user_id = param_data.get("user_id")
+                                plan_type = param_data.get("plan_type")
+                            except:
+                                user_id = plan_type = None
 
-                    if user_id and plan_type:
-                        print(f"[MEMBERSHIP] Triggering manual upgrade: user={user_id}, plan={plan_type}")
+                        if user_id and plan_type:
+                            logger.info(f"[MEMBERSHIP] Triggering manual upgrade: user={user_id}, plan={plan_type}")
 
-                        # 调用后端API手动更新会员状态
-                        upgrade_result = self.auth_client.manual_upgrade_subscription(
-                            user_id=user_id,
-                            plan_type=plan_type,
-                            out_trade_no=out_trade_no
-                        )
+                            # 调用后端API手动更新会员状态
+                            upgrade_result = self.auth_client.manual_upgrade_subscription(
+                                user_id=user_id,
+                                plan_type=plan_type,
+                                out_trade_no=out_trade_no
+                            )
 
-                        if upgrade_result.get("success"):
-                            print("[MEMBERSHIP] Manual upgrade successful!")
+                            if upgrade_result.get("success"):
+                                logger.info("[MEMBERSHIP] Manual upgrade successful!")
+                            else:
+                                logger.error(f"[MEMBERSHIP] Manual upgrade failed: {upgrade_result.get('error')}")
                         else:
-                            print(f"[MEMBERSHIP] Manual upgrade failed: {upgrade_result.get('error')}")
-                    else:
-                        print(f"[MEMBERSHIP] Warning: Missing user_id or plan_type in order param: {param_str}")
+                            logger.warning(f"[MEMBERSHIP] Warning: Missing user_id or plan_type in order param: {param_str}")
 
-                except Exception as e:
-                    print(f"[MEMBERSHIP] Error during manual upgrade: {e}")
+                    except Exception as e:
+                        logger.error(f"[MEMBERSHIP] Error during manual upgrade: {e}")
 
-                # 延迟刷新会员状态以显示最新数据
-                QTimer.singleShot(1000, self._refresh_subscription_status)
+                    # 延迟刷新会员状态以显示最新数据
+                    QTimer.singleShot(1000, self._refresh_subscription_status)
 
-                QMessageBox.information(
-                    self,
-                    tr("membership.payment.success_title"),
-                    tr("membership.payment.success_message")
-                )
+                    QMessageBox.information(
+                        self,
+                        tr("membership.payment.success_title"),
+                        tr("membership.payment.success_message")
+                    )
 
-                # 发出购买成功信号
-                self.purchase_success.emit(self.selected_plan)
+                    # 发出购买成功信号
+                    self.purchase_success.emit(self.selected_plan)
 
-                # 关闭对话框
-                self.accept()
+                    # 关闭对话框
+                    self.accept()
+
+        except Exception as e:
+            # ✅ 修复: 添加异常处理避免轮询中断
+            logger.error(f"[MEMBERSHIP] Error checking payment: {e}")
+            import traceback
+            traceback.print_exc()
 
     def _stop_payment_polling(self):
         """停止支付状态轮询"""
