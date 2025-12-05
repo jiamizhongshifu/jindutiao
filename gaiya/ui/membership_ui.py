@@ -1149,14 +1149,14 @@ class MembershipDialog(QDialog):
             print(f"[MEMBERSHIP] QR code URL: {qrcode_url[:80]}...")
 
             # 显示二维码支付对话框
-            self._show_qrcode_dialog(qrcode_url, out_trade_no, amount, plan_name)
+            self._show_qrcode_dialog(qrcode_url, out_trade_no, amount, plan_name, self.selected_pay_type)
 
         else:
             # 订单创建失败
             error_msg = result.get("error", tr("membership.error.order_creation_failed_title"))
             QMessageBox.critical(self, tr("membership.error.order_creation_failed_title"), tr("membership.error.order_creation_failed", error_msg=error_msg))
 
-    def _show_qrcode_dialog(self, qrcode_url: str, out_trade_no: str, amount: float, plan_name: str):
+    def _show_qrcode_dialog(self, qrcode_url: str, out_trade_no: str, amount: float, plan_name: str, pay_type: str):
         """显示二维码支付对话框并启动轮询"""
         # 创建对话框
         dialog = QDialog(self)
@@ -1188,7 +1188,8 @@ class MembershipDialog(QDialog):
         layout.addWidget(qr_label)
 
         # 提示信息
-        hint = QLabel("请使用支付宝或微信扫描二维码完成支付")
+        pay_type_name = self._get_pay_type_name(pay_type)
+        hint = QLabel(f"请使用{pay_type_name}扫描二维码完成支付")
         hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
         hint.setStyleSheet("color: #666; font-size: 14px;")
         layout.addWidget(hint)
@@ -1486,8 +1487,8 @@ class MembershipDialog(QDialog):
     def _get_pay_type_name(self, pay_type: str) -> str:
         """获取支付方式名称"""
         pay_type_names = {
-            "alipay": tr("membership.payment.alipay"),
-            "wxpay": tr("membership.payment.wechat")
+            "alipay": tr("payment_alipay"),
+            "wxpay": tr("payment_wechat")
         }
         return pay_type_names.get(pay_type, pay_type)
 
