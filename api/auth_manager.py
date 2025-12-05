@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Optional
 from supabase import create_client, Client
 import sys
+import requests
 
 # Supabase配置
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
@@ -509,20 +510,51 @@ class AuthManager:
             return {"success": False, "error": "Supabase not configured"}
 
         try:
-            # ✅ 修复: 添加redirect_to参数,确保邮件能正确发送
-            self.client.auth.reset_password_for_email(
-                email,
-                options={
-                    "redirect_to": "https://jindutiao.vercel.app/password-reset"
+            redirect_to = "https://jindutiao.vercel.app/password-reset"
+            # 方案1：supabase-py 官方方法
+            try:
+                self.client.auth.reset_password_for_email(
+                    email,
+                    options={
+                        "redirect_to": redirect_to
+                    }
+                )
+                print(f"Password reset requested for: {email}", file=sys.stderr)
+                return {
+                    "success": True,
+                    "message": "Password reset email sent"
                 }
+            except Exception as primary_error:
+                print(f"[RESET-FALLBACK] primary reset failed: {primary_error}", file=sys.stderr)
+
+            # 方案2：HTTP 直接调用 recover 接口，绕过 httpx 握手问题
+            supabase_url = os.getenv("SUPABASE_URL", "").rstrip("/")
+            api_key = os.getenv("SUPABASE_SERVICE_KEY") or os.getenv("SUPABASE_ANON_KEY")
+
+            if not supabase_url or not api_key:
+                return {"success": False, "error": "Supabase credentials missing"}
+
+            recover_url = f"{supabase_url}/auth/v1/recover"
+            headers = {
+                "apikey": api_key,
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            }
+
+            response = requests.post(
+                recover_url,
+                json={"email": email, "redirect_to": redirect_to},
+                headers=headers,
+                timeout=10
             )
 
-            print(f"Password reset requested for: {email}", file=sys.stderr)
+            if response.status_code in (200, 204):
+                print(f"[RESET-FALLBACK] recover API succeeded for: {email}", file=sys.stderr)
+                return {"success": True, "message": "Password reset email sent"}
 
-            return {
-                "success": True,
-                "message": "Password reset email sent"
-            }
+            error_body = response.text
+            print(f"[RESET-FALLBACK] recover API failed: {response.status_code} {error_body}", file=sys.stderr)
+            return {"success": False, "error": f"HTTP {response.status_code}: {error_body}"}
 
         except Exception as e:
             print(f"Error requesting password reset: {e}", file=sys.stderr)

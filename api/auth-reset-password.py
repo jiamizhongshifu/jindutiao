@@ -105,6 +105,13 @@ class handler(BaseHTTPRequestHandler):
             auth_manager = AuthManager()
             result = auth_manager.request_password_reset(email)
 
+            # 如果后台失败，返回错误给客户端而不是直接提示成功，避免误导
+            if not result.get("success"):
+                error_msg = result.get("error", "Failed to send reset email")
+                self._send_error(500, error_msg, rate_info)
+                print(f"[AUTH-RESET-PASSWORD] ❌ Password reset failed: {error_msg}", file=sys.stderr)
+                return
+
             # 4. 返回响应（为了安全，即使邮箱不存在也返回成功）
             self._send_success({
                 "success": True,
