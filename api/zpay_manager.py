@@ -177,7 +177,9 @@ class ZPayManager:
                     "error": f"Invalid JSON response from payment gateway: {response.text[:100]}"
                 }
 
-            if result.get("code") == 1:
+            # ✅ 修复: Z-Pay返回的code可能是字符串"1"或整数1
+            code = result.get("code")
+            if code == 1 or code == "1":
                 print(f"[ZPAY-API] Order created: {out_trade_no}", file=sys.stderr)
                 return {
                     "success": True,
@@ -260,7 +262,9 @@ class ZPayManager:
                     "error": f"Invalid JSON response from payment gateway"
                 }
 
-            if result.get("code") == 1:
+            # ✅ 修复: Z-Pay返回的code可能是字符串"1"或整数1
+            code = result.get("code")
+            if code == 1 or code == "1":
                 print(f"[ZPAY-QUERY] Order found: {out_trade_no or trade_no}, status: {result.get('status')}", file=sys.stderr)
                 return {
                     "success": True,
@@ -329,7 +333,9 @@ class ZPayManager:
                     "error": "Invalid JSON response from payment gateway"
                 }
 
-            if result.get("code") == 1:
+            # ✅ 修复: Z-Pay返回的code可能是字符串"1"或整数1
+            code = result.get("code")
+            if code == 1 or code == "1":
                 print(f"[ZPAY-API-QUERY] Order found, status: {result.get('status')}", file=sys.stderr)
                 return {
                     "success": True,
@@ -469,7 +475,9 @@ class ZPayManager:
 
             result = response.json()
 
-            if result.get("code") == 1:
+            # ✅ 修复: Z-Pay返回的code可能是字符串"1"或整数1
+            code = result.get("code")
+            if code == 1 or code == "1":
                 print(f"[ZPAY-REFUND] Refund successful: {out_trade_no}", file=sys.stderr)
                 return {
                     "success": True,
