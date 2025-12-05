@@ -13,6 +13,10 @@
       "destination": "/public/password-reset.html"
     },
     {
+      "source": "/password-reset/(.*)",
+      "destination": "/public/password-reset.html"
+    },
+    {
       "source": "/(.*).html",
       "destination": "/public/$1.html"
     },
