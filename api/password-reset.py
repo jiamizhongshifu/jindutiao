@@ -26,10 +26,17 @@ DEFAULT_HTML = """<!DOCTYPE html>
     <p>请设置新的密码。</p>
     <div id="error" class="error"></div>
     <div id="success" class="success"></div>
+    <div class="requirements">
+      <strong>密码要求：</strong>
+      <ul>
+        <li>长度 8-128 位</li>
+        <li>必须包含大写字母、小写字母、数字</li>
+      </ul>
+    </div>
     <label for="password">新密码</label>
-    <input id="password" type="password" placeholder="至少 6 位" />
+    <input id="password" type="password" placeholder="至少 8 位，含大写/小写/数字" />
     <label for="confirm">确认新密码</label>
-    <input id="confirm" type="password" placeholder="再次输入" />
+    <input id="confirm" type="password" placeholder="再次输入新密码" />
     <button id="submit">提交</button>
   </div>
   <script>
@@ -50,17 +57,29 @@ DEFAULT_HTML = """<!DOCTYPE html>
       submit.disabled = true;
     }
 
-    submit.addEventListener('click', async () => {
-      const p1 = document.getElementById('password').value;
-      const p2 = document.getElementById('confirm').value;
+    function validatePassword(p1, p2, silent=false) {
       const hasUpper = /[A-Z]/.test(p1);
       const hasLower = /[a-z]/.test(p1);
       const hasDigit = /[0-9]/.test(p1);
       if (p1.length < 8 || p1.length > 128 || !hasUpper || !hasLower || !hasDigit) {
-        showError('密码需至少 8 位且包含大写、小写、数字（最长 128 位）');
-        return;
+        if (!silent) showError('密码需 8-128 位，且包含大写、小写、数字');
+        return false;
       }
-      if (p1 !== p2) { showError('两次输入的密码不一致'); return; }
+      if (p1 !== p2) { if (!silent) showError('两次输入的密码不一致'); return false; }
+      if (!silent) { err.style.display='none'; }
+      return true;
+    }
+
+    document.getElementById('password').addEventListener('input', () => {
+      const p1 = document.getElementById('password').value;
+      const p2 = document.getElementById('confirm').value;
+      validatePassword(p1, p2, true);
+    });
+
+    submit.addEventListener('click', async () => {
+      const p1 = document.getElementById('password').value;
+      const p2 = document.getElementById('confirm').value;
+      if (!validatePassword(p1, p2)) return;
 
       submit.disabled = true;
       try {
