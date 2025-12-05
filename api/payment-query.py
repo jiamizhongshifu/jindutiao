@@ -53,15 +53,22 @@ class handler(BaseHTTPRequestHandler):
                 result = zpay.query_api_order(out_trade_no=out_trade_no)
 
                 if result["success"]:
-                    print(f"[PAYMENT-QUERY] Order found on attempt {attempt + 1}", file=sys.stderr)
+                    print(f"[PAYMENT-QUERY] Order found on attempt {attempt + 1} (mapi)", file=sys.stderr)
                     break
 
                 # 如果不是最后一次尝试,等待2秒后重试
                 if attempt < max_retries - 1:
-                    print(f"[PAYMENT-QUERY] Order not found, retry {attempt + 2}/{max_retries} in 2s...", file=sys.stderr)
+                    print(f"[PAYMENT-QUERY] Order not found on mapi, retry {attempt + 2}/{max_retries} in 2s...", file=sys.stderr)
                     time.sleep(2)
                 else:
-                    print(f"[PAYMENT-QUERY] Order not found after {max_retries} attempts", file=sys.stderr)
+                    print(f"[PAYMENT-QUERY] Order not found after {max_retries} attempts (mapi)", file=sys.stderr)
+
+            # 如果mapi查询失败, 再尝试 api.php 查询
+            if not result or not result.get("success"):
+                print(f"[PAYMENT-QUERY] Fallback to api.php query", file=sys.stderr)
+                result = zpay.query_order(out_trade_no=out_trade_no)
+                if result.get("success"):
+                    print(f"[PAYMENT-QUERY] Order found via api.php", file=sys.stderr)
 
             if result["success"]:
                 order = result["order"]

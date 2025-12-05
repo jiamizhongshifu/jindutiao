@@ -299,6 +299,10 @@ class ZPayManager:
                 "out_trade_no": out_trade_no
             }
 
+            # 补充签名参数（部分网关会校验 sign/sign_type）
+            params["sign_type"] = "MD5"
+            params["sign"] = self._generate_sign(params)
+
             print(f"[ZPAY-API-QUERY] Querying order via mapi.php: {out_trade_no}", file=sys.stderr)
 
             response = requests.get(
