@@ -53,7 +53,13 @@ DEFAULT_HTML = """<!DOCTYPE html>
     submit.addEventListener('click', async () => {
       const p1 = document.getElementById('password').value;
       const p2 = document.getElementById('confirm').value;
-      if (p1.length < 6) { showError('密码长度至少 6 位'); return; }
+      const hasUpper = /[A-Z]/.test(p1);
+      const hasLower = /[a-z]/.test(p1);
+      const hasDigit = /[0-9]/.test(p1);
+      if (p1.length < 8 || p1.length > 128 || !hasUpper || !hasLower || !hasDigit) {
+        showError('密码需至少 8 位且包含大写、小写、数字（最长 128 位）');
+        return;
+      }
       if (p1 !== p2) { showError('两次输入的密码不一致'); return; }
 
       submit.disabled = true;
