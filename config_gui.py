@@ -5131,6 +5131,8 @@ class ConfigManager(QMainWindow):
             plan_name = result.get("plan_name", "Pro月度订阅")
             pay_type = getattr(self, "_current_pay_type", "") or result.get("pay_type", "") or "wxpay"
             pay_type_name = "支付宝" if pay_type == "alipay" else "微信支付" if pay_type == "wxpay" else "支付宝或微信"
+            pay_type = getattr(self, "_current_pay_type", "") or result.get("pay_type", "") or "wxpay"
+            pay_type_name = "支付宝" if pay_type == "alipay" else "微信支付" if pay_type == "wxpay" else "支付宝或微信"
             pay_type = getattr(self, "_current_pay_type", "") or result.get("pay_type", "")
             pay_type_name = "支付宝" if pay_type == "alipay" else "微信支付" if pay_type == "wxpay" else "支付宝或微信"
 
