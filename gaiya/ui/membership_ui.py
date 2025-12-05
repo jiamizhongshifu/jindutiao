@@ -1361,7 +1361,10 @@ class MembershipDialog(QDialog):
 
     def _check_payment_status(self, out_trade_no: str):
         """检查支付状态"""
+        print(f"[MEMBERSHIP] Checking payment status for order: {out_trade_no}")
         result = self.auth_client.query_payment_order(out_trade_no)
+
+        print(f"[MEMBERSHIP] Query result: success={result.get('success')}, status={result.get('order', {}).get('status')}")
 
         if result.get("success"):
             order = result.get("order", {})
