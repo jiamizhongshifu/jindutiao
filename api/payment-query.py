@@ -85,7 +85,16 @@ class handler(BaseHTTPRequestHandler):
 
                 print(f"[PAYMENT-QUERY] Order status: {'paid' if is_paid else 'unpaid'}", file=sys.stderr)
             else:
-                self._send_error(404, result.get("error", "Order not found"))
+                # 兜底: 不再返回404，避免客户端轮询中断；标记未支付/未找到
+                self._send_success({
+                    "success": True,
+                    "order": {
+                        "out_trade_no": out_trade_no,
+                        "status": "unpaid",
+                        "error": result.get("error", "Order not found")
+                    }
+                })
+                print(f"[PAYMENT-QUERY] Order not found yet, return unpaid", file=sys.stderr)
 
         except Exception as e:
             print(f"[PAYMENT-QUERY] Error: {e}", file=sys.stderr)

@@ -5129,12 +5129,13 @@ class ConfigManager(QMainWindow):
             trade_no = result.get("trade_no")
             amount = result.get("amount")
             plan_name = result.get("plan_name", "Pro月度订阅")
-            pay_type = getattr(self, "_current_pay_type", "") or result.get("pay_type", "") or "wxpay"
-            pay_type_name = "支付宝" if pay_type == "alipay" else "微信支付" if pay_type == "wxpay" else "支付宝或微信"
-            pay_type = getattr(self, "_current_pay_type", "") or result.get("pay_type", "") or "wxpay"
-            pay_type_name = "支付宝" if pay_type == "alipay" else "微信支付" if pay_type == "wxpay" else "支付宝或微信"
-            pay_type = getattr(self, "_current_pay_type", "") or result.get("pay_type", "")
-            pay_type_name = "支付宝" if pay_type == "alipay" else "微信支付" if pay_type == "wxpay" else "支付宝或微信"
+            pay_type = getattr(self, "_current_pay_type", "") or result.get("pay_type", "") or "alipay"
+            if pay_type == "alipay":
+                pay_type_name = "支付宝"
+            elif pay_type == "wxpay":
+                pay_type_name = "微信支付"
+            else:
+                pay_type_name = "支付宝或微信"
 
             logging.info(f"[PAYMENT] Order created: {out_trade_no}, trade_no: {trade_no}")
             logging.info(f"[PAYMENT] QR code URL: {qrcode_url[:80] if qrcode_url else 'None'}...")
@@ -5200,6 +5201,8 @@ class ConfigManager(QMainWindow):
             # 保存对话框引用
             self.payment_polling_dialog = dialog
             self.current_out_trade_no = out_trade_no
+            self.current_trade_no = trade_no
+            self.current_plan_name = plan_name
 
             # 下载并显示二维码
             def download_qrcode():
@@ -5237,7 +5240,7 @@ class ConfigManager(QMainWindow):
             auth_client = AuthClient()
             self.payment_timer = QTimer()
             self.payment_timer.setInterval(3000)
-            self.payment_timer.timeout.connect(partial(self._check_payment_status, out_trade_no, auth_client))
+            self.payment_timer.timeout.connect(partial(self._check_payment_status, out_trade_no, trade_no, auth_client))
             self.payment_timer.start()
 
             # 显示对话框
@@ -5326,6 +5329,13 @@ class ConfigManager(QMainWindow):
             trade_no = result.get("trade_no")
             amount = result.get("amount")
             plan_name = result.get("plan_name", "Pro月度订阅")
+            pay_type = getattr(self, "_current_pay_type", "") or result.get("pay_type", "") or "wxpay"
+            if pay_type == "alipay":
+                pay_type_name = "支付宝"
+            elif pay_type == "wxpay":
+                pay_type_name = "微信支付"
+            else:
+                pay_type_name = "支付宝或微信"
 
             logging.info(f"[PAYMENT] Order created: {out_trade_no}, trade_no: {trade_no}")
             logging.info(f"[PAYMENT] QR code URL: {qrcode_url[:80] if qrcode_url else 'None'}...")
@@ -5391,6 +5401,8 @@ class ConfigManager(QMainWindow):
             # 保存对话框引用
             self.payment_polling_dialog = dialog
             self.current_out_trade_no = out_trade_no
+            self.current_trade_no = trade_no
+            self.current_plan_name = plan_name
 
             # 下载并显示二维码
             def download_qrcode():
@@ -5428,7 +5440,7 @@ class ConfigManager(QMainWindow):
             auth_client = AuthClient()
             self.payment_timer = QTimer()
             self.payment_timer.setInterval(3000)
-            self.payment_timer.timeout.connect(partial(self._check_payment_status, out_trade_no, auth_client))
+            self.payment_timer.timeout.connect(partial(self._check_payment_status, out_trade_no, trade_no, auth_client))
             self.payment_timer.start()
 
             # 显示对话框
@@ -5701,7 +5713,7 @@ class ConfigManager(QMainWindow):
         # 显示对话框（非阻塞）
         self.payment_polling_dialog.show()
 
-    def _check_payment_status(self, out_trade_no: str, auth_client):
+    def _check_payment_status(self, out_trade_no: str, trade_no: str, auth_client):
         """检查支付状态 - 异步调用"""
         # ✅ 性能优化: 使用异步Worker避免UI卡顿
         from gaiya.core.async_worker import AsyncNetworkWorker
@@ -5715,7 +5727,8 @@ class ConfigManager(QMainWindow):
         # 创建异步Worker
         self._status_check_worker = AsyncNetworkWorker(
             auth_client.query_payment_order,
-            out_trade_no
+            out_trade_no,
+            trade_no=trade_no
         )
         self._status_check_worker.success.connect(self._on_payment_status_checked)
         self._status_check_worker.error.connect(self._on_payment_status_check_error)
@@ -5731,19 +5744,52 @@ class ConfigManager(QMainWindow):
 
         logging.debug(f"[PAYMENT] Status check result: {status}")
 
-        if status == "paid":
+        if status and status.lower() in ("paid", "success", "successful", "completed", "pay_success", "payment_success"):
             # 支付成功
             self._stop_payment_polling()
 
-            QMessageBox.information(
-                self,
-                "支付成功",
-                self.i18n.tr("config.membership.payment_success_restart")
-            )
+            # 触发会员升级（主动调用后台）
+            from gaiya.core.auth_client import AuthClient
+            try:
+                auth_client = AuthClient()
+                user_id = auth_client.get_user_id()
+                plan_name = getattr(self, "current_plan_name", "Pro订阅")
+                out_trade_no = getattr(self, "current_out_trade_no", None)
 
-            # 重新加载个人中心tab以刷新会员状态
-            self.account_tab_widget = None
-            self._load_account_tab()
+                plan_type_map = {
+                    "Pro月度订阅": "pro_monthly",
+                    "Pro年度订阅": "pro_yearly",
+                    "团队合伙人": "team_partner"
+                }
+                plan_type = plan_type_map.get(plan_name, "pro_monthly")
+
+                if out_trade_no and user_id:
+                    upgrade_result = auth_client.manual_upgrade_subscription(
+                        user_id=user_id,
+                        plan_type=plan_type,
+                        out_trade_no=out_trade_no
+                    )
+                    if not upgrade_result.get("success"):
+                        logging.warning(f"[PAYMENT] Auto-upgrade failed after pay success: {upgrade_result.get('error')}")
+
+                # 刷新会员状态
+                self.account_tab_widget = None
+                self._load_account_tab()
+                if hasattr(self, "update_account_display"):
+                    self.update_account_display()
+
+                QMessageBox.information(
+                    self,
+                    "支付成功",
+                    f"{plan_name}已成功激活!\n\n会员状态已更新"
+                )
+            except Exception as e:
+                logging.error(f"[PAYMENT] Auto-upgrade error: {e}")
+                QMessageBox.information(
+                    self,
+                    "支付成功",
+                    "支付已完成，但刷新会员状态时出现问题，请稍后在个人中心手动刷新。"
+                )
 
     def _on_payment_status_check_error(self, error_msg: str):
         """支付状态查询失败回调(不中断轮询,静默记录)"""

@@ -294,13 +294,6 @@ class EmailVerificationDialog(QDialog):
                 # 发出验证成功信号（携带用户信息）
                 self.verification_success.emit(user_info)
 
-                # 显示成功提示
-                QMessageBox.information(
-                    self,
-                    tr("email_verification.dialog.welcome_title"),
-                    tr("email_verification.dialog.welcome_message", email=self.email)
-                )
-
                 # 关闭对话框
                 self.accept()
             else:

@@ -657,7 +657,15 @@ class AuthClient:
         except requests.exceptions.ConnectionError:
             return {"success": False, "error": "无法连接到服务器"}
         except Exception as e:
-            return {"success": False, "error": str(e)}
+            # 返回未支付状态，避免轮询终止
+            return {
+                "success": True,
+                "order": {
+                    "out_trade_no": out_trade_no,
+                    "status": "unpaid",
+                    "error": str(e)
+                }
+            }
 
     def signout(self) -> Dict:
         """
@@ -744,7 +752,15 @@ class AuthClient:
             if response.status_code == 200:
                 return response.json()
             else:
-                return {"success": False, "error": f"HTTP {response.status_code}"}
+                # 兜底：非200时仍返回未支付，让轮询继续而不抛错
+                return {
+                    "success": True,
+                    "order": {
+                        "out_trade_no": out_trade_no,
+                        "status": "unpaid",
+                        "error": f"HTTP {response.status_code}"
+                    }
+                }
 
         except Exception as e:
             return {"success": False, "error": str(e)}
@@ -823,7 +839,7 @@ class AuthClient:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    def query_payment_order(self, out_trade_no: str) -> Dict:
+    def query_payment_order(self, out_trade_no: str, trade_no: str = "") -> Dict:
         """
         查询支付订单状态
 
@@ -834,10 +850,15 @@ class AuthClient:
             {"success": True/False, "order": {...}}
         """
         try:
+            # Vercel 函数路径不带 .py，避免 404
+            params = {"out_trade_no": out_trade_no}
+            if trade_no:
+                params["trade_no"] = trade_no
+
             response = self.session.get(
-                f"{self.backend_url}/api/payment-query.py",
-                params={"out_trade_no": out_trade_no},
-                timeout=10
+                f"{self.backend_url}/api/payment-query",
+                params=params,
+                timeout=15
             )
 
             if response.status_code == 200:
