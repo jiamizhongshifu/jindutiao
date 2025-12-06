@@ -238,6 +238,9 @@ class ZPayManager:
             print(f"[ZPAY-QUERY] Request URL: {query_url}", file=sys.stderr)
             print(f"[ZPAY-QUERY] Request params: act={params['act']}, pid={params['pid'][:6]}..., out_trade_no={params.get('out_trade_no', 'N/A')}", file=sys.stderr)
 
+            print(f"[ZPAY-QUERY] Sending request to Z-Pay...", file=sys.stderr)
+            sys.stderr.flush()  # 强制刷新输出
+
             response = requests.get(
                 query_url,
                 params=params,
@@ -246,7 +249,9 @@ class ZPayManager:
 
             # ✅ 增强日志: 输出响应状态和内容预览
             print(f"[ZPAY-QUERY] Response status: {response.status_code}", file=sys.stderr)
+            sys.stderr.flush()
             print(f"[ZPAY-QUERY] Response preview (first 200 chars): {response.text[:200]}", file=sys.stderr)
+            sys.stderr.flush()
 
             # ✅ 修复: 添加JSON解析错误处理
             try:
@@ -278,7 +283,13 @@ class ZPayManager:
                 }
 
         except Exception as e:
-            print(f"[ZPAY-QUERY] Error: {e}", file=sys.stderr)
+            print(f"[ZPAY-QUERY] !!!EXCEPTION CAUGHT!!! Error type: {type(e).__name__}", file=sys.stderr)
+            sys.stderr.flush()
+            print(f"[ZPAY-QUERY] Error details: {str(e)}", file=sys.stderr)
+            sys.stderr.flush()
+            import traceback
+            print(f"[ZPAY-QUERY] Traceback: {traceback.format_exc()}", file=sys.stderr)
+            sys.stderr.flush()
             return {
                 "success": False,
                 "error": str(e)
