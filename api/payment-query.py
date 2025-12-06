@@ -1,6 +1,8 @@
 """
 查询支付订单状态API
 GET /api/payment-query?out_trade_no=xxx
+
+Version: 2.0 - Fixed api.php query
 """
 from http.server import BaseHTTPRequestHandler
 import json
