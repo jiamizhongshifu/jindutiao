@@ -179,25 +179,27 @@ class SubscriptionManager:
         Returns:
             订阅状态
         """
-        # ✅ 修复: 直接从users表读取user_tier字段
-        # 因为手动支付升级是直接更新users.user_tier,不创建subscriptions记录
+        # ✅ 修复: 直接从users表读取tier字段 (不是user_tier!)
+        # 因为手动支付升级是直接更新users.tier,不创建subscriptions记录
         try:
-            user_response = self.client.table("users").select("user_tier").eq("id", user_id).execute()
+            user_response = self.client.table("users").select("tier, subscription_expires_at").eq("id", user_id).execute()
 
             if user_response.data and len(user_response.data) > 0:
-                user_tier = user_response.data[0].get("user_tier", "free")
+                tier = user_response.data[0].get("tier", "free")
+                expires_at = user_response.data[0].get("subscription_expires_at")
 
                 # 如果是pro或lifetime,认为是活跃会员
-                is_active = user_tier in ["pro", "lifetime"]
+                is_active = tier in ["pro", "lifetime"]
 
-                print(f"[SUBSCRIPTION-STATUS] User {user_id}: tier={user_tier}, active={is_active}", file=sys.stderr)
+                print(f"[SUBSCRIPTION-STATUS] User {user_id}: tier={tier}, active={is_active}, expires={expires_at}", file=sys.stderr)
 
                 return {
                     "is_active": is_active,
-                    "user_tier": user_tier
+                    "user_tier": tier,  # 返回时保持字段名为user_tier以兼容客户端
+                    "subscription_expires_at": expires_at
                 }
         except Exception as e:
-            print(f"[SUBSCRIPTION-STATUS] Error reading user_tier: {e}", file=sys.stderr)
+            print(f"[SUBSCRIPTION-STATUS] Error reading tier: {e}", file=sys.stderr)
 
         # Fallback: 尝试从subscriptions表读取（向后兼容Stripe支付）
         subscription = self.get_user_subscription(user_id)
