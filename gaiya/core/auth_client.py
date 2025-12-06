@@ -902,8 +902,10 @@ class AuthClient:
                 result = response.json()
                 if result.get("success"):
                     logger.info(f"[AUTH] Manual upgrade successful: new_tier={result.get('user_tier')}")
-                    # 刷新用户信息
-                    self._refresh_user_info()
+                    # 更新本地用户信息
+                    if self.user_info:
+                        self.user_info["user_tier"] = result.get("user_tier", "free")
+                        self._save_tokens(self.access_token, self.refresh_token, self.user_info)
                 return result
             else:
                 logger.error(f"[AUTH] Manual upgrade failed: HTTP {response.status_code}")
