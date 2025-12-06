@@ -3204,7 +3204,53 @@ class ConfigManager(QMainWindow):
         layout.addSpacing(20)  # 添加间距与下方内容分隔
 
         if email != "未登录":
-            if user_tier == "free":
+            # ✅ 会员合伙人: 隐藏套餐卡片,显示邀请函入口
+            if user_tier == "lifetime":
+                # 显示感谢信息
+                thank_you_label = QLabel("🎉 感谢您成为 GaiYa 会员合伙人!")
+                thank_you_label.setStyleSheet("color: #FF9800; font-size: 20px; font-weight: bold; margin: 20px 0;")
+                thank_you_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                layout.addWidget(thank_you_label)
+
+                layout.addSpacing(20)
+
+                # 合伙人邀请函入口
+                invitation_frame = QFrame()
+                invitation_frame.setStyleSheet("""
+                    QFrame {
+                        background-color: #FFF3E0;
+                        border: 2px solid #FF9800;
+                        border-radius: 12px;
+                        padding: 20px;
+                    }
+                """)
+                invitation_layout = QVBoxLayout(invitation_frame)
+
+                invitation_title = QLabel("📖 阅读合伙人邀请函")
+                invitation_title.setStyleSheet("font-size: 18px; font-weight: bold; color: #333333;")
+                invitation_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                invitation_layout.addWidget(invitation_title)
+
+                invitation_layout.addSpacing(10)
+
+                invitation_desc = QLabel("了解更多合伙人权益、推荐返现机制和成长计划")
+                invitation_desc.setStyleSheet("font-size: 14px; color: #666666;")
+                invitation_desc.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                invitation_layout.addWidget(invitation_desc)
+
+                invitation_layout.addSpacing(15)
+
+                invitation_btn = QPushButton("📨 查看邀请函")
+                invitation_btn.setFixedHeight(45)
+                invitation_btn.setStyleSheet(StyleManager.button_primary())
+                invitation_btn.clicked.connect(self._on_view_invitation_clicked)
+                invitation_layout.addWidget(invitation_btn)
+
+                layout.addWidget(invitation_frame)
+                layout.addStretch()
+
+            # ✅ 免费用户或付费会员(pro): 显示套餐卡片
+            elif user_tier in ["free", "pro"]:
                 tip_label = QLabel(self.i18n.tr("account.membership_comparison"))
                 tip_label.setStyleSheet("color: #333333; font-size: 18px; font-weight: bold; margin-bottom: 15px;")
                 tip_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -3254,13 +3300,14 @@ class ConfigManager(QMainWindow):
                 self.plan_cards = []
                 self.selected_plan_id = "pro_yearly"
 
+                # ✅ 传递 user_tier 以便修改按钮文案
                 for i, plan in enumerate(plans):
                     if plan['type'] == 'yearly':
-                        card = self._create_featured_plan_card(plan, is_selected=True)
+                        card = self._create_featured_plan_card(plan, is_selected=True, user_tier=user_tier)
                     elif plan['type'] == 'lifetime':
-                        card = self._create_lifetime_plan_card(plan)
+                        card = self._create_lifetime_plan_card(plan, user_tier=user_tier)
                     else:  # monthly
-                        card = self._create_regular_plan_card(plan)
+                        card = self._create_regular_plan_card(plan, user_tier=user_tier)
 
                     cards_layout.addWidget(card)
                     self.plan_cards.append(card)
@@ -3635,6 +3682,62 @@ class ConfigManager(QMainWindow):
         )
         self.close()
 
+    def _on_view_invitation_clicked(self):
+        """处理查看合伙人邀请函按钮点击"""
+        from PySide6.QtWidgets import QMessageBox, QDialog, QVBoxLayout, QTextBrowser, QPushButton
+
+        # 创建自定义对话框显示邀请函内容
+        dialog = QDialog(self)
+        dialog.setWindowTitle("GaiYa 会员合伙人邀请函")
+        dialog.setMinimumSize(600, 500)
+
+        layout = QVBoxLayout(dialog)
+
+        # 使用 QTextBrowser 显示富文本内容
+        text_browser = QTextBrowser()
+        text_browser.setOpenExternalLinks(True)
+        text_browser.setHtml("""
+            <h2 style="color: #FF9800; text-align: center;">🎉 欢迎成为 GaiYa 会员合伙人</h2>
+            <hr>
+            <h3>🌟 专属权益</h3>
+            <ul>
+                <li><strong>所有高级版功能</strong> - 无限制使用所有 Pro 功能</li>
+                <li><strong>50次/天 AI智能规划</strong> - 超大额度,满足高频使用</li>
+                <li><strong>终身免费更新</strong> - 一次购买,永久享受</li>
+                <li><strong>优先客服支持</strong> - 专属客服通道</li>
+                <li><strong>未来新功能抢先体验</strong> - 新功能优先推送</li>
+            </ul>
+
+            <h3>💰 推荐返现机制</h3>
+            <ul>
+                <li><strong>33%推荐返现</strong> - 每成功推荐1位用户购买,返现33%</li>
+                <li><strong>专属推荐链接</strong> - 自动追踪您的推荐业绩</li>
+                <li><strong>长期收益</strong> - 持续推荐,持续获利</li>
+            </ul>
+
+            <h3>🚀 合伙人成长计划</h3>
+            <ul>
+                <li><strong>专属合伙人社群</strong> - 加入核心用户群,参与产品规划</li>
+                <li><strong>1v1咨询服务</strong> - 定期与产品团队深度交流</li>
+                <li><strong>共同成长价值</strong> - 与 GaiYa 一起成长,共享收益</li>
+            </ul>
+
+            <hr>
+            <p style="text-align: center; color: #666;">
+                <strong>如需了解更多合伙人详情,请联系客服</strong><br>
+                邮箱: support@gaiyatime.com
+            </p>
+        """)
+        layout.addWidget(text_browser)
+
+        # 关闭按钮
+        close_btn = QPushButton("关闭")
+        close_btn.setStyleSheet(StyleManager.button_minimal())
+        close_btn.clicked.connect(dialog.close)
+        layout.addWidget(close_btn)
+
+        dialog.exec()
+
     def _check_login_and_guide(self, feature_name: str = None) -> bool:
         """
         检查用户是否已登录，如果未登录则显示引导对话框
@@ -3782,8 +3885,14 @@ class ConfigManager(QMainWindow):
         self._bind_card_click(card, plan['id'])
         return card
 
-    def _create_featured_plan_card(self, plan: dict, is_selected: bool = False):
-        """创建年度卡片（中间，突出显示）"""
+    def _create_featured_plan_card(self, plan: dict, is_selected: bool = False, user_tier: str = "free"):
+        """创建年度卡片（中间，突出显示）
+
+        Args:
+            plan: 套餐信息
+            is_selected: 是否选中
+            user_tier: 用户等级 (free/pro/lifetime)
+        """
         from PySide6.QtWidgets import QFrame
         card = QFrame()
         card.setObjectName(f"plan_card_{plan['id']}")
@@ -3884,7 +3993,13 @@ class ConfigManager(QMainWindow):
         layout.addSpacing(15)  # 从 10 增加到 15
 
         # 按钮（突出显示）
-        button = QPushButton(self.i18n.tr("button.upgrade"))
+        # ✅ 根据用户等级修改按钮文案
+        if user_tier == "pro":
+            button_text = "会员续费"  # 已付费会员显示续费
+        else:
+            button_text = self.i18n.tr("button.upgrade")  # 免费用户显示升级
+
+        button = QPushButton(button_text)
         button.setFixedHeight(40)
         button.setStyleSheet("""
             QPushButton {
@@ -3949,8 +4064,13 @@ class ConfigManager(QMainWindow):
         self._bind_card_click(card, plan['id'])
         return card
 
-    def _create_regular_plan_card(self, plan: dict):
-        """创建月度卡片（普通样式）"""
+    def _create_regular_plan_card(self, plan: dict, user_tier: str = "free"):
+        """创建月度卡片（普通样式）
+
+        Args:
+            plan: 套餐信息
+            user_tier: 用户等级 (free/pro/lifetime)
+        """
         from PySide6.QtWidgets import QFrame
         card = QFrame()
         card.setObjectName(f"plan_card_{plan['id']}")
@@ -4001,7 +4121,13 @@ class ConfigManager(QMainWindow):
         layout.addSpacing(15)  # 从 10 增加到 15
 
         # 按钮
-        button = QPushButton(self.i18n.tr("button.upgrade"))
+        # ✅ 根据用户等级修改按钮文案
+        if user_tier == "pro":
+            button_text = "会员续费"  # 已付费会员显示续费
+        else:
+            button_text = self.i18n.tr("button.upgrade")  # 免费用户显示升级
+
+        button = QPushButton(button_text)
         button.setFixedHeight(36)
         button.setStyleSheet("""
             QPushButton {
@@ -4066,8 +4192,13 @@ class ConfigManager(QMainWindow):
         self._bind_card_click(card, plan['id'])
         return card
 
-    def _create_lifetime_plan_card(self, plan: dict):
-        """创建会员合伙人卡片（右侧，特殊样式）"""
+    def _create_lifetime_plan_card(self, plan: dict, user_tier: str = "free"):
+        """创建会员合伙人卡片（右侧，特殊样式）
+
+        Args:
+            plan: 套餐信息
+            user_tier: 用户等级 (free/pro/lifetime)
+        """
         from PySide6.QtWidgets import QFrame
         card = QFrame()
         card.setObjectName(f"plan_card_{plan['id']}")
