@@ -336,6 +336,7 @@ class ConfigManager(QMainWindow):
         # 延迟初始化AI相关组件(避免阻塞UI显示)
         self.ai_client = None
         self.ai_worker = None
+        self.auth_client = None  # ✅ Fix: Initialize AuthClient lazily to avoid UI blocking
         self.autostart_manager = AutoStartManager()  # 自启动管理器
         self.theme_ai_helper = None
 
@@ -1302,11 +1303,16 @@ class ConfigManager(QMainWindow):
         try:
             # 初始化AI客户端（默认使用代理服务器）
             self.ai_client = GaiyaAIClient()
-            
+
+            # ✅ Fix: Initialize AuthClient in background thread to avoid UI blocking
+            from gaiya.core.auth_client import AuthClient
+            self.auth_client = AuthClient()
+            logging.info("AuthClient initialized successfully in background")
+
             # 注意：使用代理服务器模式时，不需要启动本地后端服务
             # BackendManager仅用于向后兼容（如果用户需要本地模式）
             # 使用代理服务器时，不需要BackendManager
-            
+
             # 初始化AI主题助手
             self.theme_ai_helper = ThemeAIHelper(self.ai_client)
 
@@ -3156,11 +3162,15 @@ class ConfigManager(QMainWindow):
         title_label.setStyleSheet("font-size: 20px; font-weight: bold; color: #333333;")
         header_layout.addWidget(title_label)
 
-        from gaiya.core.auth_client import AuthClient
-        auth_client = AuthClient()
-
-        email = auth_client.get_user_email() or "未登录"
-        user_tier = auth_client.get_user_tier()
+        # ✅ Fix: Reuse cached AuthClient instance instead of creating new one
+        # This avoids blocking UI thread with file I/O, keyring reads, and SSL setup
+        if not self.auth_client:
+            # Fallback: if auth_client not initialized yet, create placeholder
+            email = "Loading..."
+            user_tier = "free"
+        else:
+            email = self.auth_client.get_user_email() or "未登录"
+            user_tier = self.auth_client.get_user_tier()
 
         if email != "未登录":
             # 添加弹性空间，推动右侧内容到右边
