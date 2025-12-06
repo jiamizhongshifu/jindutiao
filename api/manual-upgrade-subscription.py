@@ -88,14 +88,51 @@ class handler(BaseHTTPRequestHandler):
 
             print(f"[MANUAL-UPGRADE] Processing: user={user_id}, plan={plan_type}, order={out_trade_no}", file=sys.stderr)
 
-            # 4. 连接Supabase
+            # 4. ✅ 核心修复: 必须验证订单真的已支付!
+            if not out_trade_no:
+                self._send_error(400, "Missing out_trade_no parameter")
+                return
+
+            # 4.1 先查询 payment_cache 表(webhook 回调写入的缓存)
+            cache_result = self._query_payment_cache(out_trade_no)
+            if cache_result and cache_result.get("status") == "paid":
+                print(f"[MANUAL-UPGRADE] ✅ Cache confirms payment is PAID", file=sys.stderr)
+                is_paid = True
+            else:
+                # 4.2 缓存未命中,主动查询 Z-Pay API
+                print(f"[MANUAL-UPGRADE] Cache miss, querying Z-Pay API...", file=sys.stderr)
+                from zpay_manager import ZPayManager
+                zpay = ZPayManager()
+
+                result = zpay.query_order(out_trade_no=out_trade_no)
+
+                if not result.get("success"):
+                    error_msg = result.get("error", "Order not found")
+                    print(f"[MANUAL-UPGRADE] ❌ Z-Pay query failed: {error_msg}", file=sys.stderr)
+                    self._send_error(400, f"Order not paid: {error_msg}")
+                    return
+
+                order = result.get("order", {})
+                order_status = order.get("status")
+
+                # 验证支付状态
+                is_paid = self._is_paid_status(order_status)
+
+                if not is_paid:
+                    print(f"[MANUAL-UPGRADE] ❌ Order not paid yet: status={order_status}", file=sys.stderr)
+                    self._send_error(400, f"Order not paid yet (status: {order_status})")
+                    return
+
+                print(f"[MANUAL-UPGRADE] ✅ Z-Pay confirms payment is PAID", file=sys.stderr)
+
+            # 5. 连接Supabase
             if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
                 self._send_error(500, "Supabase configuration missing")
                 return
 
             supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
-            # 5. 获取订阅计划详情
+            # 6. 获取订阅计划详情
             sm = SubscriptionManager()
             plan_data = sm.PLANS.get(plan_type)
 
@@ -192,3 +229,61 @@ class handler(BaseHTTPRequestHandler):
             "error": message
         }
         self.wfile.write(json.dumps(error_response).encode('utf-8'))
+
+    def _query_payment_cache(self, out_trade_no: str) -> dict:
+        """
+        从 payment_cache 表查询支付状态
+
+        这个表由 webhook 回调写入,当支付成功时 Z-Pay 会主动通知我们。
+
+        Returns:
+            dict: 缓存记录,如果未找到返回 None
+        """
+        try:
+            from supabase_client import get_supabase_client
+
+            print(f"[MANUAL-UPGRADE] Querying payment_cache for: {out_trade_no}", file=sys.stderr)
+            sys.stderr.flush()
+
+            supabase = get_supabase_client()
+            response = supabase.table('payment_cache').select('*').eq(
+                'out_trade_no', out_trade_no
+            ).execute()
+
+            if response.data and len(response.data) > 0:
+                cache_record = response.data[0]
+                print(f"[MANUAL-UPGRADE] Cache found: status={cache_record.get('status')}", file=sys.stderr)
+                sys.stderr.flush()
+                return cache_record
+
+            print(f"[MANUAL-UPGRADE] No cache record found", file=sys.stderr)
+            sys.stderr.flush()
+            return None
+
+        except Exception as e:
+            print(f"[MANUAL-UPGRADE] Cache query error: {type(e).__name__}: {str(e)}", file=sys.stderr)
+            sys.stderr.flush()
+            return None
+
+    @staticmethod
+    def _is_paid_status(status_value) -> bool:
+        """
+        将ZPAY返回的status值统一转换为布尔标记。
+        ZPAY会把status序列化为"1"/"0",这里同时兼容字符串和数值。
+        """
+        if status_value is None:
+            return False
+
+        if isinstance(status_value, str):
+            normalized = status_value.strip().lower()
+            if normalized in {"paid", "unpaid"}:
+                return normalized == "paid"
+            if normalized == "":
+                return False
+            status_value = normalized
+
+        try:
+            numeric_status = int(float(status_value))
+            return numeric_status == 1
+        except (ValueError, TypeError):
+            return False
