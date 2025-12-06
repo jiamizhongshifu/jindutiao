@@ -157,20 +157,40 @@ class handler(BaseHTTPRequestHandler):
             # 7. 更新用户表
             print(f"[MANUAL-UPGRADE] Updating user: tier={tier}, expires={expires_at}", file=sys.stderr)
 
-            # ✅ 修复: 移除不存在的 is_active 字段,只更新 tier 和 expires_at
-            update_data = {
-                "tier": tier,
-                "subscription_expires_at": expires_at,
-                "updated_at": datetime.now().isoformat()
-            }
+            # ✅ 修复: 使用 RPC 调用绕过 PostgREST schema cache 问题
+            try:
+                # 方法1: 尝试使用 RPC (如果存在)
+                result = supabase.rpc('upgrade_user_subscription', {
+                    'p_user_id': user_id,
+                    'p_tier': tier,
+                    'p_expires_at': expires_at
+                }).execute()
 
-            result = supabase.table("users").update(update_data).eq("id", user_id).execute()
+                print(f"[MANUAL-UPGRADE] RPC upgrade successful", file=sys.stderr)
+                updated_user = {"tier": tier, "subscription_expires_at": expires_at}
 
-            if not result.data:
-                self._send_error(500, "Failed to update user")
-                return
+            except Exception as rpc_error:
+                print(f"[MANUAL-UPGRADE] RPC not available, using direct update: {rpc_error}", file=sys.stderr)
 
-            updated_user = result.data[0]
+                # 方法2: 直接更新,显式指定字段
+                update_data = {
+                    "tier": tier,
+                    "updated_at": datetime.now().isoformat()
+                }
+
+                # 只有非终身会员才设置过期时间
+                if expires_at is not None:
+                    update_data["subscription_expires_at"] = expires_at
+
+                print(f"[MANUAL-UPGRADE] Update data: {update_data}", file=sys.stderr)
+
+                result = supabase.table("users").update(update_data).eq("id", user_id).execute()
+
+                if not result.data:
+                    self._send_error(500, "Failed to update user")
+                    return
+
+                updated_user = result.data[0]
 
             # 8. 记录支付记录(如果订单号提供)
             if out_trade_no:
