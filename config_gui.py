@@ -5750,52 +5750,56 @@ class ConfigManager(QMainWindow):
 
         logging.info(f"[PAYMENT] Status check result: {status}")
 
-        if status and status.lower() in ("paid", "success", "successful", "completed", "pay_success", "payment_success"):
-            # 支付成功
-            self._stop_payment_polling()
+        # ✅ 新增: 绕过 Vercel 缓存 - 无论查询结果如何,都尝试调用 manual_upgrade
+        # 该接口会主动查询 Z-Pay 真实状态并激活会员(如果已支付)
+        from gaiya.core.auth_client import AuthClient
+        try:
+            auth_client = AuthClient()
+            user_id = auth_client.get_user_id()
+            plan_name = getattr(self, "current_plan_name", "Pro订阅")
+            out_trade_no = getattr(self, "current_out_trade_no", None)
 
-            # 触发会员升级（主动调用后台）
-            from gaiya.core.auth_client import AuthClient
-            try:
-                auth_client = AuthClient()
-                user_id = auth_client.get_user_id()
-                plan_name = getattr(self, "current_plan_name", "Pro订阅")
-                out_trade_no = getattr(self, "current_out_trade_no", None)
+            plan_type_map = {
+                "Pro月度订阅": "pro_monthly",
+                "Pro年度订阅": "pro_yearly",
+                "团队合伙人": "team_partner"
+            }
+            plan_type = plan_type_map.get(plan_name, "pro_monthly")
 
-                plan_type_map = {
-                    "Pro月度订阅": "pro_monthly",
-                    "Pro年度订阅": "pro_yearly",
-                    "团队合伙人": "team_partner"
-                }
-                plan_type = plan_type_map.get(plan_name, "pro_monthly")
+            if out_trade_no and user_id:
+                logging.info(f"[PAYMENT] Vercel query returned: {status}, trying manual upgrade to verify real status...")
+                upgrade_result = auth_client.manual_upgrade_subscription(
+                    user_id=user_id,
+                    plan_type=plan_type,
+                    out_trade_no=out_trade_no
+                )
 
-                if out_trade_no and user_id:
-                    upgrade_result = auth_client.manual_upgrade_subscription(
-                        user_id=user_id,
-                        plan_type=plan_type,
-                        out_trade_no=out_trade_no
+                if upgrade_result.get("success"):
+                    # 真实支付成功!
+                    logging.info("[PAYMENT] Manual upgrade succeeded - payment is CONFIRMED!")
+                    self._stop_payment_polling()
+
+                    # 刷新会员状态
+                    self.account_tab_widget = None
+                    self._load_account_tab()
+                    if hasattr(self, "update_account_display"):
+                        self.update_account_display()
+
+                    QMessageBox.information(
+                        self,
+                        "支付成功",
+                        f"{plan_name}已成功激活!\n\n会员状态已更新"
                     )
-                    if not upgrade_result.get("success"):
-                        logging.warning(f"[PAYMENT] Auto-upgrade failed after pay success: {upgrade_result.get('error')}")
+                else:
+                    # 真的未支付
+                    error_msg = upgrade_result.get('error', '')
+                    if 'not paid' in error_msg.lower() or 'unpaid' in error_msg.lower():
+                        logging.info("[PAYMENT] Manual upgrade confirms: order not paid yet, continue polling...")
+                    else:
+                        logging.warning(f"[PAYMENT] Manual upgrade failed: {error_msg}")
 
-                # 刷新会员状态
-                self.account_tab_widget = None
-                self._load_account_tab()
-                if hasattr(self, "update_account_display"):
-                    self.update_account_display()
-
-                QMessageBox.information(
-                    self,
-                    "支付成功",
-                    f"{plan_name}已成功激活!\n\n会员状态已更新"
-                )
-            except Exception as e:
-                logging.error(f"[PAYMENT] Auto-upgrade error: {e}")
-                QMessageBox.information(
-                    self,
-                    "支付成功",
-                    "支付已完成，但刷新会员状态时出现问题，请稍后在个人中心手动刷新。"
-                )
+        except Exception as e:
+            logging.error(f"[PAYMENT] Manual upgrade check error: {e}")
 
     def _on_payment_status_check_error(self, error_msg: str):
         """支付状态查询失败回调(不中断轮询,静默记录)"""
