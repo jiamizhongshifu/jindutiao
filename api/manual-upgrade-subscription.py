@@ -157,9 +157,9 @@ class handler(BaseHTTPRequestHandler):
             # 7. 更新用户表
             print(f"[MANUAL-UPGRADE] Updating user: tier={tier}, expires={expires_at}", file=sys.stderr)
 
+            # ✅ 修复: 移除不存在的 is_active 字段,只更新 tier 和 expires_at
             update_data = {
                 "tier": tier,
-                "is_active": True,
                 "subscription_expires_at": expires_at,
                 "updated_at": datetime.now().isoformat()
             }
@@ -196,7 +196,6 @@ class handler(BaseHTTPRequestHandler):
             self._send_success({
                 "success": True,
                 "user_tier": updated_user.get("tier"),
-                "is_active": updated_user.get("is_active"),
                 "subscription_expires_at": updated_user.get("subscription_expires_at"),
                 "message": "Subscription upgraded successfully"
             })
