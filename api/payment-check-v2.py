@@ -42,13 +42,40 @@ class handler(BaseHTTPRequestHandler):
                 return
 
             print(f"[PAYMENT-QUERY] Querying order: out_trade_no={out_trade_no}, trade_no={trade_no}", file=sys.stderr)
+            sys.stderr.flush()
 
-            # 2. 查询订单
+            # 2. ✅ 新增: 优先从 payment_cache 表查询(webhook 回调写入的缓存)
+            cache_result = self._query_payment_cache(out_trade_no)
+
+            if cache_result and cache_result.get("status") == "paid":
+                # 缓存命中且已支付,直接返回
+                print(f"[PAYMENT-QUERY] ✅ Cache hit: order is PAID", file=sys.stderr)
+                sys.stderr.flush()
+
+                self._send_success({
+                    "success": True,
+                    "order": {
+                        "out_trade_no": cache_result.get("out_trade_no"),
+                        "trade_no": cache_result.get("trade_no"),
+                        "name": cache_result.get("name"),
+                        "money": cache_result.get("money"),
+                        "status": "paid",
+                        "type": cache_result.get("type"),
+                        "param": cache_result.get("param", "")
+                    }
+                })
+                return
+
+            print(f"[PAYMENT-QUERY] Cache miss, querying Z-Pay API...", file=sys.stderr)
+            sys.stderr.flush()
+
+            # 3. 缓存未命中,查询 Z-Pay
             zpay = ZPayManager()
 
             # ✅ 修复: mapi.php 不支持查询操作,统一使用 api.php 查询
             # mapi.php 创建的订单可以通过 api.php 查询(已验证)
             print(f"[PAYMENT-QUERY] Querying order via api.php: out_trade_no={out_trade_no}, trade_no={trade_no}", file=sys.stderr)
+            sys.stderr.flush()
             result = zpay.query_order(out_trade_no=out_trade_no, trade_no=trade_no)
 
             if result["success"]:
@@ -108,6 +135,42 @@ class handler(BaseHTTPRequestHandler):
             "error": message
         }
         self.wfile.write(json.dumps(error_response).encode('utf-8'))
+
+    def _query_payment_cache(self, out_trade_no: str) -> dict:
+        """
+        从 payment_cache 表查询支付状态
+
+        这个表由 webhook 回调写入,当支付成功时 Z-Pay 会主动通知我们。
+        查询缓存比查询 Z-Pay API 更快,且避免了 Vercel 缓存问题。
+
+        Returns:
+            dict: 缓存记录,如果未找到返回 None
+        """
+        try:
+            from supabase_client import get_supabase_client
+
+            print(f"[PAYMENT-QUERY] Querying payment_cache for: {out_trade_no}", file=sys.stderr)
+            sys.stderr.flush()
+
+            supabase = get_supabase_client()
+            response = supabase.table('payment_cache').select('*').eq(
+                'out_trade_no', out_trade_no
+            ).execute()
+
+            if response.data and len(response.data) > 0:
+                cache_record = response.data[0]
+                print(f"[PAYMENT-QUERY] Cache found: status={cache_record.get('status')}", file=sys.stderr)
+                sys.stderr.flush()
+                return cache_record
+
+            print(f"[PAYMENT-QUERY] No cache record found", file=sys.stderr)
+            sys.stderr.flush()
+            return None
+
+        except Exception as e:
+            print(f"[PAYMENT-QUERY] Cache query error: {type(e).__name__}: {str(e)}", file=sys.stderr)
+            sys.stderr.flush()
+            return None
 
     @staticmethod
     def _is_paid_status(status_value) -> bool:

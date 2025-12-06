@@ -109,7 +109,12 @@ class handler(BaseHTTPRequestHandler):
                 self._send_response("success")
                 return
 
-            # 6. 创建支付记录
+            # 6. ✅ 新增: 缓存支付状态到 payment_cache 表
+            cache_success = self._cache_payment_status(params, user_id, plan_type)
+            if not cache_success:
+                print(f"[PAYMENT-NOTIFY] ⚠️ Failed to cache payment status, but continue processing", file=sys.stderr)
+
+            # 7. 创建支付记录
             payment_id = self._create_payment_record(
                 user_id=user_id,
                 order_id=out_trade_no,
@@ -124,7 +129,7 @@ class handler(BaseHTTPRequestHandler):
                 self._send_response("fail")
                 return
 
-            # 7. 创建订阅并激活会员
+            # 8. 创建订阅并激活会员
             sub_manager = SubscriptionManager()
             result = sub_manager.create_subscription(user_id, plan_type, payment_id)
 
@@ -140,6 +145,44 @@ class handler(BaseHTTPRequestHandler):
             import traceback
             traceback.print_exc(file=sys.stderr)
             self._send_response("fail")
+
+    def _cache_payment_status(self, params: dict, user_id: str, plan_type: str) -> bool:
+        """
+        缓存支付状态到 payment_cache 表
+
+        这个缓存表供客户端轮询查询使用,无需等待订阅激活完成。
+        客户端可以立即读取到支付成功状态并显示给用户。
+        """
+        try:
+            from datetime import datetime, timezone
+
+            client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+            # 准备缓存数据
+            cache_data = {
+                'out_trade_no': params.get('out_trade_no'),
+                'trade_no': params.get('trade_no'),
+                'status': 'paid',
+                'money': params.get('money'),
+                'param': f"{user_id}|{plan_type}",  # 保存业务参数
+                'name': params.get('name', ''),
+                'type': params.get('type', ''),
+                'paid_at': datetime.now(timezone.utc).isoformat(),
+                'updated_at': datetime.now(timezone.utc).isoformat()
+            }
+
+            # 使用 upsert 插入或更新
+            result = client.table('payment_cache').upsert(
+                cache_data,
+                on_conflict='out_trade_no'
+            ).execute()
+
+            print(f"[PAYMENT-NOTIFY] ✅ Payment status cached: {params.get('out_trade_no')}", file=sys.stderr)
+            return True
+
+        except Exception as e:
+            print(f"[PAYMENT-NOTIFY] ❌ Cache error: {type(e).__name__}: {str(e)}", file=sys.stderr)
+            return False
 
     def _is_order_processed(self, out_trade_no: str) -> bool:
         """检查订单是否已处理"""
