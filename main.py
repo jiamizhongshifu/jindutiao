@@ -3529,11 +3529,9 @@ def main():
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
     )
 
-    # 初始化日志
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s'
-    )
+    # ✅ 修复: 移除重复的 logging.basicConfig() 配置
+    # MainWindow.__init__() 中的 setup_logging() 会正确配置 FileHandler + StreamHandler
+    # 这里只需要获取 logger 对象,不要重复配置 basicConfig
     logger = logging.getLogger(__name__)
 
     # 创建应用实例

@@ -89,3 +89,6 @@ lpt9
 
 first_run.json
 ssl_test.txt
+
+# 旧打包脚本备份
+.old_build_scripts/

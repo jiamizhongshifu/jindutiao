@@ -855,8 +855,9 @@ class AuthClient:
             if trade_no:
                 params["trade_no"] = trade_no
 
+            # ✅ 使用新的查询接口绕过 Vercel 缓存
             response = self.session.get(
-                f"{self.backend_url}/api/payment-query",
+                f"{self.backend_url}/api/payment-check-v2",
                 params=params,
                 timeout=15
             )
