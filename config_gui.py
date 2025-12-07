@@ -12,7 +12,7 @@ from functools import partial
 from typing import Dict, List, Any, Optional, Tuple
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QTabWidget, QLabel, QLineEdit, QSpinBox, QPushButton, QColorDialog,
+    QTabWidget, QLabel, QLineEdit, QSpinBox, QDoubleSpinBox, QPushButton, QColorDialog,
     QComboBox, QCheckBox, QTableWidget, QTableWidgetItem, QHeaderView,
     QMessageBox, QTimeEdit, QGroupBox, QFormLayout, QFileDialog, QDialog,
     QDialogButtonBox, QButtonGroup, QRadioButton, QProgressDialog
@@ -41,6 +41,7 @@ from scene_editor import SceneEditorWindow
 
 # 使用gaiya.core.async_worker中的异步类(统一管理)
 from gaiya.core.async_worker import AsyncAIWorker as AIWorker
+from gaiya.core.marker_presets import MarkerPresetManager
 
 
 class PaymentOptionCard(QWidget):
@@ -345,6 +346,8 @@ class ConfigManager(QMainWindow):
         # 延迟初始化模板管理器
         self.template_manager = None
         self.schedule_manager = None
+        # 初始化标记图片预设管理器
+        self.marker_preset_manager = MarkerPresetManager()
 
         # 场景编辑器窗口引用（延迟创建）
         self.scene_editor_window = None
@@ -443,11 +446,18 @@ class ConfigManager(QMainWindow):
             if hasattr(self, 'marker_speed_spin'):
                 self.marker_speed_spin.setValue(self.config.get('marker_speed', 100))
 
+            if hasattr(self, 'marker_always_visible_check'):
+                self.marker_always_visible_check.setChecked(self.config.get('marker_always_visible', True))
+
             if hasattr(self, 'marker_x_offset_spin'):
                 self.marker_x_offset_spin.setValue(self.config.get('marker_x_offset', 0))
 
             if hasattr(self, 'marker_y_offset_spin'):
                 self.marker_y_offset_spin.setValue(self.config.get('marker_y_offset', 0))
+
+            # 加载标记图片预设配置
+            if self.marker_preset_manager:
+                self.marker_preset_manager.load_from_config(self.config)
 
             # Update language combo box
             if hasattr(self, 'language_combo'):
@@ -1932,8 +1942,47 @@ class ConfigManager(QMainWindow):
 
         color_layout.addRow(self.i18n.tr("config.labels.marker_type") + ":", marker_type_layout)
 
-        # 标记图片路径
-        marker_image_layout = QHBoxLayout()
+        # 标记图片预设选择器(下拉框)
+        preset_selector_layout = QHBoxLayout()
+
+        self.marker_preset_combo = QComboBox()
+        self.marker_preset_combo.setStyleSheet(StyleManager.dropdown())
+
+        # 添加所有预设到下拉框
+        current_preset_id = self.marker_preset_manager.get_current_preset_id()
+        for preset in self.marker_preset_manager.get_all_presets():
+            preset_id = preset["id"]
+            preset_name = preset["name"]
+
+            self.marker_preset_combo.addItem(preset_name, preset_id)
+
+            # 设置当前选中项
+            if preset_id == current_preset_id:
+                self.marker_preset_combo.setCurrentIndex(self.marker_preset_combo.count() - 1)
+
+        self.marker_preset_combo.currentIndexChanged.connect(self._on_preset_combo_changed)
+        preset_selector_layout.addWidget(self.marker_preset_combo)
+        preset_selector_layout.addStretch()
+
+        color_layout.addRow("📦 标记图片预设:", preset_selector_layout)
+
+        # 标记图片路径(仅在选择自定义预设时显示整行)
+        # 创建包含标签和内容的整行容器
+        self.marker_image_row = QWidget()
+        marker_image_row_layout = QHBoxLayout(self.marker_image_row)
+        marker_image_row_layout.setContentsMargins(0, 0, 0, 0)
+        marker_image_row_layout.setSpacing(10)
+
+        # 标签
+        marker_image_label = QLabel(tr("appearance.marker_image") + ":")
+        marker_image_label.setMinimumWidth(120)
+        marker_image_row_layout.addWidget(marker_image_label)
+
+        # 输入框和按钮容器
+        marker_image_content = QWidget()
+        marker_image_layout = QHBoxLayout(marker_image_content)
+        marker_image_layout.setContentsMargins(0, 0, 0, 0)
+
         marker_image_path = self.config.get('marker_image_path', '') if self.config else ''
         self.marker_image_input = QLineEdit(marker_image_path)
         self.marker_image_input.setPlaceholderText(self.i18n.tr("config.choose_image_file"))
@@ -1945,7 +1994,13 @@ class ConfigManager(QMainWindow):
         marker_image_btn.setStyleSheet("QPushButton { padding: 8px 12px; font-size: 12px; }")
         marker_image_layout.addWidget(marker_image_btn)
 
-        color_layout.addRow(tr("appearance.marker_image") + ":", marker_image_layout)
+        marker_image_row_layout.addWidget(marker_image_content)
+
+        # 添加整行到布局(使用addRow的单参数形式,让它跨越两列)
+        color_layout.addRow(self.marker_image_row)
+
+        # 初始化时根据当前预设决定是否显示整行
+        self._update_marker_image_visibility()
 
         # 标记图片大小 - 预设档位 + 自定义
         marker_size_container = QWidget()
@@ -2006,6 +2061,7 @@ class ConfigManager(QMainWindow):
         self.marker_x_offset_spin.setValue(self.config.get('marker_x_offset', 0))
         self.marker_x_offset_spin.setSuffix(" px")
         self.marker_x_offset_spin.setMaximumWidth(100)
+        self.marker_x_offset_spin.valueChanged.connect(self._save_current_preset_params)
         x_offset_hint = QLabel(tr("appearance.marker_x_offset_note"))
         x_offset_hint.setStyleSheet("color: #888888; font-size: 9pt;")
         x_offset_layout = QHBoxLayout()
@@ -2021,6 +2077,7 @@ class ConfigManager(QMainWindow):
         self.marker_y_offset_spin.setValue(self.config.get('marker_y_offset', 0))
         self.marker_y_offset_spin.setSuffix(" px")
         self.marker_y_offset_spin.setMaximumWidth(100)
+        self.marker_y_offset_spin.valueChanged.connect(self._save_current_preset_params)
         y_offset_hint = QLabel(tr("appearance.marker_y_offset_note"))
         y_offset_hint.setStyleSheet("color: #888888; font-size: 9pt;")
         y_offset_layout = QHBoxLayout()
@@ -2045,34 +2102,166 @@ class ConfigManager(QMainWindow):
         speed_layout.addStretch()
         color_layout.addRow(self.i18n.tr("config.labels.animation_speed") + ":", speed_layout)
 
+        # 标记图片始终显示
+        self.marker_always_visible_check = QCheckBox("标记图片始终显示")
+        self.marker_always_visible_check.setChecked(self.config.get('marker_always_visible', True))
+        always_visible_hint = QLabel("取消勾选后,标记图片仅在鼠标悬停时显示")
+        always_visible_hint.setStyleSheet("color: #888888; font-size: 11px;")
+        always_visible_layout = QHBoxLayout()
+        always_visible_layout.addWidget(self.marker_always_visible_check)
+        always_visible_layout.addWidget(always_visible_hint)
+        always_visible_layout.addStretch()
+        color_layout.addRow("", always_visible_layout)
+
         color_group.setLayout(color_layout)
         layout.addWidget(color_group)
 
         # 初始化时根据类型显示/隐藏相关控件
         self.on_marker_type_changed(self.marker_type_combo.currentText())
 
-        # 效果设置组
-        effect_group = QGroupBox(tr("appearance.visual_effects"))
-        effect_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
-        effect_layout = QFormLayout()
-        effect_layout.setVerticalSpacing(12)
-        effect_layout.setHorizontalSpacing(10)
+        # 弹幕设置组
+        danmaku_group = QGroupBox("弹幕设置")
+        danmaku_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
+        danmaku_layout = QFormLayout()
+        danmaku_layout.setVerticalSpacing(12)
+        danmaku_layout.setHorizontalSpacing(10)
 
-        # 启用阴影
-        self.shadow_check = QCheckBox(tr("appearance.enable_shadow"))
+        # 弹幕开关
+        self.danmaku_enabled_check = QCheckBox("启用弹幕")
+        danmaku_config = self.config.get('danmaku', {})
+        self.danmaku_enabled_check.setChecked(danmaku_config.get('enabled', True))
+        danmaku_hint = QLabel("在进度条上方显示B站风格的滚动弹幕")
+        danmaku_hint.setStyleSheet("color: #888888; font-size: 9pt;")
+        danmaku_enable_layout = QHBoxLayout()
+        danmaku_enable_layout.addWidget(self.danmaku_enabled_check)
+        danmaku_enable_layout.addWidget(danmaku_hint)
+        danmaku_enable_layout.addStretch()
+        danmaku_layout.addRow("", danmaku_enable_layout)
+
+        # 弹幕频率
+        self.danmaku_frequency_spin = QSpinBox()
+        self.danmaku_frequency_spin.setStyleSheet(StyleManager.input_number())
+        self.danmaku_frequency_spin.setRange(5, 120)
+        self.danmaku_frequency_spin.setValue(danmaku_config.get('frequency', 30))
+        self.danmaku_frequency_spin.setSuffix(" 秒")
+        self.danmaku_frequency_spin.setMaximumWidth(80)
+        freq_hint = QLabel("每隔多少秒生成一条弹幕")
+        freq_hint.setStyleSheet("color: #888888; font-size: 9pt;")
+        freq_layout = QHBoxLayout()
+        freq_layout.addWidget(self.danmaku_frequency_spin)
+        freq_layout.addWidget(freq_hint)
+        freq_layout.addStretch()
+        danmaku_layout.addRow("生成频率:", freq_layout)
+
+        # 弹幕速度
+        self.danmaku_speed_spin = QDoubleSpinBox()
+        self.danmaku_speed_spin.setStyleSheet(StyleManager.input_number())
+        self.danmaku_speed_spin.setRange(0.5, 3.0)
+        self.danmaku_speed_spin.setValue(danmaku_config.get('speed', 1.0))
+        self.danmaku_speed_spin.setSingleStep(0.1)
+        self.danmaku_speed_spin.setSuffix(" x")
+        self.danmaku_speed_spin.setMaximumWidth(80)
+        speed_hint = QLabel("弹幕移动速度倍率")
+        speed_hint.setStyleSheet("color: #888888; font-size: 9pt;")
+        speed_layout = QHBoxLayout()
+        speed_layout.addWidget(self.danmaku_speed_spin)
+        speed_layout.addWidget(speed_hint)
+        speed_layout.addStretch()
+        danmaku_layout.addRow("移动速度:", speed_layout)
+
+        # 字体大小
+        self.danmaku_font_size_spin = QSpinBox()
+        self.danmaku_font_size_spin.setStyleSheet(StyleManager.input_number())
+        self.danmaku_font_size_spin.setRange(10, 24)
+        self.danmaku_font_size_spin.setValue(danmaku_config.get('font_size', 14))
+        self.danmaku_font_size_spin.setSuffix(" px")
+        self.danmaku_font_size_spin.setMaximumWidth(80)
+        font_hint = QLabel("弹幕文字大小")
+        font_hint.setStyleSheet("color: #888888; font-size: 9pt;")
+        font_layout = QHBoxLayout()
+        font_layout.addWidget(self.danmaku_font_size_spin)
+        font_layout.addWidget(font_hint)
+        font_layout.addStretch()
+        danmaku_layout.addRow("字体大小:", font_layout)
+
+        # 透明度
+        self.danmaku_opacity_spin = QDoubleSpinBox()
+        self.danmaku_opacity_spin.setStyleSheet(StyleManager.input_number())
+        self.danmaku_opacity_spin.setRange(0.1, 1.0)
+        self.danmaku_opacity_spin.setValue(danmaku_config.get('opacity', 1.0))
+        self.danmaku_opacity_spin.setSingleStep(0.1)
+        self.danmaku_opacity_spin.setMaximumWidth(80)
+        opacity_hint = QLabel("弹幕透明度(1.0=不透明)")
+        opacity_hint.setStyleSheet("color: #888888; font-size: 9pt;")
+        opacity_layout = QHBoxLayout()
+        opacity_layout.addWidget(self.danmaku_opacity_spin)
+        opacity_layout.addWidget(opacity_hint)
+        opacity_layout.addStretch()
+        danmaku_layout.addRow("透明度:", opacity_layout)
+
+        # 同屏数量
+        self.danmaku_max_count_spin = QSpinBox()
+        self.danmaku_max_count_spin.setStyleSheet(StyleManager.input_number())
+        self.danmaku_max_count_spin.setRange(1, 10)
+        self.danmaku_max_count_spin.setValue(danmaku_config.get('max_count', 3))
+        self.danmaku_max_count_spin.setMaximumWidth(80)
+        count_hint = QLabel("同时显示的最大弹幕数量")
+        count_hint.setStyleSheet("color: #888888; font-size: 9pt;")
+        count_layout = QHBoxLayout()
+        count_layout.addWidget(self.danmaku_max_count_spin)
+        count_layout.addWidget(count_hint)
+        count_layout.addStretch()
+        danmaku_layout.addRow("同屏数量:", count_layout)
+
+        # Y轴偏移
+        self.danmaku_y_offset_spin = QSpinBox()
+        self.danmaku_y_offset_spin.setStyleSheet(StyleManager.input_number())
+        self.danmaku_y_offset_spin.setRange(20, 200)
+        self.danmaku_y_offset_spin.setValue(danmaku_config.get('y_offset', 80))
+        self.danmaku_y_offset_spin.setSuffix(" px")
+        self.danmaku_y_offset_spin.setMaximumWidth(80)
+        y_offset_hint = QLabel("弹幕距离进度条的垂直距离")
+        y_offset_hint.setStyleSheet("color: #888888; font-size: 9pt;")
+        y_offset_layout = QHBoxLayout()
+        y_offset_layout.addWidget(self.danmaku_y_offset_spin)
+        y_offset_layout.addWidget(y_offset_hint)
+        y_offset_layout.addStretch()
+        danmaku_layout.addRow("垂直位置:", y_offset_layout)
+
+        # 颜色模式
+        self.danmaku_color_mode_combo = QComboBox()
+        self.danmaku_color_mode_combo.setStyleSheet(StyleManager.dropdown())
+        self.danmaku_color_mode_combo.addItem("自动(根据任务类型)", "auto")
+        self.danmaku_color_mode_combo.addItem("固定白色", "fixed")
+        current_color_mode = danmaku_config.get('color_mode', 'auto')
+        index = 0 if current_color_mode == 'auto' else 1
+        self.danmaku_color_mode_combo.setCurrentIndex(index)
+        color_mode_hint = QLabel("弹幕颜色显示方式")
+        color_mode_hint.setStyleSheet("color: #888888; font-size: 9pt;")
+        color_mode_layout = QHBoxLayout()
+        color_mode_layout.addWidget(self.danmaku_color_mode_combo)
+        color_mode_layout.addWidget(color_mode_hint)
+        color_mode_layout.addStretch()
+        danmaku_layout.addRow("颜色模式:", color_mode_layout)
+
+        # 阴影效果
+        self.shadow_check = QCheckBox("启用阴影")
         self.shadow_check.setChecked(self.config.get('enable_shadow', True))
-        effect_layout.addRow(self.shadow_check)
+        shadow_hint = QLabel("进度条显示阴影效果")
+        shadow_hint.setStyleSheet("color: #888888; font-size: 9pt;")
+        shadow_layout = QHBoxLayout()
+        shadow_layout.addWidget(self.shadow_check)
+        shadow_layout.addWidget(shadow_hint)
+        shadow_layout.addStretch()
+        danmaku_layout.addRow("", shadow_layout)
 
-        # 圆角半径
+        # 圆角半径(隐藏UI,使用固定值0)
         self.radius_spin = QSpinBox()
-        self.radius_spin.setStyleSheet(StyleManager.input_number())
-        self.radius_spin.setRange(0, 20)
-        self.radius_spin.setValue(self.config.get('corner_radius', 0))
-        self.radius_spin.setSuffix(" " + tr("appearance.pixels"))
-        effect_layout.addRow(tr("appearance.corner_radius") + ":", self.radius_spin)
+        self.radius_spin.setValue(0)  # 固定为0,不显示圆角
+        self.radius_spin.setVisible(False)  # 隐藏控件
 
-        effect_group.setLayout(effect_layout)
-        layout.addWidget(effect_group)
+        danmaku_group.setLayout(danmaku_layout)
+        layout.addWidget(danmaku_group)
 
         layout.addStretch()
         # 将内容widget设置到滚动区域
@@ -7165,8 +7354,9 @@ class ConfigManager(QMainWindow):
         self.update_marker_size_preset_buttons()
 
     def on_marker_size_value_changed(self, value):
-        """标记大小改变时更新按钮状态"""
+        """标记大小改变时更新按钮状态并保存到预设"""
         self.update_marker_size_preset_buttons()
+        self._save_current_preset_params()
 
     def update_marker_size_preset_buttons(self):
         """更新预设标记大小按钮的选中状态"""
@@ -7204,6 +7394,72 @@ class ConfigManager(QMainWindow):
                     }
                 """)
 
+    def _save_current_preset_params(self):
+        """保存当前预设的参数(从UI控件读取)"""
+        if not hasattr(self, 'marker_preset_manager') or not self.marker_preset_manager:
+            return
+
+        current_preset_id = self.marker_preset_manager.get_current_preset_id()
+        params = {
+            "size": self.marker_size_spin.value(),
+            "x_offset": self.marker_x_offset_spin.value(),
+            "y_offset": self.marker_y_offset_spin.value()
+        }
+
+        self.marker_preset_manager.save_preset_params(current_preset_id, params)
+        logging.debug(f"Saved params for preset {current_preset_id}: {params}")
+
+    def _on_preset_combo_changed(self, index):
+        """处理预设下拉框切换事件"""
+        preset_id = self.marker_preset_combo.itemData(index)
+        if not preset_id:
+            return
+
+        # 更新预设管理器当前预设
+        self.marker_preset_manager.set_current_preset_id(preset_id)
+
+        # 获取预设参数并更新UI控件
+        params = self.marker_preset_manager.get_preset_params(preset_id)
+        self.marker_size_spin.setValue(params["size"])
+        self.marker_x_offset_spin.setValue(params["x_offset"])
+        self.marker_y_offset_spin.setValue(params["y_offset"])
+
+        # 更新文件选择器可见性
+        self._update_marker_image_visibility()
+
+        # 获取预设图片路径并更新
+        preset = self.marker_preset_manager.get_preset(preset_id)
+        if preset:
+            if preset_id == "custom":
+                # 自定义预设:保持用户上次选择的路径
+                pass
+            else:
+                # 内置预设:使用预设图片路径
+                marker_path = self.marker_preset_manager.get_marker_path(preset["file"])
+                self.marker_image_input.setText(marker_path)
+
+                # 自动切换到image/gif类型
+                ext = Path(preset["file"]).suffix.lower()
+                if ext in ['.gif', '.webp']:
+                    self.marker_type_combo.setCurrentText('gif')
+                else:
+                    self.marker_type_combo.setCurrentText('image')
+
+        logging.info(f"Switched to marker preset: {preset_id}, params: {params}")
+
+    def _update_marker_image_visibility(self):
+        """更新标记图片整行的可见性(仅在自定义预设时显示)"""
+        if not hasattr(self, 'marker_image_row') or not hasattr(self, 'marker_preset_combo'):
+            return
+
+        current_preset_id = self.marker_preset_combo.currentData()
+        is_custom = (current_preset_id == "custom")
+
+        # 显示或隐藏整行(包括标签和控件)
+        self.marker_image_row.setVisible(is_custom)
+
+        logging.debug(f"Marker image row visibility: {'visible' if is_custom else 'hidden'} (preset={current_preset_id})")
+
     def choose_marker_image(self):
         """选择时间标记图片"""
         file_dialog = QFileDialog(self)
@@ -7229,6 +7485,16 @@ class ConfigManager(QMainWindow):
                     self.marker_type_combo.setCurrentText('gif')
                 else:
                     self.marker_type_combo.setCurrentText('image')
+
+                # 自动切换到自定义预设
+                self.marker_preset_manager.set_custom_image_path(file_path)
+                self.marker_preset_manager.set_current_preset_id("custom")
+
+                # 更新下拉框选中"自定义图片"
+                for i in range(self.marker_preset_combo.count()):
+                    if self.marker_preset_combo.itemData(i) == "custom":
+                        self.marker_preset_combo.setCurrentIndex(i)
+                        break
 
     def choose_color(self, input_widget):
         """选择颜色"""
@@ -7350,9 +7616,11 @@ class ConfigManager(QMainWindow):
                 "marker_color": self.marker_color_input.text(),
                 "marker_width": self.marker_width_spin.value(),
                 "marker_type": self.marker_type_combo.currentText(),
-                "marker_image_path": self.marker_image_input.text(),
+                # 标记图片路径:使用预设系统的正确路径(而非UI输入框的文本)
+                "marker_image_path": self.marker_preset_manager.get_current_marker_path() if self.marker_preset_manager else self.marker_image_input.text(),
                 "marker_size": self.marker_size_spin.value(),
                 "marker_speed": self.marker_speed_spin.value(),
+                "marker_always_visible": self.marker_always_visible_check.isChecked(),
                 "marker_x_offset": self.marker_x_offset_spin.value(),
                 "marker_y_offset": self.marker_y_offset_spin.value(),
                 "screen_index": self.screen_spin.value(),
@@ -7383,8 +7651,23 @@ class ConfigManager(QMainWindow):
                     "enabled": (getattr(self, 'scene_enabled_check', None) and self.scene_enabled_check.isChecked()) if hasattr(self, 'scene_enabled_check') else self.config.get('scene', {}).get('enabled', False),
                     "current_scene": self.scene_combo.itemData(self.scene_combo.currentIndex()) if hasattr(self, 'scene_combo') and self.scene_combo.currentIndex() >= 0 else self.config.get('scene', {}).get('current_scene'),
                     "show_progress_bar": (getattr(self, 'show_progress_in_scene_check', None) and self.show_progress_in_scene_check.isChecked()) if hasattr(self, 'show_progress_in_scene_check') else self.config.get('scene', {}).get('show_progress_bar', False)
+                },
+                "danmaku": {
+                    "enabled": (getattr(self, 'danmaku_enabled_check', None) and self.danmaku_enabled_check.isChecked()) if hasattr(self, 'danmaku_enabled_check') else self.config.get('danmaku', {}).get('enabled', True),
+                    "frequency": self.danmaku_frequency_spin.value() if hasattr(self, 'danmaku_frequency_spin') else self.config.get('danmaku', {}).get('frequency', 30),
+                    "speed": self.danmaku_speed_spin.value() if hasattr(self, 'danmaku_speed_spin') else self.config.get('danmaku', {}).get('speed', 1.0),
+                    "font_size": self.danmaku_font_size_spin.value() if hasattr(self, 'danmaku_font_size_spin') else self.config.get('danmaku', {}).get('font_size', 14),
+                    "opacity": self.danmaku_opacity_spin.value() if hasattr(self, 'danmaku_opacity_spin') else self.config.get('danmaku', {}).get('opacity', 1.0),
+                    "max_count": self.danmaku_max_count_spin.value() if hasattr(self, 'danmaku_max_count_spin') else self.config.get('danmaku', {}).get('max_count', 3),
+                    "y_offset": self.danmaku_y_offset_spin.value() if hasattr(self, 'danmaku_y_offset_spin') else self.config.get('danmaku', {}).get('y_offset', 80),
+                    "color_mode": self.danmaku_color_mode_combo.itemData(self.danmaku_color_mode_combo.currentIndex()) if hasattr(self, 'danmaku_color_mode_combo') else self.config.get('danmaku', {}).get('color_mode', 'auto')
                 }
             }
+
+            # 合并标记图片预设配置
+            if self.marker_preset_manager:
+                preset_config = self.marker_preset_manager.save_to_config()
+                config.update(preset_config)
 
             # 使用防抖动保存（此处是save_all函数，通常是手动点击保存按钮触发）
             # 更新内存中的配置
@@ -8411,6 +8694,7 @@ del /f /q "%~f0"
             self.config['marker_image_path'] = self.marker_image_input.text() if hasattr(self, 'marker_image_input') else self.config.get('marker_image_path', '')
             self.config['marker_size'] = self.marker_size_spin.value() if hasattr(self, 'marker_size_spin') else self.config.get('marker_size', 50)
             self.config['marker_speed'] = self.marker_speed_spin.value() if hasattr(self, 'marker_speed_spin') else self.config.get('marker_speed', 100)
+            self.config['marker_always_visible'] = self.marker_always_visible_check.isChecked() if hasattr(self, 'marker_always_visible_check') else self.config.get('marker_always_visible', True)
             self.config['marker_x_offset'] = self.marker_x_offset_spin.value() if hasattr(self, 'marker_x_offset_spin') else self.config.get('marker_x_offset', 0)
             self.config['marker_y_offset'] = self.marker_y_offset_spin.value() if hasattr(self, 'marker_y_offset_spin') else self.config.get('marker_y_offset', 0)
             self.config['screen_index'] = self.screen_spin.value() if hasattr(self, 'screen_spin') else self.config.get('screen_index', 0)

@@ -20,6 +20,18 @@
 """
 
 from gaiya.ui.theme_light import LightTheme as Theme
+import os
+import sys
+
+
+def get_app_dir():
+    """获取应用根目录"""
+    if getattr(sys, 'frozen', False):
+        # PyInstaller打包后
+        return os.path.dirname(sys.executable)
+    else:
+        # 开发环境
+        return os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 class StyleManager:
@@ -466,6 +478,8 @@ class StyleManager:
         Returns:
             复选框QSS字符串
         """
+        app_dir = get_app_dir()
+        checkmark_path = os.path.join(app_dir, 'assets', 'checkmark.png').replace('\\', '/')
         return f"""
             QCheckBox {{
                 color: {Theme.TEXT_PRIMARY};
@@ -485,6 +499,7 @@ class StyleManager:
             QCheckBox::indicator:checked {{
                 background-color: {Theme.ACCENT_GREEN};
                 border: 1px solid {Theme.ACCENT_GREEN};
+                image: url({checkmark_path});
             }}
             QCheckBox:disabled {{
                 color: {Theme.TEXT_DISABLED};

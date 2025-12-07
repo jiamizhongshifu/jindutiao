@@ -96,7 +96,13 @@ a = Analysis(
         ('tasks_template_flexible.json', '.'),
         # 模板配置文件
         ('templates_config.json', '.'),
-        # 默认时间标记动图
+        # 标记图片预设资源（assets/markers目录）
+        ('assets/markers/', 'assets/markers/'),
+        # UI资源文件（复选框对勾图标）
+        ('assets/checkmark.png', 'assets/'),
+        # 弹幕预设内容库
+        ('gaiya/data/danmaku_presets.json', 'gaiya/data/'),
+        # 默认时间标记动图（向后兼容旧版本，保留根目录的kun.webp）
         ('kun.webp', '.'),
         ('kun.gif', '.'),
         ('kun_100x100.gif', '.'),

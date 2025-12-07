@@ -9,6 +9,7 @@ import json
 import copy
 import logging
 import platform
+import time
 from pathlib import Path
 from datetime import datetime, date
 from version import __version__, VERSION_STRING, VERSION_STRING_ZH, get_version_info
@@ -35,6 +36,8 @@ from gaiya.data.db_manager import db
 from gaiya.utils import time_utils, path_utils, data_loader, task_calculator, window_utils
 from gaiya.utils.time_block_utils import generate_time_block_id, legacy_time_block_keys
 from gaiya.scene import SceneLoader, SceneRenderer, SceneEventManager, ResourceCache, SceneManager
+from gaiya.core.marker_presets import MarkerPresetManager
+from gaiya.core.danmaku_manager import DanmakuManager
 
 # i18n support
 try:
@@ -75,6 +78,7 @@ class TimeProgressBar(QWidget):
         self.calculate_time_range()  # 计算任务的时间范围
         self.current_time_percentage = 0.0  # 初始化时间百分比
         self.hovered_task_index = -1  # 当前悬停的任务索引(-1表示没有悬停)
+        self.is_mouse_over_progress_bar = False  # 鼠标是否在进度条上（用于控制标记图片显示）
 
         # 编辑模式状态管理
         self.edit_mode = False  # 编辑模式标志
@@ -101,7 +105,14 @@ class TimeProgressBar(QWidget):
         self.gif_loop_count = 0  # 循环次数
         self.paint_event_count = 0  # paintEvent 调用次数
 
+        # 初始化标记图片预设管理器
+        self.marker_preset_manager = MarkerPresetManager()
+        self.marker_preset_manager.load_from_config(self.config)
+
         self.init_marker_image()   # 加载时间标记图片
+
+        # 初始化弹幕管理器
+        self.danmaku_manager = DanmakuManager(self.app_dir, self.config, self.logger)
 
         # 番茄钟面板实例
         self.pomodoro_panel = None
@@ -383,9 +394,16 @@ class TimeProgressBar(QWidget):
         else:
             self.logger.debug(f"[场景几何] 场景未启用")
 
-        # 取悬停空间、标记空间和场景空间的最大值
-        hover_extra_space = max(hover_extra_space, marker_extra_space, scene_extra_space)
-        self.logger.info(f"[场景几何] 悬停空间: {hover_extra_space} (悬停50, 标记{marker_extra_space}, 场景{scene_extra_space})")
+        # 计算弹幕空间（如果启用）
+        danmaku_extra_space = 0
+        if hasattr(self, 'danmaku_manager') and self.danmaku_manager.enabled:
+            # 弹幕区域高度 = y_offset + (max_count * 30px 行高)
+            danmaku_extra_space = self.danmaku_manager.y_offset + (self.danmaku_manager.max_count * 40)
+            self.logger.debug(f"[弹幕几何] 弹幕空间: {danmaku_extra_space}px")
+
+        # 取悬停空间、标记空间、场景空间和弹幕空间的最大值
+        hover_extra_space = max(hover_extra_space, marker_extra_space, scene_extra_space, danmaku_extra_space)
+        self.logger.info(f"[场景几何] 悬停空间: {hover_extra_space} (悬停50, 标记{marker_extra_space}, 场景{scene_extra_space}, 弹幕{danmaku_extra_space})")
 
         # 根据配置定位到屏幕顶部或任务栏上方
         if self.config['position'] == 'bottom':
@@ -451,6 +469,8 @@ class TimeProgressBar(QWidget):
 
         # 清理旧的资源
         self.marker_pixmap = None
+
+        # 清理旧的QMovie
         if self.marker_movie:
             # 断开所有信号连接，防止重复连接导致帧率异常
             try:
@@ -472,46 +492,49 @@ class TimeProgressBar(QWidget):
             self.gif_loop_count = 0
             self.paint_event_count = 0
 
+        # 清理旧的帧定时器(WebP手动控制)
+        if self.marker_frame_timer:
+            self.marker_frame_timer.stop()
+            try:
+                self.marker_frame_timer.timeout.disconnect()
+            except RuntimeError:
+                pass
+            self.marker_frame_timer.deleteLater()
+            self.marker_frame_timer = None
+            self.marker_current_frame = 0
+
+        # 清理帧缓存
+        if hasattr(self, 'marker_cached_frames'):
+            self.marker_cached_frames = []
+
         if marker_type == 'line':
             # 线条模式,不需要加载图片
             return
 
-        # 获取图片路径
-        image_path = self.config.get('marker_image_path', 'kun.webp')
+        # 使用预设管理器获取标记图片路径
+        image_path = self.marker_preset_manager.get_current_marker_path()
+
+        # Fallback: 如果预设管理器返回空路径,尝试从配置读取旧格式路径
+        if not image_path:
+            self.logger.warning("预设管理器未返回路径,尝试使用配置中的marker_image_path")
+            image_path = self.config.get('marker_image_path', '')
 
         if not image_path:
             self.logger.info("未配置时间标记图片,使用线条模式")
             self.config['marker_type'] = 'line'
             return
 
-        # 支持相对路径和绝对路径
+        # 预设管理器返回的已经是绝对路径
         image_file = Path(image_path)
-        if not image_file.is_absolute():
-            # 相对路径:优先尝试应用目录，然后尝试资源路径（打包后）
-            app_dir_path = self.app_dir / image_path
-            resource_path = path_utils.get_resource_path(image_path)
 
-            # 详细路径诊断日志
-            self.logger.info(f"[路径诊断] 原始路径: {image_path}")
-            self.logger.info(f"[路径诊断] app_dir: {self.app_dir}")
-            self.logger.info(f"[路径诊断] sys.frozen: {getattr(sys, 'frozen', False)}")
-            if getattr(sys, 'frozen', False):
-                self.logger.info(f"[路径诊断] _MEIPASS: {getattr(sys, '_MEIPASS', 'N/A')}")
-            self.logger.info(f"[路径诊断] app_dir路径: {app_dir_path} (存在: {app_dir_path.exists()})")
-            self.logger.info(f"[路径诊断] resource路径: {resource_path} (存在: {resource_path.exists()})")
-
-            if app_dir_path.exists():
-                image_file = app_dir_path
-                self.logger.info(f"[路径诊断] 使用app_dir路径")
-            elif resource_path.exists():
-                image_file = resource_path
-                self.logger.info(f"[路径诊断] 使用resource路径")
-            else:
-                image_file = resource_path  # 默认使用resource路径用于错误报告
+        self.logger.info(f"[标记图片] 预设ID: {self.marker_preset_manager.get_current_preset_id()}")
+        self.logger.info(f"[标记图片] 图片路径: {image_file}")
+        self.logger.info(f"[标记图片] 文件存在: {image_file.exists()}")
 
         if not image_file.exists():
             self.logger.error(f"时间标记图片不存在: {image_file}")
-            self.logger.error(f"[路径诊断] 请检查PyInstaller spec文件中是否包含: ('kun.webp', '.')")
+            self.logger.error(f"[标记图片] 当前预设: {self.marker_preset_manager.get_current_preset_id()}")
+            self.logger.error(f"[标记图片] 请检查PyInstaller spec文件中是否包含: ('assets/markers/', 'assets/markers/')")
             self.config['marker_type'] = 'line'
             return
 
@@ -583,7 +606,7 @@ class TimeProgressBar(QWidget):
                 self.logger.info(f"[帧缓存] 完成！共缓存 {len(self.marker_cached_frames)} 帧")
 
                 # 检测WebP格式 - 需要手动控制帧切换
-                is_webp = image_path.lower().endswith('.webp')
+                is_webp = str(image_file).lower().endswith('.webp')
 
                 if is_webp:
                     # WebP格式：使用帧缓存 + 定时器手动控制（不启动QMovie）
@@ -605,17 +628,23 @@ class TimeProgressBar(QWidget):
                     self.logger.info(f"[GIF修复] 高精度定时器已启动，间隔={actual_delay}ms（使用预缓存帧）")
 
                 else:
-                    # GIF格式：使用QMovie自然播放
-                    self.logger.info(f"[GIF播放] GIF格式，使用QMovie自然播放")
+                    # GIF格式：也使用定时器手动控制帧（与WebP保持一致，避免QMovie的各种兼容性问题）
+                    self.logger.info(f"[GIF播放] GIF格式，使用定时器手动控制帧")
 
-                    # 连接帧更新信号，使用监控回调
-                    self.marker_movie.frameChanged.connect(self._on_gif_frame_changed)
+                    # 创建高精度定时器手动控制帧切换
+                    from PySide6.QtCore import QTimer, Qt
+                    self.marker_frame_timer = QTimer(self)
+                    self.marker_frame_timer.setTimerType(Qt.TimerType.PreciseTimer)
+                    self.marker_frame_timer.timeout.connect(self._advance_marker_frame)
 
-                    # 连接finished信号,确保循环重启（防止卡顿）
-                    self.marker_movie.finished.connect(self._on_marker_animation_finished)
+                    # 计算实际帧延迟: 基础150ms * (100 / 速度)
+                    marker_speed = self.config.get('marker_speed', 100)
+                    base_delay = 150  # 基础延迟150ms
+                    actual_delay = int(base_delay * (100 / marker_speed))
+                    self.marker_frame_timer.setInterval(actual_delay)
+                    self.marker_frame_timer.start()
 
-                    # 启动动画
-                    self.marker_movie.start()
+                    self.logger.info(f"[GIF播放] 高精度定时器已启动，间隔={actual_delay}ms（使用预缓存帧）")
 
                 loop_count = self.marker_movie.loopCount()
                 loop_info = "无限循环" if loop_count == -1 else f"{loop_count}次循环"
@@ -695,6 +724,12 @@ class TimeProgressBar(QWidget):
         self.topmost_timer = QTimer(self)
         self.topmost_timer.timeout.connect(self.refresh_topmost)
         self.topmost_timer.start(3000)  # 每3秒刷新一次置顶状态
+
+        # 添加弹幕动画专用定时器(高频率更新,实现流畅动画,不影响其他功能)
+        self.danmaku_animation_timer = QTimer(self)
+        self.danmaku_animation_timer.timeout.connect(self.update_danmaku_animation)
+        self.danmaku_animation_timer.start(16)  # 16ms ≈ 60fps, 电影级流畅度
+        self.danmaku_last_update_time = time.time()  # 记录上次更新时间用于计算delta_time
 
     def check_visibility(self):
         """检查并确保窗口始终可见"""
@@ -1875,9 +1910,18 @@ class TimeProgressBar(QWidget):
         old_marker_image = self.config.get('marker_image_path', '')
         old_marker_size = self.config.get('marker_size', 40)
 
+        # 保存旧的弹幕配置
+        old_danmaku_enabled = False
+        if hasattr(self, 'danmaku_manager'):
+            old_danmaku_enabled = self.danmaku_manager.enabled
+
         # 重新加载配置和任务
         self.config = data_loader.load_config(self.app_dir, self.logger)
         self.tasks = data_loader.load_tasks(self.app_dir, self.logger)
+
+        # 重新加载预设管理器配置(配置文件可能包含新的预设ID)
+        if hasattr(self, 'marker_preset_manager'):
+            self.marker_preset_manager.load_from_config(self.config)
 
         # 检查动画配置是否改变
         new_marker_type = self.config.get('marker_type', 'gif')
@@ -1904,7 +1948,17 @@ class TimeProgressBar(QWidget):
         if hasattr(self, 'notification_manager'):
             self.notification_manager.reload_config(self.config, self.tasks)
 
-        # 如果高度、位置、屏幕索引或场景启用状态改变,需要重新设置窗口几何
+        # 重新加载弹幕管理器配置
+        if hasattr(self, 'danmaku_manager'):
+            self.danmaku_manager.reload_config(self.config)
+
+        # 检查弹幕启用状态是否改变
+        new_danmaku_enabled = False
+        if hasattr(self, 'danmaku_manager'):
+            new_danmaku_enabled = self.danmaku_manager.enabled
+        danmaku_changed = (old_danmaku_enabled != new_danmaku_enabled)
+
+        # 如果高度、位置、屏幕索引、场景启用状态或弹幕启用状态改变,需要重新设置窗口几何
         new_height = self.config.get('bar_height', 20)
         new_position = self.config.get('position', 'bottom')
         new_screen_index = self.config.get('screen_index', 0)
@@ -1922,8 +1976,9 @@ class TimeProgressBar(QWidget):
         if (old_height != new_height or
             old_position != new_position or
             old_screen_index != new_screen_index or
-            scene_changed):
-            self.logger.info(f"检测到几何变化: 高度 {old_height}->{new_height}, 位置 {old_position}->{new_position}, 屏幕 {old_screen_index}->{new_screen_index}, 场景 {old_scene_enabled}/{old_scene_id}->{new_scene_enabled}/{new_scene_id}")
+            scene_changed or
+            danmaku_changed):
+            self.logger.info(f"检测到几何变化: 高度 {old_height}->{new_height}, 位置 {old_position}->{new_position}, 屏幕 {old_screen_index}->{new_screen_index}, 场景 {old_scene_enabled}/{old_scene_id}->{new_scene_enabled}/{new_scene_id}, 弹幕 {old_danmaku_enabled}->{new_danmaku_enabled}")
             # 重新设置窗口几何
             self.setup_geometry()
 
@@ -2362,7 +2417,46 @@ class TimeProgressBar(QWidget):
                 except Exception as e:
                     self.logger.error(f"场景时间事件检查失败: {e}", exc_info=True)
 
+            # 弹幕生成逻辑（低频率检查,位置更新已移到update_danmaku_animation）
+            if hasattr(self, 'danmaku_manager'):
+                try:
+                    # 判断是否应该生成新弹幕
+                    if self.danmaku_manager.should_spawn_danmaku(time.time()):
+                        screen_width = self.width()
+                        window_height = self.height()  # 使用窗口高度（已扩展以容纳弹幕）
+                        self.danmaku_manager.spawn_danmaku(
+                            screen_width, window_height,
+                            self.tasks, self.current_time_percentage
+                        )
+                except Exception as e:
+                    self.logger.error(f"弹幕生成失败: {e}", exc_info=True)
+
             self.update()
+
+    def update_danmaku_animation(self):
+        """弹幕动画专用更新方法(高频率调用,仅更新位置)
+
+        与update_time_marker分离:
+        - 此方法: 20fps更新弹幕位置,流畅动画
+        - update_time_marker: 1Hz生成新弹幕,性能友好
+        """
+        if not hasattr(self, 'danmaku_manager') or not self.danmaku_manager.enabled:
+            return
+
+        try:
+            # 计算真实的delta_time(自上次更新经过的时间)
+            current_time = time.time()
+            delta_time = current_time - self.danmaku_last_update_time
+            self.danmaku_last_update_time = current_time
+
+            # 仅更新弹幕位置,不生成新弹幕
+            self.danmaku_manager.update(delta_time)
+
+            # 触发重绘(仅当有弹幕时)
+            if self.danmaku_manager.danmakus:
+                self.update()
+        except Exception as e:
+            self.logger.error(f"弹幕动画更新失败: {e}", exc_info=True)
 
     def _update_task_statistics(self, current_seconds: int):
         """更新任务统计数据 (批量更新所有任务,然后延迟写入一次)
@@ -2411,12 +2505,21 @@ class TimeProgressBar(QWidget):
 
     def mouseMoveEvent(self, event):
         """鼠标移动事件 - 检测悬停在哪个任务上(紧凑模式) + 编辑模式下的拖拽"""
+        # 标记鼠标在进度条上（用于标记图片显示控制）
+        if not self.is_mouse_over_progress_bar:
+            self.is_mouse_over_progress_bar = True
+            self.update()  # 触发重绘以显示标记图片
+
         mouse_x = event.position().x()
         mouse_y = event.position().y()
         width = self.width()
         height = self.height()
         bar_height = self.config['bar_height']
         bar_y_offset = height - bar_height
+
+        # 检测鼠标是否真的在进度条区域内
+        # 进度条区域: Y坐标在 [bar_y_offset, height] 范围内
+        is_mouse_on_progress_bar = (bar_y_offset <= mouse_y <= height)
 
         # Focus mode tooltip - update tooltip text in real-time and show at cursor's top-right
         if self.focus_mode and self.focus_start_time:
@@ -2442,13 +2545,15 @@ class TimeProgressBar(QWidget):
         mouse_percentage = mouse_x / width if width > 0 else 0
 
         # 查找鼠标所在的任务(使用紧凑位置)
+        # 只有当鼠标真的在进度条区域内时才检测任务悬停
         old_hovered_index = self.hovered_task_index
         self.hovered_task_index = -1
 
-        for i, pos in enumerate(self.task_positions):
-            if pos['compact_start_pct'] <= mouse_percentage <= pos['compact_end_pct']:
-                self.hovered_task_index = i
-                break
+        if is_mouse_on_progress_bar:  # 仅当鼠标在进度条区域内时才检测任务悬停
+            for i, pos in enumerate(self.task_positions):
+                if pos['compact_start_pct'] <= mouse_percentage <= pos['compact_end_pct']:
+                    self.hovered_task_index = i
+                    break
 
         # 如果悬停任务改变,触发重绘
         if old_hovered_index != self.hovered_task_index:
@@ -2477,6 +2582,11 @@ class TimeProgressBar(QWidget):
 
     def leaveEvent(self, event):
         """鼠标离开窗口事件"""
+        # 标记鼠标离开进度条（用于标记图片隐藏）
+        if self.is_mouse_over_progress_bar:
+            self.is_mouse_over_progress_bar = False
+            self.update()  # 触发重绘以隐藏标记图片
+
         if self.hovered_task_index != -1:
             self.hovered_task_index = -1
             self.update()
@@ -2990,62 +3100,82 @@ class TimeProgressBar(QWidget):
                 # 解析颜色
                 color = QColor(task['color'])
 
-                # 未开始的任务置灰处理
-                if is_not_started:
-                    # 转换为灰度并降低饱和度
-                    gray_value = int(color.red() * 0.299 + color.green() * 0.587 + color.blue() * 0.114)
-                    color = QColor(gray_value, gray_value, gray_value, 120)  # 半透明灰色
-
-                # 绘制任务块(在进度条位置)
-                # 不留边距，让任务块占满整个进度条高度，避免显示背景色形成"白色描边"
-                rect = QRectF(x, bar_y_offset, task_width, bar_height)
-
-                # 使用QPainterPath绘制，彻底避免描边问题
+                # 绘制任务块（根据状态分层绘制）
                 painter.setPen(Qt.NoPen)
-                painter.setBrush(color)
 
-                if self.config.get('corner_radius', 0) > 0:
-                    # 使用QPainterPath创建圆角矩形，然后fillPath（不会产生描边）
-                    path = QPainterPath()
-                    path.addRoundedRect(
-                        rect,
-                        self.config['corner_radius'],
-                        self.config['corner_radius']
-                    )
-                    painter.fillPath(path, color)
-                else:
-                    painter.fillRect(rect, color)
+                # 1. 先绘制整个任务块的背景（未开始或进行中的任务都需要背景）
+                if is_not_started or is_in_progress:
+                    # 背景使用半透明灰色
+                    gray_value = int(color.red() * 0.299 + color.green() * 0.587 + color.blue() * 0.114)
+                    bg_color = QColor(gray_value, gray_value, gray_value, 80)  # 半透明灰色背景
 
-                # 编辑模式下的视觉反馈
+                    bg_rect = QRectF(x, bar_y_offset, task_width, bar_height)
+                    painter.setBrush(bg_color)
+
+                    if self.config.get('corner_radius', 0) > 0:
+                        path = QPainterPath()
+                        path.addRoundedRect(bg_rect, self.config['corner_radius'], self.config['corner_radius'])
+                        painter.fillPath(path, bg_color)
+                    else:
+                        painter.fillRect(bg_rect, bg_color)
+
+                # 2. 绘制已完成或进行中的部分（使用任务原色）
+                if is_completed or is_in_progress:
+                    # 计算实际绘制宽度
+                    if is_in_progress:
+                        # 进行中：只绘制到当前时间
+                        task_duration = pos['original_end'] - pos['original_start']
+                        elapsed_time = current_seconds - pos['original_start']
+                        progress_ratio = elapsed_time / task_duration if task_duration > 0 else 0
+                        actual_task_width = task_width * progress_ratio
+                    else:
+                        # 已完成：绘制整个任务块
+                        actual_task_width = task_width
+
+                    # 绘制进度部分（使用任务原色）
+                    rect = QRectF(x, bar_y_offset, actual_task_width, bar_height)
+                    painter.setBrush(color)
+
+                    if self.config.get('corner_radius', 0) > 0:
+                        path = QPainterPath()
+                        path.addRoundedRect(rect, self.config['corner_radius'], self.config['corner_radius'])
+                        painter.fillPath(path, color)
+                    else:
+                        painter.fillRect(rect, color)
+
+                # 编辑模式下的视觉反馈（使用完整任务块矩形）
                 if self.edit_mode:
+                    # 为编辑模式定义完整的任务块矩形
+                    full_rect = QRectF(x, bar_y_offset, task_width, bar_height)
+
                     # 1. 金色边缘高亮（悬停或拖拽）
                     if self.hover_edge and self.hover_edge[1] == i:
                         edge_type = self.hover_edge[0]
                         painter.setPen(QPen(QColor("#FFD700"), 3))  # 金色，3像素
                         if edge_type == 'left':
                             # 左边缘高亮
-                            painter.drawLine(int(rect.left()), int(rect.top()),
-                                           int(rect.left()), int(rect.bottom()))
+                            painter.drawLine(int(full_rect.left()), int(full_rect.top()),
+                                           int(full_rect.left()), int(full_rect.bottom()))
                         elif edge_type == 'right':
                             # 右边缘高亮
-                            painter.drawLine(int(rect.right()), int(rect.top()),
-                                           int(rect.right()), int(rect.bottom()))
+                            painter.drawLine(int(full_rect.right()), int(full_rect.top()),
+                                           int(full_rect.right()), int(full_rect.bottom()))
 
                     # 2. 拖拽中的任务高亮
                     if self.dragging and self.drag_task_index == i:
                         # 绘制半透明金色覆盖层
                         overlay_color = QColor("#FFD700")
                         overlay_color.setAlpha(50)
-                        painter.fillRect(rect, overlay_color)
+                        painter.fillRect(full_rect, overlay_color)
 
                         # 绘制拖拽边缘的粗线
                         painter.setPen(QPen(QColor("#FFD700"), 4))
                         if self.drag_edge == 'left':
-                            painter.drawLine(int(rect.left()), int(rect.top()),
-                                           int(rect.left()), int(rect.bottom()))
+                            painter.drawLine(int(full_rect.left()), int(full_rect.top()),
+                                           int(full_rect.left()), int(full_rect.bottom()))
                         elif self.drag_edge == 'right':
-                            painter.drawLine(int(rect.right()), int(rect.top()),
-                                           int(rect.right()), int(rect.bottom()))
+                            painter.drawLine(int(full_rect.right()), int(full_rect.top()),
+                                           int(full_rect.right()), int(full_rect.bottom()))
 
                     # 3. 绘制拖拽手柄图标（⋮⋮）
                     if task_width > 20:  # 宽度足够才绘制
@@ -3054,13 +3184,13 @@ class TimeProgressBar(QWidget):
 
                         # 左边缘手柄
                         handle_text = "⋮"
-                        handle_rect_left = QRectF(rect.left() + 2, rect.top(),
-                                                  10, rect.height())
+                        handle_rect_left = QRectF(full_rect.left() + 2, full_rect.top(),
+                                                  10, full_rect.height())
                         painter.drawText(handle_rect_left, Qt.AlignCenter, handle_text)
 
                         # 右边缘手柄
-                        handle_rect_right = QRectF(rect.right() - 12, rect.top(),
-                                                   10, rect.height())
+                        handle_rect_right = QRectF(full_rect.right() - 12, full_rect.top(),
+                                                   10, full_rect.height())
                         painter.drawText(handle_rect_right, Qt.AlignCenter, handle_text)
 
                 # Focus state visual feedback (Red Focus Chamber integration)
@@ -3102,7 +3232,14 @@ class TimeProgressBar(QWidget):
         marker_x = self.current_time_percentage * width
         marker_type = self.config.get('marker_type', 'line')
 
-        if marker_type == 'gif':
+        # 检查是否应该显示标记图片
+        # 配置项：marker_always_visible - 是否始终显示标记图片
+        # True: 始终显示（默认，保持当前行为）
+        # False: 仅在鼠标悬停时显示
+        marker_always_visible = self.config.get('marker_always_visible', True)
+        should_show_marker = marker_always_visible or self.is_mouse_over_progress_bar
+
+        if marker_type == 'gif' and should_show_marker:
             # GIF 动画标记 - 优先使用预缓存的帧
             current_pixmap = None
             if hasattr(self, 'marker_cached_frames') and self.marker_cached_frames:
@@ -3137,7 +3274,7 @@ class TimeProgressBar(QWidget):
                 # 绘制 GIF 当前帧
                 painter.drawPixmap(draw_x, draw_y, current_pixmap)
 
-        elif marker_type == 'image' and self.marker_pixmap and not self.marker_pixmap.isNull():
+        elif marker_type == 'image' and should_show_marker and self.marker_pixmap and not self.marker_pixmap.isNull():
             # 静态图片标记
             pixmap_width = self.marker_pixmap.width()
             pixmap_height = self.marker_pixmap.height()
@@ -3389,6 +3526,13 @@ class TimeProgressBar(QWidget):
                 painter.drawText(watermark_rect, Qt.AlignCenter, watermark_text)
         except Exception as e:
             self.logger.warning(f"绘制水印失败: {e}")
+
+        # 6. 绘制弹幕（最后绘制，确保在最上层）
+        if hasattr(self, 'danmaku_manager'):
+            try:
+                self.danmaku_manager.render(painter, width, height)
+            except Exception as e:
+                self.logger.error(f"弹幕渲染失败: {e}", exc_info=True)
 
         painter.end()
     

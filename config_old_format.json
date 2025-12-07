@@ -1,0 +1,45 @@
+{
+  "bar_height": 6,
+  "position": "bottom",
+  "background_color": "#1E1E1E",
+  "background_opacity": 220,
+  "marker_color": "#FF5252",
+  "marker_width": 2,
+  "marker_type": "gif",
+  "marker_image_path": "kun.webp",
+  "marker_size": 100,
+  "marker_speed": 100,
+  "marker_x_offset": 0,
+  "marker_y_offset": -28,
+  "screen_index": 0,
+  "update_interval": 1000,
+  "enable_shadow": true,
+  "corner_radius": 0,
+  "autostart_enabled": false,
+  "theme": {
+    "mode": "preset",
+    "current_theme_id": "business",
+    "auto_apply_task_colors": false
+  },
+  "notification": {
+    "enabled": true,
+    "before_start_minutes": [
+      5
+    ],
+    "on_start": true,
+    "before_end_minutes": [],
+    "on_end": false,
+    "sound_enabled": true,
+    "sound_file": "",
+    "quiet_hours": {
+      "enabled": false,
+      "start": "22:00",
+      "end": "08:00"
+    }
+  },
+  "scene": {
+    "enabled": false,
+    "current_scene": "default",
+    "show_progress_bar": false
+  }
+}

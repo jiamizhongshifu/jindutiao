@@ -6,11 +6,12 @@
     "marker_color": "#FF5252",
     "marker_width": 2,
     "marker_type": "gif",
-    "marker_image_path": "kun.webp",
-    "marker_size": 100,
+    "marker_image_path": "c:\\Users\\Sats\\Downloads\\jindutiao\\assets\\markers\\gaiya.gif",
+    "marker_size": 60,
     "marker_speed": 100,
+    "marker_always_visible": true,
     "marker_x_offset": 0,
-    "marker_y_offset": -28,
+    "marker_y_offset": 0,
     "screen_index": 0,
     "update_interval": 1000,
     "enable_shadow": true,
@@ -41,5 +42,28 @@
         "enabled": false,
         "current_scene": "default",
         "show_progress_bar": false
+    },
+    "danmaku": {
+        "enabled": true,
+        "frequency": 30,
+        "speed": 1.0,
+        "font_size": 14,
+        "opacity": 1.0,
+        "max_count": 3,
+        "y_offset": 80,
+        "color_mode": "auto"
+    },
+    "marker_preset_id": "gaiya",
+    "marker_presets_params": {
+        "kun": {
+            "size": 100,
+            "x_offset": 0,
+            "y_offset": -28
+        },
+        "gaiya": {
+            "size": 60,
+            "x_offset": 0,
+            "y_offset": 0
+        }
     }
 }
