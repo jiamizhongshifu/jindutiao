@@ -2640,7 +2640,25 @@ class ConfigManager(QMainWindow):
         self.tasks_table.setColumnWidth(3, 195)  # Background Color
         self.tasks_table.setColumnWidth(4, 195)  # Text Color
         self.tasks_table.setColumnWidth(5, 80)   # Actions (Delete)
-        self.tasks_table.setMinimumHeight(300)
+
+        # 根据任务数量动态计算表格高度
+        # 每行约60px高度 + 表头30px + 一些padding
+        row_height = 60
+        header_height = 30
+        min_visible_rows = 8  # 至少显示8行
+        max_visible_rows = 15  # 最多显示15行,超出则显示滚动条
+
+        # 计算实际高度 (初始化时使用 self.tasks)
+        actual_row_count = len(self.tasks) if hasattr(self, 'tasks') else 0
+        visible_rows = max(min_visible_rows, min(actual_row_count, max_visible_rows))
+        calculated_height = header_height + (visible_rows * row_height) + 20  # +20 padding
+
+        self.tasks_table.setMinimumHeight(calculated_height)
+        self.tasks_table.setMaximumHeight(calculated_height)
+
+        # 启用垂直滚动条(仅在需要时显示)
+        self.tasks_table.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.tasks_table.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
         # 监听表格项的变化,实时同步到时间轴
         self.tasks_table.itemChanged.connect(self.on_table_item_changed)
@@ -2663,26 +2681,40 @@ class ConfigManager(QMainWindow):
         save_template_btn.setFixedHeight(36)
         save_template_btn.setStyleSheet(StyleManager.button_minimal())
 
-        load_custom_btn = QPushButton(self.i18n.tr("tasks.buttons.load_custom_template"))
-        load_custom_btn.clicked.connect(self.load_custom_template)
-        load_custom_btn.setFixedHeight(36)
-        load_custom_btn.setStyleSheet(StyleManager.button_minimal())
-
-        clear_btn = QPushButton(self.i18n.tr("tasks.buttons.clear_all_tasks"))
+        # 智能添加图标,避免重复
+        clear_text = self.i18n.tr("tasks.buttons.clear_all_tasks")
+        if not clear_text.startswith("🗑"):
+            clear_text = "🗑 " + clear_text
+        clear_btn = QPushButton(clear_text)
         clear_btn.clicked.connect(self.clear_all_tasks)
         clear_btn.setFixedHeight(36)
-        clear_btn.setStyleSheet(StyleManager.button_danger())
+        clear_btn.setStyleSheet("""
+            QPushButton {
+                background-color: transparent;
+                color: #333333;
+                border: 1px solid #CCCCCC;
+                padding: 8px 16px;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #F5F5F5;
+                border: 1px solid #999999;
+            }
+        """)
 
         button_layout.addWidget(add_btn)
         button_layout.addWidget(save_template_btn)
-        button_layout.addWidget(load_custom_btn)
+        button_layout.addStretch()  # 隔离危险按钮,防止误操作
         button_layout.addWidget(clear_btn)
-        button_layout.addStretch()
 
         layout.addLayout(button_layout)
 
         # ========== 模板自动应用管理（放在最底部） ==========
-        schedule_panel = QGroupBox("📅 " + self.i18n.tr("tasks.sections.auto_apply_management"))
+        # 智能添加图标,避免重复
+        schedule_title = self.i18n.tr("tasks.sections.auto_apply_management")
+        if not schedule_title.startswith("📅"):
+            schedule_title = "📅 " + schedule_title
+        schedule_panel = QGroupBox(schedule_title)
         schedule_panel.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
         schedule_layout = QVBoxLayout()
 
@@ -6471,39 +6503,56 @@ class ConfigManager(QMainWindow):
             color_layout = QHBoxLayout(color_widget)
             color_layout.setContentsMargins(4, 4, 4, 4)
 
+            # 隐藏的颜色值输入框(用于存储数据)
             color_input = QLineEdit(task['color'])
-            color_input.setMaximumWidth(80)
-            color_input.setFixedHeight(36)
+            color_input.setVisible(False)
 
-            color_btn = QPushButton(self.i18n.tr("general.text_2586"))
-            color_btn.setFixedSize(75, 36)
-            color_btn.setStyleSheet("QPushButton { padding: 4px 8px; font-size: 11px; }")
-            # 使用 partial 避免 Lambda 循环引用
+            # 可点击的色块按钮
+            color_btn = QPushButton()
+            color_btn.setFixedSize(50, 30)
+            color_btn.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: {task['color']};
+                    border: 2px solid #CCCCCC;
+                    border-radius: 4px;
+                }}
+                QPushButton:hover {{
+                    border: 2px solid #999999;
+                }}
+            """)
+            color_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            color_btn.setToolTip("点击选择颜色")
+            # 点击色块直接打开颜色选择器
             color_btn.clicked.connect(partial(self.choose_color, color_input))
 
-            color_preview = QLabel()
-            color_preview.setFixedSize(30, 20)
-            color_preview.setStyleSheet(f"background-color: {task['color']}; border: 1px solid #ccc;")
-
-            # 更新颜色预览并同步到时间轴（使用防抖，避免频繁刷新）
-            def on_color_changed(text, prev_label):
-                prev_label.setStyleSheet(f"background-color: {text}; border: 1px solid #ccc;")
+            # 当颜色值改变时,更新色块样式
+            def on_color_changed(text):
+                color_btn.setStyleSheet(f"""
+                    QPushButton {{
+                        background-color: {text};
+                        border: 2px solid #CCCCCC;
+                        border-radius: 4px;
+                    }}
+                    QPushButton:hover {{
+                        border: 2px solid #999999;
+                    }}
+                """)
                 # 使用防抖，避免频繁刷新时间轴
                 if not hasattr(self, '_timeline_refresh_timer'):
                     self._timeline_refresh_timer = QTimer()
                     self._timeline_refresh_timer.setSingleShot(True)
                     self._timeline_refresh_timer.timeout.connect(self.refresh_timeline_from_table)
-                
+
                 # 重置定时器
                 if self._timeline_refresh_timer.isActive():
                     self._timeline_refresh_timer.stop()
                 self._timeline_refresh_timer.start(300)  # 300ms防抖
 
-            color_input.textChanged.connect(lambda text, prev=color_preview: on_color_changed(text, prev))
+            color_input.textChanged.connect(on_color_changed)
 
             color_layout.addWidget(color_input)
             color_layout.addWidget(color_btn)
-            color_layout.addWidget(color_preview)
+            color_layout.addStretch()
 
             self.tasks_table.setCellWidget(row, 3, color_widget)
 
@@ -6513,23 +6562,40 @@ class ConfigManager(QMainWindow):
             text_color_layout = QHBoxLayout(text_color_widget)
             text_color_layout.setContentsMargins(4, 4, 4, 4)
 
+            # 隐藏的颜色值输入框(用于存储数据)
             text_color_input = QLineEdit(text_color)
-            text_color_input.setMaximumWidth(80)
-            text_color_input.setFixedHeight(36)
+            text_color_input.setVisible(False)
 
-            text_color_btn = QPushButton(self.i18n.tr("general.text_2586"))
-            text_color_btn.setFixedSize(75, 36)
-            text_color_btn.setStyleSheet("QPushButton { padding: 4px 8px; font-size: 11px; }")
-            # 使用 partial 避免 Lambda 循环引用
+            # 可点击的色块按钮
+            text_color_btn = QPushButton()
+            text_color_btn.setFixedSize(50, 30)
+            text_color_btn.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: {text_color};
+                    border: 2px solid #CCCCCC;
+                    border-radius: 4px;
+                }}
+                QPushButton:hover {{
+                    border: 2px solid #999999;
+                }}
+            """)
+            text_color_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            text_color_btn.setToolTip("点击选择颜色")
+            # 点击色块直接打开颜色选择器
             text_color_btn.clicked.connect(partial(self.choose_color, text_color_input))
 
-            text_color_preview = QLabel()
-            text_color_preview.setFixedSize(30, 20)
-            text_color_preview.setStyleSheet(f"background-color: {text_color}; border: 1px solid #ccc;")
-
-            # 更新文字颜色预览并同步到时间轴
-            def on_text_color_changed(text, prev_label):
-                prev_label.setStyleSheet(f"background-color: {text}; border: 1px solid #ccc;")
+            # 当颜色值改变时,更新色块样式
+            def on_text_color_changed(text):
+                text_color_btn.setStyleSheet(f"""
+                    QPushButton {{
+                        background-color: {text};
+                        border: 2px solid #CCCCCC;
+                        border-radius: 4px;
+                    }}
+                    QPushButton:hover {{
+                        border: 2px solid #999999;
+                    }}
+                """)
                 # 使用防抖，避免频繁刷新时间轴
                 if not hasattr(self, '_timeline_refresh_timer'):
                     self._timeline_refresh_timer = QTimer()
@@ -6541,30 +6607,46 @@ class ConfigManager(QMainWindow):
                     self._timeline_refresh_timer.stop()
                 self._timeline_refresh_timer.start(300)  # 300ms防抖
 
-            text_color_input.textChanged.connect(lambda text, prev=text_color_preview: on_text_color_changed(text, prev))
+            text_color_input.textChanged.connect(on_text_color_changed)
 
             text_color_layout.addWidget(text_color_input)
             text_color_layout.addWidget(text_color_btn)
-            text_color_layout.addWidget(text_color_preview)
+            text_color_layout.addStretch()
 
             self.tasks_table.setCellWidget(row, 4, text_color_widget)
 
-            # 删除按钮
-            delete_btn = QPushButton(self.i18n.tr("general.text_1284"))
+            # 删除按钮 (仅图标,极简风格)
+            delete_btn = QPushButton("🗑")
             # 使用 partial 避免 Lambda 循环引用
             delete_btn.clicked.connect(partial(self.delete_task, row))
-            delete_btn.setFixedHeight(36)
-            delete_btn.setStyleSheet(StyleManager.button_danger())
+            delete_btn.setFixedSize(32, 32)
+            delete_btn.setStyleSheet("""
+                QPushButton {
+                    background-color: transparent;
+                    border: 1px solid #CCCCCC;
+                    border-radius: 4px;
+                    font-size: 16px;
+                }
+                QPushButton:hover {
+                    background-color: #F5F5F5;
+                    border: 1px solid #999999;
+                }
+            """)
+            delete_btn.setToolTip("删除任务")
+            delete_btn.setCursor(Qt.CursorShape.PointingHandCursor)
             self.tasks_table.setCellWidget(row, 5, delete_btn)
 
         # 恢复UI更新
         self.tasks_table.setUpdatesEnabled(True)
-        
+
         # 延迟调整列宽，避免阻塞
         QTimer.singleShot(100, lambda: self.tasks_table.resizeColumnsToContents() if hasattr(self, 'tasks_table') else None)
 
         # 恢复itemChanged信号
         self.tasks_table.blockSignals(False)
+
+        # 更新表格高度
+        self.update_table_height()
 
         # 延迟刷新时间轴编辑器，避免阻塞UI
         if hasattr(self, 'timeline_editor') and self.timeline_editor:
@@ -6621,25 +6703,45 @@ class ConfigManager(QMainWindow):
         color_layout = QHBoxLayout(color_widget)
         color_layout.setContentsMargins(4, 4, 4, 4)
 
+        # 隐藏的颜色值输入框(用于存储数据)
         color_input = QLineEdit(default_color)
-        color_input.setMaximumWidth(80)
-        color_input.setFixedHeight(36)
+        color_input.setVisible(False)
 
-        color_btn = QPushButton(self.i18n.tr("general.text_2586"))
-        color_btn.setFixedSize(75, 36)
-        color_btn.setStyleSheet("QPushButton { padding: 4px 8px; font-size: 11px; }")
-        # 使用 partial 避免 Lambda 循环引用
+        # 可点击的色块按钮
+        color_btn = QPushButton()
+        color_btn.setFixedSize(50, 30)
+        color_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {default_color};
+                border: 2px solid #CCCCCC;
+                border-radius: 4px;
+            }}
+            QPushButton:hover {{
+                border: 2px solid #999999;
+            }}
+        """)
+        color_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        color_btn.setToolTip("点击选择颜色")
         color_btn.clicked.connect(partial(self.choose_color, color_input))
 
-        color_preview = QLabel()
-        color_preview.setFixedSize(30, 20)
-        color_preview.setStyleSheet(f"background-color: {default_color}; border: 1px solid #ccc;")
+        # 当颜色值改变时,更新色块样式
+        def on_color_changed(text):
+            color_btn.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: {text};
+                    border: 2px solid #CCCCCC;
+                    border-radius: 4px;
+                }}
+                QPushButton:hover {{
+                    border: 2px solid #999999;
+                }}
+            """)
 
-        color_input.textChanged.connect(lambda text, prev=color_preview: prev.setStyleSheet(f"background-color: {text}; border: 1px solid #ccc;"))
+        color_input.textChanged.connect(on_color_changed)
 
         color_layout.addWidget(color_input)
         color_layout.addWidget(color_btn)
-        color_layout.addWidget(color_preview)
+        color_layout.addStretch()
 
         self.tasks_table.setCellWidget(row, 3, color_widget)
 
@@ -6648,38 +6750,88 @@ class ConfigManager(QMainWindow):
         text_color_layout = QHBoxLayout(text_color_widget)
         text_color_layout.setContentsMargins(4, 4, 4, 4)
 
+        # 隐藏的颜色值输入框(用于存储数据)
         text_color_input = QLineEdit("#FFFFFF")
-        text_color_input.setMaximumWidth(80)
-        text_color_input.setFixedHeight(36)
+        text_color_input.setVisible(False)
 
-        text_color_btn = QPushButton(self.i18n.tr("general.text_2586"))
-        text_color_btn.setFixedSize(75, 36)
-        text_color_btn.setStyleSheet("QPushButton { padding: 4px 8px; font-size: 11px; }")
-        # 使用 partial 避免 Lambda 循环引用
+        # 可点击的色块按钮
+        text_color_btn = QPushButton()
+        text_color_btn.setFixedSize(50, 30)
+        text_color_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: #FFFFFF;
+                border: 2px solid #CCCCCC;
+                border-radius: 4px;
+            }}
+            QPushButton:hover {{
+                border: 2px solid #999999;
+            }}
+        """)
+        text_color_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        text_color_btn.setToolTip("点击选择颜色")
         text_color_btn.clicked.connect(partial(self.choose_color, text_color_input))
 
-        text_color_preview = QLabel()
-        text_color_preview.setFixedSize(30, 20)
-        text_color_preview.setStyleSheet("background-color: #FFFFFF; border: 1px solid #ccc;")
+        # 当颜色值改变时,更新色块样式
+        def on_text_color_changed(text):
+            text_color_btn.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: {text};
+                    border: 2px solid #CCCCCC;
+                    border-radius: 4px;
+                }}
+                QPushButton:hover {{
+                    border: 2px solid #999999;
+                }}
+            """)
 
-        text_color_input.textChanged.connect(lambda text, prev=text_color_preview: prev.setStyleSheet(f"background-color: {text}; border: 1px solid #ccc;"))
+        text_color_input.textChanged.connect(on_text_color_changed)
 
         text_color_layout.addWidget(text_color_input)
         text_color_layout.addWidget(text_color_btn)
-        text_color_layout.addWidget(text_color_preview)
+        text_color_layout.addStretch()
 
         self.tasks_table.setCellWidget(row, 4, text_color_widget)
 
-        # 删除按钮
-        delete_btn = QPushButton(self.i18n.tr("general.text_1284"))
+        # 删除按钮 (仅图标,极简风格)
+        delete_btn = QPushButton("🗑")
         # 使用 partial 避免 Lambda 循环引用
         delete_btn.clicked.connect(partial(self.delete_task, row))
-        delete_btn.setFixedHeight(36)
-        delete_btn.setStyleSheet(StyleManager.button_danger())
+        delete_btn.setFixedSize(32, 32)
+        delete_btn.setStyleSheet("""
+            QPushButton {
+                background-color: transparent;
+                border: 1px solid #CCCCCC;
+                border-radius: 4px;
+                font-size: 16px;
+            }
+            QPushButton:hover {
+                background-color: #F5F5F5;
+                border: 1px solid #999999;
+            }
+        """)
+        delete_btn.setToolTip("删除任务")
+        delete_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.tasks_table.setCellWidget(row, 5, delete_btn)
 
         # 刷新时间轴
         self.refresh_timeline_from_table()
+
+        # 更新表格高度
+        self.update_table_height()
+
+    def update_table_height(self):
+        """根据当前任务数量动态更新表格高度"""
+        row_height = 60
+        header_height = 30
+        min_visible_rows = 8
+        max_visible_rows = 15
+
+        actual_row_count = self.tasks_table.rowCount()
+        visible_rows = max(min_visible_rows, min(actual_row_count, max_visible_rows))
+        calculated_height = header_height + (visible_rows * row_height) + 20
+
+        self.tasks_table.setMinimumHeight(calculated_height)
+        self.tasks_table.setMaximumHeight(calculated_height)
 
     def delete_task(self, row):
         """删除任务"""
@@ -6702,6 +6854,9 @@ class ConfigManager(QMainWindow):
             # 刷新时间轴
             self.refresh_timeline_from_table()
 
+            # 更新表格高度
+            self.update_table_height()
+
     def clear_all_tasks(self):
         """清空所有任务"""
         reply = QMessageBox.question(
@@ -6715,6 +6870,8 @@ class ConfigManager(QMainWindow):
             # 刷新时间轴（延迟执行）
             if hasattr(self, 'timeline_editor') and self.timeline_editor:
                 QTimer.singleShot(50, lambda: self.timeline_editor.set_tasks([]) if self.timeline_editor else None)
+            # 更新表格高度
+            self.update_table_height()
             QMessageBox.information(self, self.i18n.tr("message.info"), "所有任务已清空\n\n记得点击【保存所有设置】按钮来保存更改")
 
     def load_default_template(self):
