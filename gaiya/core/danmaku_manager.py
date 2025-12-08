@@ -52,6 +52,15 @@ class DanmakuManager:
         self.last_spawn_time = 0
         self.enabled = False
 
+        # 防重复机制: 记录最近20条弹幕历史
+        self.recent_history: List[str] = []
+        self.max_history = 20
+
+        # 当前任务信息缓存(用于模板替换)
+        self.current_task_name = ""
+        self.current_task_start_time = 0
+        self.current_task_end_time = 0
+
         # Load preset danmaku content
         self._load_presets()
 
@@ -166,7 +175,7 @@ class DanmakuManager:
             return "default"
 
     def should_spawn_danmaku(self, current_time: float) -> bool:
-        """判断是否应该生成新弹幕"""
+        """判断是否应该生成新弹幕 (添加随机性)"""
         if not self.enabled:
             if self.logger:
                 self.logger.debug(f"弹幕未启用")
@@ -178,39 +187,50 @@ class DanmakuManager:
             return False
 
         time_since_last = current_time - self.last_spawn_time
-        if time_since_last >= self.frequency:
+
+        # 添加随机性: 基准频率 ± 30%浮动
+        # 例如30秒 → 21-39秒随机
+        random_offset = self.frequency * 0.3 * (random.random() * 2 - 1)  # -30% ~ +30%
+        threshold = self.frequency + random_offset
+
+        if time_since_last >= threshold:
             if self.logger:
-                self.logger.info(f"准备生成新弹幕 (距上次: {time_since_last:.1f}s, 频率: {self.frequency}s)")
+                self.logger.info(f"准备生成新弹幕 (距上次: {time_since_last:.1f}s, 阈值: {threshold:.1f}s)")
             return True
 
         return False
 
     def spawn_danmaku(self, screen_width: int, window_height: int,
                      tasks: List[Dict], current_time_percentage: float):
-        """生成新弹幕"""
-        # Get task category
+        """生成新弹幕 (支持模板替换和防重复)"""
+        # Get task category and update task info cache
         category = self.get_task_category(tasks, current_time_percentage)
+        self._update_current_task_info(tasks, current_time_percentage)
 
         # Fallback to default if category not found or has no content
         if category not in self.presets or not self.presets[category]:
             category = "default"
 
-        # Random select content
-        content = random.choice(self.presets[category])
+        # 防重复机制: 选择不在历史中的内容
+        content = self._select_non_repeat_content(category)
+
+        # 模板替换: 处理动态变量
+        content = self._apply_template(content, current_time_percentage)
+
+        # 添加到历史记录
+        self._add_to_history(content)
 
         # Calculate position
         # X: start from right edge + some buffer
         x = screen_width + 50
 
-        # Y: 在窗口内从底部向上计算（window_height - y_offset）
-        # 根据已有弹幕数量错开Y轴位置,避免重叠
-        # window_height包含进度条区域和弹幕区域
-        base_y = window_height - self.y_offset  # 从窗口底部向上偏移
-        y_variation = len(self.danmakus) * 30  # 每条弹幕错开30px
-        y = base_y - y_variation
+        # Y: 添加随机偏移,避免每次都在完全相同的高度
+        base_y = window_height - self.y_offset
+        y_variation = len(self.danmakus) * 30  # 基础错开
+        random_offset = random.randint(-15, 15)  # 添加 ±15px 随机偏移
+        y = base_y - y_variation + random_offset
 
         # Calculate speed (pixels per second for delta_time approach)
-        # Base speed: traverse screen in 10 seconds = screen_width / 10
         base_speed = screen_width / 10
         speed = base_speed * self.speed_multiplier
 
@@ -313,3 +333,133 @@ class DanmakuManager:
         self.enabled = enabled
         if not enabled:
             self.clear()
+
+    def _update_current_task_info(self, tasks: List[Dict], current_time_percentage: float):
+        """更新当前任务信息缓存"""
+        if not tasks:
+            return
+
+        current_minute = int(current_time_percentage * 24 * 60)
+
+        for task in tasks:
+            task_start = task.get('start', '')
+            task_end = task.get('end', '')
+
+            start_seconds = time_utils.time_str_to_seconds(task_start)
+            end_seconds = time_utils.time_str_to_seconds(task_end)
+
+            start_minute = start_seconds // 60
+            end_minute = end_seconds // 60
+
+            # Handle cross-day tasks
+            if end_minute < start_minute:
+                if current_minute >= start_minute or current_minute < end_minute:
+                    self.current_task_name = task.get('task', '')
+                    self.current_task_start_time = start_minute
+                    self.current_task_end_time = end_minute if end_minute > 0 else 1440 + end_minute
+                    return
+            else:
+                if start_minute <= current_minute < end_minute:
+                    self.current_task_name = task.get('task', '')
+                    self.current_task_start_time = start_minute
+                    self.current_task_end_time = end_minute
+                    return
+
+    def _select_non_repeat_content(self, category: str) -> str:
+        """选择不在历史记录中的内容"""
+        available_contents = self.presets.get(category, [])
+
+        if not available_contents:
+            return "时间在流逝..."
+
+        # 过滤掉历史中的内容
+        non_repeat_contents = [c for c in available_contents if c not in self.recent_history]
+
+        # 如果可选内容太少(< 5条),清空部分历史
+        if len(non_repeat_contents) < 5 and len(self.recent_history) > 10:
+            # 保留最近的10条,清除更早的
+            self.recent_history = self.recent_history[-10:]
+            non_repeat_contents = [c for c in available_contents if c not in self.recent_history]
+
+        # 如果还是没有可用内容,直接从所有内容中选择
+        if not non_repeat_contents:
+            non_repeat_contents = available_contents
+
+        return random.choice(non_repeat_contents)
+
+    def _add_to_history(self, content: str):
+        """添加内容到历史记录"""
+        self.recent_history.append(content)
+
+        # 保持历史记录在最大限制内
+        if len(self.recent_history) > self.max_history:
+            self.recent_history.pop(0)
+
+    def _apply_template(self, content: str, current_time_percentage: float) -> str:
+        """应用模板替换动态变量
+
+        支持的变量:
+        - {task_name}: 当前任务名称
+        - {elapsed}: 已用时间(分钟)
+        - {remaining}: 剩余时间(分钟)
+        - {progress}: 完成百分比
+        - {time_period}: 时间段(早晨/上午/下午/晚上)
+        """
+        # 检查是否包含模板变量
+        if '{' not in content:
+            return content
+
+        current_minute = int(current_time_percentage * 24 * 60)
+
+        # 替换任务名称
+        if '{task_name}' in content:
+            content = content.replace('{task_name}', self.current_task_name or '当前任务')
+
+        # 计算已用时间和剩余时间
+        if self.current_task_start_time and self.current_task_end_time:
+            elapsed = current_minute - self.current_task_start_time
+            if elapsed < 0:  # 跨天任务
+                elapsed = current_minute + 1440 - self.current_task_start_time
+
+            remaining = self.current_task_end_time - current_minute
+            if remaining < 0:  # 跨天任务
+                remaining = self.current_task_end_time + 1440 - current_minute
+
+            if '{elapsed}' in content:
+                content = content.replace('{elapsed}', str(max(0, elapsed)))
+
+            if '{remaining}' in content:
+                content = content.replace('{remaining}', str(max(0, remaining)))
+
+            # 计算进度百分比
+            total_duration = self.current_task_end_time - self.current_task_start_time
+            if total_duration < 0:  # 跨天任务
+                total_duration = self.current_task_end_time + 1440 - self.current_task_start_time
+
+            if total_duration > 0:
+                progress = int((elapsed / total_duration) * 100)
+                progress = max(0, min(100, progress))  # 限制在0-100
+
+                if '{progress}' in content:
+                    content = content.replace('{progress}', str(progress))
+
+        # 替换时间段
+        if '{time_period}' in content:
+            if 0 <= current_minute < 360:  # 0:00-6:00
+                time_period = '深夜'
+            elif 360 <= current_minute < 540:  # 6:00-9:00
+                time_period = '早晨'
+            elif 540 <= current_minute < 720:  # 9:00-12:00
+                time_period = '上午'
+            elif 720 <= current_minute < 780:  # 12:00-13:00
+                time_period = '中午'
+            elif 780 <= current_minute < 1080:  # 13:00-18:00
+                time_period = '下午'
+            elif 1080 <= current_minute < 1320:  # 18:00-22:00
+                time_period = '晚上'
+            else:  # 22:00-24:00
+                time_period = '深夜'
+
+            content = content.replace('{time_period}', time_period)
+
+        return content
