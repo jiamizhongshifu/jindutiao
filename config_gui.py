@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
     QTabWidget, QLabel, QLineEdit, QSpinBox, QDoubleSpinBox, QPushButton, QColorDialog,
     QComboBox, QCheckBox, QTableWidget, QTableWidgetItem, QHeaderView,
     QMessageBox, QTimeEdit, QGroupBox, QFormLayout, QFileDialog, QDialog,
-    QDialogButtonBox, QButtonGroup, QRadioButton, QProgressDialog
+    QDialogButtonBox, QButtonGroup, QRadioButton, QProgressDialog, QSlider
 )
 from PySide6.QtCore import Qt, QTime, Signal, QThread, QTimer
 from PySide6.QtGui import QColor, QIcon
@@ -417,17 +417,44 @@ class ConfigManager(QMainWindow):
 
             # 更新颜色控件
             if hasattr(self, 'bg_color_input'):
-                self.bg_color_input.setText(self.config.get('background_color', '#505050'))
+                bg_color = self.config.get('background_color', '#505050')
+                self.bg_color_input.setText(bg_color)
+                # 更新颜色预览按钮样式
                 if hasattr(self, 'bg_color_preview'):
-                    self.update_color_preview(self.bg_color_input, self.bg_color_preview)
-            
-            if hasattr(self, 'opacity_spin'):
-                self.opacity_spin.setValue(self.config.get('background_opacity', 180))
-            
+                    self.bg_color_preview.setStyleSheet(f"""
+                        QPushButton {{
+                            background-color: {bg_color};
+                            border: 2px solid #CCCCCC;
+                            border-radius: 4px;
+                        }}
+                        QPushButton:hover {{
+                            border: 2px solid #999999;
+                        }}
+                    """)
+
+            # 更新背景透明度滑块(将0-255转换为0-100百分比)
+            if hasattr(self, 'opacity_slider'):
+                opacity_value = self.config.get('background_opacity', 180)
+                opacity_percent = int(opacity_value / 255 * 100)
+                self.opacity_slider.setValue(opacity_percent)
+                if hasattr(self, 'opacity_label'):
+                    self.opacity_label.setText(f"{opacity_percent}%")
+
             if hasattr(self, 'marker_color_input'):
-                self.marker_color_input.setText(self.config.get('marker_color', '#FF0000'))
+                marker_color = self.config.get('marker_color', '#FF0000')
+                self.marker_color_input.setText(marker_color)
+                # 更新颜色预览按钮样式
                 if hasattr(self, 'marker_color_preview'):
-                    self.update_color_preview(self.marker_color_input, self.marker_color_preview)
+                    self.marker_color_preview.setStyleSheet(f"""
+                        QPushButton {{
+                            background-color: {marker_color};
+                            border: 2px solid #CCCCCC;
+                            border-radius: 4px;
+                        }}
+                        QPushButton:hover {{
+                            border: 2px solid #999999;
+                        }}
+                    """)
             
             if hasattr(self, 'marker_width_spin'):
                 self.marker_width_spin.setValue(self.config.get('marker_width', 2))
@@ -458,6 +485,44 @@ class ConfigManager(QMainWindow):
             # 加载标记图片预设配置
             if self.marker_preset_manager:
                 self.marker_preset_manager.load_from_config(self.config)
+
+                # 同步预设下拉框选中项
+                if hasattr(self, 'marker_preset_combo'):
+                    current_preset_id = self.marker_preset_manager.get_current_preset_id()
+                    # 查找对应的下拉框索引
+                    for i in range(self.marker_preset_combo.count()):
+                        if self.marker_preset_combo.itemData(i) == current_preset_id:
+                            self.marker_preset_combo.setCurrentIndex(i)
+                            break
+
+            # 更新弹幕参数
+            danmaku_config = self.config.get('danmaku', {})
+            if hasattr(self, 'danmaku_enabled_check'):
+                self.danmaku_enabled_check.setChecked(danmaku_config.get('enabled', True))
+            if hasattr(self, 'danmaku_frequency_spin'):
+                self.danmaku_frequency_spin.setValue(danmaku_config.get('frequency', 30))
+            if hasattr(self, 'danmaku_speed_spin'):
+                self.danmaku_speed_spin.setValue(danmaku_config.get('speed', 1.0))
+            if hasattr(self, 'danmaku_font_size_spin'):
+                self.danmaku_font_size_spin.setValue(danmaku_config.get('font_size', 14))
+
+            # 更新弹幕透明度滑块(将0-1转换为0-100百分比)
+            if hasattr(self, 'danmaku_opacity_slider'):
+                opacity_value = danmaku_config.get('opacity', 1.0)
+                opacity_percent = int(opacity_value * 100)
+                self.danmaku_opacity_slider.setValue(opacity_percent)
+                if hasattr(self, 'danmaku_opacity_label'):
+                    self.danmaku_opacity_label.setText(f"{opacity_percent}%")
+
+            if hasattr(self, 'danmaku_max_count_spin'):
+                self.danmaku_max_count_spin.setValue(danmaku_config.get('max_count', 3))
+            if hasattr(self, 'danmaku_y_offset_spin'):
+                self.danmaku_y_offset_spin.setValue(danmaku_config.get('y_offset', 80))
+            if hasattr(self, 'danmaku_color_mode_combo'):
+                color_mode = danmaku_config.get('color_mode', 'auto')
+                index = self.danmaku_color_mode_combo.findData(color_mode)
+                if index >= 0:
+                    self.danmaku_color_mode_combo.setCurrentIndex(index)
 
             # Update language combo box
             if hasattr(self, 'language_combo'):
@@ -1797,20 +1862,22 @@ class ConfigManager(QMainWindow):
         # 延迟更新按钮状态，避免配置未加载时出错
         QTimer.singleShot(100, self.update_height_preset_buttons)
 
-        # 显示器索引
+        # 显示器索引 (隐藏,使用默认值)
         self.screen_spin = QSpinBox()
         self.screen_spin.setStyleSheet(StyleManager.input_number())
         self.screen_spin.setRange(0, 10)
         self.screen_spin.setValue(self.config.get('screen_index', 0) if self.config else 0)
-        basic_layout.addRow(self.i18n.tr("config.labels.show_index") + ":", self.screen_spin)
+        self.screen_spin.setVisible(False)  # 隐藏控件
+        # basic_layout.addRow(self.i18n.tr("config.labels.show_index") + ":", self.screen_spin)  # 不添加到布局
 
-        # 更新间隔
+        # 更新间隔 (隐藏,使用默认值)
         self.interval_spin = QSpinBox()
         self.interval_spin.setStyleSheet(StyleManager.input_number())
         self.interval_spin.setRange(100, 60000)
         self.interval_spin.setValue(self.config.get('update_interval', 1000) if self.config else 1000)
         self.interval_spin.setSuffix(" " + tr("appearance.milliseconds"))
-        basic_layout.addRow(self.i18n.tr("config.labels.update_interval") + ":", self.interval_spin)
+        self.interval_spin.setVisible(False)  # 隐藏控件
+        # basic_layout.addRow(self.i18n.tr("config.labels.update_interval") + ":", self.interval_spin)  # 不添加到布局
 
         # 语言选择
         language_container = QWidget()
@@ -1864,69 +1931,107 @@ class ConfigManager(QMainWindow):
         # 颜色设置组
         color_group = QGroupBox(tr("appearance.color_settings"))
         color_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
-        color_layout = QFormLayout()
-        color_layout.setVerticalSpacing(15)  # 增加纵向间距
-        color_layout.setHorizontalSpacing(10)
+        color_layout = QVBoxLayout()  # 改用VBoxLayout以避免QFormLayout的标签间距
+        color_layout.setSpacing(15)
+        color_layout.setContentsMargins(10, 10, 10, 10)
+
+        # 背景颜色和时间标记颜色 (合并到同一行,色块缩小50%)
+        colors_row_layout = QHBoxLayout()
 
         # 背景颜色
-        bg_color_layout = QHBoxLayout()
         bg_color = self.config.get('background_color', '#505050') if self.config else '#505050'
         self.bg_color_input = QLineEdit(bg_color)
-        self.bg_color_input.setMaximumWidth(100)
-        self.bg_color_input.setFixedHeight(36)
-        self.bg_color_btn = QPushButton(self.i18n.tr("config.color"))
-        self.bg_color_btn.setFixedSize(100, 36)
-        self.bg_color_btn.setStyleSheet("QPushButton { padding: 8px 12px; font-size: 12px; }")
-        # 使用 partial 避免 Lambda 循环引用
-        self.bg_color_btn.clicked.connect(partial(self.choose_color, self.bg_color_input))
-        self.bg_color_preview = QLabel()
-        self.update_color_preview(self.bg_color_input, self.bg_color_preview)
-        bg_color_layout.addWidget(self.bg_color_input)
-        bg_color_layout.addSpacing(10)  # 横向间距
-        bg_color_layout.addWidget(self.bg_color_btn)
-        bg_color_layout.addSpacing(10)  # 横向间距
-        bg_color_layout.addWidget(self.bg_color_preview)
-        bg_color_layout.addStretch()
-        color_layout.addRow(tr("appearance.background_color") + ":", bg_color_layout)
+        self.bg_color_input.setVisible(False)  # 隐藏色值输入框
 
-        # 背景透明度
-        self.opacity_spin = QSpinBox()
-        self.opacity_spin.setStyleSheet(StyleManager.input_number())
-        self.opacity_spin.setRange(0, 255)
-        self.opacity_spin.setValue(self.config.get('background_opacity', 180) if self.config else 180)
-        color_layout.addRow(tr("appearance.background_opacity") + ":", self.opacity_spin)
+        colors_row_layout.addWidget(QLabel(tr("appearance.background_color") + ":"))
+        self.bg_color_preview = QPushButton()
+        self.bg_color_preview.setFixedSize(20, 18)  # 再次缩小50%宽度+高度减半: 40->20, 36->18
+        self.bg_color_preview.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {bg_color};
+                border: 2px solid #CCCCCC;
+                border-radius: 4px;
+            }}
+            QPushButton:hover {{
+                border: 2px solid #999999;
+            }}
+        """)
+        self.bg_color_preview.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.bg_color_preview.clicked.connect(partial(self.choose_color, self.bg_color_input))
+        colors_row_layout.addWidget(self.bg_color_preview)
+
+        colors_row_layout.addSpacing(30)  # 两个颜色选择器之间的间距
 
         # 时间标记颜色
-        marker_color_layout = QHBoxLayout()
         marker_color = self.config.get('marker_color', '#FF0000') if self.config else '#FF0000'
         self.marker_color_input = QLineEdit(marker_color)
-        self.marker_color_input.setMaximumWidth(100)
-        self.marker_color_input.setFixedHeight(36)
-        self.marker_color_btn = QPushButton(self.i18n.tr("config.color"))
-        self.marker_color_btn.setFixedSize(100, 36)
-        self.marker_color_btn.setStyleSheet("QPushButton { padding: 8px 12px; font-size: 12px; }")
-        # 使用 partial 避免 Lambda 循环引用
-        self.marker_color_btn.clicked.connect(partial(self.choose_color, self.marker_color_input))
-        self.marker_color_preview = QLabel()
-        self.update_color_preview(self.marker_color_input, self.marker_color_preview)
-        marker_color_layout.addWidget(self.marker_color_input)
-        marker_color_layout.addSpacing(10)  # 横向间距
-        marker_color_layout.addWidget(self.marker_color_btn)
-        marker_color_layout.addSpacing(10)  # 横向间距
-        marker_color_layout.addWidget(self.marker_color_preview)
-        marker_color_layout.addStretch()
-        color_layout.addRow(tr("appearance.marker_color") + ":", marker_color_layout)
+        self.marker_color_input.setVisible(False)  # 隐藏色值输入框
 
-        # 时间标记宽度
+        colors_row_layout.addWidget(QLabel(tr("appearance.marker_color") + ":"))
+        self.marker_color_preview = QPushButton()
+        self.marker_color_preview.setFixedSize(20, 18)  # 再次缩小50%宽度+高度减半: 40->20, 36->18
+        self.marker_color_preview.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {marker_color};
+                border: 2px solid #CCCCCC;
+                border-radius: 4px;
+            }}
+            QPushButton:hover {{
+                border: 2px solid #999999;
+            }}
+        """)
+        self.marker_color_preview.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.marker_color_preview.clicked.connect(partial(self.choose_color, self.marker_color_input))
+        colors_row_layout.addWidget(self.marker_color_preview)
+
+        colors_row_layout.addStretch()
+        color_layout.addLayout(colors_row_layout)  # 直接添加到VBoxLayout,无标签间距
+
+        # 背景透明度 (使用滑块控制,范围0-100%,缩短长度)
+        opacity_layout = QHBoxLayout()
+        self.opacity_slider = QSlider(Qt.Orientation.Horizontal)
+        self.opacity_slider.setRange(0, 100)
+        # 将0-255转换为0-100百分比
+        opacity_value = self.config.get('background_opacity', 180) if self.config else 180
+        opacity_percent = int(opacity_value / 255 * 100)
+        self.opacity_slider.setValue(opacity_percent)
+        self.opacity_slider.setFixedWidth(150)  # 缩短滑块长度
+
+        self.opacity_label = QLabel(f"{opacity_percent}%")
+        self.opacity_label.setMinimumWidth(50)
+        self.opacity_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+
+        # 滑块值变化时更新标签
+        self.opacity_slider.valueChanged.connect(
+            lambda value: self.opacity_label.setText(f"{value}%")
+        )
+
+        opacity_layout.addWidget(QLabel(tr("appearance.background_opacity") + ":"))
+        opacity_layout.addWidget(self.opacity_slider)
+        opacity_layout.addWidget(self.opacity_label)
+        opacity_layout.addStretch()
+        color_layout.addLayout(opacity_layout)
+
+        # 隐藏旧的spin控件,保留用于保存配置时的转换
+        self.opacity_spin = QSpinBox()
+        self.opacity_spin.setVisible(False)
+
+        # 时间标记宽度 (缩小输入框宽度)
+        marker_width_layout = QHBoxLayout()
+        marker_width_layout.addWidget(QLabel(self.i18n.tr("config.labels.marker_width") + ":"))
         self.marker_width_spin = QSpinBox()
         self.marker_width_spin.setStyleSheet(StyleManager.input_number())
         self.marker_width_spin.setRange(1, 10)
         self.marker_width_spin.setValue(self.config.get('marker_width', 2) if self.config else 2)
         self.marker_width_spin.setSuffix(" " + tr("appearance.pixels"))
-        color_layout.addRow(self.i18n.tr("config.labels.marker_width") + ":", self.marker_width_spin)
+        self.marker_width_spin.setFixedWidth(100)  # 稍微增加宽度以容纳后缀
+        marker_width_layout.addWidget(self.marker_width_spin)
+        marker_width_layout.addStretch()
+        color_layout.addLayout(marker_width_layout)
 
         # 时间标记类型
         marker_type_layout = QHBoxLayout()
+        marker_type_layout.addWidget(QLabel(self.i18n.tr("config.labels.marker_type") + ":"))
         self.marker_type_combo = QComboBox()
         self.marker_type_combo.setStyleSheet(StyleManager.dropdown())
         self.marker_type_combo.addItems(["line", "image", "gif"])
@@ -1940,10 +2045,11 @@ class ConfigManager(QMainWindow):
         marker_type_layout.addWidget(marker_type_hint)
         marker_type_layout.addStretch()
 
-        color_layout.addRow(self.i18n.tr("config.labels.marker_type") + ":", marker_type_layout)
+        color_layout.addLayout(marker_type_layout)
 
         # 标记图片预设选择器(下拉框)
         preset_selector_layout = QHBoxLayout()
+        preset_selector_layout.addWidget(QLabel("📦 标记图片预设:"))
 
         self.marker_preset_combo = QComboBox()
         self.marker_preset_combo.setStyleSheet(StyleManager.dropdown())
@@ -1964,7 +2070,7 @@ class ConfigManager(QMainWindow):
         preset_selector_layout.addWidget(self.marker_preset_combo)
         preset_selector_layout.addStretch()
 
-        color_layout.addRow("📦 标记图片预设:", preset_selector_layout)
+        color_layout.addLayout(preset_selector_layout)
 
         # 标记图片路径(仅在选择自定义预设时显示整行)
         # 创建包含标签和内容的整行容器
@@ -1996,8 +2102,8 @@ class ConfigManager(QMainWindow):
 
         marker_image_row_layout.addWidget(marker_image_content)
 
-        # 添加整行到布局(使用addRow的单参数形式,让它跨越两列)
-        color_layout.addRow(self.marker_image_row)
+        # 添加整行到布局
+        color_layout.addWidget(self.marker_image_row)
 
         # 初始化时根据当前预设决定是否显示整行
         self._update_marker_image_visibility()
@@ -2049,42 +2155,54 @@ class ConfigManager(QMainWindow):
 
         marker_size_layout.addStretch()
 
-        color_layout.addRow(tr("appearance.marker_size") + ":", marker_size_container)
+        # 添加标记图片大小到布局
+        marker_size_full_layout = QHBoxLayout()
+        marker_size_full_layout.addWidget(QLabel(tr("appearance.marker_size") + ":"))
+        marker_size_full_layout.addWidget(marker_size_container)
+        marker_size_full_layout.addStretch()
+        color_layout.addLayout(marker_size_full_layout)
 
         # 延迟更新按钮状态
         # 将在 _load_config_and_tasks 中更新
 
-        # 标记图片 X 轴偏移
+        # 标记图片偏移 (X和Y放在同一行)
+        offset_layout = QHBoxLayout()
+
+        # X轴偏移
+        offset_layout.addWidget(QLabel("X:"))
         self.marker_x_offset_spin = QSpinBox()
         self.marker_x_offset_spin.setStyleSheet(StyleManager.input_number())
         self.marker_x_offset_spin.setRange(-100, 100)
         self.marker_x_offset_spin.setValue(self.config.get('marker_x_offset', 0))
         self.marker_x_offset_spin.setSuffix(" px")
-        self.marker_x_offset_spin.setMaximumWidth(100)
+        self.marker_x_offset_spin.setFixedWidth(80)
         self.marker_x_offset_spin.valueChanged.connect(self._save_current_preset_params)
-        x_offset_hint = QLabel(tr("appearance.marker_x_offset_note"))
-        x_offset_hint.setStyleSheet("color: #888888; font-size: 9pt;")
-        x_offset_layout = QHBoxLayout()
-        x_offset_layout.addWidget(self.marker_x_offset_spin)
-        x_offset_layout.addWidget(x_offset_hint)
-        x_offset_layout.addStretch()
-        color_layout.addRow(self.i18n.tr("config.labels.marker_x_offset") + ":", x_offset_layout)
+        offset_layout.addWidget(self.marker_x_offset_spin)
 
-        # 标记图片 Y 轴偏移
+        offset_layout.addSpacing(20)
+
+        # Y轴偏移
+        offset_layout.addWidget(QLabel("Y:"))
         self.marker_y_offset_spin = QSpinBox()
         self.marker_y_offset_spin.setStyleSheet(StyleManager.input_number())
         self.marker_y_offset_spin.setRange(-100, 100)
         self.marker_y_offset_spin.setValue(self.config.get('marker_y_offset', 0))
         self.marker_y_offset_spin.setSuffix(" px")
-        self.marker_y_offset_spin.setMaximumWidth(100)
+        self.marker_y_offset_spin.setFixedWidth(80)
         self.marker_y_offset_spin.valueChanged.connect(self._save_current_preset_params)
-        y_offset_hint = QLabel(tr("appearance.marker_y_offset_note"))
-        y_offset_hint.setStyleSheet("color: #888888; font-size: 9pt;")
-        y_offset_layout = QHBoxLayout()
-        y_offset_layout.addWidget(self.marker_y_offset_spin)
-        y_offset_layout.addWidget(y_offset_hint)
-        y_offset_layout.addStretch()
-        color_layout.addRow(self.i18n.tr("config.labels.marker_y_offset") + ":", y_offset_layout)
+        offset_layout.addWidget(self.marker_y_offset_spin)
+
+        # 合并的提示信息
+        offset_hint = QLabel(tr("appearance.marker_offset_note"))
+        offset_hint.setStyleSheet("color: #888888; font-size: 9pt;")
+        offset_layout.addWidget(offset_hint)
+        offset_layout.addStretch()
+
+        # 添加偏移到布局
+        offset_full_layout = QHBoxLayout()
+        offset_full_layout.addWidget(QLabel(self.i18n.tr("config.labels.marker_offset") + ":"))
+        offset_full_layout.addLayout(offset_layout)
+        color_layout.addLayout(offset_full_layout)
 
         # 标记动画播放速度
         self.marker_speed_spin = QSpinBox()
@@ -2097,10 +2215,11 @@ class ConfigManager(QMainWindow):
         speed_hint = QLabel(tr("appearance.marker_speed_note"))
         speed_hint.setStyleSheet("color: #888888; font-size: 9pt;")
         speed_layout = QHBoxLayout()
+        speed_layout.addWidget(QLabel(self.i18n.tr("config.labels.animation_speed") + ":"))
         speed_layout.addWidget(self.marker_speed_spin)
         speed_layout.addWidget(speed_hint)
         speed_layout.addStretch()
-        color_layout.addRow(self.i18n.tr("config.labels.animation_speed") + ":", speed_layout)
+        color_layout.addLayout(speed_layout)
 
         # 标记图片始终显示
         self.marker_always_visible_check = QCheckBox("标记图片始终显示")
@@ -2111,7 +2230,7 @@ class ConfigManager(QMainWindow):
         always_visible_layout.addWidget(self.marker_always_visible_check)
         always_visible_layout.addWidget(always_visible_hint)
         always_visible_layout.addStretch()
-        color_layout.addRow("", always_visible_layout)
+        color_layout.addLayout(always_visible_layout)
 
         color_group.setLayout(color_layout)
         layout.addWidget(color_group)
@@ -2122,9 +2241,9 @@ class ConfigManager(QMainWindow):
         # 弹幕设置组
         danmaku_group = QGroupBox("弹幕设置")
         danmaku_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
-        danmaku_layout = QFormLayout()
-        danmaku_layout.setVerticalSpacing(12)
-        danmaku_layout.setHorizontalSpacing(10)
+        danmaku_layout = QVBoxLayout()  # 改用VBoxLayout以避免左侧标签间距
+        danmaku_layout.setSpacing(12)
+        danmaku_layout.setContentsMargins(10, 10, 10, 10)
 
         # 弹幕开关
         self.danmaku_enabled_check = QCheckBox("启用弹幕")
@@ -2136,7 +2255,7 @@ class ConfigManager(QMainWindow):
         danmaku_enable_layout.addWidget(self.danmaku_enabled_check)
         danmaku_enable_layout.addWidget(danmaku_hint)
         danmaku_enable_layout.addStretch()
-        danmaku_layout.addRow("", danmaku_enable_layout)
+        danmaku_layout.addLayout(danmaku_enable_layout)
 
         # 弹幕频率
         self.danmaku_frequency_spin = QSpinBox()
@@ -2148,10 +2267,11 @@ class ConfigManager(QMainWindow):
         freq_hint = QLabel("每隔多少秒生成一条弹幕")
         freq_hint.setStyleSheet("color: #888888; font-size: 9pt;")
         freq_layout = QHBoxLayout()
+        freq_layout.addWidget(QLabel("生成频率:"))
         freq_layout.addWidget(self.danmaku_frequency_spin)
         freq_layout.addWidget(freq_hint)
         freq_layout.addStretch()
-        danmaku_layout.addRow("生成频率:", freq_layout)
+        danmaku_layout.addLayout(freq_layout)
 
         # 弹幕速度
         self.danmaku_speed_spin = QDoubleSpinBox()
@@ -2164,10 +2284,11 @@ class ConfigManager(QMainWindow):
         speed_hint = QLabel("弹幕移动速度倍率")
         speed_hint.setStyleSheet("color: #888888; font-size: 9pt;")
         speed_layout = QHBoxLayout()
+        speed_layout.addWidget(QLabel("移动速度:"))
         speed_layout.addWidget(self.danmaku_speed_spin)
         speed_layout.addWidget(speed_hint)
         speed_layout.addStretch()
-        danmaku_layout.addRow("移动速度:", speed_layout)
+        danmaku_layout.addLayout(speed_layout)
 
         # 字体大小
         self.danmaku_font_size_spin = QSpinBox()
@@ -2179,25 +2300,40 @@ class ConfigManager(QMainWindow):
         font_hint = QLabel("弹幕文字大小")
         font_hint.setStyleSheet("color: #888888; font-size: 9pt;")
         font_layout = QHBoxLayout()
+        font_layout.addWidget(QLabel("字体大小:"))
         font_layout.addWidget(self.danmaku_font_size_spin)
         font_layout.addWidget(font_hint)
         font_layout.addStretch()
-        danmaku_layout.addRow("字体大小:", font_layout)
+        danmaku_layout.addLayout(font_layout)
 
-        # 透明度
-        self.danmaku_opacity_spin = QDoubleSpinBox()
-        self.danmaku_opacity_spin.setStyleSheet(StyleManager.input_number())
-        self.danmaku_opacity_spin.setRange(0.1, 1.0)
-        self.danmaku_opacity_spin.setValue(danmaku_config.get('opacity', 1.0))
-        self.danmaku_opacity_spin.setSingleStep(0.1)
-        self.danmaku_opacity_spin.setMaximumWidth(80)
-        opacity_hint = QLabel("弹幕透明度(1.0=不透明)")
-        opacity_hint.setStyleSheet("color: #888888; font-size: 9pt;")
+        # 透明度 (使用滑块控制,范围0-100%)
         opacity_layout = QHBoxLayout()
-        opacity_layout.addWidget(self.danmaku_opacity_spin)
-        opacity_layout.addWidget(opacity_hint)
+        opacity_layout.addWidget(QLabel("透明度:"))
+        self.danmaku_opacity_slider = QSlider(Qt.Orientation.Horizontal)
+        self.danmaku_opacity_slider.setRange(0, 100)
+        # 将0-1转换为0-100百分比
+        opacity_value = danmaku_config.get('opacity', 1.0)
+        opacity_percent = int(opacity_value * 100)
+        self.danmaku_opacity_slider.setValue(opacity_percent)
+        self.danmaku_opacity_slider.setFixedWidth(150)  # 和背景透明度滑块长度一致
+
+        self.danmaku_opacity_label = QLabel(f"{opacity_percent}%")
+        self.danmaku_opacity_label.setMinimumWidth(50)
+        self.danmaku_opacity_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+
+        # 滑块值变化时更新标签
+        self.danmaku_opacity_slider.valueChanged.connect(
+            lambda value: self.danmaku_opacity_label.setText(f"{value}%")
+        )
+
+        opacity_layout.addWidget(self.danmaku_opacity_slider)
+        opacity_layout.addWidget(self.danmaku_opacity_label)
         opacity_layout.addStretch()
-        danmaku_layout.addRow("透明度:", opacity_layout)
+        danmaku_layout.addLayout(opacity_layout)
+
+        # 隐藏旧的spin控件,保留用于保存配置时的转换
+        self.danmaku_opacity_spin = QDoubleSpinBox()
+        self.danmaku_opacity_spin.setVisible(False)
 
         # 同屏数量
         self.danmaku_max_count_spin = QSpinBox()
@@ -2208,10 +2344,11 @@ class ConfigManager(QMainWindow):
         count_hint = QLabel("同时显示的最大弹幕数量")
         count_hint.setStyleSheet("color: #888888; font-size: 9pt;")
         count_layout = QHBoxLayout()
+        count_layout.addWidget(QLabel("同屏数量:"))
         count_layout.addWidget(self.danmaku_max_count_spin)
         count_layout.addWidget(count_hint)
         count_layout.addStretch()
-        danmaku_layout.addRow("同屏数量:", count_layout)
+        danmaku_layout.addLayout(count_layout)
 
         # Y轴偏移
         self.danmaku_y_offset_spin = QSpinBox()
@@ -2223,10 +2360,11 @@ class ConfigManager(QMainWindow):
         y_offset_hint = QLabel("弹幕距离进度条的垂直距离")
         y_offset_hint.setStyleSheet("color: #888888; font-size: 9pt;")
         y_offset_layout = QHBoxLayout()
+        y_offset_layout.addWidget(QLabel("垂直位置:"))
         y_offset_layout.addWidget(self.danmaku_y_offset_spin)
         y_offset_layout.addWidget(y_offset_hint)
         y_offset_layout.addStretch()
-        danmaku_layout.addRow("垂直位置:", y_offset_layout)
+        danmaku_layout.addLayout(y_offset_layout)
 
         # 颜色模式
         self.danmaku_color_mode_combo = QComboBox()
@@ -2239,21 +2377,16 @@ class ConfigManager(QMainWindow):
         color_mode_hint = QLabel("弹幕颜色显示方式")
         color_mode_hint.setStyleSheet("color: #888888; font-size: 9pt;")
         color_mode_layout = QHBoxLayout()
+        color_mode_layout.addWidget(QLabel("颜色模式:"))
         color_mode_layout.addWidget(self.danmaku_color_mode_combo)
         color_mode_layout.addWidget(color_mode_hint)
         color_mode_layout.addStretch()
-        danmaku_layout.addRow("颜色模式:", color_mode_layout)
+        danmaku_layout.addLayout(color_mode_layout)
 
-        # 阴影效果
+        # 阴影效果 - 删除此选项,改为隐藏控件以保持向后兼容
         self.shadow_check = QCheckBox("启用阴影")
         self.shadow_check.setChecked(self.config.get('enable_shadow', True))
-        shadow_hint = QLabel("进度条显示阴影效果")
-        shadow_hint.setStyleSheet("color: #888888; font-size: 9pt;")
-        shadow_layout = QHBoxLayout()
-        shadow_layout.addWidget(self.shadow_check)
-        shadow_layout.addWidget(shadow_hint)
-        shadow_layout.addStretch()
-        danmaku_layout.addRow("", shadow_layout)
+        self.shadow_check.setVisible(False)  # 隐藏控件,不显示给用户
 
         # 圆角半径(隐藏UI,使用固定值0)
         self.radius_spin = QSpinBox()
@@ -2411,88 +2544,63 @@ class ConfigManager(QMainWindow):
         theme_group.setLayout(theme_layout)
         top_layout.addWidget(theme_group)
 
-        # 模板加载区域 - 单行显示所有模板
-        self.template_group = QGroupBox("📋 " + self.i18n.tr("tasks.sections.preset_templates"))
+        # 合并的模板管理区域
+        self.template_group = QGroupBox("📋 模板管理")
         self.template_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
 
-        # Use VBoxLayout to contain label and grid layout for wrapping
         template_container = QVBoxLayout()
 
-        # Quick load label in its own row
-        template_label_layout = QHBoxLayout()
-        template_label = QLabel(self.i18n.tr("tasks.labels.quick_load"))
-        template_label_layout.addWidget(template_label)
-        template_label_layout.addStretch()
-        template_container.addLayout(template_label_layout)
+        # 统一的模板选择布局
+        self.template_layout = QHBoxLayout()
+        self.template_layout.setSpacing(12)
 
-        # Grid layout for template buttons (supports wrapping)
-        from PySide6.QtWidgets import QGridLayout
-        self.template_layout = QGridLayout()
-        self.template_layout.setSpacing(8)
+        # 模板类型选择下拉框
+        type_label = QLabel("模板类型:")
+        self.template_layout.addWidget(type_label)
 
-        # 动态生成所有模板按钮（从templates_config.json，只显示预设模板）
-        if hasattr(self, 'template_manager') and self.template_manager:
-            templates = self.template_manager.get_all_templates(include_custom=False)
-            max_columns = 6  # Maximum buttons per row
-            for idx, template in enumerate(templates):
-                # Use i18n translation for template name if available
-                template_name = self.i18n.tr(f"templates.names.{template['id']}", fallback=template['name'])
-                btn = QPushButton(template_name)
-                # 使用 partial 避免 Lambda 循环引用
-                btn.clicked.connect(partial(self.load_template, template['filename']))
-                btn.setStyleSheet(f"QPushButton {{ background-color: white; color: {template['button_color']}; border: 2px solid {template['button_color']}; border-radius: 6px; padding: 6px; min-width: 80px; }}")
-                btn.setToolTip(template.get('description', ''))
-                row = idx // max_columns
-                col = idx % max_columns
-                self.template_layout.addWidget(btn, row, col)
-        else:
-            # 备用：如果template_manager未初始化，显示提示
-            fallback_label = QLabel(self.i18n.tr("tasks.labels.template_loading"))
-            fallback_label.setStyleSheet("color: #333333; font-style: italic;")
-            self.template_layout.addWidget(fallback_label, 0, 0)
-            # 延迟重新创建模板按钮
-            QTimer.singleShot(500, self._reload_template_buttons)
+        self.template_type_combo = QComboBox()
+        self.template_type_combo.setStyleSheet(StyleManager.dropdown())
+        self.template_type_combo.setMinimumWidth(120)
+        self.template_type_combo.addItem("📋 预设模板", "preset")
+        self.template_type_combo.addItem("💾 我的模板", "custom")
+        self.template_type_combo.currentIndexChanged.connect(self._on_template_type_changed)
+        self.template_layout.addWidget(self.template_type_combo)
+
+        # 选择模板标签
+        template_select_label = QLabel(self.i18n.tr("templates.auto_apply.select_template") + ":")
+        self.template_layout.addWidget(template_select_label)
+
+        # 统一的模板选择下拉框(动态内容)
+        self.unified_template_combo = QComboBox()
+        self.unified_template_combo.setStyleSheet(StyleManager.dropdown())
+        self.unified_template_combo.setMinimumWidth(200)
+        self.template_layout.addWidget(self.unified_template_combo)
+
+        # 加载按钮
+        self.load_template_btn = QPushButton(self.i18n.tr("tasks.buttons.load"))
+        self.load_template_btn.setToolTip("加载选中的模板")
+        self.load_template_btn.setFixedHeight(36)
+        self.load_template_btn.setStyleSheet("QPushButton { padding: 8px 16px; border-radius: 4px; }")
+        self.load_template_btn.clicked.connect(self._load_unified_template)
+        self.template_layout.addWidget(self.load_template_btn)
+
+        # 删除按钮(初始隐藏,只在"我的模板"时显示)
+        self.delete_template_btn = QPushButton(self.i18n.tr("general.text_1284"))
+        self.delete_template_btn.setToolTip(self.i18n.tr("config.tooltips.delete_custom_template"))
+        self.delete_template_btn.setFixedHeight(36)
+        self.delete_template_btn.setStyleSheet("QPushButton { padding: 8px 12px; border-radius: 4px; }")
+        self.delete_template_btn.clicked.connect(self._delete_selected_custom_template)
+        self.delete_template_btn.setVisible(False)  # 初始隐藏
+        self.template_layout.addWidget(self.delete_template_btn)
+
+        self.template_layout.addStretch()
 
         template_container.addLayout(self.template_layout)
         self.template_group.setLayout(template_container)
         top_layout.addWidget(self.template_group)
 
-        # 我的模板区域 - 下拉框选择样式
-        self.custom_template_group = QGroupBox("💾 " + self.i18n.tr("tasks.sections.my_templates"))
-        self.custom_template_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
-        self.custom_template_layout = QHBoxLayout()
-
-        custom_label = QLabel(self.i18n.tr("templates.auto_apply.select_template"))
-        self.custom_template_layout.addWidget(custom_label)
-
-        # 创建自定义模板下拉框
-        self.custom_template_combo = QComboBox()
-        self.custom_template_combo.setStyleSheet(StyleManager.dropdown())
-        self.custom_template_combo.setMinimumWidth(200)
-        self.custom_template_layout.addWidget(self.custom_template_combo)
-
-        # 加载按钮
-        load_custom_btn = QPushButton(self.i18n.tr("tasks.buttons.load"))
-        load_custom_btn.setToolTip(self.i18n.tr("config.tooltips.load_custom_template"))
-        load_custom_btn.setFixedHeight(36)
-        load_custom_btn.setStyleSheet("QPushButton { padding: 8px 12px; border-radius: 4px; }")
-        load_custom_btn.clicked.connect(self._load_selected_custom_template)
-        self.custom_template_layout.addWidget(load_custom_btn)
-
-        # 删除按钮
-        delete_custom_btn = QPushButton(self.i18n.tr("general.text_1284"))
-        delete_custom_btn.setToolTip(self.i18n.tr("config.tooltips.delete_custom_template"))
-        delete_custom_btn.setFixedHeight(36)
-        delete_custom_btn.setStyleSheet("QPushButton { padding: 8px 12px; border-radius: 4px; }")
-        delete_custom_btn.clicked.connect(self._delete_selected_custom_template)
-        self.custom_template_layout.addWidget(delete_custom_btn)
-
-        # 动态加载自定义模板列表
-        self._reload_custom_template_combo()
-
-        self.custom_template_layout.addStretch()
-        self.custom_template_group.setLayout(self.custom_template_layout)
-        top_layout.addWidget(self.custom_template_group)
+        # 初始化加载预设模板
+        self._load_templates_by_type("preset")
 
         layout.addLayout(top_layout)
 
@@ -6799,46 +6907,135 @@ class ConfigManager(QMainWindow):
             QMessageBox.critical(self, "错误", self.i18n.tr("config.errors.template_load_failed", error=str(e)))
 
 
-    def _reload_template_buttons(self):
-        """重新加载模板按钮（当template_manager延迟初始化完成后调用）"""
+    def _reload_preset_template_combo(self):
+        """重新加载预设模板下拉框（当template_manager延迟初始化完成后调用）"""
         try:
             if not hasattr(self, 'template_manager') or not self.template_manager:
                 logging.warning("TemplateManager尚未初始化，延迟500ms后重试")
                 # 延迟重试
-                QTimer.singleShot(500, self._reload_template_buttons)
+                QTimer.singleShot(500, self._reload_preset_template_combo)
                 return
 
-            if not hasattr(self, 'template_layout'):
-                logging.error("template_layout未找到，无法重新加载模板按钮")
+            if not hasattr(self, 'preset_template_combo'):
+                logging.error("preset_template_combo未找到，无法重新加载预设模板下拉框")
                 return
 
-            logging.info("TemplateManager已初始化，重新构建模板按钮")
+            logging.info("TemplateManager已初始化，重新加载预设模板下拉框")
 
-            # 清空布局中的所有控件
-            while self.template_layout.count():
-                item = self.template_layout.takeAt(0)
-                if item.widget():
-                    item.widget().deleteLater()
+            # 清空下拉框
+            self.preset_template_combo.clear()
 
-            # 重新添加所有模板按钮（使用网格布局）
+            # 重新添加所有预设模板到下拉框
             templates = self.template_manager.get_all_templates(include_custom=False)
-            max_columns = 6  # Maximum buttons per row
-            for idx, template in enumerate(templates):
+            for template in templates:
                 # Use i18n translation for template name if available
                 template_name = self.i18n.tr(f"templates.names.{template['id']}", fallback=template['name'])
-                btn = QPushButton(template_name)
-                # 使用 partial 避免 Lambda 循环引用
-                btn.clicked.connect(partial(self.load_template, template['filename']))
-                btn.setStyleSheet(f"QPushButton {{ background-color: white; color: {template['button_color']}; border: 2px solid {template['button_color']}; border-radius: 6px; padding: 6px; min-width: 80px; }}")
-                btn.setToolTip(template.get('description', ''))
-                row = idx // max_columns
-                col = idx % max_columns
-                self.template_layout.addWidget(btn, row, col)
+                # 存储模板信息:显示名称,数据为filename
+                self.preset_template_combo.addItem(template_name, template['filename'])
+                # 设置工具提示
+                idx = self.preset_template_combo.count() - 1
+                self.preset_template_combo.setItemData(idx, template.get('description', ''), Qt.ItemDataRole.ToolTipRole)
 
-            logging.info(f"成功加载 {len(templates)} 个模板按钮")
+            logging.info(f"成功加载 {len(templates)} 个预设模板到下拉框")
 
         except Exception as e:
-            logging.error(f"重新加载模板按钮失败: {e}")
+            logging.error(f"重新加载预设模板下拉框失败: {e}")
+
+    def _load_selected_preset_template(self):
+        """加载选中的预设模板"""
+        if not hasattr(self, 'preset_template_combo'):
+            return
+
+        # 获取选中项的filename
+        current_data = self.preset_template_combo.currentData()
+
+        if not current_data:
+            QMessageBox.warning(self, self.i18n.tr("message.warning"), "请先选择一个预设模板")
+            return
+
+        # 调用已有的load_template方法
+        self.load_template(current_data)
+
+    def _on_template_type_changed(self, index):
+        """模板类型切换时的处理"""
+        if not hasattr(self, 'template_type_combo'):
+            return
+
+        # 获取当前选中的类型
+        template_type = self.template_type_combo.currentData()
+
+        # 根据类型加载模板列表
+        self._load_templates_by_type(template_type)
+
+    def _load_templates_by_type(self, template_type):
+        """根据类型加载模板列表到统一下拉框"""
+        if not hasattr(self, 'unified_template_combo'):
+            return
+
+        # 清空下拉框
+        self.unified_template_combo.clear()
+
+        if template_type == "preset":
+            # 加载预设模板
+            if hasattr(self, 'template_manager') and self.template_manager:
+                templates = self.template_manager.get_all_templates(include_custom=False)
+                for template in templates:
+                    template_name = self.i18n.tr(f"templates.names.{template['id']}", fallback=template['name'])
+                    # 存储: (类型, 数据)
+                    self.unified_template_combo.addItem(template_name, ("preset", template['filename']))
+                    # 设置工具提示
+                    idx = self.unified_template_combo.count() - 1
+                    self.unified_template_combo.setItemData(idx, template.get('description', ''), Qt.ItemDataRole.ToolTipRole)
+            else:
+                self.unified_template_combo.addItem(self.i18n.tr("tasks.labels.template_loading"), ("preset", ""))
+                QTimer.singleShot(500, lambda: self._load_templates_by_type("preset"))
+
+            # 隐藏删除按钮
+            if hasattr(self, 'delete_template_btn'):
+                self.delete_template_btn.setVisible(False)
+
+        elif template_type == "custom":
+            # 加载自定义模板
+            meta_data = self._get_custom_templates_meta()
+            templates = meta_data.get('templates', [])
+
+            if not templates:
+                self.unified_template_combo.addItem(self.i18n.tr("account.message.no_custom_templates_placeholder"), ("custom", None))
+            else:
+                for template in templates:
+                    display_name = f"{template['name']} ({template.get('task_count', 0)}个任务)"
+                    self.unified_template_combo.addItem(display_name, ("custom", template))
+
+            # 显示删除按钮
+            if hasattr(self, 'delete_template_btn'):
+                self.delete_template_btn.setVisible(True)
+
+    def _load_unified_template(self):
+        """统一的模板加载方法"""
+        if not hasattr(self, 'unified_template_combo'):
+            return
+
+        current_data = self.unified_template_combo.currentData()
+        if not current_data:
+            QMessageBox.warning(self, self.i18n.tr("message.warning"), "请先选择一个模板")
+            return
+
+        template_type, template_data = current_data
+
+        if template_type == "preset":
+            # 加载预设模板
+            if not template_data:
+                QMessageBox.warning(self, self.i18n.tr("message.warning"), "模板数据无效")
+                return
+            self.load_template(template_data)
+
+        elif template_type == "custom":
+            # 加载自定义模板
+            if not template_data:
+                QMessageBox.information(self, self.i18n.tr("message.info"), "请先创建自定义模板")
+                return
+            filename = template_data['filename']
+            self._load_custom_template_by_filename(filename)
 
 
     def _get_custom_templates_meta(self):
@@ -7504,6 +7701,30 @@ class ConfigManager(QMainWindow):
         if color.isValid():
             input_widget.setText(color.name())
 
+            # 更新对应的颜色预览按钮样式
+            if input_widget == self.bg_color_input:
+                self.bg_color_preview.setStyleSheet(f"""
+                    QPushButton {{
+                        background-color: {color.name()};
+                        border: 2px solid #CCCCCC;
+                        border-radius: 4px;
+                    }}
+                    QPushButton:hover {{
+                        border: 2px solid #999999;
+                    }}
+                """)
+            elif input_widget == self.marker_color_input:
+                self.marker_color_preview.setStyleSheet(f"""
+                    QPushButton {{
+                        background-color: {color.name()};
+                        border: 2px solid #CCCCCC;
+                        border-radius: 4px;
+                    }}
+                    QPushButton:hover {{
+                        border: 2px solid #999999;
+                    }}
+                """)
+
     def update_color_preview(self, input_widget, preview_label):
         """更新颜色预览"""
         color = input_widget.text()
@@ -7612,7 +7833,8 @@ class ConfigManager(QMainWindow):
                 "bar_height": self.height_spin.value(),
                 "position": "bottom",  # 固定位置为屏幕底部
                 "background_color": self.bg_color_input.text(),
-                "background_opacity": self.opacity_spin.value(),
+                # 将百分比(0-100)转换为0-255
+                "background_opacity": int(self.opacity_slider.value() * 255 / 100),
                 "marker_color": self.marker_color_input.text(),
                 "marker_width": self.marker_width_spin.value(),
                 "marker_type": self.marker_type_combo.currentText(),
@@ -7657,7 +7879,8 @@ class ConfigManager(QMainWindow):
                     "frequency": self.danmaku_frequency_spin.value() if hasattr(self, 'danmaku_frequency_spin') else self.config.get('danmaku', {}).get('frequency', 30),
                     "speed": self.danmaku_speed_spin.value() if hasattr(self, 'danmaku_speed_spin') else self.config.get('danmaku', {}).get('speed', 1.0),
                     "font_size": self.danmaku_font_size_spin.value() if hasattr(self, 'danmaku_font_size_spin') else self.config.get('danmaku', {}).get('font_size', 14),
-                    "opacity": self.danmaku_opacity_spin.value() if hasattr(self, 'danmaku_opacity_spin') else self.config.get('danmaku', {}).get('opacity', 1.0),
+                    # 将百分比(0-100)转换为0-1浮点数
+                    "opacity": round(self.danmaku_opacity_slider.value() / 100, 2) if hasattr(self, 'danmaku_opacity_slider') else self.config.get('danmaku', {}).get('opacity', 1.0),
                     "max_count": self.danmaku_max_count_spin.value() if hasattr(self, 'danmaku_max_count_spin') else self.config.get('danmaku', {}).get('max_count', 3),
                     "y_offset": self.danmaku_y_offset_spin.value() if hasattr(self, 'danmaku_y_offset_spin') else self.config.get('danmaku', {}).get('y_offset', 80),
                     "color_mode": self.danmaku_color_mode_combo.itemData(self.danmaku_color_mode_combo.currentIndex()) if hasattr(self, 'danmaku_color_mode_combo') else self.config.get('danmaku', {}).get('color_mode', 'auto')
@@ -8835,7 +9058,7 @@ del /f /q "%~f0"
             if self.ai_status_timer.isActive():
                 self.ai_status_timer.stop()
             self.ai_status_timer = None
-        
+
         # 取消正在运行的AI工作线程
         if hasattr(self, 'ai_worker') and self.ai_worker:
             try:
@@ -8873,7 +9096,7 @@ del /f /q "%~f0"
                 self.theme_manager.unregister_ui_component(self)
             except Exception:
                 pass
-        
+
         # 已切换到Vercel云服务，不再需要停止本地后端服务
         # 保留此检查以保持向后兼容性
         if hasattr(self, 'backend_manager') and self.backend_manager:

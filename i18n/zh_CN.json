@@ -260,6 +260,7 @@
       "marker_type": "时间标记类型",
       "marker_x_offset": "标记图片 X 偏移",
       "marker_y_offset": "标记图片 Y 偏移",
+      "marker_offset": "标记图片偏移",
       "animation_speed": "动画播放速度"
     },
     "presets": {
@@ -2300,6 +2301,7 @@
   "appearance.marker_x_offset_note": "(正值向右,负值向左)",
   "appearance.marker_y_offset": "标记Y轴偏移",
   "appearance.marker_y_offset_note": "(正值向上,负值向下)",
+  "appearance.marker_offset_note": "(X正值向右/负值向左, Y正值向上/负值向下)",
   "appearance.marker_speed": "动画速度",
   "appearance.marker_speed_note": "(100%=原速, 200%=2倍速)",
   "appearance.visual_effects": "✨ 视觉效果",

@@ -119,15 +119,20 @@ class DanmakuManager:
             # Handle cross-day tasks
             if end_minute < start_minute:
                 if current_minute >= start_minute or current_minute < end_minute:
-                    return self._map_task_name_to_category(task.get('task', ''))
+                    return self._map_task_name_to_category(task.get('task', ''), current_minute)
             else:
                 if start_minute <= current_minute < end_minute:
-                    return self._map_task_name_to_category(task.get('task', ''))
+                    return self._map_task_name_to_category(task.get('task', ''), current_minute)
 
         return "default"
 
-    def _map_task_name_to_category(self, task_name: str) -> str:
-        """将任务名称映射到弹幕类别"""
+    def _map_task_name_to_category(self, task_name: str, current_minute: int = None) -> str:
+        """将任务名称映射到弹幕类别
+
+        Args:
+            task_name: 任务名称
+            current_minute: 当前时间(分钟数,从0到1440),用于区分早晚通勤
+        """
         task_name_lower = task_name.lower()
 
         # Mapping rules
@@ -144,6 +149,14 @@ class DanmakuManager:
         elif any(keyword in task_name_lower for keyword in ['吃饭', 'meal', '午餐', '晚餐', '早餐']):
             return "meal"
         elif any(keyword in task_name_lower for keyword in ['通勤', 'commute', '上班', '下班']):
+            # 根据时间区分早晚通勤
+            # 早上通勤: 6:00-12:00 (360-720分钟)
+            # 晚上通勤: 17:00-21:00 (1020-1260分钟)
+            if current_minute is not None:
+                if 360 <= current_minute < 720:  # 6:00-12:00
+                    return "commute_morning"
+                elif 1020 <= current_minute < 1260:  # 17:00-21:00
+                    return "commute_evening"
             return "commute"
         elif any(keyword in task_name_lower for keyword in ['娱乐', 'entertainment', '游戏', '看剧']):
             return "entertainment"
@@ -222,6 +235,8 @@ class DanmakuManager:
                 "meeting": "#9C27B0",   # Purple - 会议
                 "meal": "#FF9800",      # Orange - 用餐
                 "commute": "#00BCD4",   # Cyan - 通勤
+                "commute_morning": "#4DD0E1",  # Light Cyan - 早晨通勤
+                "commute_evening": "#0097A7",  # Dark Cyan - 晚间通勤
                 "entertainment": "#E91E63",  # Pink - 娱乐
                 "sleep": "#3F51B5",     # Indigo - 睡眠
                 "motivational": "#FFEB3B",  # Yellow - 励志

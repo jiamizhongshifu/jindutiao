@@ -431,14 +431,19 @@ class StyleManager:
     @staticmethod
     def dropdown() -> str:
         """
-        下拉框 (QComboBox)
+        下拉框 (QComboBox) - 浅灰背景以区分输入框
+
+        特点:
+        - 浅灰色背景 (区别于白色输入框)
+        - 使用 "▼" Unicode字符作为箭头指示
+        - 悬停时边框高亮
 
         Returns:
             下拉框QSS字符串
         """
         return f"""
             QComboBox {{
-                background-color: {Theme.BG_PRIMARY};
+                background-color: {Theme.BG_SECONDARY};
                 color: {Theme.TEXT_PRIMARY};
                 border: 1px solid {Theme.BORDER_NORMAL};
                 border-radius: {Theme.RADIUS_SMALL}px;
@@ -447,23 +452,18 @@ class StyleManager:
             }}
             QComboBox:hover {{
                 border: 1px solid {Theme.BORDER_HOVER};
+                background-color: {Theme.BG_HOVER};
             }}
             QComboBox:focus {{
                 border: 2px solid {Theme.BORDER_FOCUS};
-            }}
-            QComboBox::drop-down {{
-                border: none;
-                width: 20px;
-            }}
-            QComboBox::down-arrow {{
-                width: 12px;
-                height: 12px;
+                background-color: {Theme.BG_PRIMARY};
             }}
             QComboBox QAbstractItemView {{
                 background-color: {Theme.BG_PRIMARY};
                 border: 1px solid {Theme.BORDER_NORMAL};
                 selection-background-color: {Theme.BG_HOVER};
                 selection-color: {Theme.TEXT_PRIMARY};
+                outline: none;
             }}
         """
 
