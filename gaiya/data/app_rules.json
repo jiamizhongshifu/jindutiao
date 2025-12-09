@@ -1,0 +1,109 @@
+{
+  "comment": "App Classification Rules - Maps process names to app types",
+  "version": "1.0",
+  "last_updated": "2025-12-08",
+
+  "browser": [
+    "chrome.exe",
+    "msedge.exe",
+    "firefox.exe",
+    "brave.exe",
+    "opera.exe",
+    "vivaldi.exe",
+    "iexplore.exe",
+    "safari.exe"
+  ],
+
+  "ide": [
+    "Code.exe",
+    "cursor.exe",
+    "devenv.exe",
+    "pycharm64.exe",
+    "pycharm.exe",
+    "webstorm64.exe",
+    "idea64.exe",
+    "rider64.exe",
+    "clion64.exe",
+    "sublime_text.exe",
+    "notepad++.exe",
+    "atom.exe",
+    "brackets.exe"
+  ],
+
+  "office": [
+    "WINWORD.EXE",
+    "EXCEL.EXE",
+    "POWERPNT.EXE",
+    "ONENOTE.EXE",
+    "OUTLOOK.EXE",
+    "MSACCESS.EXE",
+    "wps.exe",
+    "et.exe",
+    "wpp.exe"
+  ],
+
+  "im": [
+    "WeChat.exe",
+    "QQ.exe",
+    "TIM.exe",
+    "DingTalk.exe",
+    "Feishu.exe",
+    "Slack.exe",
+    "Discord.exe",
+    "Teams.exe",
+    "Telegram.exe",
+    "Skype.exe"
+  ],
+
+  "video": [
+    "bilibili.exe",
+    "QQLive.exe",
+    "iQIYI.exe",
+    "youku.exe",
+    "PotPlayerMini64.exe",
+    "PotPlayerMini.exe",
+    "vlc.exe",
+    "mpv.exe",
+    "ZoomPlayer.exe"
+  ],
+
+  "player": [
+    "cloudmusic.exe",
+    "QQMusic.exe",
+    "KuGou.exe",
+    "foobar2000.exe",
+    "AIMP.exe",
+    "Spotify.exe"
+  ],
+
+  "game": [
+    "steam.exe",
+    "League of Legends.exe",
+    "CrossFire.exe",
+    "VALORANT.exe",
+    "GameLoader.exe",
+    "WeGamePlatform.exe"
+  ],
+
+  "tool": [
+    "Everything.exe",
+    "Listary.exe",
+    "Snipaste.exe",
+    "Bandizip.exe",
+    "7zFM.exe",
+    "WinRAR.exe",
+    "Typora.exe",
+    "Notion.exe",
+    "Obsidian.exe"
+  ],
+
+  "system": [
+    "explorer.exe",
+    "Taskmgr.exe",
+    "SystemSettings.exe",
+    "regedit.exe",
+    "cmd.exe",
+    "powershell.exe",
+    "WindowsTerminal.exe"
+  ]
+}

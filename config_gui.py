@@ -352,6 +352,10 @@ class ConfigManager(QMainWindow):
         # 场景编辑器窗口引用（延迟创建）
         self.scene_editor_window = None
 
+        # 行为识别统计信息实时更新
+        self.behavior_stats_timer = None  # 统计信息更新定时器
+        self.stats_labels = {}  # 统计标签引用字典 {category: QLabel}
+
         # 先初始化UI,让窗口快速显示
         self.init_ui()
 
@@ -1583,6 +1587,10 @@ class ConfigManager(QMainWindow):
         self.notification_tab_widget = None
         tabs.addTab(QWidget(), "🔔 " + self.i18n.tr("config.tabs.notifications"))  # 占位widget
 
+        # 延迟创建行为识别标签页
+        self.behavior_tab_widget = None
+        tabs.addTab(QWidget(), "🔍 行为识别")  # 占位widget
+
         # 延迟创建个人中心标签页
         self.account_tab_widget = None
         tabs.addTab(QWidget(), tr("account.tab_title"))  # 占位widget
@@ -1629,8 +1637,8 @@ class ConfigManager(QMainWindow):
             index: Tab index that was switched to
         """
         # 控制底部按钮的显示/隐藏
-        # 在"个人中心"(4)和self.i18n.tr("config.tabs.about")(5)页面隐藏按钮
-        if index in [4, 5]:  # 个人中心或关于页面
+        # 在"个人中心"(5)和"关于"(6)页面隐藏按钮
+        if index in [5, 6]:  # 个人中心或关于页面
             self.save_btn.hide()
             self.cancel_btn.hide()
         else:  # 其他页面显示按钮
@@ -1644,10 +1652,13 @@ class ConfigManager(QMainWindow):
         elif index == 3:  # 通知设置标签页
             if self.notification_tab_widget is None:
                 self._load_notification_tab()
-        elif index == 4:  # 个人中心标签页
+        elif index == 4:  # 行为识别标签页
+            if self.behavior_tab_widget is None:
+                self._load_behavior_tab()
+        elif index == 5:  # 个人中心标签页
             if self.account_tab_widget is None:
                 self._load_account_tab()
-        elif index == 5:  # 关于标签页
+        elif index == 6:  # 关于标签页
             if self.about_tab_widget is None:
                 self._load_about_tab()
 
@@ -1717,6 +1728,46 @@ class ConfigManager(QMainWindow):
             self.tabs.removeTab(3)
             self.tabs.insertTab(3, self.notification_tab_widget, "🔔 " + self.i18n.tr("config.tabs.notifications"))
 
+    def _load_behavior_tab(self):
+        """加载行为识别标签页"""
+        if self.behavior_tab_widget is not None:
+            return  # 已经加载过了
+
+        try:
+            # Block signals to prevent recursive tab change events
+            self.tabs.blockSignals(True)
+
+            self.behavior_tab_widget = self.create_behavior_tab()
+            self.tabs.setTabEnabled(4, True)  # 确保标签页可用
+            # 替换占位widget
+            self.tabs.removeTab(4)
+            self.tabs.insertTab(4, self.behavior_tab_widget, "🔍 行为识别")
+            self.tabs.setCurrentIndex(4)  # 切换到行为识别标签页
+
+            # 启动统计信息实时更新定时器 (每5秒更新一次)
+            if self.behavior_stats_timer is None:
+                self.behavior_stats_timer = QTimer(self)
+                self.behavior_stats_timer.timeout.connect(self.update_behavior_stats)
+                self.behavior_stats_timer.start(5000)  # 5秒间隔
+                logging.info("行为识别统计信息定时器已启动 (5秒/次)")
+
+            # Restore signals
+            self.tabs.blockSignals(False)
+        except Exception as e:
+            logging.error(f"加载行为识别标签页失败: {e}")
+            # Ensure signals are restored even on error
+            self.tabs.blockSignals(False)
+            # 显示错误提示
+            from PySide6.QtWidgets import QLabel
+            error_widget = QWidget()
+            error_layout = QVBoxLayout(error_widget)
+            error_label = QLabel("加载行为识别设置失败，请查看日志")
+            error_label.setStyleSheet("color: red; padding: 20px;")
+            error_layout.addWidget(error_label)
+            self.behavior_tab_widget = error_widget
+            self.tabs.removeTab(4)
+            self.tabs.insertTab(4, self.behavior_tab_widget, "🔍 行为识别")
+
 
     def _load_account_tab(self):
         """加载个人中心标签页"""
@@ -1728,11 +1779,11 @@ class ConfigManager(QMainWindow):
             self.tabs.blockSignals(True)
 
             self.account_tab_widget = self._create_account_tab()
-            self.tabs.setTabEnabled(4, True)  # 确保标签页可用
+            self.tabs.setTabEnabled(5, True)  # 确保标签页可用
             # 替换占位widget
-            self.tabs.removeTab(4)
-            self.tabs.insertTab(4, self.account_tab_widget, tr("account.tab_title"))
-            self.tabs.setCurrentIndex(4)  # 切换到个人中心标签页
+            self.tabs.removeTab(5)
+            self.tabs.insertTab(5, self.account_tab_widget, tr("account.tab_title"))
+            self.tabs.setCurrentIndex(5)  # 切换到个人中心标签页
 
             # Restore signals
             self.tabs.blockSignals(False)
@@ -1750,8 +1801,8 @@ class ConfigManager(QMainWindow):
             error_label.setStyleSheet("color: red; padding: 20px;")
             error_layout.addWidget(error_label)
             self.account_tab_widget = error_widget
-            self.tabs.removeTab(4)
-            self.tabs.insertTab(4, self.account_tab_widget, tr("account.tab_title"))
+            self.tabs.removeTab(5)
+            self.tabs.insertTab(5, self.account_tab_widget, tr("account.tab_title"))
 
     def _load_about_tab(self):
         """加载关于标签页"""
@@ -1763,11 +1814,11 @@ class ConfigManager(QMainWindow):
             self.tabs.blockSignals(True)
 
             self.about_tab_widget = self.create_about_tab()
-            self.tabs.setTabEnabled(5, True)  # 确保标签页可用
+            self.tabs.setTabEnabled(6, True)  # 确保标签页可用
             # 替换占位widget
-            self.tabs.removeTab(5)
-            self.tabs.insertTab(5, self.about_tab_widget, "📖 " + self.i18n.tr("tabs.about"))
-            self.tabs.setCurrentIndex(5)  # 切换到关于标签页
+            self.tabs.removeTab(6)
+            self.tabs.insertTab(6, self.about_tab_widget, "📖 " + self.i18n.tr("tabs.about"))
+            self.tabs.setCurrentIndex(6)  # 切换到关于标签页
 
             # Restore signals
             self.tabs.blockSignals(False)
@@ -1785,9 +1836,9 @@ class ConfigManager(QMainWindow):
             error_label.setStyleSheet("color: red; padding: 20px;")
             error_layout.addWidget(error_label)
             self.about_tab_widget = error_widget
-            self.tabs.removeTab(5)
-            self.tabs.insertTab(5, self.about_tab_widget, "📖 " + self.i18n.tr("tabs.about"))
-            self.tabs.setCurrentIndex(5)  # 确保切换到关于标签页显示错误信息
+            self.tabs.removeTab(6)
+            self.tabs.insertTab(6, self.about_tab_widget, "📖 " + self.i18n.tr("tabs.about"))
+            self.tabs.setCurrentIndex(6)  # 确保切换到关于标签页显示错误信息
 
     def create_config_tab(self):
         """创建外观配置标签页"""
@@ -3470,6 +3521,296 @@ class ConfigManager(QMainWindow):
 
         layout.addStretch()
         return widget
+
+    def create_behavior_tab(self):
+        """创建行为识别标签页 - 整合应用分类管理和弹幕行为识别配置"""
+        from PySide6.QtWidgets import QScrollArea, QSplitter
+
+        # 创建滚动区域
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+        content_widget = QWidget()
+        main_layout = QVBoxLayout(content_widget)
+        main_layout.setSpacing(15)
+        main_layout.setContentsMargins(20, 20, 20, 20)
+
+        # 标题
+        title_label = QLabel("🔍 行为识别设置")
+        title_font = title_label.font()
+        title_font.setPointSize(16)
+        title_font.setBold(True)
+        title_label.setFont(title_font)
+        title_label.setStyleSheet("color: #2c3e50; margin-bottom: 10px;")
+        main_layout.addWidget(title_label)
+
+        # 创建水平分割器
+        splitter = QSplitter(Qt.Horizontal)
+
+        # === 左侧面板：基本设置和弹幕配置 ===
+        left_widget = QWidget()
+        left_layout = QVBoxLayout(left_widget)
+        left_layout.setSpacing(15)
+
+        # 1. 基本设置组
+        basic_group = QGroupBox("⚙️ 基本设置")
+        basic_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
+        basic_layout = QFormLayout(basic_group)
+        basic_layout.setSpacing(10)
+
+        # 启用行为追踪 (旧的activity_tracking)
+        activity_config = self.config.get('activity_tracking', {})
+        self.activity_tracking_enabled = QCheckBox("启用应用活动追踪")
+        self.activity_tracking_enabled.setChecked(activity_config.get('enabled', False))
+        self.activity_tracking_enabled.setMinimumHeight(36)
+        basic_layout.addRow("行为追踪:", self.activity_tracking_enabled)
+
+        # 采样间隔
+        self.activity_polling_interval = QSpinBox()
+        self.activity_polling_interval.setRange(1, 60)
+        self.activity_polling_interval.setSuffix(" 秒")
+        self.activity_polling_interval.setValue(activity_config.get('polling_interval', 5))
+        self.activity_polling_interval.setMinimumHeight(36)
+        basic_layout.addRow("采样间隔:", self.activity_polling_interval)
+
+        # 数据保留天数
+        self.activity_retention_days = QSpinBox()
+        self.activity_retention_days.setRange(7, 365)
+        self.activity_retention_days.setSuffix(" 天")
+        self.activity_retention_days.setValue(activity_config.get('data_retention_days', 90))
+        self.activity_retention_days.setMinimumHeight(36)
+        basic_layout.addRow("数据保留:", self.activity_retention_days)
+
+        left_layout.addWidget(basic_group)
+
+        # 2. 弹幕行为识别组
+        behavior_group = QGroupBox("💬 弹幕行为识别")
+        behavior_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
+        behavior_layout = QFormLayout(behavior_group)
+        behavior_layout.setSpacing(10)
+
+        # 获取 behavior_recognition 配置
+        behavior_config = self.config.get('behavior_recognition', {})
+
+        # 启用弹幕行为识别
+        self.behavior_danmaku_enabled = QCheckBox("启用行为感知弹幕")
+        self.behavior_danmaku_enabled.setChecked(behavior_config.get('enabled', False))
+        self.behavior_danmaku_enabled.setMinimumHeight(36)
+        behavior_layout.addRow("弹幕识别:", self.behavior_danmaku_enabled)
+
+        # 采集间隔
+        self.behavior_collection_interval = QSpinBox()
+        self.behavior_collection_interval.setRange(1, 60)
+        self.behavior_collection_interval.setSuffix(" 秒")
+        self.behavior_collection_interval.setValue(behavior_config.get('collection_interval', 5))
+        self.behavior_collection_interval.setMinimumHeight(36)
+        behavior_layout.addRow("采集间隔:", self.behavior_collection_interval)
+
+        # 触发概率
+        self.behavior_trigger_probability = QDoubleSpinBox()
+        self.behavior_trigger_probability.setRange(0.0, 1.0)
+        self.behavior_trigger_probability.setSingleStep(0.1)
+        self.behavior_trigger_probability.setDecimals(2)
+        self.behavior_trigger_probability.setValue(behavior_config.get('trigger_probability', 0.4))
+        self.behavior_trigger_probability.setMinimumHeight(36)
+        behavior_layout.addRow("触发概率:", self.behavior_trigger_probability)
+
+        # 全局冷却
+        self.behavior_global_cooldown = QSpinBox()
+        self.behavior_global_cooldown.setRange(5, 300)
+        self.behavior_global_cooldown.setSuffix(" 秒")
+        self.behavior_global_cooldown.setValue(behavior_config.get('global_cooldown', 30))
+        self.behavior_global_cooldown.setMinimumHeight(36)
+        behavior_layout.addRow("全局冷却:", self.behavior_global_cooldown)
+
+        # 分类冷却
+        self.behavior_category_cooldown = QSpinBox()
+        self.behavior_category_cooldown.setRange(10, 600)
+        self.behavior_category_cooldown.setSuffix(" 秒")
+        self.behavior_category_cooldown.setValue(behavior_config.get('category_cooldown', 60))
+        self.behavior_category_cooldown.setMinimumHeight(36)
+        behavior_layout.addRow("分类冷却:", self.behavior_category_cooldown)
+
+        left_layout.addWidget(behavior_group)
+
+        # 3. 帮助说明
+        help_group = QGroupBox("💡 使用说明")
+        help_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
+        help_layout = QVBoxLayout(help_group)
+
+        help_text = QLabel(
+            "• <b>行为追踪</b>: 记录您使用各个应用的时间\n"
+            "• <b>弹幕识别</b>: 根据行为模式智能触发弹幕\n"
+            "• <b>采样间隔</b>: 检测活动的时间间隔\n"
+            "• <b>触发概率</b>: 控制弹幕出现频率(0.0-1.0)\n"
+            "• <b>冷却时间</b>: 避免弹幕过度频繁\n"
+            "• 所有数据仅存储在本地,不会上传云端"
+        )
+        help_text.setWordWrap(True)
+        help_text.setStyleSheet("""
+            QLabel {
+                background-color: #f8f9fa;
+                border: 1px solid #dee2e6;
+                border-radius: 4px;
+                padding: 12px;
+                line-height: 1.6;
+            }
+        """)
+        help_layout.addWidget(help_text)
+
+        left_layout.addWidget(help_group)
+        left_layout.addStretch()
+
+        # === 右侧面板：应用分类管理 ===
+        right_widget = QWidget()
+        right_layout = QVBoxLayout(right_widget)
+        right_layout.setSpacing(10)
+
+        # 标题
+        app_title = QLabel("📱 应用分类管理")
+        app_title_font = app_title.font()
+        app_title_font.setPointSize(13)
+        app_title_font.setBold(True)
+        app_title.setFont(app_title_font)
+        app_title.setStyleSheet("color: #2c3e50;")
+        right_layout.addWidget(app_title)
+
+        # 提示
+        app_hint = QLabel("设置应用的生产力分类,用于统计和行为分析")
+        app_hint.setStyleSheet("color: #7f8c8d; font-size: 10pt;")
+        right_layout.addWidget(app_hint)
+
+        # 使用 ActivitySettingsWindow 的内容
+        # 由于 ActivitySettingsWindow 是独立窗口,这里直接创建一个简化版
+        # 或者在 save_all() 方法中打开 ActivitySettingsWindow
+
+        app_settings_button = QPushButton("🔧 打开应用分类设置")
+        app_settings_button.setMinimumHeight(44)
+        app_settings_button.setStyleSheet(StyleManager.button_primary())
+        app_settings_button.clicked.connect(self.open_activity_settings_window)
+        right_layout.addWidget(app_settings_button)
+
+        # 添加间距
+        right_layout.addSpacing(20)
+
+        # === 快速访问区域 ===
+        access_group = QGroupBox("📊 快速访问")
+        access_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
+        access_layout = QVBoxLayout(access_group)
+        access_layout.setSpacing(10)
+
+        # 查看今日回放按钮
+        today_replay_button = QPushButton("📊 查看今日回放")
+        today_replay_button.setMinimumHeight(40)
+        today_replay_button.setStyleSheet("""
+            QPushButton {
+                background-color: #3498db;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                font-size: 12pt;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #2980b9;
+            }
+            QPushButton:pressed {
+                background-color: #21618c;
+            }
+        """)
+        today_replay_button.clicked.connect(self.open_today_replay_window)
+        access_layout.addWidget(today_replay_button)
+
+        # 查看统计报告按钮
+        stats_report_button = QPushButton("📈 查看统计报告")
+        stats_report_button.setMinimumHeight(40)
+        stats_report_button.setStyleSheet("""
+            QPushButton {
+                background-color: #2ecc71;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                font-size: 12pt;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #27ae60;
+            }
+            QPushButton:pressed {
+                background-color: #1e8449;
+            }
+        """)
+        stats_report_button.clicked.connect(self.open_stats_report_window)
+        access_layout.addWidget(stats_report_button)
+
+        right_layout.addWidget(access_group)
+        right_layout.addStretch()
+
+        # 添加到分割器
+        splitter.addWidget(left_widget)
+        splitter.addWidget(right_widget)
+        splitter.setSizes([400, 300])  # 设置初始比例
+
+        main_layout.addWidget(splitter)
+
+        scroll_area.setWidget(content_widget)
+        return scroll_area
+
+    def open_activity_settings_window(self):
+        """打开应用分类设置窗口"""
+        try:
+            from gaiya.ui.activity_settings_window import ActivitySettingsWindow
+
+            # 创建窗口
+            settings_window = ActivitySettingsWindow(self)
+
+            # 连接信号 - 当设置更改时更新统计信息
+            settings_window.settings_changed.connect(lambda: logging.info("应用分类设置已更改"))
+            settings_window.settings_changed.connect(self.update_behavior_stats)
+
+            # 显示窗口
+            settings_window.exec()
+
+        except Exception as e:
+            logging.error(f"打开应用分类设置窗口失败: {e}")
+            QMessageBox.critical(self, "错误", f"打开应用分类设置窗口失败: {e}")
+
+    def open_today_replay_window(self):
+        """打开今日时间回放窗口"""
+        try:
+            from gaiya.ui.time_review_window import TimeReviewWindow
+
+            # 创建窗口
+            replay_window = TimeReviewWindow(self)
+
+            # 显示窗口
+            replay_window.exec()
+
+        except Exception as e:
+            logging.error(f"打开今日时间回放窗口失败: {e}")
+            QMessageBox.critical(self, "错误", f"打开今日时间回放窗口失败: {e}")
+
+    def open_stats_report_window(self):
+        """打开统计报告窗口"""
+        try:
+            # 使用保存的main_window引用,调用正确的方法名 show_statistics
+            if self.main_window and hasattr(self.main_window, 'show_statistics'):
+                # ❌ 不再关闭配置窗口,让两个窗口可以同时存在
+                # self.close()  # 移除此行,保持配置窗口打开
+
+                # 调用主窗口的统计报告方法 (正确的方法名是 show_statistics)
+                self.main_window.show_statistics()
+            else:
+                QMessageBox.warning(self, "提示", "无法打开统计报告窗口,请从主界面访问")
+        except Exception as e:
+            logging.error(f"打开统计报告窗口失败: {e}")
+            QMessageBox.critical(self, "错误", f"打开统计报告窗口失败: {e}")
+
+    def update_behavior_stats(self):
+        """更新行为识别统计信息"""
+        # 注意: stats_labels已被移除,此方法保留用于向后兼容
+        logging.debug("update_behavior_stats被调用,但统计显示已移除")
 
 
     def _create_account_tab(self):
@@ -8041,6 +8382,20 @@ class ConfigManager(QMainWindow):
                     "max_count": self.danmaku_max_count_spin.value() if hasattr(self, 'danmaku_max_count_spin') else self.config.get('danmaku', {}).get('max_count', 3),
                     "y_offset": self.danmaku_y_offset_spin.value() if hasattr(self, 'danmaku_y_offset_spin') else self.config.get('danmaku', {}).get('y_offset', 80),
                     "color_mode": self.danmaku_color_mode_combo.itemData(self.danmaku_color_mode_combo.currentIndex()) if hasattr(self, 'danmaku_color_mode_combo') else self.config.get('danmaku', {}).get('color_mode', 'auto')
+                },
+                "activity_tracking": {
+                    "enabled": self.activity_tracking_enabled.isChecked() if hasattr(self, 'activity_tracking_enabled') else self.config.get('activity_tracking', {}).get('enabled', False),
+                    "polling_interval": self.activity_polling_interval.value() if hasattr(self, 'activity_polling_interval') else self.config.get('activity_tracking', {}).get('polling_interval', 5),
+                    "min_session_duration": self.config.get('activity_tracking', {}).get('min_session_duration', 5),
+                    "data_retention_days": self.activity_retention_days.value() if hasattr(self, 'activity_retention_days') else self.config.get('activity_tracking', {}).get('data_retention_days', 90)
+                },
+                "behavior_recognition": {
+                    "enabled": self.behavior_danmaku_enabled.isChecked() if hasattr(self, 'behavior_danmaku_enabled') else self.config.get('behavior_recognition', {}).get('enabled', False),
+                    "collection_interval": self.behavior_collection_interval.value() if hasattr(self, 'behavior_collection_interval') else self.config.get('behavior_recognition', {}).get('collection_interval', 5),
+                    "trigger_probability": self.behavior_trigger_probability.value() if hasattr(self, 'behavior_trigger_probability') else self.config.get('behavior_recognition', {}).get('trigger_probability', 0.4),
+                    "global_cooldown": self.behavior_global_cooldown.value() if hasattr(self, 'behavior_global_cooldown') else self.config.get('behavior_recognition', {}).get('global_cooldown', 30),
+                    "category_cooldown": self.behavior_category_cooldown.value() if hasattr(self, 'behavior_category_cooldown') else self.config.get('behavior_recognition', {}).get('category_cooldown', 60),
+                    "tone_cooldown": self.config.get('behavior_recognition', {}).get('tone_cooldown', 120)
                 }
             }
 
@@ -9210,6 +9565,13 @@ del /f /q "%~f0"
 
     def closeEvent(self, event):
         """窗口关闭事件，清理所有资源"""
+        # 停止行为识别统计定时器
+        if hasattr(self, 'behavior_stats_timer') and self.behavior_stats_timer:
+            if self.behavior_stats_timer.isActive():
+                self.behavior_stats_timer.stop()
+            self.behavior_stats_timer = None
+            logging.info("行为识别统计信息定时器已停止")
+
         # 停止AI状态定时器
         if hasattr(self, 'ai_status_timer') and self.ai_status_timer:
             if self.ai_status_timer.isActive():

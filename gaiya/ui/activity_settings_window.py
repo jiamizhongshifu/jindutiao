@@ -1,5 +1,5 @@
 """
-行为识别设置窗口
+应用分类管理窗口
 允许用户配置App分类和行为追踪设置
 """
 
@@ -17,11 +17,12 @@ from PySide6.QtGui import QFont, QIcon
 
 from gaiya.data.db_manager import db
 from gaiya.services.app_category_manager import app_category_manager
+from gaiya.core.app_recommender import AppRecommender
 
 logger = logging.getLogger("gaiya.ui.activity_settings_window")
 
 class ActivitySettingsWindow(QDialog):
-    """行为识别设置窗口"""
+    """应用分类管理窗口"""
 
     # 信号定义
     settings_changed = Signal()
@@ -32,7 +33,7 @@ class ActivitySettingsWindow(QDialog):
         self.logger = logger
 
         # 窗口设置
-        self.setWindowTitle("行为识别设置")
+        self.setWindowTitle("📱 应用分类管理")
         self.setModal(True)
         self.resize(800, 600)
         self.setMinimumSize(700, 500)
@@ -40,6 +41,9 @@ class ActivitySettingsWindow(QDialog):
         # 数据缓存
         self.app_categories: List[Dict] = []
         self.recent_apps: List[Dict] = []
+
+        # 初始化智能推荐引擎
+        self.app_recommender = AppRecommender(logger=self.logger)
 
         # 初始化UI
         self.init_ui()
@@ -52,7 +56,7 @@ class ActivitySettingsWindow(QDialog):
         layout.setContentsMargins(20, 20, 20, 20)
 
         # 标题
-        title_label = QLabel("🔍 行为识别设置")
+        title_label = QLabel("📱 应用分类管理")
         title_label.setFont(QFont("Microsoft YaHei", 14, QFont.Bold))
         title_label.setStyleSheet("color: #2c3e50; margin-bottom: 10px;")
         layout.addWidget(title_label)
@@ -234,6 +238,11 @@ class ActivitySettingsWindow(QDialog):
         import_defaults_button = QPushButton("📥 导入默认分类")
         import_defaults_button.clicked.connect(self.import_default_categories)
         table_buttons_layout.addWidget(import_defaults_button)
+
+        smart_recommend_button = QPushButton("✨ 智能推荐")
+        smart_recommend_button.clicked.connect(self.show_smart_recommendations)
+        smart_recommend_button.setToolTip("根据应用名称智能推荐分类")
+        table_buttons_layout.addWidget(smart_recommend_button)
 
         table_buttons_layout.addStretch()
 
@@ -486,3 +495,210 @@ class ActivitySettingsWindow(QDialog):
         self.polling_interval_spinbox.setValue(settings.get('polling_interval', 5))
         self.min_session_duration_spinbox.setValue(settings.get('min_session_duration', 5))
         self.data_retention_days_spinbox.setValue(settings.get('data_retention_days', 90))
+
+    def show_smart_recommendations(self):
+        """显示智能推荐对话框"""
+        try:
+            # 获取当前所有未分类的应用 (category=UNKNOWN)
+            unknown_apps = [app['process_name'] for app in self.app_categories
+                          if app.get('category') == 'UNKNOWN']
+
+            if not unknown_apps:
+                QMessageBox.information(
+                    self,
+                    "提示",
+                    "没有找到需要推荐的应用!\n\n所有应用都已分类。"
+                )
+                return
+
+            # 生成推荐
+            recommendations = self.app_recommender.batch_recommend(unknown_apps)
+
+            # 显示推荐对话框
+            dialog = SmartRecommendationDialog(recommendations, parent=self)
+            if dialog.exec() == QDialog.Accepted:
+                # 用户接受了推荐,应用到分类
+                accepted_recs = dialog.get_accepted_recommendations()
+                self._apply_recommendations(accepted_recs)
+
+                QMessageBox.information(
+                    self,
+                    "成功",
+                    f"✅ 已应用 {len(accepted_recs)} 个推荐分类!"
+                )
+
+                # 刷新表格
+                self.refresh_category_table()
+                self.update_category_stats()
+
+        except Exception as e:
+            self.logger.error(f"智能推荐失败: {e}")
+            QMessageBox.critical(self, "错误", f"智能推荐失败: {e}")
+
+    def _apply_recommendations(self, recommendations: Dict[str, str]):
+        """应用推荐结果"""
+        try:
+            for app_name, category in recommendations.items():
+                # 更新分类
+                app_category_manager.set_app_category(app_name, category, is_ignored=False)
+
+                # 更新本地缓存
+                for app_data in self.app_categories:
+                    if app_data['process_name'].upper() == app_name.upper():
+                        app_data['category'] = category
+                        break
+
+            self.logger.info(f"已应用 {len(recommendations)} 个推荐分类")
+        except Exception as e:
+            self.logger.error(f"应用推荐分类失败: {e}")
+            raise
+
+
+class SmartRecommendationDialog(QDialog):
+    """智能推荐对话框"""
+
+    def __init__(self, recommendations: Dict[str, Dict], parent=None):
+        super().__init__(parent)
+        self.recommendations = recommendations
+        self.accepted_items = {}  # {app_name: category}
+
+        self.setWindowTitle("✨ 智能应用分类推荐")
+        self.setModal(True)
+        self.resize(700, 500)
+        self.setMinimumSize(600, 400)
+
+        self.init_ui()
+
+    def init_ui(self):
+        """初始化UI"""
+        layout = QVBoxLayout(self)
+        layout.setSpacing(15)
+        layout.setContentsMargins(20, 20, 20, 20)
+
+        # 标题
+        title_label = QLabel("✨ 智能应用分类推荐")
+        title_label.setFont(QFont("Microsoft YaHei", 14, QFont.Bold))
+        title_label.setStyleSheet("color: #2c3e50; margin-bottom: 10px;")
+        layout.addWidget(title_label)
+
+        # 说明
+        desc_label = QLabel(
+            "AI 已根据应用名称分析并推荐分类。\n"
+            "勾选您认同的推荐,点击「应用推荐」保存。"
+        )
+        desc_label.setStyleSheet("color: #7f8c8d; font-size: 12px; margin-bottom: 10px;")
+        layout.addWidget(desc_label)
+
+        # 推荐表格
+        self.recommendation_table = QTableWidget()
+        self.recommendation_table.setColumnCount(6)
+        self.recommendation_table.setHorizontalHeaderLabels([
+            "选择", "应用名称", "推荐分类", "置信度", "理由", "说明"
+        ])
+
+        # 设置表格样式
+        header = self.recommendation_table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)  # 选择
+        header.setSectionResizeMode(1, QHeaderView.Stretch)  # 应用名称
+        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)  # 推荐分类
+        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)  # 置信度
+        header.setSectionResizeMode(4, QHeaderView.Stretch)  # 理由
+        header.setSectionResizeMode(5, QHeaderView.Stretch)  # 说明
+
+        self.recommendation_table.setAlternatingRowColors(True)
+        self.recommendation_table.setSelectionMode(QTableWidget.NoSelection)
+
+        # 填充推荐数据
+        self.populate_recommendations()
+
+        layout.addWidget(self.recommendation_table)
+
+        # 统计信息
+        stats_label = QLabel(
+            f"📊 共 {len(self.recommendations)} 个应用需要推荐分类"
+        )
+        stats_label.setStyleSheet("color: #7f8c8d; font-size: 11px; margin-top: 5px;")
+        layout.addWidget(stats_label)
+
+        # 底部按钮
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+
+        select_all_button = QPushButton("✅ 全选")
+        select_all_button.clicked.connect(self.select_all)
+        button_layout.addWidget(select_all_button)
+
+        deselect_all_button = QPushButton("❌ 取消全选")
+        deselect_all_button.clicked.connect(self.deselect_all)
+        button_layout.addWidget(deselect_all_button)
+
+        apply_button = QPushButton("✨ 应用推荐")
+        apply_button.clicked.connect(self.accept)
+        apply_button.setStyleSheet("""
+            QPushButton {
+                background-color: #3498db;
+                color: white;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #2980b9;
+            }
+        """)
+        button_layout.addWidget(apply_button)
+
+        cancel_button = QPushButton("取消")
+        cancel_button.clicked.connect(self.reject)
+        button_layout.addWidget(cancel_button)
+
+        layout.addLayout(button_layout)
+
+    def populate_recommendations(self):
+        """填充推荐数据"""
+        self.recommendation_table.setRowCount(len(self.recommendations))
+        self.checkboxes = []
+
+        for row, (app_name, rec) in enumerate(self.recommendations.items()):
+            # 复选框
+            checkbox = QCheckBox()
+            checkbox.setChecked(rec['confidence'] >= 0.75)  # 置信度>= 75% 默认勾选
+            self.checkboxes.append(checkbox)
+            self.recommendation_table.setCellWidget(row, 0, checkbox)
+
+            # 应用名称
+            self.recommendation_table.setItem(row, 1, QTableWidgetItem(app_name))
+
+            # 推荐分类 + Emoji
+            category_text = f"{rec['emoji']} {rec['category']}"
+            category_item = QTableWidgetItem(category_text)
+            self.recommendation_table.setItem(row, 2, category_item)
+
+            # 置信度
+            confidence_text = f"{int(rec['confidence'] * 100)}%"
+            confidence_item = QTableWidgetItem(confidence_text)
+            self.recommendation_table.setItem(row, 3, confidence_item)
+
+            # 理由
+            self.recommendation_table.setItem(row, 4, QTableWidgetItem(rec['reason']))
+
+            # 说明
+            self.recommendation_table.setItem(row, 5, QTableWidgetItem(rec['description']))
+
+    def select_all(self):
+        """全选"""
+        for checkbox in self.checkboxes:
+            checkbox.setChecked(True)
+
+    def deselect_all(self):
+        """取消全选"""
+        for checkbox in self.checkboxes:
+            checkbox.setChecked(False)
+
+    def get_accepted_recommendations(self) -> Dict[str, str]:
+        """获取用户接受的推荐"""
+        accepted = {}
+        for row, (app_name, rec) in enumerate(self.recommendations.items()):
+            if self.checkboxes[row].isChecked():
+                accepted[app_name] = rec['category']
+        return accepted

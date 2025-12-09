@@ -25,6 +25,7 @@ class LightTheme:
     # ============================================================
     TEXT_PRIMARY = "#333333"      # 主标题、重要文字（对比度 12.6:1）
     TEXT_SECONDARY = "#666666"    # 副标题、次要信息（引导弹窗实测）
+    TEXT_TERTIARY = "#999999"     # 三级文字（更浅的提示文字）
     TEXT_HINT = "#888888"         # 提示文字、占位符（引导弹窗实测）
     TEXT_DISABLED = "#CCCCCC"     # 禁用状态
     TEXT_WHITE = "#FFFFFF"        # 深色背景上的文字（套餐卡片）
@@ -63,6 +64,9 @@ class LightTheme:
 
     ACCENT_RED = "#f44336"        # 危险操作（删除、清空）
     ACCENT_RED_HOVER = "#d32f2f"
+
+    ACCENT_PURPLE = "#9C27B0"     # 紫色强调（学习、创意相关）
+    ACCENT_PURPLE_HOVER = "#7B1FA2"
 
     # ============================================================
     # 字体大小（参考引导弹窗）

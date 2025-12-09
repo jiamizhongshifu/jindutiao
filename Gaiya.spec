@@ -49,6 +49,7 @@ hidden_imports = [
     'PySide6.QtWidgets',
     'PySide6.QtCore',
     'PySide6.QtGui',
+    'PySide6.QtCharts',  # 图表库(用于统计报告趋势图)
 ]
 
 # 平台特定依赖
@@ -102,6 +103,10 @@ a = Analysis(
         ('assets/checkmark.png', 'assets/'),
         # 弹幕预设内容库
         ('gaiya/data/danmaku_presets.json', 'gaiya/data/'),
+        # 行为识别数据文件
+        ('gaiya/data/behavior_danmaku.json', 'gaiya/data/'),
+        ('gaiya/data/app_rules.json', 'gaiya/data/'),
+        ('gaiya/data/domain_rules.json', 'gaiya/data/'),
         # 默认时间标记动图（向后兼容旧版本，保留根目录的kun.webp）
         ('kun.webp', '.'),
         ('kun.gif', '.'),
@@ -160,7 +165,7 @@ a = Analysis(
 
         # 其他不需要的模块（~10MB）
         'PySide6.QtBluetooth',
-        'PySide6.QtCharts',
+        # 'PySide6.QtCharts',  # ❌ 已启用 - 用于统计报告趋势图
         'PySide6.QtDataVisualization',
         'PySide6.QtPositioning',
         'PySide6.QtSensors',

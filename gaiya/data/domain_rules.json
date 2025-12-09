@@ -1,0 +1,223 @@
+{
+  "comment": "Domain Classification Rules - Maps domains to categories and content modes",
+  "version": "1.0",
+  "last_updated": "2025-12-08",
+
+  "domains": {
+    "github.com": {
+      "category": "code",
+      "mode": "production",
+      "description": "GitHub code repository"
+    },
+    "gitlab.com": {
+      "category": "code",
+      "mode": "production",
+      "description": "GitLab code repository"
+    },
+    "gitee.com": {
+      "category": "code",
+      "mode": "production",
+      "description": "Gitee code repository"
+    },
+    "stackoverflow.com": {
+      "category": "code",
+      "mode": "production",
+      "description": "Stack Overflow Q&A"
+    },
+    "leetcode.com": {
+      "category": "code",
+      "mode": "production",
+      "description": "LeetCode coding practice"
+    },
+    "leetcode.cn": {
+      "category": "code",
+      "mode": "production",
+      "description": "LeetCode China"
+    },
+
+    "notion.so": {
+      "category": "doc",
+      "mode": "production",
+      "description": "Notion documentation"
+    },
+    "docs.google.com": {
+      "category": "doc",
+      "mode": "production",
+      "description": "Google Docs"
+    },
+    "confluence.atlassian.com": {
+      "category": "doc",
+      "mode": "production",
+      "description": "Confluence wiki"
+    },
+    "yuque.com": {
+      "category": "doc",
+      "mode": "production",
+      "description": "语雀文档"
+    },
+    "feishu.cn": {
+      "category": "doc",
+      "mode": "production",
+      "description": "飞书文档"
+    },
+
+    "bilibili.com": {
+      "category": "video",
+      "mode": "consumption",
+      "description": "Bilibili video platform"
+    },
+    "youtube.com": {
+      "category": "video",
+      "mode": "consumption",
+      "description": "YouTube video platform"
+    },
+    "iqiyi.com": {
+      "category": "video",
+      "mode": "consumption",
+      "description": "iQiyi video platform"
+    },
+    "v.qq.com": {
+      "category": "video",
+      "mode": "consumption",
+      "description": "Tencent Video"
+    },
+    "youku.com": {
+      "category": "video",
+      "mode": "consumption",
+      "description": "Youku video platform"
+    },
+
+    "weibo.com": {
+      "category": "social",
+      "mode": "consumption",
+      "description": "Weibo social network"
+    },
+    "xiaohongshu.com": {
+      "category": "social",
+      "mode": "consumption",
+      "description": "Xiaohongshu social platform"
+    },
+    "twitter.com": {
+      "category": "social",
+      "mode": "consumption",
+      "description": "Twitter social network"
+    },
+    "x.com": {
+      "category": "social",
+      "mode": "consumption",
+      "description": "X (formerly Twitter)"
+    },
+    "facebook.com": {
+      "category": "social",
+      "mode": "consumption",
+      "description": "Facebook social network"
+    },
+    "instagram.com": {
+      "category": "social",
+      "mode": "consumption",
+      "description": "Instagram social platform"
+    },
+    "zhihu.com": {
+      "category": "social",
+      "mode": "neutral",
+      "description": "Zhihu Q&A (can be both learning and browsing)"
+    },
+
+    "jd.com": {
+      "category": "shopping",
+      "mode": "consumption",
+      "description": "JD.com shopping"
+    },
+    "taobao.com": {
+      "category": "shopping",
+      "mode": "consumption",
+      "description": "Taobao shopping"
+    },
+    "tmall.com": {
+      "category": "shopping",
+      "mode": "consumption",
+      "description": "Tmall shopping"
+    },
+    "amazon.com": {
+      "category": "shopping",
+      "mode": "consumption",
+      "description": "Amazon shopping"
+    },
+    "pinduoduo.com": {
+      "category": "shopping",
+      "mode": "consumption",
+      "description": "Pinduoduo shopping"
+    },
+
+    "google.com": {
+      "category": "search",
+      "mode": "neutral",
+      "description": "Google search"
+    },
+    "baidu.com": {
+      "category": "search",
+      "mode": "neutral",
+      "description": "Baidu search"
+    },
+    "bing.com": {
+      "category": "search",
+      "mode": "neutral",
+      "description": "Bing search"
+    },
+
+    "claude.ai": {
+      "category": "ai",
+      "mode": "production",
+      "description": "Claude AI assistant"
+    },
+    "chat.openai.com": {
+      "category": "ai",
+      "mode": "production",
+      "description": "ChatGPT"
+    },
+    "poe.com": {
+      "category": "ai",
+      "mode": "production",
+      "description": "Poe AI platform"
+    },
+
+    "mail.google.com": {
+      "category": "email",
+      "mode": "neutral",
+      "description": "Gmail"
+    },
+    "outlook.live.com": {
+      "category": "email",
+      "mode": "neutral",
+      "description": "Outlook email"
+    },
+    "mail.163.com": {
+      "category": "email",
+      "mode": "neutral",
+      "description": "163 email"
+    },
+    "mail.qq.com": {
+      "category": "email",
+      "mode": "neutral",
+      "description": "QQ email"
+    }
+  },
+
+  "wildcards": {
+    "*.github.io": {
+      "category": "doc",
+      "mode": "production",
+      "description": "GitHub Pages documentation"
+    },
+    "*.vercel.app": {
+      "category": "code",
+      "mode": "production",
+      "description": "Vercel deployment preview"
+    },
+    "*.netlify.app": {
+      "category": "code",
+      "mode": "production",
+      "description": "Netlify deployment preview"
+    }
+  }
+}

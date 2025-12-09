@@ -736,3 +736,186 @@ class StatisticsManager:
         except Exception as e:
             self.logger.error(f"导出CSV失败: {e}", exc_info=True)
             return False
+
+    def get_weekly_trend(self, days: int = 7) -> List[Dict]:
+        """获取最近N天的任务完成率趋势数据
+
+        Args:
+            days: 要获取的天数,默认7天
+
+        Returns:
+            List[Dict]: 趋势数据列表,每个元素包含:
+                - date: 日期字符串 (YYYY-MM-DD)
+                - completion_rate: 完成率 (0-100)
+                - total_tasks: 总任务数
+                - completed_tasks: 已完成任务数
+        """
+        trend_data = []
+        today = date.today()
+
+        for i in range(days - 1, -1, -1):
+            target_date = today - timedelta(days=i)
+            date_str = target_date.isoformat()
+
+            # 获取该日期的统计数据
+            if date_str in self.statistics["daily_records"]:
+                daily_record = self.statistics["daily_records"][date_str]
+                summary = daily_record.get("summary", {})
+
+                trend_data.append({
+                    'date': date_str,
+                    'completion_rate': summary.get('completion_rate', 0.0),
+                    'total_tasks': summary.get('total_tasks', 0),
+                    'completed_tasks': summary.get('completed_tasks', 0)
+                })
+            else:
+                # 没有数据的日期,填充0值
+                trend_data.append({
+                    'date': date_str,
+                    'completion_rate': 0.0,
+                    'total_tasks': 0,
+                    'completed_tasks': 0
+                })
+
+        return trend_data
+
+    def _classify_task(self, task_name: str) -> str:
+        """根据任务名称对任务进行分类
+
+        Args:
+            task_name: 任务名称
+
+        Returns:
+            str: 分类名称
+        """
+        task_name_lower = task_name.lower()
+
+        # 工作类
+        if any(keyword in task_name_lower for keyword in ['工作', '会议', '开发', '项目', '讨论', '设计', '编程', '代码', '测试', '部署', '早会']):
+            return '工作'
+
+        # 学习类
+        if any(keyword in task_name_lower for keyword in ['学习', '阅读', '课程', '培训', '研究', '充电', '看书', '教程']):
+            return '学习'
+
+        # 运动类
+        if any(keyword in task_name_lower for keyword in ['健身', '运动', '跑步', '游泳', '瑜伽', '锻炼', '散步', '球类', '体育']):
+            return '运动'
+
+        # 饮食类
+        if any(keyword in task_name_lower for keyword in ['早餐', '午餐', '晚餐', '吃饭', '用餐', '饮食', '做饭', '烹饪']):
+            return '饮食'
+
+        # 休息类
+        if any(keyword in task_name_lower for keyword in ['睡眠', '休息', '午休', '小憩', '放松', '打盹', '睡觉']):
+            return '休息'
+
+        # 娱乐类
+        if any(keyword in task_name_lower for keyword in ['娱乐', '游戏', '电影', '追剧', '看剧', '综艺', '音乐', '唱歌', 'ktv']):
+            return '娱乐'
+
+        # 通勤类
+        if any(keyword in task_name_lower for keyword in ['通勤', '上班', '下班', '路上', '交通', '地铁', '公交', '开车']):
+            return '通勤'
+
+        # 其他类
+        return '其他'
+
+    def get_category_distribution(self, days: int = 7) -> Dict[str, Dict]:
+        """获取最近N天的任务分类分布统计
+
+        Args:
+            days: 要统计的天数,默认7天
+
+        Returns:
+            Dict[str, Dict]: 分类统计字典,格式为:
+                {
+                    '工作': {'count': 10, 'completed': 8, 'total_minutes': 600},
+                    '学习': {'count': 5, 'completed': 4, 'total_minutes': 300},
+                    ...
+                }
+        """
+        category_stats = defaultdict(lambda: {'count': 0, 'completed': 0, 'total_minutes': 0})
+        today = date.today()
+
+        for i in range(days - 1, -1, -1):
+            target_date = today - timedelta(days=i)
+            date_str = target_date.isoformat()
+
+            if date_str not in self.statistics["daily_records"]:
+                continue
+
+            daily_record = self.statistics["daily_records"][date_str]
+            tasks = daily_record.get("tasks", {})
+
+            for task_name, task_info in tasks.items():
+                # 分类任务
+                category = self._classify_task(task_name)
+
+                # 统计数量
+                category_stats[category]['count'] += 1
+
+                # 统计完成数
+                if task_info.get('status') == 'completed':
+                    category_stats[category]['completed'] += 1
+
+                # 计算任务时长（分钟）
+                try:
+                    start_time = datetime.strptime(task_info['start'], '%H:%M')
+                    end_time = datetime.strptime(task_info['end'], '%H:%M')
+                    duration = (end_time - start_time).total_seconds() / 60
+
+                    # 处理跨天任务（end < start）
+                    if duration < 0:
+                        duration += 24 * 60
+
+                    category_stats[category]['total_minutes'] += int(duration)
+                except (ValueError, KeyError):
+                    pass
+
+        return dict(category_stats)
+
+    def get_task_categories(self, days: int = 7) -> List[Dict]:
+        """获取任务分类分布数据 (格式化为饼图所需格式)
+
+        Args:
+            days: 要统计的天数,默认7天
+
+        Returns:
+            List[Dict]: 分类列表,每个元素包含:
+                - name: 分类名称
+                - count: 任务数量
+                - percentage: 百分比
+                - hours: 总时长(小时)
+        """
+        category_dist = self.get_category_distribution(days=days)
+
+        # 如果没有数据,返回空列表
+        if not category_dist:
+            return []
+
+        # 计算总任务数
+        total_count = sum(stats['count'] for stats in category_dist.values())
+
+        # 如果总数为0,返回空列表
+        if total_count == 0:
+            return []
+
+        # 格式化为饼图数据
+        categories = []
+        for category_name, stats in category_dist.items():
+            count = stats['count']
+            percentage = (count / total_count) * 100
+            hours = stats['total_minutes'] / 60.0
+
+            categories.append({
+                'name': category_name,
+                'count': count,
+                'percentage': percentage,
+                'hours': hours
+            })
+
+        # 按数量排序 (从大到小)
+        categories.sort(key=lambda x: x['count'], reverse=True)
+
+        return categories

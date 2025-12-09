@@ -1,0 +1,27 @@
+{
+  "goals": [
+    {
+      "goal_id": "2811598c-1923-4596-963d-84a7f0d0cc12",
+      "goal_type": "daily_tasks",
+      "target_value": 5,
+      "current_value": 0.0,
+      "start_date": "2025-12-09",
+      "end_date": null,
+      "status": "active",
+      "created_at": "2025-12-09T22:12:17.659138",
+      "completed_at": null
+    },
+    {
+      "goal_id": "3aa2cbe3-fc2a-462b-b668-0a0c77feabcd",
+      "goal_type": "daily_tasks",
+      "target_value": 5,
+      "current_value": 0.0,
+      "start_date": "2025-12-09",
+      "end_date": null,
+      "status": "active",
+      "created_at": "2025-12-09T22:36:59.484922",
+      "completed_at": null
+    }
+  ],
+  "last_updated": "2025-12-09T22:36:59.486927"
+}

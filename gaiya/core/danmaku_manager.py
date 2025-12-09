@@ -61,6 +61,16 @@ class DanmakuManager:
         self.current_task_start_time = 0
         self.current_task_end_time = 0
 
+        # 行为识别弹幕管理器
+        self.behavior_danmaku_manager = None
+        try:
+            from gaiya.core.behavior_danmaku_manager import BehaviorDanmakuManager
+            self.behavior_danmaku_manager = BehaviorDanmakuManager(config, logger)
+            self.behavior_danmaku_manager.start()
+        except Exception as e:
+            if logger:
+                logger.warning(f"Failed to initialize behavior danmaku manager: {e}")
+
         # Load preset danmaku content
         self._load_presets()
 
@@ -105,6 +115,10 @@ class DanmakuManager:
         """重新加载配置"""
         self.config = config
         self._load_config()
+
+        # 重新加载行为识别配置
+        if self.behavior_danmaku_manager:
+            self.behavior_danmaku_manager.reload_config(config)
 
     def get_task_category(self, tasks: List[Dict], current_time_percentage: float) -> str:
         """根据当前时间获取任务类型"""
@@ -203,6 +217,14 @@ class DanmakuManager:
     def spawn_danmaku(self, screen_width: int, window_height: int,
                      tasks: List[Dict], current_time_percentage: float):
         """生成新弹幕 (支持模板替换和防重复)"""
+        # 优先检查行为识别弹幕
+        if self.behavior_danmaku_manager and self.behavior_danmaku_manager.has_pending_danmaku():
+            content = self.behavior_danmaku_manager.get_pending_danmaku()
+            if content:
+                self._create_and_add_danmaku(content, screen_width, window_height, "behavior")
+                return
+
+        # 回退到时间任务弹幕
         # Get task category and update task info cache
         category = self.get_task_category(tasks, current_time_percentage)
         self._update_current_task_info(tasks, current_time_percentage)
@@ -220,6 +242,12 @@ class DanmakuManager:
         # 添加到历史记录
         self._add_to_history(content)
 
+        # Create and add danmaku
+        self._create_and_add_danmaku(content, screen_width, window_height, category)
+
+    def _create_and_add_danmaku(self, content: str, screen_width: int,
+                                window_height: int, category: str):
+        """创建并添加弹幕"""
         # Calculate position
         # X: start from right edge + some buffer
         x = screen_width + 50
@@ -260,6 +288,13 @@ class DanmakuManager:
                 "entertainment": "#E91E63",  # Pink - 娱乐
                 "sleep": "#3F51B5",     # Indigo - 睡眠
                 "motivational": "#FFEB3B",  # Yellow - 励志
+                # 行为识别弹幕颜色
+                "behavior": "#00E676",  # Bright Green - 行为感知
+                "focus_steady": "#00E676",  # Bright Green - 专注稳定
+                "moyu_start": "#FF6D00",    # Deep Orange - 摸鱼开始
+                "moyu_steady": "#FF1744",   # Red - 持续摸鱼
+                "mode_switch": "#00B0FF",   # Light Blue - 模式切换
+                "task_switch": "#76FF03",   # Light Green - 任务切换
                 "default": "#FFFFFF"    # White - 默认
             }
             return color_map.get(category, "#FFFFFF")

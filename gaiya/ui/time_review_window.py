@@ -16,6 +16,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont, QPainter, QColor, QPen
 
 from gaiya.data.db_manager import db
+from gaiya.core.focus_tracker import calculate_focus_from_activity_log
 from gaiya.services.app_category_manager import app_category_manager
 from gaiya.utils import data_loader, path_utils, time_utils
 from gaiya.utils.time_block_utils import generate_time_block_id
@@ -85,6 +86,27 @@ class TimeReviewWindow(QDialog):
         export_button = QPushButton("📊 导出报告")
         export_button.clicked.connect(self.export_report)
         button_layout.addWidget(export_button)
+
+        # 添加"查看详细报告"按钮
+        detail_report_button = QPushButton("📈 查看详细报告")
+        detail_report_button.setStyleSheet("""
+            QPushButton {
+                background-color: #2ecc71;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 6px 12px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #27ae60;
+            }
+            QPushButton:pressed {
+                background-color: #1e8449;
+            }
+        """)
+        detail_report_button.clicked.connect(self.open_statistics_report)
+        button_layout.addWidget(detail_report_button)
 
         close_button = QPushButton("✖️ 关闭")
         close_button.clicked.connect(self.close)
@@ -204,6 +226,11 @@ class TimeReviewWindow(QDialog):
         self.productive_time_label = QLabel("0小时0分钟")
         active_time_layout.addRow("🎯 生产力:", self.productive_time_label)
 
+        # 专注时长 (新增)
+        self.focus_time_label = QLabel("0小时0分钟")
+        self.focus_time_label.setStyleSheet("color: #4CAF50; font-weight: bold;")
+        active_time_layout.addRow("🔥 专注时长:", self.focus_time_label)
+
         # 摸鱼时间
         self.leisure_time_label = QLabel("0小时0分钟")
         active_time_layout.addRow("🎮 摸鱼:", self.leisure_time_label)
@@ -217,6 +244,25 @@ class TimeReviewWindow(QDialog):
         active_time_layout.addRow("❓ 未分类:", self.unknown_time_label)
 
         layout.addWidget(active_time_group)
+
+        # 数据说明卡片 (新增)
+        info_card = QLabel(
+            "💡 <b>数据说明</b><br>"
+            "• <b>生产力时长</b>: 使用生产力应用的总时长(可以碎片化)<br>"
+            "• <b>专注时长</b>: 连续使用同一应用 ≥25分钟 的时长(深度工作)"
+        )
+        info_card.setStyleSheet("""
+            QLabel {
+                background-color: rgba(33, 150, 243, 0.1);
+                border-left: 4px solid #2196F3;
+                border-radius: 4px;
+                padding: 12px;
+                color: #2c3e50;
+                font-size: 10pt;
+            }
+        """)
+        info_card.setWordWrap(True)
+        layout.addWidget(info_card)
 
         # Top App排行榜 (增加高度)
         top_apps_group = QGroupBox("🏆 应用排行")  # 简化标题
@@ -490,6 +536,28 @@ class TimeReviewWindow(QDialog):
         self.neutral_time_label.setText(self.format_duration(neutral_seconds))
         self.unknown_time_label.setText(self.format_duration(unknown_seconds))
 
+        # 计算并更新专注时长 (新增)
+        try:
+            # 从数据库获取今日活动记录
+            activity_records = db.get_today_activity_records()
+            if activity_records:
+                focus_stats = calculate_focus_from_activity_log(activity_records)
+                focus_seconds = focus_stats['productive_focus_time']
+                self.focus_time_label.setText(self.format_duration(focus_seconds))
+
+                # 如果有专注时段,显示绿色,否则显示灰色
+                if focus_seconds > 0:
+                    self.focus_time_label.setStyleSheet("color: #4CAF50; font-weight: bold;")
+                else:
+                    self.focus_time_label.setStyleSheet("color: #999999;")
+            else:
+                self.focus_time_label.setText("0分钟")
+                self.focus_time_label.setStyleSheet("color: #999999;")
+        except Exception as e:
+            self.logger.warning(f"计算专注时长失败: {e}")
+            self.focus_time_label.setText("--")
+            self.focus_time_label.setStyleSheet("color: #999999;")
+
         # 更新Top应用列表
         self.update_top_apps(self.activity_data['top_apps'])
 
@@ -751,3 +819,28 @@ class TimeReviewWindow(QDialog):
             QMessageBox.information(self, "提示", "报告导出功能开发中...")
         except Exception as e:
             self.logger.error(f"导出报告失败: {e}")
+
+    def open_statistics_report(self):
+        """打开统计报告窗口"""
+        try:
+            # Get config window (parent of this dialog)
+            config_window = self.parent()
+            if config_window and hasattr(config_window, 'main_window'):
+                # Get main window from config's main_window reference
+                main_window = config_window.main_window
+                if main_window and hasattr(main_window, 'show_statistics'):
+                    # 关闭当前回放窗口和配置窗口
+                    self.close()
+                    config_window.close()
+                    # 打开统计报告窗口 (正确的方法名是 show_statistics)
+                    main_window.show_statistics()
+                else:
+                    from PySide6.QtWidgets import QMessageBox
+                    QMessageBox.warning(self, "提示", "无法打开统计报告窗口,请从主界面访问")
+            else:
+                from PySide6.QtWidgets import QMessageBox
+                QMessageBox.warning(self, "提示", "无法打开统计报告窗口")
+        except Exception as e:
+            from PySide6.QtWidgets import QMessageBox
+            self.logger.error(f"打开统计报告窗口失败: {e}", exc_info=True)
+            QMessageBox.warning(self, "错误", f"无法打开统计报告窗口: {e}")

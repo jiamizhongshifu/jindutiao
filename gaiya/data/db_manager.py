@@ -517,6 +517,53 @@ class DatabaseManager:
             "top_apps": top_apps
         }
 
+    def get_today_activity_records(self):
+        """获取今日所有活动记录(用于专注时长计算)
+
+        Returns:
+            List[Dict]: 活动记录列表,每条记录包含:
+                - app_name: 应用名称
+                - timestamp: 开始时间戳
+                - category: 应用分类
+                - duration: 持续时长(秒)
+        """
+        start_of_day = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        # 获取今日所有活动会话,按时间排序
+        cursor.execute('''
+            SELECT
+                a.process_name,
+                a.start_time,
+                a.category,
+                a.duration_seconds
+            FROM activity_sessions a
+            LEFT JOIN app_categories c ON a.process_name = c.process_name
+            WHERE a.start_time >= ?
+            AND (c.is_ignored IS NULL OR c.is_ignored = 0)
+            ORDER BY a.start_time ASC
+        ''', (start_of_day,))
+
+        records = []
+        for row in cursor.fetchall():
+            # 转换时间字符串为timestamp
+            start_time_str = row[1]
+            if isinstance(start_time_str, str):
+                start_time = datetime.fromisoformat(start_time_str).timestamp()
+            else:
+                start_time = start_time_str
+
+            records.append({
+                'app_name': row[0],
+                'timestamp': start_time,
+                'category': row[2] or 'UNKNOWN',
+                'duration': row[3] or 0
+            })
+
+        conn.close()
+        return records
+
     # --- Task Completion Methods ---
 
     def create_task_completion(self, date, time_block_id, task_data, inference_result):

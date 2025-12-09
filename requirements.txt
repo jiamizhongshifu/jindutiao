@@ -16,6 +16,10 @@ stripe>=7.0.0
 # Configuration Management
 python-dotenv>=1.0.0
 
+# Behavior Recognition Dependencies
+psutil>=5.9.0
+pywinauto>=0.6.8
+
 # Development Dependencies (for local testing)
 pytest>=7.4.0
 pytest-cov>=4.1.0

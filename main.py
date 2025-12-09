@@ -1782,12 +1782,15 @@ class TimeProgressBar(QWidget):
             # 导入统计GUI
             from statistics_gui import StatisticsWindow
 
-            # 创建统计窗口
+            # 创建统计窗口 (不设置parent,避免成为子窗口导致其他窗口关闭)
             self.statistics_window = StatisticsWindow(
                 self.statistics_manager,
                 self.logger,
-                parent=self  # 设置parent为self,以便访问task_completion_scheduler
+                parent=None  # 设置为None,使其成为独立的顶层窗口
             )
+
+            # 保存主窗口引用,以便访问task_completion_scheduler和open_config_gui
+            self.statistics_window.main_window = self
 
             # 连接关闭信号
             self.statistics_window.closed.connect(self.on_statistics_closed)

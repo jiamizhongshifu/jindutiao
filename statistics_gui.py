@@ -6,16 +6,28 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                                QTabWidget, QTableWidget, QTableWidgetItem,
                                QPushButton, QGroupBox, QScrollArea, QHeaderView,
-                               QMessageBox, QFileDialog, QProgressBar)
-from PySide6.QtCore import Qt, Signal, Q_ARG, Slot
+                               QMessageBox, QFileDialog, QProgressBar, QDialog,
+                               QSpinBox, QComboBox, QDialogButtonBox, QFormLayout,
+                               QGridLayout)
+from PySide6.QtCore import Qt, Signal, Q_ARG, Slot, QDateTime, QPropertyAnimation, QEasingCurve, QTimer
 from PySide6.QtGui import QColor, QFont, QPainter, QPen
+from PySide6.QtCharts import QChart, QChartView, QLineSeries, QValueAxis, QDateTimeAxis, QPieSeries, QPieSlice
 from statistics_manager import StatisticsManager
 from gaiya.core.theme_manager import ThemeManager
+from gaiya.ui.theme_light import LightTheme
+from gaiya.ui.style_manager import StyleManager
 from i18n.translator import tr
 from gaiya.data.db_manager import db
+from gaiya.core.insights_generator import InsightsGenerator
+from gaiya.core.goal_manager import GoalManager, Goal
+from gaiya.core.achievement_manager import AchievementManager, Achievement
+from gaiya.core.motivation_engine import MotivationEngine
 from pathlib import Path
 import logging
 import sys
+import json
+from datetime import date
+from version import VERSION_STRING
 
 
 class CircularProgressWidget(QWidget):
@@ -79,9 +91,9 @@ class StatCard(QWidget):
         # 设置背景颜色
         self.setStyleSheet(f"""
             StatCard {{
-                background-color: white;
-                border: 1px solid #E0E0E0;
-                border-radius: 8px;
+                background-color: {LightTheme.BG_PRIMARY};
+                border: 1px solid {LightTheme.BORDER_LIGHT};
+                border-radius: {LightTheme.RADIUS_LARGE}px;
             }}
         """)
 
@@ -93,7 +105,7 @@ class StatCard(QWidget):
             title_layout.addWidget(icon_label)
 
         title_label = QLabel(self.title)
-        title_label.setStyleSheet("font-size: 12px; color: #757575;")
+        title_label.setStyleSheet(f"font-size: {LightTheme.FONT_SMALL}px; color: {LightTheme.TEXT_HINT};")
         title_layout.addWidget(title_label)
         title_layout.addStretch()
 
@@ -120,6 +132,201 @@ class StatCard(QWidget):
                 break
 
 
+class AIGuideDialog(QWidget):
+    """AI推理功能引导对话框
+
+    首次使用统计报告时显示,介绍AI任务完成推理功能并引导用户配置。
+    参考 welcome_dialog.py 的设计风格,使用MacOS极简风格。
+    """
+
+    # Signal emitted when user clicks "立即配置" button
+    config_requested = Signal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setup_ui()
+
+    def setup_ui(self):
+        """设置UI界面"""
+        # 窗口基本设置
+        self.setWindowFlags(Qt.Window | Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+        self.setFixedSize(500, 520)
+
+        # 浅色主题背景和圆角
+        self.setStyleSheet(f"""
+            AIGuideDialog {{
+                background-color: {LightTheme.BG_PRIMARY};
+                border: 2px solid {LightTheme.BORDER_NORMAL};
+                border-radius: {LightTheme.RADIUS_XLARGE}px;
+            }}
+        """)
+
+        # 主布局
+        layout = QVBoxLayout(self)
+        layout.setSpacing(16)
+        layout.setContentsMargins(30, 30, 30, 30)
+
+        # 顶部图标和标题行
+        header_layout = QHBoxLayout()
+        header_layout.setSpacing(12)
+
+        # 图标
+        icon_label = QLabel("🤖")
+        icon_label.setStyleSheet(f"font-size: 40px;")
+        header_layout.addWidget(icon_label)
+
+        # 标题
+        title_label = QLabel("AI任务完成推理")
+        title_font = QFont()
+        title_font.setPointSize(LightTheme.FONT_TITLE)
+        title_font.setBold(True)
+        title_label.setFont(title_font)
+        title_label.setStyleSheet(f"color: {LightTheme.TEXT_PRIMARY};")
+        header_layout.addWidget(title_label)
+        header_layout.addStretch()
+
+        layout.addLayout(header_layout)
+
+        # 副标题
+        subtitle = QLabel("让AI帮你分析每日任务完成情况")
+        subtitle.setStyleSheet(f"""
+            font-size: {LightTheme.FONT_SUBTITLE}px;
+            color: {LightTheme.TEXT_SECONDARY};
+            padding: 0 0 8px 0;
+        """)
+        layout.addWidget(subtitle)
+
+        # 功能介绍卡片
+        features_card = QLabel(
+            "✨ <b>核心功能</b><br><br>"
+            "• <b>智能分析</b>: 根据活动日志自动推理任务完成情况<br>"
+            "• <b>活动追踪</b>: 实时记录应用使用情况<br>"
+            "• <b>精准匹配</b>: 将应用活动与任务时间段关联<br>"
+            "• <b>批量处理</b>: 一键推理全天所有任务"
+        )
+        features_card.setWordWrap(True)
+        features_card.setStyleSheet(f"""
+            QLabel {{
+                background-color: {LightTheme.BG_SECONDARY};
+                border-left: 4px solid {LightTheme.ACCENT_GREEN};
+                border-radius: {LightTheme.RADIUS_SMALL}px;
+                padding: 16px;
+                color: {LightTheme.TEXT_PRIMARY};
+                font-size: {LightTheme.FONT_BODY}px;
+                line-height: 1.6;
+            }}
+        """)
+        layout.addWidget(features_card)
+
+        # 使用说明
+        usage_info = QLabel(
+            "📋 <b>使用步骤</b><br><br>"
+            "1. 开启「活动追踪」功能<br>"
+            "2. 正常使用电脑工作<br>"
+            "3. 点击「手动生成推理」按钮<br>"
+            "4. 在弹出窗口中确认或修正完成度"
+        )
+        usage_info.setWordWrap(True)
+        usage_info.setStyleSheet(f"""
+            QLabel {{
+                background-color: rgba(33, 150, 243, 0.1);
+                border-left: 4px solid {LightTheme.ACCENT_BLUE};
+                border-radius: {LightTheme.RADIUS_SMALL}px;
+                padding: 16px;
+                color: {LightTheme.TEXT_PRIMARY};
+                font-size: {LightTheme.FONT_BODY}px;
+                line-height: 1.6;
+            }}
+        """)
+        layout.addWidget(usage_info)
+
+        # 提示信息
+        hint_label = QLabel(
+            "💡 提示: 如需配置应用分类规则,请前往「配置界面 → 行为识别」"
+        )
+        hint_label.setWordWrap(True)
+        hint_label.setStyleSheet(f"""
+            color: {LightTheme.TEXT_HINT};
+            font-size: {LightTheme.FONT_SMALL}px;
+            padding: 8px 0;
+        """)
+        layout.addWidget(hint_label)
+
+        layout.addStretch()
+
+        # 底部按钮区域
+        button_layout = QHBoxLayout()
+        button_layout.setSpacing(12)
+
+        # 稍后再说按钮
+        later_btn = QPushButton("稍后再说")
+        later_btn.setFixedHeight(40)
+        later_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {LightTheme.BG_SECONDARY};
+                color: {LightTheme.TEXT_PRIMARY};
+                border: 1px solid {LightTheme.BORDER_NORMAL};
+                border-radius: {LightTheme.RADIUS_MEDIUM}px;
+                font-size: {LightTheme.FONT_BODY}px;
+                font-weight: normal;
+                padding: 0 20px;
+            }}
+            QPushButton:hover {{
+                background-color: {LightTheme.BG_HOVER};
+                border-color: {LightTheme.BORDER_HOVER};
+            }}
+            QPushButton:pressed {{
+                background-color: {LightTheme.BG_PRESSED};
+            }}
+        """)
+        later_btn.clicked.connect(self.close)
+        button_layout.addWidget(later_btn)
+
+        # 立即配置按钮
+        config_btn = QPushButton("立即配置 →")
+        config_btn.setFixedHeight(40)
+        config_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {LightTheme.ACCENT_GREEN};
+                color: white;
+                border: none;
+                border-radius: {LightTheme.RADIUS_MEDIUM}px;
+                font-size: {LightTheme.FONT_BODY}px;
+                font-weight: bold;
+                padding: 0 20px;
+            }}
+            QPushButton:hover {{
+                background-color: {LightTheme.ACCENT_GREEN_HOVER};
+            }}
+            QPushButton:pressed {{
+                background-color: {LightTheme.ACCENT_GREEN_PRESSED};
+            }}
+        """)
+        config_btn.clicked.connect(self._on_config_clicked)
+        button_layout.addWidget(config_btn)
+
+        layout.addLayout(button_layout)
+
+    def _on_config_clicked(self):
+        """立即配置按钮点击处理"""
+        self.config_requested.emit()
+        self.close()
+
+    def showEvent(self, event):
+        """窗口显示时自动居中"""
+        super().showEvent(event)
+        self.center_on_screen()
+
+    def center_on_screen(self):
+        """将窗口移动到屏幕中央"""
+        from PySide6.QtGui import QGuiApplication
+        screen = QGuiApplication.primaryScreen().geometry()
+        window_rect = self.frameGeometry()
+        center_point = screen.center()
+        window_rect.moveCenter(center_point)
+        self.move(window_rect.topLeft())
+
+
 class StatisticsWindow(QWidget):
     """统计报告主窗口"""
 
@@ -130,16 +337,42 @@ class StatisticsWindow(QWidget):
         super().__init__(parent)
         self.stats_manager = stats_manager
         self.logger = logger
-        
-        # 初始化主题管理器
+
+        # 初始化洞察生成器
+        self.insights_generator = InsightsGenerator(stats_manager, logger)
+
+        # 初始化目标管理器和成就管理器
         if getattr(sys, 'frozen', False):
             app_dir = Path(sys.executable).parent
         else:
             app_dir = Path(__file__).parent
+        data_dir = app_dir / 'gaiya' / 'data'
+        self.goal_manager = GoalManager(data_dir, logger)
+        self.achievement_manager = AchievementManager(data_dir, logger)
+
+        # 初始化激励引擎 (自动更新目标和成就)
+        self.motivation_engine = MotivationEngine(
+            goal_manager=self.goal_manager,
+            achievement_manager=self.achievement_manager,
+            stats_manager=stats_manager,
+            logger=logger
+        )
+
+        # 设置激励引擎的回调
+        self.motivation_engine.on_goal_completed = self._on_goal_completed
+        self.motivation_engine.on_achievement_unlocked = self._on_achievement_unlocked
+
+        # 成就通知队列 (防止连续弹窗)
+        self.pending_achievements = []
+        self.achievement_notification_timer = QTimer(self)
+        self.achievement_notification_timer.timeout.connect(self._show_batched_achievements)
+        self.achievement_notification_timer.setSingleShot(True)
+
+        # 初始化主题管理器
         self.theme_manager = ThemeManager(app_dir)
         self.theme_manager.register_ui_component(self)
         self.theme_manager.theme_changed.connect(self.apply_theme)
-        
+
         self.init_ui()
         self.load_statistics()
 
@@ -149,12 +382,97 @@ class StatisticsWindow(QWidget):
         # 应用初始主题
         self.apply_theme()
 
+        # 首次使用时显示AI功能引导对话框
+        self._show_ai_guide_if_needed()
+
+        # 启动定时器: 每5分钟自动更新目标和成就
+        self.motivation_timer = QTimer(self)
+        self.motivation_timer.timeout.connect(self._update_motivation_system)
+        self.motivation_timer.start(300000)  # 5分钟 = 300000毫秒
+
+        # 首次启动时立即更新一次
+        QTimer.singleShot(2000, self._update_motivation_system)  # 延迟2秒执行
+
+    def _show_ai_guide_if_needed(self):
+        """首次使用时显示AI功能引导对话框"""
+        try:
+            # 从config.json读取配置
+            config_path = Path("config.json")
+            config = {}
+            if config_path.exists():
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    config = json.load(f)
+
+            # 检查是否已显示过引导对话框
+            ai_guide_shown = config.get('ai_guide_shown', False)
+
+            if not ai_guide_shown:
+                # 创建并显示引导对话框
+                guide_dialog = AIGuideDialog(self)
+
+                # 连接"立即配置"信号
+                guide_dialog.config_requested.connect(self._open_config_window)
+
+                # 显示对话框
+                guide_dialog.show()
+
+                # 标记为已显示,保存到配置
+                config['ai_guide_shown'] = True
+                with open(config_path, 'w', encoding='utf-8') as f:
+                    json.dump(config, f, ensure_ascii=False, indent=2)
+
+                self.logger.info("AI功能引导对话框已显示")
+        except Exception as e:
+            self.logger.warning(f"显示AI引导对话框失败: {e}")
+
+    def _open_config_window(self):
+        """打开配置窗口到行为识别页签"""
+        try:
+            # 获取主窗口引用 (在main.py的show_statistics中设置)
+            main_window = getattr(self, 'main_window', None)
+            if main_window is None:
+                # 如果没有main_window引用,尝试从parent获取
+                main_window = self.parent()
+
+            if main_window is None:
+                self.logger.warning("无法获取主窗口引用")
+                QMessageBox.warning(
+                    self,
+                    "提示",
+                    "无法打开配置窗口,请从主界面打开"
+                )
+                return
+
+            # 调用主窗口的open_config_gui方法,传递行为识别页签的索引(4)
+            if hasattr(main_window, 'open_config_gui'):
+                main_window.open_config_gui(initial_tab=4)
+                self.logger.info("已打开配置窗口到行为识别页签")
+            else:
+                self.logger.error("主窗口没有open_config_gui方法")
+                QMessageBox.warning(
+                    self,
+                    "错误",
+                    "无法打开配置窗口"
+                )
+        except Exception as e:
+            self.logger.error(f"打开配置窗口失败: {e}")
+            QMessageBox.warning(
+                self,
+                "错误",
+                f"无法打开配置窗口:\n{str(e)}"
+            )
+
     def init_ui(self):
         """初始化用户界面"""
         # 设置为独立的顶层窗口,而不是子窗口
         self.setWindowFlags(Qt.Window | Qt.WindowCloseButtonHint | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
-        self.setWindowTitle('📊 任务统计报告 - GaiYa每日进度条')
-        self.setGeometry(100, 100, 900, 700)
+        self.setWindowTitle(f'任务统计报告 - GaiYa每日进度条 {VERSION_STRING}')
+
+        # 设置窗口大小
+        self.resize(900, 700)
+
+        # 窗口居中显示 (避免出现在左上角)
+        self.center_window()
 
         # 主布局
         main_layout = QVBoxLayout(self)
@@ -162,19 +480,23 @@ class StatisticsWindow(QWidget):
 
         # 顶部标题栏
         title_layout = QHBoxLayout()
-        title_label = QLabel(tr("statistics.window_title"))
+        title_label = QLabel("任务统计报告")
         self.title_label = title_label  # 保存引用以便主题更新
-        title_label.setStyleSheet("font-size: 20px; font-weight: bold; color: #2196F3;")
+        title_label.setStyleSheet(f"font-size: {LightTheme.FONT_TITLE}px; font-weight: bold; color: {LightTheme.TEXT_PRIMARY};")
         title_layout.addWidget(title_label)
         title_layout.addStretch()
 
         # 刷新按钮
         refresh_button = QPushButton(tr("statistics.btn_refresh"))
+        refresh_button.setFixedHeight(36)
+        refresh_button.setStyleSheet(StyleManager.button_minimal())
         refresh_button.clicked.connect(self.load_statistics)
         title_layout.addWidget(refresh_button)
 
         # 导出按钮
         export_button = QPushButton(tr("statistics.btn_export_csv"))
+        export_button.setFixedHeight(36)
+        export_button.setStyleSheet(StyleManager.button_primary())
         export_button.clicked.connect(self.export_statistics)
         title_layout.addWidget(export_button)
 
@@ -189,8 +511,65 @@ class StatisticsWindow(QWidget):
         self.create_weekly_tab()
         self.create_monthly_tab()
         self.create_tasks_tab()
+        self.create_goals_tab()  # 添加目标管理页签
+        self.create_achievements_tab()  # 添加成就展示页签
 
         main_layout.addWidget(self.tab_widget)
+
+    def create_behavior_shortcut(self):
+        """创建行为摘要快捷跳转卡片"""
+        shortcut_card = QWidget()
+        shortcut_card.setStyleSheet(f"""
+            QWidget {{
+                background-color: {LightTheme.BG_TERTIARY};
+                border: none;
+                border-radius: {LightTheme.RADIUS_LARGE}px;
+                padding: 16px;
+            }}
+            QWidget:hover {{
+                background-color: {LightTheme.BG_HOVER};
+            }}
+        """)
+
+        layout = QVBoxLayout(shortcut_card)
+
+        # 图标 + 标题
+        title_layout = QHBoxLayout()
+        icon_label = QLabel("⚡")
+        icon_label.setStyleSheet("font-size: 32px;")
+        title_layout.addWidget(icon_label)
+
+        title_label = QLabel("行为识别摘要")
+        title_label.setStyleSheet(f"font-size: 16px; font-weight: bold; color: {LightTheme.TEXT_PRIMARY};")
+        title_layout.addWidget(title_label, 1)
+
+        arrow_label = QLabel("→")
+        arrow_label.setStyleSheet(f"font-size: 20px; color: {LightTheme.TEXT_HINT};")
+        title_layout.addWidget(arrow_label)
+
+        layout.addLayout(title_layout)
+
+        # 描述文字
+        desc_label = QLabel("查看完整的应用使用情况、行为分类分析和Top应用排行")
+        desc_label.setStyleSheet(f"color: {LightTheme.TEXT_SECONDARY}; font-size: {LightTheme.FONT_BODY}px;")
+        desc_label.setWordWrap(True)
+        layout.addWidget(desc_label)
+
+        # 点击跳转
+        shortcut_card.mousePressEvent = lambda e: self.open_time_review_window()
+        shortcut_card.setCursor(Qt.CursorShape.PointingHandCursor)
+
+        return shortcut_card
+
+    def open_time_review_window(self):
+        """打开今日回放窗口"""
+        try:
+            from gaiya.ui.time_review_window import TimeReviewWindow
+            self.time_review_window = TimeReviewWindow()
+            self.time_review_window.show()
+        except Exception as e:
+            logging.error(f"打开今日回放窗口失败: {e}")
+            QMessageBox.warning(self, "错误", f"无法打开今日回放窗口: {str(e)}")
 
     def create_today_tab(self):
         """创建今日统计标签页"""
@@ -205,43 +584,22 @@ class StatisticsWindow(QWidget):
 
         content_widget = QWidget()
         content_layout = QVBoxLayout(content_widget)
+        content_layout.setSpacing(15)  # 设置组件之间的间距
+        content_layout.setContentsMargins(15, 15, 15, 15)  # 设置内容边距
 
-        # 行为识别摘要
-        behavior_group = QGroupBox("⚡ 今日行为摘要")
-        behavior_layout = QVBoxLayout(behavior_group)
+        # 添加顶部提示信息
+        hint_label = QLabel("💡 快速查看今日数据请使用「今日时间回放」,此页面提供详细分析与多维度统计")
+        hint_label.setStyleSheet(StyleManager.label_hint())
+        hint_label.setWordWrap(True)
+        content_layout.addWidget(hint_label)
 
-        self.behavior_summary_label = QLabel("行为识别未启用或暂无数据")
-        self.behavior_summary_label.setStyleSheet("font-weight: bold; color: #2c3e50;")
-        behavior_layout.addWidget(self.behavior_summary_label)
-
-        self.behavior_ratio_bar = QProgressBar()
-        self.behavior_ratio_bar.setRange(0, 100)
-        self.behavior_ratio_bar.setValue(0)
-        self.behavior_ratio_bar.setFormat("🎯 生产力 0%")
-        self.behavior_ratio_bar.setStyleSheet("""
-            QProgressBar {
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-                text-align: center;
-            }
-            QProgressBar::chunk {
-                background-color: #4CAF50;
-                border-radius: 3px;
-            }
-        """)
-        behavior_layout.addWidget(self.behavior_ratio_bar)
-
-        self.behavior_ratio_detail_label = QLabel("🎯 生产力 0% | 🎮 摸鱼 0% | ⚙️ 中性 0% | ❓ 未分类 0%")
-        self.behavior_ratio_detail_label.setStyleSheet("color: #6c757d;")
-        behavior_layout.addWidget(self.behavior_ratio_detail_label)
-
-        self.behavior_top_label = QLabel("🏆 Top 应用：暂无数据")
-        behavior_layout.addWidget(self.behavior_top_label)
-
-        content_layout.addWidget(behavior_group)
+        # 行为摘要快捷跳转卡片 (移除重复模块,统一跳转到今日回放)
+        shortcut_card = self.create_behavior_shortcut()
+        content_layout.addWidget(shortcut_card)
 
         # AI推理数据摘要区域 (作为主要展示区域)
         ai_summary_group = QGroupBox("🤖 AI推理数据摘要")
+        ai_summary_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
         ai_summary_layout = QVBoxLayout(ai_summary_group)
 
         # 第一行: 推理统计卡片 + 任务统计卡片 (紧凑布局)
@@ -254,13 +612,13 @@ class StatisticsWindow(QWidget):
         ai_main_layout = QHBoxLayout()
 
         self.ai_inferred_label = QLabel("已推理: 0 个")
-        self.ai_inferred_label.setStyleSheet("font-size: 16px; color: #2196F3; font-weight: bold;")
+        self.ai_inferred_label.setStyleSheet(f"font-size: 16px; color: {LightTheme.ACCENT_BLUE}; font-weight: bold;")
         ai_main_layout.addWidget(self.ai_inferred_label)
 
         ai_main_layout.addSpacing(30)
 
         self.ai_avg_completion_label = QLabel("平均完成度: 0%")
-        self.ai_avg_completion_label.setStyleSheet("font-size: 16px; color: #4CAF50; font-weight: bold;")
+        self.ai_avg_completion_label.setStyleSheet(f"font-size: 16px; color: {LightTheme.ACCENT_GREEN}; font-weight: bold;")
         ai_main_layout.addWidget(self.ai_avg_completion_label)
 
         ai_main_layout.addStretch()
@@ -270,13 +628,13 @@ class StatisticsWindow(QWidget):
         ai_sub_layout = QHBoxLayout()
 
         self.ai_high_confidence_label = QLabel("高置信度: 0 个")
-        self.ai_high_confidence_label.setStyleSheet("font-size: 13px; color: #FF9800;")
+        self.ai_high_confidence_label.setStyleSheet(f"font-size: {LightTheme.FONT_BODY}px; color: {LightTheme.ACCENT_ORANGE};")
         ai_sub_layout.addWidget(self.ai_high_confidence_label)
 
         ai_sub_layout.addSpacing(20)
 
         self.ai_unconfirmed_label = QLabel("待确认: 0 个")
-        self.ai_unconfirmed_label.setStyleSheet("font-size: 13px; color: #F44336;")
+        self.ai_unconfirmed_label.setStyleSheet(f"font-size: {LightTheme.FONT_BODY}px; color: {LightTheme.ACCENT_RED};")
         ai_sub_layout.addWidget(self.ai_unconfirmed_label)
 
         ai_sub_layout.addStretch()
@@ -293,14 +651,20 @@ class StatisticsWindow(QWidget):
         total_card_layout.setContentsMargins(10, 5, 10, 5)
         total_card_layout.setSpacing(2)
         self.total_tasks_label = QLabel("0")
-        self.total_tasks_label.setStyleSheet("font-size: 20px; font-weight: bold; color: #2196F3;")
+        self.total_tasks_label.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {LightTheme.ACCENT_BLUE};")
         self.total_tasks_label.setAlignment(Qt.AlignCenter)
         total_card_layout.addWidget(self.total_tasks_label)
         total_card_name = QLabel("📝 总任务")
-        total_card_name.setStyleSheet("font-size: 11px; color: #757575;")
+        total_card_name.setStyleSheet(f"font-size: {LightTheme.FONT_SMALL}px; color: {LightTheme.TEXT_HINT};")
         total_card_name.setAlignment(Qt.AlignCenter)
         total_card_layout.addWidget(total_card_name)
-        total_card.setStyleSheet("background-color: #E3F2FD; border-radius: 5px;")
+        total_card.setStyleSheet(f"""
+            QWidget {{
+                background-color: {LightTheme.BG_TERTIARY};
+                border: none;
+                border-radius: {LightTheme.RADIUS_LARGE}px;
+            }}
+        """)
         task_stats_layout.addWidget(total_card)
 
         # 已完成卡片
@@ -309,14 +673,20 @@ class StatisticsWindow(QWidget):
         completed_card_layout.setContentsMargins(10, 5, 10, 5)
         completed_card_layout.setSpacing(2)
         self.completed_tasks_label = QLabel("0")
-        self.completed_tasks_label.setStyleSheet("font-size: 20px; font-weight: bold; color: #4CAF50;")
+        self.completed_tasks_label.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {LightTheme.ACCENT_GREEN};")
         self.completed_tasks_label.setAlignment(Qt.AlignCenter)
         completed_card_layout.addWidget(self.completed_tasks_label)
         completed_card_name = QLabel("✅ 已完成")
-        completed_card_name.setStyleSheet("font-size: 11px; color: #757575;")
+        completed_card_name.setStyleSheet(f"font-size: {LightTheme.FONT_SMALL}px; color: {LightTheme.TEXT_HINT};")
         completed_card_name.setAlignment(Qt.AlignCenter)
         completed_card_layout.addWidget(completed_card_name)
-        completed_card.setStyleSheet("background-color: #E8F5E9; border-radius: 5px;")
+        completed_card.setStyleSheet(f"""
+            QWidget {{
+                background-color: {LightTheme.BG_TERTIARY};
+                border: none;
+                border-radius: {LightTheme.RADIUS_LARGE}px;
+            }}
+        """)
         task_stats_layout.addWidget(completed_card)
 
         # 进行中卡片
@@ -325,14 +695,20 @@ class StatisticsWindow(QWidget):
         in_progress_card_layout.setContentsMargins(10, 5, 10, 5)
         in_progress_card_layout.setSpacing(2)
         self.in_progress_tasks_label = QLabel("0")
-        self.in_progress_tasks_label.setStyleSheet("font-size: 20px; font-weight: bold; color: #FF9800;")
+        self.in_progress_tasks_label.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {LightTheme.ACCENT_ORANGE};")
         self.in_progress_tasks_label.setAlignment(Qt.AlignCenter)
         in_progress_card_layout.addWidget(self.in_progress_tasks_label)
         in_progress_card_name = QLabel("⏳ 进行中")
-        in_progress_card_name.setStyleSheet("font-size: 11px; color: #757575;")
+        in_progress_card_name.setStyleSheet(f"font-size: {LightTheme.FONT_SMALL}px; color: {LightTheme.TEXT_HINT};")
         in_progress_card_name.setAlignment(Qt.AlignCenter)
         in_progress_card_layout.addWidget(in_progress_card_name)
-        in_progress_card.setStyleSheet("background-color: #FFF3E0; border-radius: 5px;")
+        in_progress_card.setStyleSheet(f"""
+            QWidget {{
+                background-color: {LightTheme.BG_TERTIARY};
+                border: none;
+                border-radius: {LightTheme.RADIUS_LARGE}px;
+            }}
+        """)
         task_stats_layout.addWidget(in_progress_card)
 
         # 未开始卡片
@@ -341,14 +717,20 @@ class StatisticsWindow(QWidget):
         not_started_card_layout.setContentsMargins(10, 5, 10, 5)
         not_started_card_layout.setSpacing(2)
         self.not_started_tasks_label = QLabel("0")
-        self.not_started_tasks_label.setStyleSheet("font-size: 20px; font-weight: bold; color: #F44336;")
+        self.not_started_tasks_label.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {LightTheme.ACCENT_RED};")
         self.not_started_tasks_label.setAlignment(Qt.AlignCenter)
         not_started_card_layout.addWidget(self.not_started_tasks_label)
         not_started_card_name = QLabel("⏰ 未开始")
-        not_started_card_name.setStyleSheet("font-size: 11px; color: #757575;")
+        not_started_card_name.setStyleSheet(f"font-size: {LightTheme.FONT_SMALL}px; color: {LightTheme.TEXT_HINT};")
         not_started_card_name.setAlignment(Qt.AlignCenter)
         not_started_card_layout.addWidget(not_started_card_name)
-        not_started_card.setStyleSheet("background-color: #FFEBEE; border-radius: 5px;")
+        not_started_card.setStyleSheet(f"""
+            QWidget {{
+                background-color: {LightTheme.BG_TERTIARY};
+                border: none;
+                border-radius: {LightTheme.RADIUS_LARGE}px;
+            }}
+        """)
         task_stats_layout.addWidget(not_started_card)
 
         row1_layout.addLayout(task_stats_layout, 2)
@@ -358,31 +740,15 @@ class StatisticsWindow(QWidget):
         row2_layout = QHBoxLayout()
 
         self.ai_accuracy_hint_label = QLabel("💡 提示: 持续确认任务完成度,可以提高AI推理的准确度")
-        self.ai_accuracy_hint_label.setStyleSheet("font-size: 12px; color: #757575;")
+        self.ai_accuracy_hint_label.setStyleSheet(f"font-size: {LightTheme.FONT_SMALL}px; color: {LightTheme.TEXT_HINT};")
         row2_layout.addWidget(self.ai_accuracy_hint_label)
 
         row2_layout.addStretch()
 
         # 手动触发推理按钮
         self.trigger_inference_button = QPushButton("🔄 手动生成推理")
-        self.trigger_inference_button.setStyleSheet("""
-            QPushButton {
-                background-color: #2196F3;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-                font-size: 13px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #1976D2;
-            }
-            QPushButton:disabled {
-                background-color: #BDBDBD;
-                color: #757575;
-            }
-        """)
+        self.trigger_inference_button.setFixedHeight(36)
+        self.trigger_inference_button.setStyleSheet(StyleManager.button_minimal())
         self.trigger_inference_button.clicked.connect(self.trigger_manual_inference)
         row2_layout.addWidget(self.trigger_inference_button)
 
@@ -392,6 +758,7 @@ class StatisticsWindow(QWidget):
 
         # 操作按钮区域 (移除了任务详情表格,直接提供操作按钮)
         action_group = QGroupBox("📋 操作")
+        action_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
         action_layout = QVBoxLayout(action_group)
         action_layout.setContentsMargins(20, 15, 20, 15)
 
@@ -400,7 +767,7 @@ class StatisticsWindow(QWidget):
             "💡 点击下方按钮查看和确认今日任务完成度\n"
             "   批量确认窗口会显示所有任务的详细信息"
         )
-        hint_label.setStyleSheet("color: #757575; font-size: 13px; padding: 10px;")
+        hint_label.setStyleSheet(StyleManager.label_hint())
         hint_label.setWordWrap(True)
         action_layout.addWidget(hint_label)
 
@@ -409,49 +776,17 @@ class StatisticsWindow(QWidget):
         button_layout.addStretch()
 
         self.confirm_button = QPushButton("✅ 确认/修正任务完成度")
-        self.confirm_button.setStyleSheet("""
-            QPushButton {
-                background-color: #4CAF50;
-                color: white;
-                border: none;
-                padding: 15px 30px;
-                border-radius: 8px;
-                font-size: 15px;
-                font-weight: bold;
-                min-width: 200px;
-            }
-            QPushButton:hover {
-                background-color: #45a049;
-            }
-            QPushButton:disabled {
-                background-color: #cccccc;
-            }
-        """)
+        self.confirm_button.setFixedHeight(36)
+        self.confirm_button.setStyleSheet(StyleManager.button_primary())
         self.confirm_button.clicked.connect(self.open_task_review_window)
         button_layout.addWidget(self.confirm_button)
 
         button_layout.addSpacing(20)
 
-        # AI深度分析按钮
+        # AI深度分析按钮 - 使用极简按钮样式
         self.ai_analysis_button = QPushButton("🤖 AI深度分析")
-        self.ai_analysis_button.setStyleSheet("""
-            QPushButton {
-                background-color: #9C27B0;
-                color: white;
-                border: none;
-                padding: 15px 30px;
-                border-radius: 8px;
-                font-size: 15px;
-                font-weight: bold;
-                min-width: 200px;
-            }
-            QPushButton:hover {
-                background-color: #7B1FA2;
-            }
-            QPushButton:disabled {
-                background-color: #cccccc;
-            }
-        """)
+        self.ai_analysis_button.setFixedHeight(36)
+        self.ai_analysis_button.setStyleSheet(StyleManager.button_minimal())
         self.ai_analysis_button.clicked.connect(self.trigger_ai_analysis)
         button_layout.addWidget(self.ai_analysis_button)
 
@@ -480,9 +815,12 @@ class StatisticsWindow(QWidget):
 
         content_widget = QWidget()
         content_layout = QVBoxLayout(content_widget)
+        content_layout.setSpacing(15)  # 设置组件之间的间距
+        content_layout.setContentsMargins(15, 15, 15, 15)  # 设置内容边距
 
         # 本周统计摘要 (卡片式设计)
         weekly_summary_group = QGroupBox("📊 本周统计摘要")
+        weekly_summary_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
         weekly_summary_layout = QVBoxLayout(weekly_summary_group)
 
         # 统计卡片布局
@@ -494,14 +832,20 @@ class StatisticsWindow(QWidget):
         total_card_layout.setContentsMargins(10, 10, 10, 10)
         total_card_layout.setSpacing(5)
         self.weekly_total_label = QLabel("0")
-        self.weekly_total_label.setStyleSheet("font-size: 24px; font-weight: bold; color: #2196F3;")
+        self.weekly_total_label.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {LightTheme.ACCENT_BLUE};")
         self.weekly_total_label.setAlignment(Qt.AlignCenter)
         total_card_layout.addWidget(self.weekly_total_label)
         total_card_name = QLabel("📝 总任务")
-        total_card_name.setStyleSheet("font-size: 12px; color: #757575;")
+        total_card_name.setStyleSheet(f"font-size: {LightTheme.FONT_SMALL}px; color: {LightTheme.TEXT_HINT};")
         total_card_name.setAlignment(Qt.AlignCenter)
         total_card_layout.addWidget(total_card_name)
-        total_card.setStyleSheet("background-color: #E3F2FD; border-radius: 8px;")
+        total_card.setStyleSheet(f"""
+            QWidget {{
+                background-color: {LightTheme.BG_TERTIARY};
+                border: none;
+                border-radius: {LightTheme.RADIUS_LARGE}px;
+            }}
+        """)
         cards_layout.addWidget(total_card)
 
         # 已完成卡片
@@ -510,14 +854,20 @@ class StatisticsWindow(QWidget):
         completed_card_layout.setContentsMargins(10, 10, 10, 10)
         completed_card_layout.setSpacing(5)
         self.weekly_completed_label = QLabel("0")
-        self.weekly_completed_label.setStyleSheet("font-size: 24px; font-weight: bold; color: #4CAF50;")
+        self.weekly_completed_label.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {LightTheme.ACCENT_GREEN};")
         self.weekly_completed_label.setAlignment(Qt.AlignCenter)
         completed_card_layout.addWidget(self.weekly_completed_label)
         completed_card_name = QLabel("✅ 已完成")
-        completed_card_name.setStyleSheet("font-size: 12px; color: #757575;")
+        completed_card_name.setStyleSheet(f"font-size: {LightTheme.FONT_SMALL}px; color: {LightTheme.TEXT_HINT};")
         completed_card_name.setAlignment(Qt.AlignCenter)
         completed_card_layout.addWidget(completed_card_name)
-        completed_card.setStyleSheet("background-color: #E8F5E9; border-radius: 8px;")
+        completed_card.setStyleSheet(f"""
+            QWidget {{
+                background-color: {LightTheme.BG_TERTIARY};
+                border: none;
+                border-radius: {LightTheme.RADIUS_LARGE}px;
+            }}
+        """)
         cards_layout.addWidget(completed_card)
 
         # 平均完成率卡片
@@ -526,14 +876,20 @@ class StatisticsWindow(QWidget):
         avg_card_layout.setContentsMargins(10, 10, 10, 10)
         avg_card_layout.setSpacing(5)
         self.weekly_avg_label = QLabel("0%")
-        self.weekly_avg_label.setStyleSheet("font-size: 24px; font-weight: bold; color: #FF9800;")
+        self.weekly_avg_label.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {LightTheme.ACCENT_ORANGE};")
         self.weekly_avg_label.setAlignment(Qt.AlignCenter)
         avg_card_layout.addWidget(self.weekly_avg_label)
         avg_card_name = QLabel("📈 平均完成率")
-        avg_card_name.setStyleSheet("font-size: 12px; color: #757575;")
+        avg_card_name.setStyleSheet(f"font-size: {LightTheme.FONT_SMALL}px; color: {LightTheme.TEXT_HINT};")
         avg_card_name.setAlignment(Qt.AlignCenter)
         avg_card_layout.addWidget(avg_card_name)
-        avg_card.setStyleSheet("background-color: #FFF3E0; border-radius: 8px;")
+        avg_card.setStyleSheet(f"""
+            QWidget {{
+                background-color: {LightTheme.BG_TERTIARY};
+                border: none;
+                border-radius: {LightTheme.RADIUS_LARGE}px;
+            }}
+        """)
         cards_layout.addWidget(avg_card)
 
         # 总时长卡片
@@ -542,21 +898,64 @@ class StatisticsWindow(QWidget):
         hours_card_layout.setContentsMargins(10, 10, 10, 10)
         hours_card_layout.setSpacing(5)
         self.weekly_hours_label = QLabel("0h")
-        self.weekly_hours_label.setStyleSheet("font-size: 24px; font-weight: bold; color: #9C27B0;")
+        self.weekly_hours_label.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {LightTheme.ACCENT_BLUE};")
         self.weekly_hours_label.setAlignment(Qt.AlignCenter)
         hours_card_layout.addWidget(self.weekly_hours_label)
         hours_card_name = QLabel("⏱️ 总时长")
-        hours_card_name.setStyleSheet("font-size: 12px; color: #757575;")
+        hours_card_name.setStyleSheet(f"font-size: {LightTheme.FONT_SMALL}px; color: {LightTheme.TEXT_HINT};")
         hours_card_name.setAlignment(Qt.AlignCenter)
         hours_card_layout.addWidget(hours_card_name)
-        hours_card.setStyleSheet("background-color: #F3E5F5; border-radius: 8px;")
+        hours_card.setStyleSheet(f"""
+            QWidget {{
+                background-color: {LightTheme.BG_TERTIARY};
+                border: none;
+                border-radius: {LightTheme.RADIUS_LARGE}px;
+            }}
+        """)
         cards_layout.addWidget(hours_card)
 
         weekly_summary_layout.addLayout(cards_layout)
         content_layout.addWidget(weekly_summary_group)
 
+        # 任务完成率趋势图
+        chart_group = QGroupBox("📈 完成率趋势")
+        chart_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
+        chart_layout = QVBoxLayout(chart_group)
+        chart_layout.setContentsMargins(10, 10, 10, 10)
+
+        # 创建并添加折线图
+        trend_chart = self.create_completion_trend_chart()
+        chart_layout.addWidget(trend_chart)
+
+        content_layout.addWidget(chart_group)
+
+        # 任务分类饼图
+        pie_chart_group = QGroupBox("📊 任务分类分布")
+        pie_chart_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
+        pie_chart_layout = QVBoxLayout(pie_chart_group)
+        pie_chart_layout.setContentsMargins(10, 10, 10, 10)
+
+        # 创建并添加饼图
+        category_pie_chart = self.create_category_pie_chart()
+        pie_chart_layout.addWidget(category_pie_chart)
+
+        content_layout.addWidget(pie_chart_group)
+
+        # 智能洞察报告 (Sprint 3 - Task 3.2)
+        insights_group = QGroupBox("💡 本周智能洞察")
+        insights_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
+        insights_layout = QVBoxLayout(insights_group)
+        insights_layout.setContentsMargins(10, 10, 10, 10)
+
+        # 创建并添加洞察报告
+        insights_widget = self.create_insights_widget()
+        insights_layout.addWidget(insights_widget)
+
+        content_layout.addWidget(insights_group)
+
         # 每日趋势表格
         trend_group = QGroupBox(tr("statistics.table.daily_completion"))
+        trend_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
         trend_layout = QVBoxLayout(trend_group)
 
         self.weekly_table = QTableWidget()
@@ -595,9 +994,12 @@ class StatisticsWindow(QWidget):
 
         content_widget = QWidget()
         content_layout = QVBoxLayout(content_widget)
+        content_layout.setSpacing(15)  # 设置组件之间的间距
+        content_layout.setContentsMargins(15, 15, 15, 15)  # 设置内容边距
 
         # 本月统计摘要 (卡片式设计)
         monthly_summary_group = QGroupBox("📊 本月统计摘要")
+        monthly_summary_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
         monthly_summary_layout = QVBoxLayout(monthly_summary_group)
 
         # 统计卡片布局
@@ -609,14 +1011,20 @@ class StatisticsWindow(QWidget):
         total_card_layout.setContentsMargins(10, 10, 10, 10)
         total_card_layout.setSpacing(5)
         self.monthly_total_label = QLabel("0")
-        self.monthly_total_label.setStyleSheet("font-size: 24px; font-weight: bold; color: #2196F3;")
+        self.monthly_total_label.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {LightTheme.ACCENT_BLUE};")
         self.monthly_total_label.setAlignment(Qt.AlignCenter)
         total_card_layout.addWidget(self.monthly_total_label)
         total_card_name = QLabel("📝 总任务")
-        total_card_name.setStyleSheet("font-size: 12px; color: #757575;")
+        total_card_name.setStyleSheet(f"font-size: {LightTheme.FONT_SMALL}px; color: {LightTheme.TEXT_HINT};")
         total_card_name.setAlignment(Qt.AlignCenter)
         total_card_layout.addWidget(total_card_name)
-        total_card.setStyleSheet("background-color: #E3F2FD; border-radius: 8px;")
+        total_card.setStyleSheet(f"""
+            QWidget {{
+                background-color: {LightTheme.BG_TERTIARY};
+                border: none;
+                border-radius: {LightTheme.RADIUS_LARGE}px;
+            }}
+        """)
         cards_layout.addWidget(total_card)
 
         # 已完成卡片
@@ -625,14 +1033,20 @@ class StatisticsWindow(QWidget):
         completed_card_layout.setContentsMargins(10, 10, 10, 10)
         completed_card_layout.setSpacing(5)
         self.monthly_completed_label = QLabel("0")
-        self.monthly_completed_label.setStyleSheet("font-size: 24px; font-weight: bold; color: #4CAF50;")
+        self.monthly_completed_label.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {LightTheme.ACCENT_GREEN};")
         self.monthly_completed_label.setAlignment(Qt.AlignCenter)
         completed_card_layout.addWidget(self.monthly_completed_label)
         completed_card_name = QLabel("✅ 已完成")
-        completed_card_name.setStyleSheet("font-size: 12px; color: #757575;")
+        completed_card_name.setStyleSheet(f"font-size: {LightTheme.FONT_SMALL}px; color: {LightTheme.TEXT_HINT};")
         completed_card_name.setAlignment(Qt.AlignCenter)
         completed_card_layout.addWidget(completed_card_name)
-        completed_card.setStyleSheet("background-color: #E8F5E9; border-radius: 8px;")
+        completed_card.setStyleSheet(f"""
+            QWidget {{
+                background-color: {LightTheme.BG_TERTIARY};
+                border: none;
+                border-radius: {LightTheme.RADIUS_LARGE}px;
+            }}
+        """)
         cards_layout.addWidget(completed_card)
 
         # 平均完成率卡片
@@ -641,14 +1055,20 @@ class StatisticsWindow(QWidget):
         avg_card_layout.setContentsMargins(10, 10, 10, 10)
         avg_card_layout.setSpacing(5)
         self.monthly_avg_label = QLabel("0%")
-        self.monthly_avg_label.setStyleSheet("font-size: 24px; font-weight: bold; color: #FF9800;")
+        self.monthly_avg_label.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {LightTheme.ACCENT_ORANGE};")
         self.monthly_avg_label.setAlignment(Qt.AlignCenter)
         avg_card_layout.addWidget(self.monthly_avg_label)
         avg_card_name = QLabel("📈 平均完成率")
-        avg_card_name.setStyleSheet("font-size: 12px; color: #757575;")
+        avg_card_name.setStyleSheet(f"font-size: {LightTheme.FONT_SMALL}px; color: {LightTheme.TEXT_HINT};")
         avg_card_name.setAlignment(Qt.AlignCenter)
         avg_card_layout.addWidget(avg_card_name)
-        avg_card.setStyleSheet("background-color: #FFF3E0; border-radius: 8px;")
+        avg_card.setStyleSheet(f"""
+            QWidget {{
+                background-color: {LightTheme.BG_TERTIARY};
+                border: none;
+                border-radius: {LightTheme.RADIUS_LARGE}px;
+            }}
+        """)
         cards_layout.addWidget(avg_card)
 
         # 总时长卡片
@@ -657,14 +1077,20 @@ class StatisticsWindow(QWidget):
         hours_card_layout.setContentsMargins(10, 10, 10, 10)
         hours_card_layout.setSpacing(5)
         self.monthly_hours_label = QLabel("0h")
-        self.monthly_hours_label.setStyleSheet("font-size: 24px; font-weight: bold; color: #9C27B0;")
+        self.monthly_hours_label.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {LightTheme.ACCENT_BLUE};")
         self.monthly_hours_label.setAlignment(Qt.AlignCenter)
         hours_card_layout.addWidget(self.monthly_hours_label)
         hours_card_name = QLabel("⏱️ 总时长")
-        hours_card_name.setStyleSheet("font-size: 12px; color: #757575;")
+        hours_card_name.setStyleSheet(f"font-size: {LightTheme.FONT_SMALL}px; color: {LightTheme.TEXT_HINT};")
         hours_card_name.setAlignment(Qt.AlignCenter)
         hours_card_layout.addWidget(hours_card_name)
-        hours_card.setStyleSheet("background-color: #F3E5F5; border-radius: 8px;")
+        hours_card.setStyleSheet(f"""
+            QWidget {{
+                background-color: {LightTheme.BG_TERTIARY};
+                border: none;
+                border-radius: {LightTheme.RADIUS_LARGE}px;
+            }}
+        """)
         cards_layout.addWidget(hours_card)
 
         monthly_summary_layout.addLayout(cards_layout)
@@ -672,6 +1098,7 @@ class StatisticsWindow(QWidget):
 
         # 每日统计表格
         daily_group = QGroupBox(tr("statistics.table.daily_stats"))
+        daily_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
         daily_layout = QVBoxLayout(daily_group)
 
         self.monthly_table = QTableWidget()
@@ -701,10 +1128,11 @@ class StatisticsWindow(QWidget):
         tab = QWidget()
         layout = QVBoxLayout(tab)
         layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(15)  # 设置组件之间的间距
 
         # 标题
         title_label = QLabel(tr("statistics.tab.category_history"))
-        title_label.setStyleSheet("font-size: 16px; font-weight: bold; margin-bottom: 10px;")
+        title_label.setStyleSheet("font-size: 16px; font-weight: bold; margin-bottom: 5px;")
         layout.addWidget(title_label)
 
         # 任务统计表格
@@ -760,10 +1188,7 @@ class StatisticsWindow(QWidget):
         self.update_ai_summary(summary)
 
         # 任务详情表格已移除,用户通过"确认/修正任务完成度"按钮查看详情
-
-        # 更新行为摘要
-        activity_stats = db.get_today_activity_stats() or {}
-        self.update_behavior_summary(activity_stats)
+        # 行为摘要已移除,统一在今日回放窗口中查看
 
     def update_ai_summary(self, summary: dict):
         """更新AI推理数据摘要
@@ -796,12 +1221,13 @@ class StatisticsWindow(QWidget):
             # 如果有待确认任务,高亮显示
             if unconfirmed_count > 0:
                 self.ai_unconfirmed_label.setStyleSheet(
-                    "font-size: 14px; color: #F44336; font-weight: bold; "
-                    "background-color: #FFEBEE; padding: 5px; border-radius: 3px;"
+                    f"font-size: {LightTheme.FONT_SUBTITLE}px; color: {LightTheme.ACCENT_RED}; font-weight: bold; "
+                    f"background-color: {LightTheme.with_opacity(LightTheme.ACCENT_RED, 0.1)}; "
+                    f"padding: 5px; border-radius: {LightTheme.RADIUS_SMALL}px;"
                 )
             else:
                 self.ai_unconfirmed_label.setStyleSheet(
-                    "font-size: 14px; color: #4CAF50; font-weight: bold;"
+                    f"font-size: {LightTheme.FONT_SUBTITLE}px; color: {LightTheme.ACCENT_GREEN}; font-weight: bold;"
                 )
 
             # 更新提示文字
@@ -824,56 +1250,8 @@ class StatisticsWindow(QWidget):
                 "💡 提示: 每晚21:00自动生成推理,或点击下方按钮手动触发"
             )
 
-    def update_behavior_summary(self, activity_stats: dict):
-        """刷新行为识别摘要"""
-        total_seconds = activity_stats.get('total_seconds', 0) or 0
-        categories = activity_stats.get('categories', {}) or {}
-
-        productive_seconds = categories.get('PRODUCTIVE', 0) or 0
-        leisure_seconds = categories.get('LEISURE', 0) or 0
-        neutral_seconds = categories.get('NEUTRAL', 0) or 0
-        unknown_seconds = categories.get('UNKNOWN', 0) or 0
-
-        if total_seconds > 0:
-            self.behavior_summary_label.setText(f"今日活跃用机：{self._format_duration(total_seconds)}")
-            productive_pct = (productive_seconds / total_seconds) * 100
-            leisure_pct = (leisure_seconds / total_seconds) * 100
-            neutral_pct = (neutral_seconds / total_seconds) * 100
-            unknown_pct = max(0.0, 100 - productive_pct - leisure_pct - neutral_pct)
-
-            self.behavior_ratio_bar.setValue(int(round(productive_pct)))
-            self.behavior_ratio_bar.setFormat(f"🎯 生产力 {productive_pct:.1f}%")
-            self.behavior_ratio_detail_label.setText(
-                f"🎯 生产力 {productive_pct:.1f}% | "
-                f"🎮 摸鱼 {leisure_pct:.1f}% | "
-                f"⚙️ 中性 {neutral_pct:.1f}% | "
-                f"❓ 未分类 {unknown_pct:.1f}%"
-            )
-
-            top_apps = activity_stats.get('top_apps', []) or []
-            if top_apps:
-                top = top_apps[0]
-                category_map = {
-                    'PRODUCTIVE': '生产力',
-                    'LEISURE': '摸鱼',
-                    'NEUTRAL': '中性',
-                    'UNKNOWN': '未分类'
-                }
-                category_cn = category_map.get(top.get('category', 'UNKNOWN'), '未分类')
-                self.behavior_top_label.setText(
-                    f"🏆 Top 应用：{top.get('name', 'Unknown')} "
-                    f"{self._format_duration(top.get('duration', 0))}（{category_cn}）"
-                )
-            else:
-                self.behavior_top_label.setText("🏆 Top 应用：暂无数据")
-        else:
-            self.behavior_summary_label.setText("行为识别未启用或暂无数据")
-            self.behavior_ratio_bar.setValue(0)
-            self.behavior_ratio_bar.setFormat("🎯 生产力 0%")
-            self.behavior_ratio_detail_label.setText(
-                "🎯 生产力 0% | 🎮 摸鱼 0% | ⚙️ 中性 0% | ❓ 未分类 0%"
-            )
-            self.behavior_top_label.setText("🏆 Top 应用：暂无数据")
+    # update_behavior_summary() 方法已移除
+    # 行为摘要数据统一在今日回放窗口中查看,不再在统计报告中显示
 
     def _format_duration(self, seconds: int) -> str:
         if seconds < 60:
@@ -1011,79 +1389,106 @@ class StatisticsWindow(QWidget):
             )
 
     def apply_theme(self):
-        """应用当前主题到统计窗口"""
+        """应用当前主题到统计窗口 - 与配置界面风格统一"""
         theme = self.theme_manager.get_current_theme()
         if not theme:
             return
-        
-        bg_color = theme.get('background_color', '#FFFFFF')
-        text_color = theme.get('text_color', '#000000')
-        accent_color = theme.get('accent_color', '#2196F3')
-        
-        # 应用窗口背景色
-        self.setStyleSheet(f"""
-            QWidget {{
-                background-color: {bg_color};
-                color: {text_color};
-            }}
-        """)
-        
+
+        # 使用浅色系主题,与配置界面保持一致
+        bg_color = theme.get('background_color', LightTheme.BG_SECONDARY)
+        text_color = theme.get('text_color', LightTheme.TEXT_PRIMARY)
+        accent_color = theme.get('accent_color', LightTheme.ACCENT_BLUE)
+
+        # 移除全局样式覆盖,与其他界面保持一致
+        # QGroupBox将使用默认的白色背景,仅在需要时使用内联样式
+
         # 更新标题颜色
         if hasattr(self, 'title_label'):
-            self.title_label.setStyleSheet(f"font-size: 20px; font-weight: bold; color: {accent_color};")
-        
+            self.title_label.setStyleSheet(f"font-size: {LightTheme.FONT_TITLE}px; font-weight: bold; color: {LightTheme.TEXT_PRIMARY};")
+
+        # 优化标签页样式 - 与配置界面一致
         if hasattr(self, 'tab_widget'):
             self.tab_widget.setStyleSheet(f"""
                 QTabWidget::pane {{
-                    border: 1px solid #E0E0E0;
-                    background: {bg_color};
+                    border: 1px solid {LightTheme.BORDER_LIGHT};
+                    background: {LightTheme.BG_PRIMARY};
+                    border-radius: {LightTheme.RADIUS_SMALL}px;
                 }}
                 QTabBar::tab {{
                     padding: 10px 20px;
                     margin-right: 2px;
-                    background: {bg_color};
-                    color: {text_color};
+                    background: {LightTheme.BG_SECONDARY};
+                    color: {LightTheme.TEXT_SECONDARY};
+                    border: 1px solid {LightTheme.BORDER_LIGHT};
+                    border-bottom: none;
+                    border-top-left-radius: {LightTheme.RADIUS_SMALL}px;
+                    border-top-right-radius: {LightTheme.RADIUS_SMALL}px;
+                    font-size: 11pt;
+                    font-weight: 500;
+                }}
+                QTabBar::tab:hover {{
+                    background: {LightTheme.BG_HOVER};
+                    color: {LightTheme.TEXT_PRIMARY};
                 }}
                 QTabBar::tab:selected {{
-                    background: {accent_color};
-                    color: white;
+                    background: {LightTheme.BG_PRIMARY};
+                    color: {accent_color};
+                    border-bottom: 2px solid {accent_color};
+                    font-weight: bold;
                 }}
             """)
-        
-        # 更新滚动区域背景
+
+        # 更新滚动区域背景 - 白色内容区
         for scroll in self.findChildren(QScrollArea):
-            scroll.setStyleSheet(f"QScrollArea {{ border: none; background: {bg_color}; }}")
-        
-        # 更新表格样式
+            scroll.setStyleSheet(f"QScrollArea {{ border: none; background: {LightTheme.BG_PRIMARY}; }}")
+
+        # 优化表格样式 - MacOS极简风格
         for table in self.findChildren(QTableWidget):
             table.setStyleSheet(f"""
                 QTableWidget {{
-                    border: 1px solid #E0E0E0;
-                    gridline-color: #E0E0E0;
-                    background-color: {bg_color};
+                    border: 1px solid {LightTheme.BORDER_LIGHT};
+                    border-radius: {LightTheme.RADIUS_SMALL}px;
+                    gridline-color: {LightTheme.BORDER_LIGHT};
+                    background-color: {LightTheme.BG_PRIMARY};
                     color: {text_color};
+                    selection-background-color: {LightTheme.with_opacity(LightTheme.ACCENT_BLUE, 0.1)};
+                    selection-color: {LightTheme.TEXT_PRIMARY};
                 }}
                 QTableWidget::item {{
                     padding: 8px;
+                    border-bottom: 1px solid {LightTheme.BORDER_LIGHT};
+                }}
+                QTableWidget::item:hover {{
+                    background-color: {LightTheme.BG_HOVER};
                 }}
                 QHeaderView::section {{
-                    background-color: {accent_color};
-                    color: white;
-                    padding: 8px;
+                    background-color: {LightTheme.BG_TERTIARY};
+                    color: {text_color};
+                    padding: 10px;
+                    border: none;
+                    border-bottom: 2px solid {LightTheme.BORDER_LIGHT};
+                    font-weight: bold;
+                    font-size: {LightTheme.FONT_SMALL}pt;
                 }}
             """)
-        
-        # 更新统计卡片样式
+
+        # 移除 QMessageBox 的全局样式设置
+        # QMessageBox 将使用系统默认样式,与其他界面保持一致
+
+        # 更新统计卡片样式 - 添加悬停效果
         for card in self.findChildren(StatCard):
             card.setStyleSheet(f"""
                 StatCard {{
-                    background-color: {bg_color};
-                    border: 1px solid #E0E0E0;
-                    border-radius: 8px;
+                    background-color: {LightTheme.BG_PRIMARY};
+                    border: 1px solid {LightTheme.BORDER_LIGHT};
+                    border-radius: {LightTheme.RADIUS_LARGE}px;
+                }}
+                StatCard:hover {{
+                    border-color: {accent_color};
                 }}
             """)
-        
-        self.logger.info(f"已应用主题到统计窗口: {theme.get('name', 'Unknown')}")
+
+        self.logger.info(f"已应用统一主题到统计窗口: {theme.get('name', 'Unknown')}")
 
     def open_task_review_window(self):
         """打开任务完成回顾窗口（显示所有任务，包括已确认的）"""
@@ -1380,6 +1785,16 @@ class StatisticsWindow(QWidget):
         dialog.setWindowTitle(f"AI深度分析 - {date}")
         dialog.setMinimumSize(700, 500)
 
+        # 添加浅色模式样式
+        dialog.setStyleSheet(f"""
+            QDialog {{
+                background-color: {LightTheme.BG_PRIMARY};
+            }}
+            QLabel {{
+                color: {LightTheme.TEXT_PRIMARY};
+            }}
+        """)
+
         layout = QVBoxLayout(dialog)
 
         # 标题
@@ -1391,33 +1806,22 @@ class StatisticsWindow(QWidget):
         text_edit = QTextEdit()
         text_edit.setPlainText(analysis_text)
         text_edit.setReadOnly(True)
-        text_edit.setStyleSheet("""
-            QTextEdit {
-                background-color: #F5F5F5;
-                border: 1px solid #E0E0E0;
-                border-radius: 5px;
+        text_edit.setStyleSheet(f"""
+            QTextEdit {{
+                background-color: {LightTheme.BG_SECONDARY};
+                border: 1px solid {LightTheme.BORDER_LIGHT};
+                border-radius: {LightTheme.RADIUS_SMALL}px;
                 padding: 15px;
-                font-size: 14px;
+                font-size: {LightTheme.FONT_SUBTITLE}px;
                 line-height: 1.6;
-            }
+            }}
         """)
         layout.addWidget(text_edit)
 
         # 关闭按钮
         close_button = QPushButton("关闭")
-        close_button.setStyleSheet("""
-            QPushButton {
-                background-color: #2196F3;
-                color: white;
-                border: none;
-                padding: 10px 30px;
-                border-radius: 5px;
-                font-size: 14px;
-            }
-            QPushButton:hover {
-                background-color: #1976D2;
-            }
-        """)
+        close_button.setFixedHeight(36)
+        close_button.setStyleSheet(StyleManager.button_primary())
         close_button.clicked.connect(dialog.close)
         layout.addWidget(close_button)
 
@@ -1463,7 +1867,1117 @@ class StatisticsWindow(QWidget):
                 f"请检查日志文件获取详细错误信息。"
             )
 
+    def create_completion_trend_chart(self) -> QChartView:
+        """创建任务完成率趋势折线图(最近7天)
+
+        Returns:
+            QChartView: 图表视图组件
+        """
+        # 获取最近7天的趋势数据
+        trend_data = self.stats_manager.get_weekly_trend(days=7)
+
+        # 创建折线系列
+        series = QLineSeries()
+        series.setName("任务完成率")
+
+        # 添加数据点
+        for day_stat in trend_data:
+            # 将日期字符串转换为 QDateTime
+            date_time = QDateTime.fromString(day_stat['date'], "yyyy-MM-dd")
+            timestamp = date_time.toMSecsSinceEpoch()
+            completion_rate = day_stat['completion_rate']
+
+            series.append(timestamp, completion_rate)
+
+        # 创建图表
+        chart = QChart()
+        chart.addSeries(series)
+        chart.setTitle("📈 任务完成率趋势 (最近7天)")
+        chart.setAnimationOptions(QChart.AnimationOption.SeriesAnimations)
+
+        # 设置图表样式
+        chart.setBackgroundBrush(QColor(LightTheme.BG_PRIMARY))
+        chart.setTitleFont(QFont("Microsoft YaHei", LightTheme.FONT_SUBTITLE, QFont.Weight.Bold))
+
+        # X轴: 日期
+        axis_x = QDateTimeAxis()
+        axis_x.setFormat("MM-dd")
+        axis_x.setTitleText("日期")
+        axis_x.setLabelsFont(QFont("Microsoft YaHei", LightTheme.FONT_SMALL))
+        chart.addAxis(axis_x, Qt.AlignmentFlag.AlignBottom)
+        series.attachAxis(axis_x)
+
+        # Y轴: 百分比
+        axis_y = QValueAxis()
+        axis_y.setRange(0, 100)
+        axis_y.setTitleText("完成率 (%)")
+        axis_y.setLabelsFont(QFont("Microsoft YaHei", LightTheme.FONT_SMALL))
+        axis_y.setTickCount(6)  # 0, 20, 40, 60, 80, 100
+        chart.addAxis(axis_y, Qt.AlignmentFlag.AlignLeft)
+        series.attachAxis(axis_y)
+
+        # 设置系列颜色
+        pen = QPen(QColor(LightTheme.ACCENT_GREEN))
+        pen.setWidth(3)
+        series.setPen(pen)
+
+        # 创建视图
+        chart_view = QChartView(chart)
+        chart_view.setRenderHint(QPainter.RenderHint.Antialiasing)
+        chart_view.setMinimumHeight(300)
+        chart_view.setStyleSheet(f"""
+            QChartView {{
+                background-color: {LightTheme.BG_PRIMARY};
+                border: 1px solid {LightTheme.BORDER_LIGHT};
+                border-radius: {LightTheme.RADIUS_MEDIUM}px;
+            }}
+        """)
+
+        return chart_view
+
+    def create_category_pie_chart(self) -> QChartView:
+        """创建任务分类分布饼图(最近7天)
+
+        Returns:
+            QChartView: 饼图视图组件
+        """
+        # 获取分类统计数据
+        category_data = self.stats_manager.get_category_distribution(days=7)
+
+        # 如果没有数据,显示空图表
+        if not category_data or sum(cat['count'] for cat in category_data.values()) == 0:
+            series = QPieSeries()
+            series.append("暂无数据", 1)
+            slice = series.slices()[0]
+            slice.setBrush(QColor(LightTheme.TEXT_TERTIARY))
+            slice.setLabelVisible(True)
+        else:
+            # 创建饼图系列
+            series = QPieSeries()
+
+            # 定义分类对应的颜色（使用主题色系）
+            category_colors = {
+                '工作': LightTheme.ACCENT_BLUE,      # 蓝色 - 工作
+                '学习': LightTheme.ACCENT_PURPLE,    # 紫色 - 学习
+                '运动': LightTheme.ACCENT_GREEN,     # 绿色 - 运动
+                '饮食': LightTheme.ACCENT_ORANGE,    # 橙色 - 饮食
+                '休息': '#90CAF9',                    # 浅蓝色 - 休息
+                '娱乐': '#CE93D8',                    # 浅紫色 - 娱乐
+                '通勤': '#A1887F',                    # 棕色 - 通勤
+                '其他': LightTheme.TEXT_TERTIARY     # 灰色 - 其他
+            }
+
+            # 定义分类对应的emoji
+            category_emoji = {
+                '工作': '🏢',
+                '学习': '📚',
+                '运动': '🏃',
+                '饮食': '🍽️',
+                '休息': '😴',
+                '娱乐': '🎮',
+                '通勤': '🚗',
+                '其他': '🔧'
+            }
+
+            # 按任务数量排序
+            sorted_categories = sorted(category_data.items(),
+                                      key=lambda x: x[1]['count'],
+                                      reverse=True)
+
+            # 添加数据到饼图
+            for category_name, stats in sorted_categories:
+                count = stats['count']
+                percentage = (count / sum(cat['count'] for cat in category_data.values())) * 100
+
+                # 只显示占比超过3%的分类，其余归入"其他"
+                if percentage < 3 and category_name != '其他':
+                    continue
+
+                # 设置标签：emoji + 分类名 + 任务数
+                emoji = category_emoji.get(category_name, '📌')
+                label = f"{emoji} {category_name} ({count})"
+
+                slice = series.append(label, count)
+                slice.setLabelVisible(True)
+                slice.setLabelFont(QFont("Microsoft YaHei", LightTheme.FONT_SMALL))
+
+                # 设置扇形颜色
+                color = category_colors.get(category_name, LightTheme.TEXT_SECONDARY)
+                slice.setBrush(QColor(color))
+
+                # 高亮最大的分类（爆炸效果）
+                if sorted_categories[0][0] == category_name:
+                    slice.setExploded(True)
+                    slice.setExplodeDistanceFactor(0.1)
+
+        # 创建图表
+        chart = QChart()
+        chart.addSeries(series)
+        chart.setTitle("📊 任务分类分布 (最近7天)")
+        chart.setAnimationOptions(QChart.AnimationOption.SeriesAnimations)
+
+        # 设置图表样式
+        chart.setBackgroundBrush(QColor(LightTheme.BG_PRIMARY))
+        chart.setTitleFont(QFont("Microsoft YaHei", LightTheme.FONT_SUBTITLE, QFont.Weight.Bold))
+
+        # 隐藏图例（因为饼图上已有标签）
+        chart.legend().setVisible(False)
+
+        # 创建视图
+        chart_view = QChartView(chart)
+        chart_view.setRenderHint(QPainter.RenderHint.Antialiasing)
+        chart_view.setMinimumHeight(300)
+        chart_view.setStyleSheet(f"""
+            QChartView {{
+                background-color: {LightTheme.BG_PRIMARY};
+                border: 1px solid {LightTheme.BORDER_LIGHT};
+                border-radius: {LightTheme.RADIUS_MEDIUM}px;
+            }}
+        """)
+
+        return chart_view
+
+    def center_window(self):
+        """将窗口居中显示在屏幕上"""
+        from PySide6.QtGui import QGuiApplication
+        screen = QGuiApplication.primaryScreen().geometry()
+        window_rect = self.frameGeometry()
+        center_point = screen.center()
+        window_rect.moveCenter(center_point)
+        self.move(window_rect.topLeft())
+
+    def create_insights_widget(self) -> QWidget:
+        """创建智能洞察组件 (Sprint 3 - Task 3.2)"""
+        container = QWidget()
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(12)
+
+        try:
+            # 生成洞察报告
+            insights = self.insights_generator.generate_weekly_insights(days=7)
+
+            # 1. 总体摘要卡片
+            summary_card = self._create_insights_summary_card(insights)
+            layout.addWidget(summary_card)
+
+            # 2. 生产力趋势 + Top 3应用 (横向布局)
+            stats_row = QHBoxLayout()
+            stats_row.setSpacing(12)
+
+            # 生产力趋势卡片
+            trend_card = self._create_insights_trend_card(insights['productivity_trend'])
+            stats_row.addWidget(trend_card, 1)
+
+            # Top 3应用卡片
+            top_apps_card = self._create_insights_top_apps_card(insights['top_apps'])
+            stats_row.addWidget(top_apps_card, 1)
+
+            layout.addLayout(stats_row)
+
+            # 3. 改进建议列表
+            if insights['suggestions']:
+                suggestions_card = self._create_insights_suggestions_card(insights['suggestions'])
+                layout.addWidget(suggestions_card)
+
+        except Exception as e:
+            self.logger.error(f"生成洞察报告失败: {e}")
+            # 显示错误提示
+            error_label = QLabel("⚠️ 暂无足够数据生成洞察报告")
+            error_label.setStyleSheet(f"""
+                color: {LightTheme.TEXT_SECONDARY};
+                font-size: {LightTheme.FONT_BODY}px;
+                padding: 20px;
+            """)
+            error_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            layout.addWidget(error_label)
+
+        return container
+
+    def _create_insights_summary_card(self, insights: dict) -> QWidget:
+        """创建洞察摘要卡片"""
+        card = QWidget()
+        card.setStyleSheet(f"""
+            QWidget {{
+                background-color: {LightTheme.with_opacity(LightTheme.ACCENT_BLUE, 0.05)};
+                border: none;
+                border-radius: {LightTheme.RADIUS_MEDIUM}px;
+                padding: 16px;
+            }}
+        """)
+
+        layout = QVBoxLayout(card)
+        layout.setSpacing(8)
+
+        # 摘要文字
+        summary_text = insights['summary']
+        summary_label = QLabel(summary_text)
+        summary_label.setWordWrap(True)
+        summary_label.setStyleSheet(f"""
+            color: {LightTheme.TEXT_PRIMARY};
+            font-size: {LightTheme.FONT_BODY}px;
+            line-height: 1.6;
+        """)
+        layout.addWidget(summary_label)
+
+        return card
+
+    def _create_insights_trend_card(self, trend_data: dict) -> QWidget:
+        """创建生产力趋势卡片"""
+        card = QWidget()
+        card.setStyleSheet(f"""
+            QWidget {{
+                background-color: {LightTheme.BG_TERTIARY};
+                border: none;
+                border-radius: {LightTheme.RADIUS_MEDIUM}px;
+                padding: 16px;
+            }}
+        """)
+
+        layout = QVBoxLayout(card)
+        layout.setSpacing(8)
+
+        # 标题
+        title_layout = QHBoxLayout()
+        emoji_label = QLabel(trend_data['emoji'])
+        emoji_label.setStyleSheet("font-size: 28px;")
+        title_layout.addWidget(emoji_label)
+
+        title_label = QLabel("生产力趋势")
+        title_label.setStyleSheet(f"""
+            color: {LightTheme.TEXT_PRIMARY};
+            font-size: {LightTheme.FONT_SUBTITLE}px;
+            font-weight: bold;
+        """)
+        title_layout.addWidget(title_label, 1)
+        layout.addLayout(title_layout)
+
+        # 趋势描述
+        desc_label = QLabel(trend_data['description'])
+        desc_label.setWordWrap(True)
+        desc_label.setStyleSheet(f"""
+            color: {LightTheme.TEXT_SECONDARY};
+            font-size: {LightTheme.FONT_BODY}px;
+        """)
+        layout.addWidget(desc_label)
+
+        # 变化值
+        if 'change' in trend_data:
+            change_val = trend_data['change']
+            change_text = f"+{change_val:.1f}%" if change_val > 0 else f"{change_val:.1f}%"
+            change_color = LightTheme.ACCENT_GREEN if change_val > 0 else LightTheme.ACCENT_RED
+
+            change_label = QLabel(change_text)
+            change_label.setStyleSheet(f"""
+                color: {change_color};
+                font-size: {LightTheme.FONT_TITLE}px;
+                font-weight: bold;
+            """)
+            layout.addWidget(change_label)
+
+        return card
+
+    def _create_insights_top_apps_card(self, top_apps: list) -> QWidget:
+        """创建Top 3应用卡片"""
+        card = QWidget()
+        card.setStyleSheet(f"""
+            QWidget {{
+                background-color: {LightTheme.BG_TERTIARY};
+                border: none;
+                border-radius: {LightTheme.RADIUS_MEDIUM}px;
+                padding: 16px;
+            }}
+        """)
+
+        layout = QVBoxLayout(card)
+        layout.setSpacing(8)
+
+        # 标题
+        title_label = QLabel("⏱️ 时间投入TOP 3")
+        title_label.setStyleSheet(f"""
+            color: {LightTheme.TEXT_PRIMARY};
+            font-size: {LightTheme.FONT_SUBTITLE}px;
+            font-weight: bold;
+        """)
+        layout.addWidget(title_label)
+
+        # 应用列表
+        if top_apps:
+            for app in top_apps[:3]:
+                app_row = QHBoxLayout()
+
+                # 排名 + Emoji
+                rank_label = QLabel(f"{app['rank']}. {app['emoji']}")
+                rank_label.setStyleSheet(f"font-size: {LightTheme.FONT_BODY}px;")
+                app_row.addWidget(rank_label)
+
+                # 分类名称
+                name_label = QLabel(app['category'])
+                name_label.setStyleSheet(f"""
+                    color: {LightTheme.TEXT_PRIMARY};
+                    font-size: {LightTheme.FONT_BODY}px;
+                """)
+                app_row.addWidget(name_label, 1)
+
+                # 时长
+                hours_label = QLabel(f"{app['hours']}h")
+                hours_label.setStyleSheet(f"""
+                    color: {LightTheme.ACCENT_BLUE};
+                    font-size: {LightTheme.FONT_BODY}px;
+                    font-weight: bold;
+                """)
+                app_row.addWidget(hours_label)
+
+                layout.addLayout(app_row)
+        else:
+            empty_label = QLabel("暂无数据")
+            empty_label.setStyleSheet(f"color: {LightTheme.TEXT_HINT};")
+            layout.addWidget(empty_label)
+
+        return card
+
+    def _create_insights_suggestions_card(self, suggestions: list) -> QWidget:
+        """创建改进建议卡片"""
+        card = QWidget()
+        card.setStyleSheet(f"""
+            QWidget {{
+                border-left: 3px solid {LightTheme.ACCENT_GREEN};
+                padding: 12px 16px;
+            }}
+        """)
+
+        layout = QVBoxLayout(card)
+        layout.setSpacing(8)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        # 标题
+        title_label = QLabel("💡 改进建议")
+        title_label.setStyleSheet(f"""
+            color: {LightTheme.TEXT_PRIMARY};
+            font-size: {LightTheme.FONT_SUBTITLE}px;
+            font-weight: bold;
+        """)
+        layout.addWidget(title_label)
+
+        # 建议列表
+        for suggestion in suggestions:
+            suggestion_label = QLabel(f"• {suggestion}")
+            suggestion_label.setWordWrap(True)
+            suggestion_label.setStyleSheet(f"""
+                color: {LightTheme.TEXT_SECONDARY};
+                font-size: {LightTheme.FONT_BODY}px;
+                line-height: 1.6;
+            """)
+            layout.addWidget(suggestion_label)
+
+        return card
+
+    def create_goals_tab(self):
+        """创建目标管理页签 (Sprint 4 - Task 4.1)"""
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+        layout.setContentsMargins(20, 20, 20, 20)
+
+        # 创建滚动区域
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+
+        content_widget = QWidget()
+        content_layout = QVBoxLayout(content_widget)
+        content_layout.setSpacing(15)
+
+        # 标题和创建按钮
+        header_layout = QHBoxLayout()
+        title_label = QLabel("🎯 我的目标")
+        title_label.setStyleSheet(f"font-size: {LightTheme.FONT_TITLE}px; font-weight: bold; color: {LightTheme.TEXT_PRIMARY};")
+        header_layout.addWidget(title_label)
+        header_layout.addStretch()
+
+        create_goal_btn = QPushButton("➕ 创建新目标")
+        create_goal_btn.setFixedHeight(36)
+        create_goal_btn.setStyleSheet(StyleManager.button_primary())
+        create_goal_btn.clicked.connect(self._create_new_goal)
+        header_layout.addWidget(create_goal_btn)
+
+        content_layout.addLayout(header_layout)
+
+        # 目标统计卡片
+        stats = self.goal_manager.get_statistics()
+        stats_card = QGroupBox("📊 目标统计")
+        stats_card.setStyleSheet(f"QGroupBox::title {{ color: {LightTheme.TEXT_PRIMARY}; font-weight: bold; font-size: {LightTheme.FONT_SUBTITLE}px; }}")
+        stats_layout = QHBoxLayout(stats_card)
+
+        self._add_stat_item(stats_layout, "活跃目标", str(stats['active_goals']), LightTheme.ACCENT_BLUE)
+        self._add_stat_item(stats_layout, "已完成", str(stats['completed_goals']), LightTheme.ACCENT_GREEN)
+        self._add_stat_item(stats_layout, "完成率", f"{stats['completion_rate']:.0f}%", LightTheme.ACCENT_ORANGE)
+
+        content_layout.addWidget(stats_card)
+
+        # 活跃目标列表
+        active_goals = self.goal_manager.get_active_goals()
+        if active_goals:
+            goals_group = QGroupBox(f"📋 活跃目标 ({len(active_goals)}个)")
+            goals_group.setStyleSheet(f"QGroupBox::title {{ color: {LightTheme.TEXT_PRIMARY}; font-weight: bold; font-size: {LightTheme.FONT_SUBTITLE}px; }}")
+            goals_layout = QVBoxLayout(goals_group)
+            goals_layout.setSpacing(10)
+
+            for goal in active_goals:
+                goal_card = self._create_goal_card(goal)
+                goals_layout.addWidget(goal_card)
+
+            content_layout.addWidget(goals_group)
+        else:
+            # 空状态提示
+            empty_label = QLabel("暂无活跃目标\n点击上方「创建新目标」按钮开始设定你的第一个目标!")
+            empty_label.setAlignment(Qt.AlignCenter)
+            empty_label.setStyleSheet(f"""
+                color: {LightTheme.TEXT_HINT};
+                font-size: {LightTheme.FONT_BODY}px;
+                padding: 40px;
+            """)
+            content_layout.addWidget(empty_label)
+
+        content_layout.addStretch()
+        scroll.setWidget(content_widget)
+        layout.addWidget(scroll)
+
+        self.tab_widget.addTab(tab, "🎯 目标")
+
+    def _add_stat_item(self, layout: QHBoxLayout, label: str, value: str, color: str):
+        """添加统计项"""
+        item_widget = QWidget()
+        item_layout = QVBoxLayout(item_widget)
+        item_layout.setSpacing(5)
+
+        value_label = QLabel(value)
+        value_label.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {color};")
+        value_label.setAlignment(Qt.AlignCenter)
+        item_layout.addWidget(value_label)
+
+        label_label = QLabel(label)
+        label_label.setStyleSheet(f"color: {LightTheme.TEXT_SECONDARY}; font-size: {LightTheme.FONT_SMALL}px;")
+        label_label.setAlignment(Qt.AlignCenter)
+        item_layout.addWidget(label_label)
+
+        layout.addWidget(item_widget)
+
+    def _create_goal_card(self, goal: Goal) -> QWidget:
+        """创建目标卡片"""
+        card = QWidget()
+        card.setStyleSheet(f"""
+            QWidget {{
+                background-color: {LightTheme.BG_PRIMARY};
+                border: 1px solid {LightTheme.BORDER_LIGHT};
+                border-radius: {LightTheme.RADIUS_MEDIUM}px;
+                padding: 16px;
+            }}
+        """)
+
+        layout = QVBoxLayout(card)
+        layout.setSpacing(10)
+
+        # 目标信息
+        info = goal.get_info()
+
+        # 标题行
+        title_layout = QHBoxLayout()
+        title_label = QLabel(f"{info['emoji']} {info['name']}")
+        title_label.setStyleSheet(f"font-size: {LightTheme.FONT_SUBTITLE}px; font-weight: bold; color: {LightTheme.TEXT_PRIMARY};")
+        title_layout.addWidget(title_label)
+        title_layout.addStretch()
+
+        # 删除按钮
+        delete_btn = QPushButton("🗑️")
+        delete_btn.setFixedSize(32, 32)
+        delete_btn.setStyleSheet(StyleManager.button_minimal())
+        delete_btn.clicked.connect(lambda: self._delete_goal(goal.goal_id))
+        title_layout.addWidget(delete_btn)
+
+        layout.addLayout(title_layout)
+
+        # 进度信息
+        progress_text = QLabel(f"目标: {info['target_value']}{info['unit']}  |  当前: {info['current_value']:.1f}{info['unit']}")
+        progress_text.setStyleSheet(f"color: {LightTheme.TEXT_SECONDARY}; font-size: {LightTheme.FONT_BODY}px;")
+        layout.addWidget(progress_text)
+
+        # 进度条
+        progress_bar = QProgressBar()
+        progress_bar.setValue(int(info['progress_percentage']))
+        progress_bar.setTextVisible(True)
+        progress_bar.setFormat(f"{info['progress_percentage']:.1f}%")
+        progress_bar.setStyleSheet(f"""
+            QProgressBar {{
+                border: 1px solid {LightTheme.BORDER_LIGHT};
+                border-radius: {LightTheme.RADIUS_SMALL}px;
+                text-align: center;
+                height: 24px;
+                background-color: {LightTheme.BG_SECONDARY};
+            }}
+            QProgressBar::chunk {{
+                background-color: {LightTheme.ACCENT_GREEN};
+                border-radius: {LightTheme.RADIUS_SMALL}px;
+            }}
+        """)
+        layout.addWidget(progress_bar)
+
+        return card
+
+    def _create_new_goal(self):
+        """创建新目标对话框"""
+        dialog = QDialog(self)
+        dialog.setWindowTitle("创建新目标")
+        dialog.setFixedWidth(400)
+
+        layout = QFormLayout(dialog)
+
+        # 目标类型
+        type_combo = QComboBox()
+        type_combo.addItem("📋 每日任务目标", "daily_tasks")
+        type_combo.addItem("⏱️ 每周专注时长", "weekly_focus_hours")
+        type_combo.addItem("🎯 每周完成率", "weekly_completion_rate")
+        layout.addRow("目标类型:", type_combo)
+
+        # 目标值
+        value_spin = QSpinBox()
+        value_spin.setMinimum(1)
+        value_spin.setMaximum(1000)
+        value_spin.setValue(5)
+
+        def update_value_range(index):
+            goal_type = type_combo.itemData(index)
+            if goal_type == "daily_tasks":
+                value_spin.setValue(5)
+                value_spin.setSuffix(" 个任务")
+            elif goal_type == "weekly_focus_hours":
+                value_spin.setValue(20)
+                value_spin.setSuffix(" 小时")
+            else:  # weekly_completion_rate
+                value_spin.setMaximum(100)
+                value_spin.setValue(80)
+                value_spin.setSuffix(" %")
+
+        type_combo.currentIndexChanged.connect(update_value_range)
+        update_value_range(0)  # 初始化
+
+        layout.addRow("目标值:", value_spin)
+
+        # 按钮
+        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        button_box.accepted.connect(dialog.accept)
+        button_box.rejected.connect(dialog.reject)
+        layout.addRow(button_box)
+
+        if dialog.exec() == QDialog.Accepted:
+            goal_type = type_combo.currentData()
+            target_value = value_spin.value()
+
+            try:
+                self.goal_manager.create_goal(goal_type, target_value)
+                QMessageBox.information(self, "成功", "目标创建成功!")
+                self._refresh_goals_tab()
+            except Exception as e:
+                QMessageBox.warning(self, "错误", f"创建目标失败:\n{str(e)}")
+
+    def _delete_goal(self, goal_id: str):
+        """删除目标"""
+        reply = QMessageBox.question(
+            self,
+            "确认删除",
+            "确定要删除这个目标吗?",
+            QMessageBox.Yes | QMessageBox.No
+        )
+
+        if reply == QMessageBox.Yes:
+            self.goal_manager.delete_goal(goal_id)
+            self._refresh_goals_tab()
+
+    def _refresh_goals_tab(self):
+        """刷新目标页签"""
+        # 删除旧的tab
+        for i in range(self.tab_widget.count()):
+            if self.tab_widget.tabText(i) == "🎯 目标":
+                self.tab_widget.removeTab(i)
+                break
+
+        # 重新创建
+        self.create_goals_tab()
+
+    def create_achievements_tab(self):
+        """创建成就展示页签 (Sprint 4 - Task 4.2)"""
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+        layout.setContentsMargins(20, 20, 20, 20)
+
+        # 创建滚动区域
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+
+        content_widget = QWidget()
+        content_layout = QVBoxLayout(content_widget)
+        content_layout.setSpacing(15)
+
+        # 标题
+        title_label = QLabel("🏆 成就系统")
+        title_label.setStyleSheet(f"font-size: {LightTheme.FONT_TITLE}px; font-weight: bold; color: {LightTheme.TEXT_PRIMARY};")
+        content_layout.addWidget(title_label)
+
+        # 成就统计卡片
+        stats = self.achievement_manager.get_statistics()
+        stats_card = QGroupBox("📊 成就统计")
+        stats_card.setStyleSheet(f"QGroupBox::title {{ color: {LightTheme.TEXT_PRIMARY}; font-weight: bold; font-size: {LightTheme.FONT_SUBTITLE}px; }}")
+        stats_layout = QGridLayout(stats_card)
+
+        # 总体统计
+        total_card = self._create_achievement_stat_card(
+            "总成就数",
+            str(stats['total_achievements']),
+            LightTheme.ACCENT_BLUE
+        )
+        stats_layout.addWidget(total_card, 0, 0)
+
+        unlocked_card = self._create_achievement_stat_card(
+            "已解锁",
+            str(stats['unlocked_count']),
+            LightTheme.ACCENT_GREEN
+        )
+        stats_layout.addWidget(unlocked_card, 0, 1)
+
+        percentage_card = self._create_achievement_stat_card(
+            "完成度",
+            f"{stats['unlock_percentage']:.0f}%",
+            LightTheme.ACCENT_ORANGE
+        )
+        stats_layout.addWidget(percentage_card, 0, 2)
+
+        # 稀有度统计
+        rarity_layout = QHBoxLayout()
+        rarity_counts = stats['rarity_counts']
+        rarity_info = [
+            ('普通', rarity_counts.get('common', 0), LightTheme.TEXT_SECONDARY),
+            ('稀有', rarity_counts.get('rare', 0), LightTheme.ACCENT_BLUE),
+            ('史诗', rarity_counts.get('epic', 0), LightTheme.ACCENT_PURPLE),
+            ('传说', rarity_counts.get('legendary', 0), LightTheme.ACCENT_ORANGE)
+        ]
+
+        for rarity_name, count, color in rarity_info:
+            rarity_label = QLabel(f"{rarity_name}: {count}")
+            rarity_label.setStyleSheet(f"color: {color}; font-size: {LightTheme.FONT_SMALL}px; font-weight: bold;")
+            rarity_layout.addWidget(rarity_label)
+
+        rarity_widget = QWidget()
+        rarity_widget.setLayout(rarity_layout)
+        stats_layout.addWidget(rarity_widget, 1, 0, 1, 3)
+
+        content_layout.addWidget(stats_card)
+
+        # 已解锁成就
+        unlocked_achievements = self.achievement_manager.get_unlocked_achievements()
+        if unlocked_achievements:
+            unlocked_group = QGroupBox(f"✅ 已解锁成就 ({len(unlocked_achievements)}个)")
+            unlocked_group.setStyleSheet(f"QGroupBox::title {{ color: {LightTheme.TEXT_PRIMARY}; font-weight: bold; font-size: {LightTheme.FONT_SUBTITLE}px; }}")
+            unlocked_layout = QVBoxLayout(unlocked_group)
+            unlocked_layout.setSpacing(10)
+
+            for achievement in unlocked_achievements:
+                achievement_card = self._create_achievement_card(achievement, unlocked=True)
+                unlocked_layout.addWidget(achievement_card)
+
+            content_layout.addWidget(unlocked_group)
+
+        # 未解锁成就
+        locked_achievements = self.achievement_manager.get_locked_achievements()
+        if locked_achievements:
+            locked_group = QGroupBox(f"🔒 未解锁成就 ({len(locked_achievements)}个)")
+            locked_group.setStyleSheet(f"QGroupBox::title {{ color: {LightTheme.TEXT_PRIMARY}; font-weight: bold; font-size: {LightTheme.FONT_SUBTITLE}px; }}")
+            locked_layout = QVBoxLayout(locked_group)
+            locked_layout.setSpacing(10)
+
+            for achievement in locked_achievements:
+                achievement_card = self._create_achievement_card(achievement, unlocked=False)
+                locked_layout.addWidget(achievement_card)
+
+            content_layout.addWidget(locked_group)
+
+        content_layout.addStretch()
+        scroll.setWidget(content_widget)
+        layout.addWidget(scroll)
+
+        self.tab_widget.addTab(tab, "🏆 成就")
+
+    def _create_achievement_stat_card(self, label: str, value: str, color: str) -> QWidget:
+        """创建成就统计卡片"""
+        card = QWidget()
+        card.setStyleSheet(f"""
+            QWidget {{
+                border-left: 3px solid {color};
+                padding: 12px 16px;
+            }}
+        """)
+
+        layout = QVBoxLayout(card)
+        layout.setSpacing(5)
+
+        value_label = QLabel(value)
+        value_label.setStyleSheet(f"font-size: 20px; font-weight: bold; color: {color};")
+        value_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(value_label)
+
+        label_label = QLabel(label)
+        label_label.setStyleSheet(f"color: {LightTheme.TEXT_SECONDARY}; font-size: {LightTheme.FONT_SMALL}px;")
+        label_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(label_label)
+
+        return card
+
+    def _create_achievement_card(self, achievement: Achievement, unlocked: bool) -> QWidget:
+        """创建成就卡片"""
+        card = QWidget()
+
+        # 根据稀有度选择颜色
+        rarity_colors = {
+            'common': LightTheme.TEXT_SECONDARY,
+            'rare': LightTheme.ACCENT_BLUE,
+            'epic': LightTheme.ACCENT_PURPLE,
+            'legendary': LightTheme.ACCENT_ORANGE
+        }
+        border_color = rarity_colors.get(achievement.rarity, LightTheme.BORDER_LIGHT)
+
+        # 简化样式: 只使用 border-left 进行视觉区分
+        if not unlocked:
+            card.setStyleSheet(f"""
+                QWidget {{
+                    border-left: 3px solid {LightTheme.BORDER_LIGHT};
+                    padding: 12px 16px;
+                }}
+            """)
+        else:
+            card.setStyleSheet(f"""
+                QWidget {{
+                    border-left: 3px solid {border_color};
+                    padding: 12px 16px;
+                }}
+            """)
+
+        layout = QHBoxLayout(card)
+        layout.setSpacing(12)
+
+        # 图标 (添加emoji字体支持)
+        icon_label = QLabel(achievement.emoji if unlocked else "🔒")
+
+        # 使用QFont设置emoji字体 (更可靠的方式)
+        emoji_font = QFont()
+        emoji_font.setPointSize(28)  # 增大字体
+        emoji_font.setFamilies(["Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji"])
+        icon_label.setFont(emoji_font)
+
+        # 设置固定宽度但允许高度自适应,并添加内边距
+        icon_label.setMinimumSize(60, 60)  # 增大最小尺寸
+        icon_label.setMaximumSize(60, 60)  # 设置最大尺寸
+        icon_label.setAlignment(Qt.AlignCenter)
+        icon_label.setStyleSheet("padding: 5px;")  # 添加内边距防止裁剪
+        layout.addWidget(icon_label)
+
+        # 信息
+        info_layout = QVBoxLayout()
+        info_layout.setSpacing(4)
+
+        # 名称和稀有度
+        name_layout = QHBoxLayout()
+        name_label = QLabel(achievement.name if unlocked else "???")
+        name_label.setStyleSheet(f"font-size: {LightTheme.FONT_SUBTITLE}px; font-weight: bold; color: {LightTheme.TEXT_PRIMARY if unlocked else LightTheme.TEXT_HINT};")
+        name_layout.addWidget(name_label)
+
+        # 稀有度标签: 移除背景色,使用彩色文本
+        rarity_text = {
+            'common': '普通',
+            'rare': '稀有',
+            'epic': '史诗',
+            'legendary': '传说'
+        }.get(achievement.rarity, achievement.rarity)
+
+        rarity_badge = QLabel(f"[{rarity_text}]")
+        rarity_badge.setStyleSheet(f"""
+            color: {border_color};
+            font-size: {LightTheme.FONT_TINY}px;
+            font-weight: bold;
+        """)
+        name_layout.addWidget(rarity_badge)
+        name_layout.addStretch()
+
+        info_layout.addLayout(name_layout)
+
+        # 描述
+        desc_label = QLabel(achievement.description if unlocked else "解锁后可见")
+        desc_label.setWordWrap(True)
+        desc_label.setStyleSheet(f"color: {LightTheme.TEXT_SECONDARY if unlocked else LightTheme.TEXT_HINT}; font-size: {LightTheme.FONT_SMALL}px;")
+        info_layout.addWidget(desc_label)
+
+        # 解锁时间 (仅已解锁)
+        if unlocked and achievement.unlocked_at:
+            from datetime import datetime
+            unlock_time = datetime.fromisoformat(achievement.unlocked_at)
+            time_label = QLabel(f"解锁于: {unlock_time.strftime('%Y-%m-%d %H:%M')}")
+            time_label.setStyleSheet(f"color: {LightTheme.TEXT_HINT}; font-size: {LightTheme.FONT_TINY}px;")
+            info_layout.addWidget(time_label)
+
+        layout.addLayout(info_layout, 1)
+
+        return card
+
+    # ============================================================
+    # 激励系统回调和自动更新 (Sprint 4 - 后续拓展功能)
+    # ============================================================
+
+    def _update_motivation_system(self):
+        """自动更新激励系统 (目标进度 + 成就检测) - 线程安全版本"""
+        try:
+            self.logger.info("🚀 Updating motivation system...")
+
+            # 检查窗口是否还存在
+            if not self.isVisible():
+                self.logger.info("Window closed, skipping motivation update")
+                return
+
+            result = self.motivation_engine.update_all()
+
+            completed_goals = result['completed_goals']
+            unlocked_achievements = result['unlocked_achievements']
+
+            # 刷新UI (如果有更新) - 确保在主线程
+            if completed_goals or unlocked_achievements:
+                # 使用QTimer.singleShot确保UI更新在主线程
+                QTimer.singleShot(0, self._refresh_goals_tab)
+                QTimer.singleShot(0, self._refresh_achievements_tab)
+
+            self.logger.info(
+                f"✅ Motivation update complete: "
+                f"{len(completed_goals)} goals, {len(unlocked_achievements)} achievements"
+            )
+
+        except Exception as e:
+            self.logger.error(f"Failed to update motivation system: {e}", exc_info=True)
+
+    def _on_goal_completed(self, goal: Goal):
+        """目标完成回调 - 显示庆祝动画"""
+        self.logger.info(f"🎉 Goal completed callback: {goal.goal_type}")
+
+        # 显示庆祝对话框
+        self._show_goal_celebration(goal)
+
+    def _on_achievement_unlocked(self, achievement: Achievement):
+        """成就解锁回调 - 加入队列批量显示"""
+        self.logger.info(f"🏆 Achievement unlocked callback: {achievement.name}")
+
+        # 添加到待显示队列
+        self.pending_achievements.append(achievement)
+
+        # 重置定时器 (500ms后批量显示,避免连续弹窗)
+        self.achievement_notification_timer.stop()
+        self.achievement_notification_timer.start(500)
+
+    def _show_batched_achievements(self):
+        """批量显示成就解锁通知 (合并多个成就在一个对话框)"""
+        if not self.pending_achievements:
+            return
+
+        try:
+            from PySide6.QtWidgets import QMessageBox, QVBoxLayout, QWidget
+
+            # 取出所有待显示的成就
+            achievements = self.pending_achievements[:]
+            self.pending_achievements.clear()
+
+            msg_box = QMessageBox(self)
+            msg_box.setWindowTitle("🏆 成就解锁!")
+
+            # 根据数量决定标题
+            if len(achievements) == 1:
+                achievement = achievements[0]
+                # 使用纯文本显示emoji,避免字体问题
+                msg_box.setText(f"解锁新成就:")
+                msg_box.setInformativeText(
+                    f"\n{achievement.emoji} 【{achievement.name}】\n\n"
+                    f"{achievement.description}\n\n"
+                    f"稀有度: {self._get_rarity_cn(achievement.rarity)}"
+                )
+
+                # 根据稀有度选择颜色
+                rarity_colors = {
+                    'common': LightTheme.TEXT_SECONDARY,
+                    'rare': LightTheme.ACCENT_BLUE,
+                    'epic': LightTheme.ACCENT_PURPLE,
+                    'legendary': LightTheme.ACCENT_ORANGE
+                }
+                color = rarity_colors.get(achievement.rarity, LightTheme.ACCENT_GREEN)
+            else:
+                # 多个成就
+                msg_box.setText(f"恭喜!同时解锁 {len(achievements)} 个成就:")
+
+                # 组装成就列表
+                achievement_list = []
+                for ach in achievements:
+                    rarity_cn = self._get_rarity_cn(ach.rarity)
+                    achievement_list.append(
+                        f"{ach.emoji} 【{ach.name}】({rarity_cn})\n  {ach.description}"
+                    )
+
+                msg_box.setInformativeText("\n\n".join(achievement_list))
+                color = LightTheme.ACCENT_PURPLE  # 多个成就使用紫色
+
+            msg_box.setIcon(QMessageBox.Information)
+            msg_box.setStandardButtons(QMessageBox.Ok)
+
+            # 应用样式
+            msg_box.setStyleSheet(f"""
+                QMessageBox {{
+                    background-color: {LightTheme.BG_PRIMARY};
+                    min-width: 400px;
+                }}
+                QLabel {{
+                    color: {LightTheme.TEXT_PRIMARY};
+                    font-size: {LightTheme.FONT_BODY}px;
+                    font-family: "Microsoft YaHei UI", "Segoe UI Emoji", "Apple Color Emoji";
+                }}
+                QPushButton {{
+                    background-color: {color};
+                    color: white;
+                    border: none;
+                    border-radius: {LightTheme.RADIUS_SMALL}px;
+                    padding: 8px 16px;
+                    font-size: {LightTheme.FONT_BODY}px;
+                    font-weight: bold;
+                }}
+                QPushButton:hover {{
+                    opacity: 0.9;
+                }}
+            """)
+
+            # 为所有QLabel设置emoji字体 (更可靠的方式)
+            emoji_font = QFont()
+            emoji_font.setPointSize(LightTheme.FONT_BODY)
+            emoji_font.setFamilies(["Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji"])
+
+            for label in msg_box.findChildren(QLabel):
+                label.setFont(emoji_font)
+
+            # 显示对话框
+            msg_box.exec()
+
+        except Exception as e:
+            self.logger.error(f"Failed to show batched achievements: {e}", exc_info=True)
+
+    def _get_rarity_cn(self, rarity: str) -> str:
+        """获取稀有度中文名称"""
+        rarity_map = {
+            'common': '普通',
+            'rare': '稀有',
+            'epic': '史诗',
+            'legendary': '传说'
+        }
+        return rarity_map.get(rarity, rarity)
+
+    def _show_goal_celebration(self, goal: Goal):
+        """显示目标完成庆祝动画"""
+        try:
+            from PySide6.QtWidgets import QMessageBox
+
+            goal_info = goal.get_info()
+            goal_name = goal_info['name']
+            emoji = goal_info['emoji']
+
+            msg_box = QMessageBox(self)
+            msg_box.setWindowTitle("🎉 目标达成!")
+            msg_box.setText(f"恭喜!你已完成目标:")
+            msg_box.setInformativeText(f"\n{emoji} {goal_name}\n\n继续保持,创造更多成就!")
+            msg_box.setIcon(QMessageBox.Information)
+            msg_box.setStandardButtons(QMessageBox.Ok)
+
+            # 应用样式 - 添加emoji字体支持
+            msg_box.setStyleSheet(f"""
+                QMessageBox {{
+                    background-color: {LightTheme.BG_PRIMARY};
+                }}
+                QLabel {{
+                    color: {LightTheme.TEXT_PRIMARY};
+                    font-size: {LightTheme.FONT_BODY}px;
+                    font-family: "Microsoft YaHei UI", "Segoe UI Emoji", "Apple Color Emoji";
+                }}
+                QPushButton {{
+                    background-color: {LightTheme.ACCENT_GREEN};
+                    color: white;
+                    border: none;
+                    border-radius: {LightTheme.RADIUS_SMALL}px;
+                    padding: 8px 16px;
+                    font-size: {LightTheme.FONT_BODY}px;
+                    font-weight: bold;
+                }}
+                QPushButton:hover {{
+                    background-color: {LightTheme.ACCENT_GREEN_HOVER};
+                }}
+            """)
+
+            # 为所有QLabel设置emoji字体 (更可靠的方式)
+            emoji_font = QFont()
+            emoji_font.setPointSize(LightTheme.FONT_BODY)
+            emoji_font.setFamilies(["Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji"])
+
+            for label in msg_box.findChildren(QLabel):
+                label.setFont(emoji_font)
+
+            # 显示对话框
+            msg_box.exec()
+
+        except Exception as e:
+            self.logger.error(f"Failed to show goal celebration: {e}", exc_info=True)
+
+    def _refresh_goals_tab(self):
+        """刷新目标页签"""
+        try:
+            # 查找目标页签的索引
+            for i in range(self.tab_widget.count()):
+                if "目标" in self.tab_widget.tabText(i):
+                    # 移除旧的页签
+                    self.tab_widget.removeTab(i)
+                    # 重新创建
+                    self.create_goals_tab()
+                    break
+        except Exception as e:
+            self.logger.error(f"Failed to refresh goals tab: {e}", exc_info=True)
+
+    def _refresh_achievements_tab(self):
+        """刷新成就页签"""
+        try:
+            # 查找成就页签的索引
+            for i in range(self.tab_widget.count()):
+                if "成就" in self.tab_widget.tabText(i):
+                    # 移除旧的页签
+                    self.tab_widget.removeTab(i)
+                    # 重新创建
+                    self.create_achievements_tab()
+                    break
+        except Exception as e:
+            self.logger.error(f"Failed to refresh achievements tab: {e}", exc_info=True)
+
     def closeEvent(self, event):
-        """窗口关闭事件"""
-        self.closed.emit()
-        super().closeEvent(event)
+        """窗口关闭事件 - 清理资源"""
+        try:
+            # 停止激励系统定时器
+            if hasattr(self, 'motivation_timer') and self.motivation_timer:
+                self.motivation_timer.stop()
+                self.logger.info("Motivation timer stopped")
+
+            # 停止成就通知定时器
+            if hasattr(self, 'achievement_notification_timer') and self.achievement_notification_timer:
+                self.achievement_notification_timer.stop()
+                self.logger.info("Achievement notification timer stopped")
+
+            # 清空待显示队列
+            if hasattr(self, 'pending_achievements'):
+                self.pending_achievements.clear()
+
+            self.closed.emit()
+            super().closeEvent(event)
+
+        except Exception as e:
+            self.logger.error(f"Error in closeEvent: {e}", exc_info=True)
+            super().closeEvent(event)
