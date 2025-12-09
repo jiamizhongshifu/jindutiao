@@ -379,6 +379,15 @@ class StatisticsWindow(QWidget):
         # 连接推理完成信号
         self.inference_completed.connect(self._on_inference_completed)
 
+        # 连接自动推理引擎信号 (方案A)
+        main_window = self.parent()
+        if main_window and hasattr(main_window, 'auto_inference_engine'):
+            engine = main_window.auto_inference_engine
+            engine.inference_completed.connect(self.update_inference_ui)
+            self.logger.info("已连接自动推理引擎信号")
+        else:
+            self.logger.warning("未找到自动推理引擎,自动推理功能将不可用")
+
         # 应用初始主题
         self.apply_theme()
 
@@ -561,6 +570,156 @@ class StatisticsWindow(QWidget):
 
         return shortcut_card
 
+    def create_auto_inference_summary(self):
+        """创建自动推理摘要卡片 (方案A: 全自动推理模式)"""
+        summary_group = QGroupBox("🤖 AI自动推理")
+        summary_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
+        layout = QVBoxLayout(summary_group)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(12)
+
+        # 状态指示行
+        status_layout = QHBoxLayout()
+
+        # 状态图标
+        status_icon = QLabel("🟢")
+        status_icon.setStyleSheet("font-size: 16px;")
+        status_layout.addWidget(status_icon)
+
+        # 状态文字
+        status_label = QLabel("实时推理中 (每5分钟更新)")
+        status_label.setStyleSheet(f"color: {LightTheme.TEXT_SECONDARY}; font-size: {LightTheme.FONT_SMALL}px;")
+        status_layout.addWidget(status_label)
+
+        status_layout.addStretch()
+
+        # 最后更新时间
+        self.last_inference_time_label = QLabel("最后更新: --")
+        self.last_inference_time_label.setStyleSheet(f"color: {LightTheme.TEXT_HINT}; font-size: {LightTheme.FONT_SMALL}px;")
+        status_layout.addWidget(self.last_inference_time_label)
+
+        layout.addLayout(status_layout)
+
+        # 推理结果摘要
+        self.inference_summary_label = QLabel("今日已推理 <b>0</b> 个任务 · 平均置信度: <b>--</b>")
+        self.inference_summary_label.setStyleSheet(f"font-size: {LightTheme.FONT_BODY}px; color: {LightTheme.TEXT_PRIMARY};")
+        layout.addWidget(self.inference_summary_label)
+
+        # 推理任务列表容器
+        self.inference_task_list_widget = QWidget()
+        self.inference_task_list_layout = QVBoxLayout(self.inference_task_list_widget)
+        self.inference_task_list_layout.setContentsMargins(0, 8, 0, 0)
+        self.inference_task_list_layout.setSpacing(8)
+
+        layout.addWidget(self.inference_task_list_widget)
+
+        return summary_group
+
+    def create_inferred_task_card(self, task: dict) -> QWidget:
+        """
+        创建推理任务卡片
+
+        Args:
+            task: {
+                'name': '代码开发',
+                'confidence': 0.9,
+                'start_time': '14:30',
+                'end_time': '15:00',
+                'duration_minutes': 30,
+                'apps': ['vscode', 'chrome']
+            }
+        """
+        card = QWidget()
+        card.setStyleSheet(f"""
+            QWidget {{
+                background-color: {LightTheme.BG_SECONDARY};
+                border-radius: {LightTheme.RADIUS_MEDIUM}px;
+                padding: 12px;
+            }}
+            QWidget:hover {{
+                background-color: {LightTheme.BG_TERTIARY};
+            }}
+        """)
+
+        layout = QHBoxLayout(card)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        # 左侧: 任务信息
+        info_layout = QVBoxLayout()
+
+        # 任务名称
+        name_label = QLabel(f"📋 {task['name']}")
+        name_label.setStyleSheet(f"font-weight: bold; color: {LightTheme.TEXT_PRIMARY}; font-size: {LightTheme.FONT_BODY}px;")
+        info_layout.addWidget(name_label)
+
+        # 时间范围 + 时长
+        time_label = QLabel(f"⏰ {task['start_time']} - {task['end_time']} ({task['duration_minutes']}分钟)")
+        time_label.setStyleSheet(f"color: {LightTheme.TEXT_SECONDARY}; font-size: {LightTheme.FONT_SMALL}px;")
+        info_layout.addWidget(time_label)
+
+        # 相关应用
+        apps_text = ", ".join(task['apps'][:3])
+        apps_label = QLabel(f"💻 应用: {apps_text}")
+        apps_label.setStyleSheet(f"color: {LightTheme.TEXT_HINT}; font-size: {LightTheme.FONT_SMALL}px;")
+        info_layout.addWidget(apps_label)
+
+        layout.addLayout(info_layout, 1)
+
+        # 右侧: 置信度标签
+        confidence = task['confidence']
+        confidence_color = LightTheme.ACCENT_GREEN if confidence >= 0.8 else LightTheme.ACCENT_ORANGE
+
+        confidence_badge = QLabel(f"{confidence:.0%}")
+        confidence_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        confidence_badge.setFixedSize(50, 24)
+        confidence_badge.setStyleSheet(f"""
+            QLabel {{
+                background-color: {confidence_color};
+                color: white;
+                border-radius: 12px;
+                font-size: {LightTheme.FONT_SMALL}px;
+                font-weight: bold;
+            }}
+        """)
+        layout.addWidget(confidence_badge)
+
+        return card
+
+    def update_inference_ui(self, inferred_tasks: list):
+        """
+        更新推理UI (方案A)
+
+        Args:
+            inferred_tasks: 推理任务列表
+        """
+        try:
+            # 更新摘要
+            avg_confidence = sum(t['confidence'] for t in inferred_tasks) / len(inferred_tasks) if inferred_tasks else 0
+            self.inference_summary_label.setText(
+                f"今日已推理 <b>{len(inferred_tasks)}</b> 个任务 · "
+                f"平均置信度: <b>{avg_confidence:.0%}</b>"
+            )
+
+            # 更新时间
+            from datetime import datetime
+            self.last_inference_time_label.setText(f"最后更新: {datetime.now().strftime('%H:%M')}")
+
+            # 清空现有任务列表
+            while self.inference_task_list_layout.count():
+                child = self.inference_task_list_layout.takeAt(0)
+                if child.widget():
+                    child.widget().deleteLater()
+
+            # 添加新任务卡片 (只显示最近5个)
+            for task in inferred_tasks[-5:]:
+                card = self.create_inferred_task_card(task)
+                self.inference_task_list_layout.addWidget(card)
+
+            self.logger.info(f"推理UI已更新: {len(inferred_tasks)} 个任务")
+
+        except Exception as e:
+            self.logger.error(f"更新推理UI失败: {e}", exc_info=True)
+
     def open_time_review_window(self):
         """打开今日回放窗口"""
         try:
@@ -597,164 +756,9 @@ class StatisticsWindow(QWidget):
         shortcut_card = self.create_behavior_shortcut()
         content_layout.addWidget(shortcut_card)
 
-        # AI推理数据摘要区域 (作为主要展示区域)
-        ai_summary_group = QGroupBox("🤖 AI推理数据摘要")
-        ai_summary_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
-        ai_summary_layout = QVBoxLayout(ai_summary_group)
-
-        # 第一行: 推理统计卡片 + 任务统计卡片 (紧凑布局)
-        row1_layout = QHBoxLayout()
-
-        # 左侧: AI推理核心指标
-        ai_core_layout = QVBoxLayout()
-
-        # 已推理任务数 & 平均完成度 (大字体,突出显示)
-        ai_main_layout = QHBoxLayout()
-
-        self.ai_inferred_label = QLabel("已推理: 0 个")
-        self.ai_inferred_label.setStyleSheet(f"font-size: 16px; color: {LightTheme.ACCENT_BLUE}; font-weight: bold;")
-        ai_main_layout.addWidget(self.ai_inferred_label)
-
-        ai_main_layout.addSpacing(30)
-
-        self.ai_avg_completion_label = QLabel("平均完成度: 0%")
-        self.ai_avg_completion_label.setStyleSheet(f"font-size: 16px; color: {LightTheme.ACCENT_GREEN}; font-weight: bold;")
-        ai_main_layout.addWidget(self.ai_avg_completion_label)
-
-        ai_main_layout.addStretch()
-        ai_core_layout.addLayout(ai_main_layout)
-
-        # 高置信度 & 待确认 (次要指标)
-        ai_sub_layout = QHBoxLayout()
-
-        self.ai_high_confidence_label = QLabel("高置信度: 0 个")
-        self.ai_high_confidence_label.setStyleSheet(f"font-size: {LightTheme.FONT_BODY}px; color: {LightTheme.ACCENT_ORANGE};")
-        ai_sub_layout.addWidget(self.ai_high_confidence_label)
-
-        ai_sub_layout.addSpacing(20)
-
-        self.ai_unconfirmed_label = QLabel("待确认: 0 个")
-        self.ai_unconfirmed_label.setStyleSheet(f"font-size: {LightTheme.FONT_BODY}px; color: {LightTheme.ACCENT_RED};")
-        ai_sub_layout.addWidget(self.ai_unconfirmed_label)
-
-        ai_sub_layout.addStretch()
-        ai_core_layout.addLayout(ai_sub_layout)
-
-        row1_layout.addLayout(ai_core_layout, 3)
-
-        # 右侧: 简化的任务统计卡片 (紧凑型)
-        task_stats_layout = QHBoxLayout()
-
-        # 总任务数卡片
-        total_card = QWidget()
-        total_card_layout = QVBoxLayout(total_card)
-        total_card_layout.setContentsMargins(10, 5, 10, 5)
-        total_card_layout.setSpacing(2)
-        self.total_tasks_label = QLabel("0")
-        self.total_tasks_label.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {LightTheme.ACCENT_BLUE};")
-        self.total_tasks_label.setAlignment(Qt.AlignCenter)
-        total_card_layout.addWidget(self.total_tasks_label)
-        total_card_name = QLabel("📝 总任务")
-        total_card_name.setStyleSheet(f"font-size: {LightTheme.FONT_SMALL}px; color: {LightTheme.TEXT_HINT};")
-        total_card_name.setAlignment(Qt.AlignCenter)
-        total_card_layout.addWidget(total_card_name)
-        total_card.setStyleSheet(f"""
-            QWidget {{
-                background-color: {LightTheme.BG_TERTIARY};
-                border: none;
-                border-radius: {LightTheme.RADIUS_LARGE}px;
-            }}
-        """)
-        task_stats_layout.addWidget(total_card)
-
-        # 已完成卡片
-        completed_card = QWidget()
-        completed_card_layout = QVBoxLayout(completed_card)
-        completed_card_layout.setContentsMargins(10, 5, 10, 5)
-        completed_card_layout.setSpacing(2)
-        self.completed_tasks_label = QLabel("0")
-        self.completed_tasks_label.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {LightTheme.ACCENT_GREEN};")
-        self.completed_tasks_label.setAlignment(Qt.AlignCenter)
-        completed_card_layout.addWidget(self.completed_tasks_label)
-        completed_card_name = QLabel("✅ 已完成")
-        completed_card_name.setStyleSheet(f"font-size: {LightTheme.FONT_SMALL}px; color: {LightTheme.TEXT_HINT};")
-        completed_card_name.setAlignment(Qt.AlignCenter)
-        completed_card_layout.addWidget(completed_card_name)
-        completed_card.setStyleSheet(f"""
-            QWidget {{
-                background-color: {LightTheme.BG_TERTIARY};
-                border: none;
-                border-radius: {LightTheme.RADIUS_LARGE}px;
-            }}
-        """)
-        task_stats_layout.addWidget(completed_card)
-
-        # 进行中卡片
-        in_progress_card = QWidget()
-        in_progress_card_layout = QVBoxLayout(in_progress_card)
-        in_progress_card_layout.setContentsMargins(10, 5, 10, 5)
-        in_progress_card_layout.setSpacing(2)
-        self.in_progress_tasks_label = QLabel("0")
-        self.in_progress_tasks_label.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {LightTheme.ACCENT_ORANGE};")
-        self.in_progress_tasks_label.setAlignment(Qt.AlignCenter)
-        in_progress_card_layout.addWidget(self.in_progress_tasks_label)
-        in_progress_card_name = QLabel("⏳ 进行中")
-        in_progress_card_name.setStyleSheet(f"font-size: {LightTheme.FONT_SMALL}px; color: {LightTheme.TEXT_HINT};")
-        in_progress_card_name.setAlignment(Qt.AlignCenter)
-        in_progress_card_layout.addWidget(in_progress_card_name)
-        in_progress_card.setStyleSheet(f"""
-            QWidget {{
-                background-color: {LightTheme.BG_TERTIARY};
-                border: none;
-                border-radius: {LightTheme.RADIUS_LARGE}px;
-            }}
-        """)
-        task_stats_layout.addWidget(in_progress_card)
-
-        # 未开始卡片
-        not_started_card = QWidget()
-        not_started_card_layout = QVBoxLayout(not_started_card)
-        not_started_card_layout.setContentsMargins(10, 5, 10, 5)
-        not_started_card_layout.setSpacing(2)
-        self.not_started_tasks_label = QLabel("0")
-        self.not_started_tasks_label.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {LightTheme.ACCENT_RED};")
-        self.not_started_tasks_label.setAlignment(Qt.AlignCenter)
-        not_started_card_layout.addWidget(self.not_started_tasks_label)
-        not_started_card_name = QLabel("⏰ 未开始")
-        not_started_card_name.setStyleSheet(f"font-size: {LightTheme.FONT_SMALL}px; color: {LightTheme.TEXT_HINT};")
-        not_started_card_name.setAlignment(Qt.AlignCenter)
-        not_started_card_layout.addWidget(not_started_card_name)
-        not_started_card.setStyleSheet(f"""
-            QWidget {{
-                background-color: {LightTheme.BG_TERTIARY};
-                border: none;
-                border-radius: {LightTheme.RADIUS_LARGE}px;
-            }}
-        """)
-        task_stats_layout.addWidget(not_started_card)
-
-        row1_layout.addLayout(task_stats_layout, 2)
-        ai_summary_layout.addLayout(row1_layout)
-
-        # 第二行: 智能提示 + 操作按钮
-        row2_layout = QHBoxLayout()
-
-        self.ai_accuracy_hint_label = QLabel("💡 提示: 持续确认任务完成度,可以提高AI推理的准确度")
-        self.ai_accuracy_hint_label.setStyleSheet(f"font-size: {LightTheme.FONT_SMALL}px; color: {LightTheme.TEXT_HINT};")
-        row2_layout.addWidget(self.ai_accuracy_hint_label)
-
-        row2_layout.addStretch()
-
-        # 手动触发推理按钮
-        self.trigger_inference_button = QPushButton("🔄 手动生成推理")
-        self.trigger_inference_button.setFixedHeight(36)
-        self.trigger_inference_button.setStyleSheet(StyleManager.button_minimal())
-        self.trigger_inference_button.clicked.connect(self.trigger_manual_inference)
-        row2_layout.addWidget(self.trigger_inference_button)
-
-        ai_summary_layout.addLayout(row2_layout)
-
-        content_layout.addWidget(ai_summary_group)
+        # AI推理数据摘要区域 (方案A: 全自动推理模式)
+        auto_inference_summary = self.create_auto_inference_summary()
+        content_layout.addWidget(auto_inference_summary)
 
         # 操作按钮区域 (移除了任务详情表格,直接提供操作按钮)
         action_group = QGroupBox("📋 操作")
@@ -1175,80 +1179,28 @@ class StatisticsWindow(QWidget):
             QMessageBox.warning(self, tr("statistics.error.error_title"), tr("statistics.error.loading_failed_message", error=str(e)))
 
     def load_today_statistics(self):
-        """加载今日统计"""
+        """加载今日统计 (方案A: 全自动推理模式)"""
         summary = self.stats_manager.get_today_summary()
 
-        # 更新紧凑型统计卡片
-        self.total_tasks_label.setText(str(summary['total_tasks']))
-        self.completed_tasks_label.setText(str(summary['completed_tasks']))
-        self.in_progress_tasks_label.setText(str(summary['in_progress_tasks']))
-        self.not_started_tasks_label.setText(str(summary['not_started_tasks']))
+        # 注: 今日统计页签已完全重构为自动推理模式
+        # 统计卡片已移除,数据通过自动推理引擎实时更新
+        # 用户通过"确认/修正任务完成度"按钮查看任务详情
 
-        # 更新AI推理数据摘要
+        # 更新AI推理数据摘要 (保留用于兼容性)
         self.update_ai_summary(summary)
 
-        # 任务详情表格已移除,用户通过"确认/修正任务完成度"按钮查看详情
-        # 行为摘要已移除,统一在今日回放窗口中查看
-
     def update_ai_summary(self, summary: dict):
-        """更新AI推理数据摘要
+        """更新AI推理数据摘要 (已废弃,保留用于兼容性)
+
+        注: 今日统计页签已完全重构为自动推理模式(方案A)
+        AI推理数据通过 update_inference_ui() 方法实时更新
+        此方法保留仅为避免调用处报错
 
         Args:
             summary: 统计摘要数据
         """
-        # 检查是否有推理数据
-        if summary.get('data_source') == 'task_completions':
-            # 有推理数据
-            total_tasks = summary.get('total_tasks', 0)
-            high_confidence = summary.get('high_confidence_tasks', 0)
-            avg_completion = summary.get('avg_completion_percentage', 0)
-
-            # 计算待确认任务数
-            try:
-                from datetime import date
-                today = date.today().isoformat()
-                unconfirmed = db.get_unconfirmed_task_completions(today)
-                unconfirmed_count = len(unconfirmed) if unconfirmed else 0
-            except Exception:
-                unconfirmed_count = 0
-
-            # 更新标签
-            self.ai_inferred_label.setText(f"已推理: {total_tasks} 个任务")
-            self.ai_avg_completion_label.setText(f"平均完成度: {avg_completion}%")
-            self.ai_high_confidence_label.setText(f"高置信度: {high_confidence} 个")
-            self.ai_unconfirmed_label.setText(f"待确认: {unconfirmed_count} 个")
-
-            # 如果有待确认任务,高亮显示
-            if unconfirmed_count > 0:
-                self.ai_unconfirmed_label.setStyleSheet(
-                    f"font-size: {LightTheme.FONT_SUBTITLE}px; color: {LightTheme.ACCENT_RED}; font-weight: bold; "
-                    f"background-color: {LightTheme.with_opacity(LightTheme.ACCENT_RED, 0.1)}; "
-                    f"padding: 5px; border-radius: {LightTheme.RADIUS_SMALL}px;"
-                )
-            else:
-                self.ai_unconfirmed_label.setStyleSheet(
-                    f"font-size: {LightTheme.FONT_SUBTITLE}px; color: {LightTheme.ACCENT_GREEN}; font-weight: bold;"
-                )
-
-            # 更新提示文字
-            if avg_completion >= 80:
-                hint = "✨ 太棒了!今天的任务完成度很高!"
-            elif avg_completion >= 50:
-                hint = "💪 继续加油!完成度还不错!"
-            else:
-                hint = "📊 今天的完成度较低,确认后帮助AI更准确分析"
-
-            self.ai_accuracy_hint_label.setText(hint)
-
-        else:
-            # 无推理数据,显示提示
-            self.ai_inferred_label.setText("今日尚未生成推理数据")
-            self.ai_avg_completion_label.setText("平均完成度: --")
-            self.ai_high_confidence_label.setText("高置信度: --")
-            self.ai_unconfirmed_label.setText("待确认: --")
-            self.ai_accuracy_hint_label.setText(
-                "💡 提示: 每晚21:00自动生成推理,或点击下方按钮手动触发"
-            )
+        # 不再更新UI,自动推理引擎会通过信号槽实时更新
+        pass
 
     # update_behavior_summary() 方法已移除
     # 行为摘要数据统一在今日回放窗口中查看,不再在统计报告中显示
@@ -1636,14 +1588,43 @@ class StatisticsWindow(QWidget):
                     # 获取调度器实例 (从 main window)
                     main_window = self.parent()
                     self.logger.info(f"[手动推理] parent类型: {type(main_window).__name__}")
-                    self.logger.info(f"[手动推理] parent有task_completion_scheduler属性吗? {hasattr(main_window, 'task_completion_scheduler')}")
+
+                    # 详细诊断
                     if not hasattr(main_window, 'task_completion_scheduler'):
                         self.logger.error("[手动推理] 未找到任务完成推理调度器")
+                        self.logger.error(f"[手动推理] parent属性列表: {dir(main_window)[:10]}...")
+
+                        # 生成详细错误信息
+                        error_msg = (
+                            "AI推理功能暂时不可用\n\n"
+                            "可能原因:\n"
+                            "1. 任务追踪系统初始化失败\n"
+                            "2. 应用刚启动,系统组件正在加载中\n"
+                            "3. 配置文件缺少必要参数\n\n"
+                            "建议操作:\n"
+                            "• 重启应用再试\n"
+                            "• 检查系统日志(gaiya.log)\n"
+                            "• 如问题持续,请联系技术支持"
+                        )
+
                         # 发射信号通知推理失败
-                        self.inference_completed.emit(False, "未找到任务完成推理调度器,请检查配置")
+                        self.inference_completed.emit(False, error_msg)
                         return
 
                     scheduler = main_window.task_completion_scheduler
+
+                    # 检查调度器是否正常初始化
+                    if not scheduler or not hasattr(scheduler, '_run_daily_inference'):
+                        self.logger.error("[手动推理] 调度器未正确初始化")
+                        error_msg = (
+                            "AI推理功能未正确初始化\n\n"
+                            "请检查:\n"
+                            "1. 应用是否完全启动\n"
+                            "2. 系统日志中是否有错误信息\n"
+                            "3. 数据库文件是否正常"
+                        )
+                        self.inference_completed.emit(False, error_msg)
+                        return
 
                     # 直接调用内部方法执行推理
                     self.logger.info(f"[手动推理] 调用调度器执行推理")
@@ -1936,77 +1917,65 @@ class StatisticsWindow(QWidget):
         return chart_view
 
     def create_category_pie_chart(self) -> QChartView:
-        """创建任务分类分布饼图(最近7天)
+        """创建任务颜色分布饼图(本周)
 
         Returns:
             QChartView: 饼图视图组件
         """
-        # 获取分类统计数据
-        category_data = self.stats_manager.get_category_distribution(days=7)
+        # 获取本周任务颜色分布数据
+        color_distribution = self.stats_manager.get_task_color_distribution(date_range="week")
 
         # 如果没有数据,显示空图表
-        if not category_data or sum(cat['count'] for cat in category_data.values()) == 0:
+        if not color_distribution or len(color_distribution) == 0:
             series = QPieSeries()
             series.append("暂无数据", 1)
             slice = series.slices()[0]
             slice.setBrush(QColor(LightTheme.TEXT_TERTIARY))
             slice.setLabelVisible(True)
+            slice.setLabelFont(QFont("Microsoft YaHei", LightTheme.FONT_SMALL))
         else:
             # 创建饼图系列
             series = QPieSeries()
 
-            # 定义分类对应的颜色（使用主题色系）
-            category_colors = {
-                '工作': LightTheme.ACCENT_BLUE,      # 蓝色 - 工作
-                '学习': LightTheme.ACCENT_PURPLE,    # 紫色 - 学习
-                '运动': LightTheme.ACCENT_GREEN,     # 绿色 - 运动
-                '饮食': LightTheme.ACCENT_ORANGE,    # 橙色 - 饮食
-                '休息': '#90CAF9',                    # 浅蓝色 - 休息
-                '娱乐': '#CE93D8',                    # 浅紫色 - 娱乐
-                '通勤': '#A1887F',                    # 棕色 - 通勤
-                '其他': LightTheme.TEXT_TERTIARY     # 灰色 - 其他
-            }
-
-            # 定义分类对应的emoji
-            category_emoji = {
-                '工作': '🏢',
+            # 定义颜色标签对应的emoji
+            label_emoji = {
+                '工作': '💼',
                 '学习': '📚',
-                '运动': '🏃',
-                '饮食': '🍽️',
-                '休息': '😴',
+                '生活': '🏠',
                 '娱乐': '🎮',
-                '通勤': '🚗',
-                '其他': '🔧'
+                '运动': '🏃',
+                '重要': '⭐',
+                '社交': '👥',
+                '休闲': '☕',
+                '其他': '📌'
             }
-
-            # 按任务数量排序
-            sorted_categories = sorted(category_data.items(),
-                                      key=lambda x: x[1]['count'],
-                                      reverse=True)
 
             # 添加数据到饼图
-            for category_name, stats in sorted_categories:
-                count = stats['count']
-                percentage = (count / sum(cat['count'] for cat in category_data.values())) * 100
+            total_tasks = sum(item['count'] for item in color_distribution)
 
-                # 只显示占比超过3%的分类，其余归入"其他"
-                if percentage < 3 and category_name != '其他':
+            for item in color_distribution:
+                label = item['label']
+                count = item['count']
+                percentage = item['percentage']
+                color = item['color']
+
+                # 只显示占比超过3%的分类
+                if percentage < 3.0:
                     continue
 
-                # 设置标签：emoji + 分类名 + 任务数
-                emoji = category_emoji.get(category_name, '📌')
-                label = f"{emoji} {category_name} ({count})"
+                # 设置标签：emoji + 分类名 + 任务数 + 百分比
+                emoji = label_emoji.get(label, '📌')
+                slice_label = f"{emoji} {label} ({count}个, {percentage:.1f}%)"
 
-                slice = series.append(label, count)
+                slice = series.append(slice_label, count)
                 slice.setLabelVisible(True)
                 slice.setLabelFont(QFont("Microsoft YaHei", LightTheme.FONT_SMALL))
 
-                # 设置扇形颜色
-                color = category_colors.get(category_name, LightTheme.TEXT_SECONDARY)
+                # 设置扇形颜色(使用任务实际颜色)
                 slice.setBrush(QColor(color))
 
                 # 高亮最大的分类（爆炸效果）
-                if sorted_categories[0][0] == category_name:
+                if item == color_distribution[0]:  # 第一个是最大的(已排序)
                     slice.setExploded(True)
                     slice.setExplodeDistanceFactor(0.1)
 

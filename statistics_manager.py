@@ -779,6 +779,85 @@ class StatisticsManager:
 
         return trend_data
 
+    def get_task_color_distribution(self, date_range: str = "today") -> List[Dict]:
+        """获取任务颜色分布统计(用于饼图)
+
+        Args:
+            date_range: 统计范围, "today"(今日) / "week"(本周) / "month"(本月)
+
+        Returns:
+            List[Dict]: 颜色分布数据列表,每个元素包含:
+                - color: 颜色代码 (例如: "#4CAF50")
+                - label: 颜色标签 (例如: "工作")
+                - count: 任务数量
+                - percentage: 百分比 (0-100)
+        """
+        # 定义颜色标签映射 (与config_gui.py中的保持一致)
+        COLOR_LABELS = {
+            "#4CAF50": "工作",      # 绿色
+            "#2196F3": "学习",      # 蓝色
+            "#FF9800": "生活",      # 橙色
+            "#E91E63": "娱乐",      # 粉色
+            "#9C27B0": "运动",      # 紫色
+            "#FF5722": "重要",      # 红色
+            "#00BCD4": "社交",      # 青色
+            "#FFEB3B": "休闲",      # 黄色
+            "#795548": "其他",      # 棕色
+        }
+
+        # 统计任务颜色
+        color_counts = defaultdict(int)
+        total_tasks = 0
+
+        if date_range == "today":
+            # 今日任务
+            today_str = date.today().isoformat()
+            if today_str in self.statistics["daily_records"]:
+                tasks = self.statistics["daily_records"][today_str].get("tasks", {})
+                for task_info in tasks.values():
+                    color = task_info.get("color", "#795548")
+                    color_counts[color] += 1
+                    total_tasks += 1
+
+        elif date_range == "week":
+            # 本周任务 (最近7天)
+            today = date.today()
+            for i in range(7):
+                target_date = (today - timedelta(days=i)).isoformat()
+                if target_date in self.statistics["daily_records"]:
+                    tasks = self.statistics["daily_records"][target_date].get("tasks", {})
+                    for task_info in tasks.values():
+                        color = task_info.get("color", "#795548")
+                        color_counts[color] += 1
+                        total_tasks += 1
+
+        elif date_range == "month":
+            # 本月任务 (最近30天)
+            today = date.today()
+            for i in range(30):
+                target_date = (today - timedelta(days=i)).isoformat()
+                if target_date in self.statistics["daily_records"]:
+                    tasks = self.statistics["daily_records"][target_date].get("tasks", {})
+                    for task_info in tasks.values():
+                        color = task_info.get("color", "#795548")
+                        color_counts[color] += 1
+                        total_tasks += 1
+
+        # 构建结果列表
+        distribution = []
+        for color, count in sorted(color_counts.items(), key=lambda x: x[1], reverse=True):
+            label = COLOR_LABELS.get(color, "其他")
+            percentage = (count / total_tasks * 100) if total_tasks > 0 else 0
+
+            distribution.append({
+                'color': color,
+                'label': label,
+                'count': count,
+                'percentage': percentage
+            })
+
+        return distribution
+
     def _classify_task(self, task_name: str) -> str:
         """根据任务名称对任务进行分类
 

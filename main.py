@@ -1413,6 +1413,24 @@ class TimeProgressBar(QWidget):
             self.task_completion_scheduler.start()
             self.logger.info("任务完成推理调度器已启动")
 
+            # 初始化自动推理引擎 (方案A: 全自动推理模式)
+            self.logger.info("开始初始化自动推理引擎...")
+            from gaiya.core.auto_inference_engine import AutoInferenceEngine
+
+            self.auto_inference_engine = AutoInferenceEngine(
+                db_manager=db,
+                behavior_analyzer=None,  # 可选,未来可集成
+                interval_minutes=5       # 每5分钟推理一次
+            )
+
+            # 连接信号槽
+            self.auto_inference_engine.inference_completed.connect(self._on_inference_completed)
+            self.auto_inference_engine.inference_failed.connect(self._on_inference_failed)
+
+            # 启动引擎
+            self.auto_inference_engine.start()
+            self.logger.info("自动推理引擎已启动 (间隔: 5分钟)")
+
         except Exception as e:
             self.logger.error(f"任务完成追踪系统初始化异常: {e}", exc_info=True)
 
@@ -1768,6 +1786,66 @@ class TimeProgressBar(QWidget):
 
         except Exception as e:
             self.logger.error(f"学习反馈失败: {e}", exc_info=True)
+
+    def _on_inference_completed(self, inferred_tasks: list):
+        """
+        自动推理完成回调 (方案A)
+
+        Args:
+            inferred_tasks: 推理任务列表
+                [{
+                    'name': str,
+                    'type': str,
+                    'confidence': float,
+                    'start_time': str,
+                    'end_time': str,
+                    'duration_minutes': int,
+                    'apps': list,
+                    'auto_generated': bool
+                }]
+        """
+        try:
+            self.logger.info(f"[自动推理] 推理完成: {len(inferred_tasks)} 个任务")
+
+            # 记录推理摘要
+            if inferred_tasks:
+                avg_confidence = sum(t['confidence'] for t in inferred_tasks) / len(inferred_tasks)
+                self.logger.info(
+                    f"[自动推理] 平均置信度: {avg_confidence:.1%}, "
+                    f"任务类型分布: {self._get_task_type_summary(inferred_tasks)}"
+                )
+
+            # TODO: 未来可以在这里添加通知功能
+            # 例如: 推理出重要任务时,发送托盘通知
+
+        except Exception as e:
+            self.logger.error(f"[自动推理] 处理推理结果失败: {e}", exc_info=True)
+
+    def _on_inference_failed(self, error_msg: str):
+        """
+        自动推理失败回调 (方案A)
+
+        Args:
+            error_msg: 错误信息
+        """
+        self.logger.error(f"[自动推理] 推理失败: {error_msg}")
+
+        # TODO: 未来可以添加错误通知
+        # 例如: 连续失败3次以上时,发送托盘通知
+
+    def _get_task_type_summary(self, tasks: list) -> str:
+        """
+        获取任务类型分布摘要
+
+        Args:
+            tasks: 任务列表
+
+        Returns:
+            类型分布摘要字符串,如: "work:3, learning:1"
+        """
+        from collections import Counter
+        type_counts = Counter(task['type'] for task in tasks)
+        return ", ".join(f"{t}:{c}" for t, c in type_counts.items())
 
     def show_statistics(self):
         """显示统计报告窗口"""
