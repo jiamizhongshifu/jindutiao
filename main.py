@@ -32,6 +32,7 @@ from scene_editor import SceneEditorWindow
 from gaiya.core.pomodoro_state import PomodoroState
 from gaiya.core.notification_manager import NotificationManager
 from gaiya.ui.pomodoro_panel import PomodoroPanel, PomodoroSettingsDialog
+from gaiya.ui.components import RichToolTip
 from gaiya.data.db_manager import db
 from gaiya.utils import time_utils, path_utils, data_loader, task_calculator, window_utils
 from gaiya.utils.time_block_utils import generate_time_block_id, legacy_time_block_keys
@@ -79,6 +80,13 @@ class TimeProgressBar(QWidget):
         self.current_time_percentage = 0.0  # 初始化时间百分比
         self.hovered_task_index = -1  # 当前悬停的任务索引(-1表示没有悬停)
         self.is_mouse_over_progress_bar = False  # 鼠标是否在进度条上（用于控制标记图片显示）
+
+        # 初始化富文本悬停提示
+        self.rich_tooltip = RichToolTip(self)
+        self.tooltip_delay_timer = QTimer()
+        self.tooltip_delay_timer.setSingleShot(True)
+        self.tooltip_delay_timer.timeout.connect(self._show_rich_tooltip)
+        self.tooltip_delay_ms = 300  # 300ms 延迟显示
 
         # 编辑模式状态管理
         self.edit_mode = False  # 编辑模式标志
@@ -987,6 +995,60 @@ class TimeProgressBar(QWidget):
 
         # Always update tooltip to ensure it's fresh
         self.setToolTip(tooltip_text)
+
+    def _show_rich_tooltip(self):
+        """延迟显示富文本悬停提示"""
+        if self.hovered_task_index == -1:
+            return
+
+        # 获取当前悬停的任务
+        if self.hovered_task_index < len(self.tasks):
+            task = self.tasks[self.hovered_task_index]
+
+            # 更新提示内容
+            self.rich_tooltip.set_task(task)
+
+            # 计算提示位置
+            cursor_pos = QCursor.pos()
+            tooltip_pos = self._calculate_tooltip_position(cursor_pos)
+
+            # 显示提示
+            self.rich_tooltip.show_animated(tooltip_pos)
+
+    def _calculate_tooltip_position(self, cursor_pos):
+        """计算富文本提示的显示位置
+
+        优先显示在任务块上方,避免遮挡内容
+
+        Args:
+            cursor_pos: 鼠标全局位置 (QPoint)
+
+        Returns:
+            QPoint: 提示框显示位置
+        """
+        tooltip_width = self.rich_tooltip.width()
+        tooltip_height = self.rich_tooltip.height()
+
+        # 获取主窗口全局位置
+        window_global_pos = self.mapToGlobal(QPoint(0, 0))
+        window_height = self.height()
+
+        # 默认位置: 鼠标上方 20px
+        x = cursor_pos.x() - tooltip_width // 2
+        y = window_global_pos.y() - tooltip_height - 10
+
+        # 确保不超出屏幕左右边界
+        screen = QApplication.primaryScreen().geometry()
+        if x < 0:
+            x = 0
+        elif x + tooltip_width > screen.width():
+            x = screen.width() - tooltip_width
+
+        # 如果上方空间不足,显示在下方
+        if y < 0:
+            y = window_global_pos.y() + window_height + 10
+
+        return QPoint(x, y)
 
     def _start_focus_work(self, task):
         """Start focus work mode for a task."""
@@ -2639,6 +2701,15 @@ class TimeProgressBar(QWidget):
         # 如果悬停任务改变,触发重绘
         if old_hovered_index != self.hovered_task_index:
             self.update()
+            # 处理富文本悬停提示
+            if self.hovered_task_index != -1:
+                # 启动延迟显示定时器
+                self.tooltip_delay_timer.start(self.tooltip_delay_ms)
+            else:
+                # 鼠标离开任务,隐藏提示
+                self.tooltip_delay_timer.stop()
+                if self.rich_tooltip.isVisible():
+                    self.rich_tooltip.hide_animated()
 
         # 场景事件检测(hover)
         scene_config = self.scene_manager.get_current_scene_config()
@@ -2671,6 +2742,12 @@ class TimeProgressBar(QWidget):
         if self.hovered_task_index != -1:
             self.hovered_task_index = -1
             self.update()
+
+        # 隐藏富文本悬停提示
+        self.tooltip_delay_timer.stop()
+        if self.rich_tooltip.isVisible():
+            self.rich_tooltip.hide_animated()
+
         # 清除编辑模式的悬停状态
         if self.edit_mode and self.hover_edge is not None:
             self.hover_edge = None
