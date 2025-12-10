@@ -1544,6 +1544,20 @@ class ConfigManager(QMainWindow):
         # 主布局
         layout = QVBoxLayout(central_widget)
 
+        # 添加AI功能横幅 (可关闭)
+        from gaiya.ui.components import AiFeatureBanner
+        self.ai_banner = AiFeatureBanner(self)
+        self.ai_banner.ai_generate_clicked.connect(self.on_banner_ai_clicked)
+        self.ai_banner.learn_more_clicked.connect(self.on_banner_learn_more)
+        self.ai_banner.close_clicked.connect(self.on_banner_closed)
+
+        # 检查是否已关闭横幅(从配置读取)
+        banner_closed = self.config.get('ai_banner_closed', False)
+        if banner_closed:
+            self.ai_banner.hide()
+
+        layout.addWidget(self.ai_banner)
+
         # 创建标签页(使用懒加载,只在切换到标签页时才创建内容)
         tabs = QTabWidget()
 
@@ -8772,6 +8786,83 @@ class ConfigManager(QMainWindow):
             # 恢复按钮状态
             self.generate_btn.setEnabled(True)
             self.generate_btn.setText(self.i18n.tr("account.ui.ai_smart_generate"))
+
+    def on_banner_ai_clicked(self):
+        """横幅AI生成按钮点击"""
+        # 打开改进版AI生成对话框
+        from gaiya.ui.components import ImprovedAIGenerationDialog
+
+        dialog = ImprovedAIGenerationDialog(self)
+        dialog.generation_requested.connect(self.on_improved_ai_generation)
+        dialog.exec()
+
+    def on_improved_ai_generation(self, prompt: str):
+        """改进版AI对话框生成请求"""
+        # 首先检查是否已登录
+        if not self._check_login_and_guide(self.i18n.tr("config.ai.title")):
+            return
+
+        # 检查AI配额
+        if not self._check_ai_quota():
+            return
+
+        # 检查是否有正在运行的任务
+        if self.ai_worker is not None and self.ai_worker.isRunning():
+            QMessageBox.warning(
+                self,
+                "请稍候",
+                "AI正在处理上一个请求,请稍候..."
+            )
+            return
+
+        # 检查后端服务器
+        if not hasattr(self, 'ai_client') or not self.ai_client:
+            QMessageBox.warning(
+                self,
+                "AI服务正在初始化",
+                "AI服务正在后台启动中,请稍候片刻再试...",
+                QMessageBox.Ok
+            )
+            return
+
+        # 创建并启动工作线程
+        self.ai_worker = AIWorker(self.ai_client, prompt)
+
+        # 使用lambda包装回调
+        def on_finished(result):
+            self.on_ai_generation_finished(result)
+            self.ai_worker.finished.disconnect()
+            self.ai_worker.error.disconnect()
+            self.ai_worker.deleteLater()
+            self.ai_worker = None
+
+        def on_error(error_msg):
+            self.on_ai_generation_error(error_msg)
+            self.ai_worker.finished.disconnect()
+            self.ai_worker.error.disconnect()
+            self.ai_worker.deleteLater()
+            self.ai_worker = None
+
+        self.ai_worker.finished.connect(on_finished)
+        self.ai_worker.error.connect(on_error)
+        self.ai_worker.start()
+
+        # 显示进度对话框
+        self.logger.info(f"开始AI生成任务,prompt长度: {len(prompt)}")
+
+    def on_banner_learn_more(self):
+        """横幅了解更多点击"""
+        # 切换到账户标签页的AI说明区域
+        if self.tabs:
+            # 个人中心在索引5
+            self.tabs.setCurrentIndex(5)
+
+    def on_banner_closed(self):
+        """横幅关闭按钮点击"""
+        # 保存到配置
+        self.config['ai_banner_closed'] = True
+        self.save_config()
+        self.logger.info("AI功能横幅已关闭")
 
     def create_about_tab(self):
         """创建关于标签页"""

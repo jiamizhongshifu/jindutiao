@@ -110,6 +110,8 @@ a = Analysis(
         ('gaiya/data/behavior_danmaku.json', 'gaiya/data/'),
         ('gaiya/data/app_rules.json', 'gaiya/data/'),
         ('gaiya/data/domain_rules.json', 'gaiya/data/'),
+        # AI场景预设配置文件
+        ('gaiya/data/ai_scene_presets.json', 'gaiya/data/'),
         # 默认时间标记动图（向后兼容旧版本，保留根目录的kun.webp）
         ('kun.webp', '.'),
         ('kun.gif', '.'),
