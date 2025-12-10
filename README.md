@@ -522,6 +522,58 @@ datas=[
 
 ## 🔄 最新更新
 
+### v1.6.13 (2025-12-10) - 统计报告界面优化 📊
+
+#### 🎨 UI修复与优化
+
+- ✅ **表格序号字体修复** - 解决序号列使用特殊字体显示异常的问题
+  - 分离水平表头(列标题)和垂直表头(行号)样式
+  - 统一使用系统标准字体: "Microsoft YaHei", "Segoe UI", Arial, sans-serif
+  - 修复 `apply_theme()` 方法覆盖表格创建时样式的问题
+  - 影响范围: 本周统计、本月统计、任务分类三个标签页
+
+- ✅ **成就展示优化** - 未解锁成就现在完整展示给用户
+  - 移除 "???" 和 "解锁后可见" 的隐藏逻辑
+  - 未解锁成就显示完整名称和描述信息
+  - 使用灰色文本视觉区分已解锁/未解锁状态
+  - 添加调试日志记录成就统计信息
+  - 空状态显示: "🎉 恭喜!你已解锁所有成就!"
+
+#### 🔧 技术实现
+
+- 📁 **修复文件**: [statistics_gui.py](statistics_gui.py)
+  - 行 1076-1091, 1247-1262, 1302-1318: 表格创建时样式设置
+  - 行 1600-1615: `apply_theme()` 方法样式统一
+  - 行 2720-2746: 成就展示逻辑优化
+  - 行 2854-2856, 2878-2881: 成就卡片文本显示
+
+- 🎯 **关键修复**:
+  ```python
+  # 表头样式分离
+  QHeaderView::section {
+      font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+  }
+  QHeaderView:horizontal::section {  # 列标题
+      border-bottom: 2px solid ...;
+  }
+  QHeaderView:vertical::section {  # 行号
+      border-right: 1px solid ...;
+      text-align: center;
+  }
+
+  # 成就始终显示
+  name_label = QLabel(achievement.name)  # 不再隐藏
+  desc_label = QLabel(achievement.description)  # 完整描述
+  ```
+
+#### 💡 用户体验提升
+
+- 📊 **表格可读性**: 序号使用标准字体,不再出现特殊字符显示异常
+- 🏆 **成就激励**: 用户可清楚看到所有未解锁成就的解锁条件
+- 🎯 **目标明确**: 知道还有哪些成就可以挑战,提升使用动力
+
+---
+
 ### v1.6.12 (2025-12-08) - 行为识别 × 弹幕系统 🔍💬
 
 #### 🧠 智能行为识别系统

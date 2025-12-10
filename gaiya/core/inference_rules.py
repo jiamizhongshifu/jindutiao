@@ -20,7 +20,7 @@
 INFERENCE_RULES = {
     # ==================== 开发相关 ====================
     'coding_python': {
-        'apps': ['pycharm', 'vscode'],
+        'apps': ['pycharm', 'vscode', 'cursor'],  # 添加 Cursor 支持
         'concurrent_apps': ['chrome', 'firefox', 'edge'],
         'domains': ['github.com', 'stackoverflow.com', 'localhost'],
         'task_name': 'Python开发',
@@ -29,7 +29,7 @@ INFERENCE_RULES = {
     },
 
     'coding_web': {
-        'apps': ['vscode', 'sublime text', 'webstorm'],
+        'apps': ['vscode', 'sublime text', 'webstorm', 'cursor'],  # 添加 Cursor 支持
         'concurrent_apps': ['chrome', 'firefox'],
         'domains': ['github.com', 'stackoverflow.com', 'localhost'],
         'task_name': 'Web开发',

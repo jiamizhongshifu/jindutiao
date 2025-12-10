@@ -667,22 +667,17 @@ class StatisticsWindow(QWidget):
         info_layout = QVBoxLayout()
 
         # 任务名称
-        task_name = task.get('name', '未知任务')
-        name_label = QLabel(f"📋 {task_name}")
+        name_label = QLabel(f"📋 {task['name']}")
         name_label.setStyleSheet(f"font-weight: bold; color: {LightTheme.TEXT_PRIMARY}; font-size: {LightTheme.FONT_BODY}px;")
         info_layout.addWidget(name_label)
 
         # 时间范围 + 时长
-        start_time = task.get('start_time', '--:--')
-        end_time = task.get('end_time', '--:--')
-        duration = task.get('duration_minutes', 0)
-        time_label = QLabel(f"⏰ {start_time} - {end_time} ({duration}分钟)")
+        time_label = QLabel(f"⏰ {task['start_time']} - {task['end_time']} ({task['duration_minutes']}分钟)")
         time_label.setStyleSheet(f"color: {LightTheme.TEXT_SECONDARY}; font-size: {LightTheme.FONT_SMALL}px;")
         info_layout.addWidget(time_label)
 
         # 相关应用
-        apps = task.get('apps', [])
-        apps_text = ", ".join(apps[:3]) if apps else "无"
+        apps_text = ", ".join(task['apps'][:3])
         apps_label = QLabel(f"💻 应用: {apps_text}")
         apps_label.setStyleSheet(f"color: {LightTheme.TEXT_HINT}; font-size: {LightTheme.FONT_SMALL}px;")
         info_layout.addWidget(apps_label)
@@ -690,7 +685,7 @@ class StatisticsWindow(QWidget):
         layout.addLayout(info_layout, 1)
 
         # 右侧: 置信度标签 (友好化显示)
-        confidence = task.get('confidence', 0.0)
+        confidence = task['confidence']
 
         # 根据置信度设置不同的文案和颜色
         if confidence >= 0.9:
@@ -1061,34 +1056,6 @@ class StatisticsWindow(QWidget):
         ])
         self.weekly_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.weekly_table.setAlternatingRowColors(True)
-        self.weekly_table.setStyleSheet(f"""
-            QTableWidget {{
-                background-color: {LightTheme.BG_PRIMARY};
-                border: 1px solid {LightTheme.BORDER_LIGHT};
-                border-radius: {LightTheme.RADIUS_MEDIUM}px;
-                gridline-color: {LightTheme.BORDER_LIGHT};
-                color: {LightTheme.TEXT_PRIMARY};
-            }}
-            QTableWidget::item {{
-                padding: 8px;
-                color: {LightTheme.TEXT_PRIMARY};
-            }}
-            QHeaderView::section {{
-                background-color: {LightTheme.BG_SECONDARY};
-                color: {LightTheme.TEXT_PRIMARY};
-                padding: 8px;
-                border: none;
-                font-weight: bold;
-                font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
-            }}
-            QHeaderView:horizontal::section {{
-                border-bottom: 2px solid {LightTheme.ACCENT_BLUE};
-            }}
-            QHeaderView:vertical::section {{
-                border-right: 1px solid {LightTheme.BORDER_LIGHT};
-                text-align: center;
-            }}
-        """)
 
         trend_layout.addWidget(self.weekly_table)
         content_layout.addWidget(trend_group)
@@ -1109,20 +1076,9 @@ class StatisticsWindow(QWidget):
         # 创建滚动区域
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QScrollArea.NoFrame)
-        scroll.setStyleSheet(f"""
-            QScrollArea {{
-                background-color: {LightTheme.BG_PRIMARY};
-                border: none;
-            }}
-        """)
+        # 样式将在 apply_theme 中设置
 
         content_widget = QWidget()
-        content_widget.setStyleSheet(f"""
-            QWidget {{
-                background-color: {LightTheme.BG_PRIMARY};
-            }}
-        """)
         content_layout = QVBoxLayout(content_widget)
         content_layout.setSpacing(15)  # 设置组件之间的间距
         content_layout.setContentsMargins(15, 15, 15, 15)  # 设置内容边距
@@ -1242,34 +1198,6 @@ class StatisticsWindow(QWidget):
         ])
         self.monthly_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.monthly_table.setAlternatingRowColors(True)
-        self.monthly_table.setStyleSheet(f"""
-            QTableWidget {{
-                background-color: {LightTheme.BG_PRIMARY};
-                border: 1px solid {LightTheme.BORDER_LIGHT};
-                border-radius: {LightTheme.RADIUS_MEDIUM}px;
-                gridline-color: {LightTheme.BORDER_LIGHT};
-                color: {LightTheme.TEXT_PRIMARY};
-            }}
-            QTableWidget::item {{
-                padding: 8px;
-                color: {LightTheme.TEXT_PRIMARY};
-            }}
-            QHeaderView::section {{
-                background-color: {LightTheme.BG_SECONDARY};
-                color: {LightTheme.TEXT_PRIMARY};
-                padding: 8px;
-                border: none;
-                font-weight: bold;
-                font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
-            }}
-            QHeaderView:horizontal::section {{
-                border-bottom: 2px solid {LightTheme.ACCENT_BLUE};
-            }}
-            QHeaderView:vertical::section {{
-                border-right: 1px solid {LightTheme.BORDER_LIGHT};
-                text-align: center;
-            }}
-        """)
 
         daily_layout.addWidget(self.monthly_table)
         content_layout.addWidget(daily_group)
@@ -1304,34 +1232,6 @@ class StatisticsWindow(QWidget):
         ])
         self.tasks_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.tasks_table.setAlternatingRowColors(True)
-        self.tasks_table.setStyleSheet(f"""
-            QTableWidget {{
-                background-color: {LightTheme.BG_PRIMARY};
-                border: 1px solid {LightTheme.BORDER_LIGHT};
-                border-radius: {LightTheme.RADIUS_MEDIUM}px;
-                gridline-color: {LightTheme.BORDER_LIGHT};
-                color: {LightTheme.TEXT_PRIMARY};
-            }}
-            QTableWidget::item {{
-                padding: 8px;
-                color: {LightTheme.TEXT_PRIMARY};
-            }}
-            QHeaderView::section {{
-                background-color: {LightTheme.BG_SECONDARY};
-                color: {LightTheme.TEXT_PRIMARY};
-                padding: 8px;
-                border: none;
-                font-weight: bold;
-                font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
-            }}
-            QHeaderView:horizontal::section {{
-                border-bottom: 2px solid {LightTheme.ACCENT_BLUE};
-            }}
-            QHeaderView:vertical::section {{
-                border-right: 1px solid {LightTheme.BORDER_LIGHT};
-                text-align: center;
-            }}
-        """)
 
         layout.addWidget(self.tasks_table)
 
@@ -1577,7 +1477,6 @@ class StatisticsWindow(QWidget):
             scroll.setStyleSheet(f"QScrollArea {{ border: none; background: {LightTheme.BG_PRIMARY}; }}")
 
         # 优化表格样式 - MacOS极简风格
-        # 注意: 统计界面始终使用浅色背景,所以文字颜色固定使用 LightTheme.TEXT_PRIMARY
         for table in self.findChildren(QTableWidget):
             table.setStyleSheet(f"""
                 QTableWidget {{
@@ -1585,33 +1484,25 @@ class StatisticsWindow(QWidget):
                     border-radius: {LightTheme.RADIUS_SMALL}px;
                     gridline-color: {LightTheme.BORDER_LIGHT};
                     background-color: {LightTheme.BG_PRIMARY};
-                    color: {LightTheme.TEXT_PRIMARY};
+                    color: {text_color};
                     selection-background-color: {LightTheme.with_opacity(LightTheme.ACCENT_BLUE, 0.1)};
                     selection-color: {LightTheme.TEXT_PRIMARY};
                 }}
                 QTableWidget::item {{
                     padding: 8px;
                     border-bottom: 1px solid {LightTheme.BORDER_LIGHT};
-                    color: {LightTheme.TEXT_PRIMARY};
                 }}
                 QTableWidget::item:hover {{
                     background-color: {LightTheme.BG_HOVER};
                 }}
                 QHeaderView::section {{
                     background-color: {LightTheme.BG_TERTIARY};
-                    color: {LightTheme.TEXT_PRIMARY};
+                    color: {text_color};
                     padding: 10px;
                     border: none;
+                    border-bottom: 2px solid {LightTheme.BORDER_LIGHT};
                     font-weight: bold;
                     font-size: {LightTheme.FONT_SMALL}pt;
-                    font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
-                }}
-                QHeaderView:horizontal::section {{
-                    border-bottom: 2px solid {LightTheme.BORDER_LIGHT};
-                }}
-                QHeaderView:vertical::section {{
-                    border-right: 1px solid {LightTheme.BORDER_LIGHT};
-                    text-align: center;
                 }}
             """)
 
@@ -2744,33 +2635,19 @@ class StatisticsWindow(QWidget):
 
             content_layout.addWidget(unlocked_group)
 
-        # 未解锁成就 (始终显示,即使为空)
+        # 未解锁成就
         locked_achievements = self.achievement_manager.get_locked_achievements()
-
-        # Debug logging
-        all_achievements = self.achievement_manager.get_all_achievements()
-        unlocked_count = len(unlocked_achievements)
-        locked_count = len(locked_achievements)
-        total_count = len(all_achievements)
-        self.logger.info(f"成就统计: 总数={total_count}, 已解锁={unlocked_count}, 未解锁={locked_count}")
-
-        locked_group = QGroupBox(f"🔒 未解锁成就 ({len(locked_achievements)}个)")
-        locked_group.setStyleSheet(f"QGroupBox::title {{ color: {LightTheme.TEXT_PRIMARY}; font-weight: bold; font-size: {LightTheme.FONT_SUBTITLE}px; }}")
-        locked_layout = QVBoxLayout(locked_group)
-        locked_layout.setSpacing(10)
-
         if locked_achievements:
+            locked_group = QGroupBox(f"🔒 未解锁成就 ({len(locked_achievements)}个)")
+            locked_group.setStyleSheet(f"QGroupBox::title {{ color: {LightTheme.TEXT_PRIMARY}; font-weight: bold; font-size: {LightTheme.FONT_SUBTITLE}px; }}")
+            locked_layout = QVBoxLayout(locked_group)
+            locked_layout.setSpacing(10)
+
             for achievement in locked_achievements:
                 achievement_card = self._create_achievement_card(achievement, unlocked=False)
                 locked_layout.addWidget(achievement_card)
-        else:
-            # 如果所有成就都解锁了,显示祝贺信息
-            congrats_label = QLabel("🎉 恭喜!你已解锁所有成就!")
-            congrats_label.setStyleSheet(f"color: {LightTheme.TEXT_SECONDARY}; font-size: {LightTheme.FONT_BODY}px; padding: 20px;")
-            congrats_label.setAlignment(Qt.AlignCenter)
-            locked_layout.addWidget(congrats_label)
 
-        content_layout.addWidget(locked_group)
+            content_layout.addWidget(locked_group)
 
         content_layout.addStretch()
         scroll.setWidget(content_widget)
@@ -2857,8 +2734,8 @@ class StatisticsWindow(QWidget):
 
         # 名称和稀有度
         name_layout = QHBoxLayout()
-        name_label = QLabel(achievement.name)  # 始终显示成就名称
-        name_label.setStyleSheet(f"font-size: {LightTheme.FONT_SUBTITLE}px; font-weight: bold; color: {LightTheme.TEXT_PRIMARY if unlocked else LightTheme.TEXT_SECONDARY};")
+        name_label = QLabel(achievement.name if unlocked else "???")
+        name_label.setStyleSheet(f"font-size: {LightTheme.FONT_SUBTITLE}px; font-weight: bold; color: {LightTheme.TEXT_PRIMARY if unlocked else LightTheme.TEXT_HINT};")
         name_layout.addWidget(name_label)
 
         # 稀有度标签: 移除背景色,使用彩色文本
@@ -2881,9 +2758,9 @@ class StatisticsWindow(QWidget):
         info_layout.addLayout(name_layout)
 
         # 描述
-        desc_label = QLabel(achievement.description)  # 始终显示成就描述
+        desc_label = QLabel(achievement.description if unlocked else "解锁后可见")
         desc_label.setWordWrap(True)
-        desc_label.setStyleSheet(f"color: {LightTheme.TEXT_PRIMARY if unlocked else LightTheme.TEXT_SECONDARY}; font-size: {LightTheme.FONT_SMALL}px;")
+        desc_label.setStyleSheet(f"color: {LightTheme.TEXT_SECONDARY if unlocked else LightTheme.TEXT_HINT}; font-size: {LightTheme.FONT_SMALL}px;")
         info_layout.addWidget(desc_label)
 
         # 解锁时间 (仅已解锁)
@@ -3145,10 +3022,6 @@ class StatisticsWindow(QWidget):
 
         if main_window and hasattr(main_window, 'auto_inference_engine'):
             engine = main_window.auto_inference_engine
-
-            # 保存引擎引用,供导出功能使用
-            self.auto_inference_engine = engine
-
             engine.inference_completed.connect(self.update_inference_ui)
             self.logger.info("已连接自动推理引擎信号")
 
@@ -3162,7 +3035,6 @@ class StatisticsWindow(QWidget):
             self._engine_connected = True
         else:
             self.logger.warning("未找到自动推理引擎,自动推理功能将不可用")
-            self.auto_inference_engine = None
 
     def showEvent(self, event):
         """窗口显示事件 - 延迟连接自动推理引擎"""
@@ -3194,149 +3066,150 @@ class StatisticsWindow(QWidget):
         except Exception as e:
             self.logger.error(f"Error in closeEvent: {e}", exc_info=True)
             super().closeEvent(event)
+# 导出功能 - 添加到 StatisticsWindow 类末尾
 
-    def export_work_log(self):
-        """导出工作日志为Markdown格式"""
-        from datetime import date, datetime
+def export_work_log(self):
+    """导出工作日志为Markdown格式"""
+    from datetime import date, datetime
 
-        today = date.today()
+    today = date.today()
 
-        try:
-            # 获取推理引擎的数据
-            if not hasattr(self, 'auto_inference_engine') or not self.auto_inference_engine:
-                QMessageBox.information(
-                    self,
-                    "提示",
-                    "推理引擎未启动,无法导出工作日志"
-                )
-                return
-
-            inferred_tasks = self.auto_inference_engine.inferred_tasks
-
-            if not inferred_tasks:
-                QMessageBox.information(
-                    self,
-                    "暂无数据",
-                    "今天还没有识别到工作任务。\n\n"
-                    "• AI推理每5分钟运行一次\n"
-                    "• 请确保有足够的应用使用时间(建议15分钟以上)\n\n"
-                    "💡 您也可以手动添加任务完成记录"
-                )
-                return
-
-            # 生成文件名
-            default_filename = f"工作日志_{today.strftime('%Y%m%d')}.md"
-
-            # 打开文件保存对话框
-            file_path, _ = QFileDialog.getSaveFileName(
-                self,
-                "导出工作日志",
-                default_filename,
-                "Markdown文件 (*.md);;所有文件 (*.*)"
-            )
-
-            if not file_path:
-                return  # 用户取消
-
-            # 生成Markdown内容
-            md_content = self._generate_work_log_markdown(inferred_tasks, today)
-
-            # 写入文件
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(md_content)
-
-            # 显示成功消息
+    try:
+        # 获取推理引擎的数据
+        if not hasattr(self, 'auto_inference_engine') or not self.auto_inference_engine:
             QMessageBox.information(
                 self,
-                "导出成功",
-                f"工作日志已导出到:\n{file_path}\n\n"
-                "💡 您可以将这个文件发送给客户或领导"
+                "提示",
+                "推理引擎未启动,无法导出工作日志"
             )
+            return
 
-            self.logger.info(f"工作日志已导出: {file_path}")
+        inferred_tasks = self.auto_inference_engine.inferred_tasks
 
-        except Exception as e:
-            self.logger.error(f"导出工作日志失败: {e}", exc_info=True)
-            QMessageBox.warning(
+        if not inferred_tasks:
+            QMessageBox.information(
                 self,
-                "导出失败",
-                f"导出失败:\n{str(e)}"
+                "暂无数据",
+                "今天还没有识别到工作任务。\n\n"
+                "• AI推理每5分钟运行一次\n"
+                "• 请确保有足够的应用使用时间(建议15分钟以上)\n\n"
+                "💡 您也可以手动添加任务完成记录"
             )
+            return
 
-    def _generate_work_log_markdown(self, inferred_tasks: list, date_obj: date) -> str:
-        """生成工作日志的Markdown内容"""
-        from datetime import datetime
+        # 生成文件名
+        default_filename = f"工作日志_{today.strftime('%Y%m%d')}.md"
 
-        # 计算统计数据
-        total_minutes = sum(t.get('duration_minutes', 0) for t in inferred_tasks)
-        total_hours = total_minutes / 60
+        # 打开文件保存对话框
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "导出工作日志",
+            default_filename,
+            "Markdown文件 (*.md);;所有文件 (*.*)"
+        )
 
-        # 开始生成Markdown
-        md = f"# {date_obj.strftime('%Y年%m月%d日')} 工作日志\n\n"
-        md += f"**生成时间**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
-        md += "---\n\n"
+        if not file_path:
+            return  # 用户取消
 
-        # 工作任务总结
-        md += "## 📊 工作任务总结\n\n"
+        # 生成Markdown内容
+        md_content = self._generate_work_log_markdown(inferred_tasks, today)
 
-        # 按任务名称分组统计
-        task_summary = {}
-        for task in inferred_tasks:
-            task_name = task.get('name', '未知任务')
-            duration = task.get('duration_minutes', 0)
+        # 写入文件
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(md_content)
 
-            if task_name in task_summary:
-                task_summary[task_name] += duration
-            else:
-                task_summary[task_name] = duration
+        # 显示成功消息
+        QMessageBox.information(
+            self,
+            "导出成功",
+            f"工作日志已导出到:\n{file_path}\n\n"
+            "💡 您可以将这个文件发送给客户或领导"
+        )
 
-        for task_name, duration in sorted(task_summary.items(), key=lambda x: x[1], reverse=True):
-            md += f"- **{task_name}**: {duration}分钟\n"
+        self.logger.info(f"工作日志已导出: {file_path}")
 
-        md += f"\n**总计**: {len(inferred_tasks)}个任务 · {total_minutes}分钟 ({total_hours:.1f}小时)\n\n"
-        md += "---\n\n"
+    except Exception as e:
+        self.logger.error(f"导出工作日志失败: {e}", exc_info=True)
+        QMessageBox.warning(
+            self,
+            "导出失败",
+            f"导出失败:\n{str(e)}"
+        )
 
-        # 详细时间线
-        md += "## ⏰ 详细时间线\n\n"
+def _generate_work_log_markdown(self, inferred_tasks: list, date_obj: date) -> str:
+    """生成工作日志的Markdown内容"""
+    from datetime import datetime
 
-        for task in inferred_tasks:
-            task_name = task.get('name', '未知任务')
-            start_time = task.get('start_time', '--')
-            end_time = task.get('end_time', '--')
-            duration = task.get('duration_minutes', 0)
-            apps = task.get('apps', [])
-            confidence = task.get('confidence', 0)
+    # 计算统计数据
+    total_minutes = sum(t.get('duration_minutes', 0) for t in inferred_tasks)
+    total_hours = total_minutes / 60
 
-            md += f"### {start_time} - {end_time} | {task_name}\n\n"
-            md += f"**时长**: {duration}分钟  \n"
-            md += f"**使用工具**: {', '.join(apps[:5]) if apps else '无'}  \n"
-            md += f"**AI置信度**: {confidence:.0%}  \n"
-            md += "\n"
+    # 开始生成Markdown
+    md = f"# {date_obj.strftime('%Y年%m月%d日')} 工作日志\n\n"
+    md += f"**生成时间**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+    md += "---\n\n"
 
-        md += "---\n\n"
+    # 工作任务总结
+    md += "## 📊 工作任务总结\n\n"
 
-        # 效率分析
-        md += "## 📈 效率分析\n\n"
+    # 按任务名称分组统计
+    task_summary = {}
+    for task in inferred_tasks:
+        task_name = task.get('name', '未知任务')
+        duration = task.get('duration_minutes', 0)
 
-        # 计算平均置信度
-        avg_confidence = sum(t.get('confidence', 0) for t in inferred_tasks) / len(inferred_tasks) if inferred_tasks else 0
-
-        # 专注度评级
-        if avg_confidence >= 0.9:
-            focus_rating = "⭐⭐⭐⭐⭐"
-            focus_comment = "非常专注"
-        elif avg_confidence >= 0.8:
-            focus_rating = "⭐⭐⭐⭐"
-            focus_comment = "比较专注"
+        if task_name in task_summary:
+            task_summary[task_name] += duration
         else:
-            focus_rating = "⭐⭐⭐"
-            focus_comment = "需要改进"
+            task_summary[task_name] = duration
 
-        md += f"**专注度**: {focus_rating} ({focus_comment})  \n"
-        md += f"**平均AI置信度**: {avg_confidence:.0%}  \n"
-        md += f"**任务切换次数**: {len(inferred_tasks)}次  \n"
+    for task_name, duration in sorted(task_summary.items(), key=lambda x: x[1], reverse=True):
+        md += f"- **{task_name}**: {duration}分钟\n"
 
-        md += "\n---\n\n"
-        md += "*本报告由 GaiYa每日进度条 自动生成 | [https://www.gaiyatime.com](https://www.gaiyatime.com)*\n"
+    md += f"\n**总计**: {len(inferred_tasks)}个任务 · {total_minutes}分钟 ({total_hours:.1f}小时)\n\n"
+    md += "---\n\n"
 
-        return md
+    # 详细时间线
+    md += "## ⏰ 详细时间线\n\n"
+
+    for task in inferred_tasks:
+        task_name = task.get('name', '未知任务')
+        start_time = task.get('start_time', '--')
+        end_time = task.get('end_time', '--')
+        duration = task.get('duration_minutes', 0)
+        apps = task.get('apps', [])
+        confidence = task.get('confidence', 0)
+
+        md += f"### {start_time} - {end_time} | {task_name}\n\n"
+        md += f"**时长**: {duration}分钟  \n"
+        md += f"**使用工具**: {', '.join(apps[:5]) if apps else '无'}  \n"
+        md += f"**AI置信度**: {confidence:.0%}  \n"
+        md += "\n"
+
+    md += "---\n\n"
+
+    # 效率分析
+    md += "## 📈 效率分析\n\n"
+
+    # 计算平均置信度
+    avg_confidence = sum(t.get('confidence', 0) for t in inferred_tasks) / len(inferred_tasks) if inferred_tasks else 0
+
+    # 专注度评级
+    if avg_confidence >= 0.9:
+        focus_rating = "⭐⭐⭐⭐⭐"
+        focus_comment = "非常专注"
+    elif avg_confidence >= 0.8:
+        focus_rating = "⭐⭐⭐⭐"
+        focus_comment = "比较专注"
+    else:
+        focus_rating = "⭐⭐⭐"
+        focus_comment = "需要改进"
+
+    md += f"**专注度**: {focus_rating} ({focus_comment})  \n"
+    md += f"**平均AI置信度**: {avg_confidence:.0%}  \n"
+    md += f"**任务切换次数**: {len(inferred_tasks)}次  \n"
+
+    md += "\n---\n\n"
+    md += "*本报告由 GaiYa每日进度条 自动生成 | [https://www.gaiyatime.com](https://www.gaiyatime.com)*\n"
+
+    return md

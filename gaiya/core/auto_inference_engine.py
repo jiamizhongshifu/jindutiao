@@ -208,6 +208,9 @@ class AutoInferenceEngine(QObject):
             app_usage = defaultdict(int)
             for activity in window_activities:
                 app_name = activity['app_name'].lower()
+                # 移除 .exe 后缀以便与规则库匹配
+                if app_name.endswith('.exe'):
+                    app_name = app_name[:-4]
                 app_usage[app_name] += activity.get('duration', 60)
 
             # 匹配规则库
