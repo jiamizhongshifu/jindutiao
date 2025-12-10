@@ -3,7 +3,7 @@
 from PySide6.QtWidgets import (
     QWizard, QWizardPage, QVBoxLayout, QLabel,
     QRadioButton, QPushButton, QButtonGroup,
-    QHBoxLayout
+    QHBoxLayout, QWidget
 )
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
