@@ -186,7 +186,6 @@ class TimeProgressBar(QWidget):
         self.theme_manager.theme_changed.connect(self.apply_theme)
         
         # 使用QTimer延迟应用主题，确保窗口完全显示后再应用
-        from PySide6.QtCore import QTimer
         QTimer.singleShot(100, self.apply_theme)
 
         # 延迟检查是否首次运行，显示新手引导
