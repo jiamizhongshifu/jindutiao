@@ -12,6 +12,7 @@ import os
 # 添加父目录到路径以导入i18n模块
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from i18n.translator import tr
+from .feature_card import FeatureCardList
 
 
 class WelcomeDialog(QDialog):
@@ -29,7 +30,7 @@ class WelcomeDialog(QDialog):
         """设置UI界面"""
         # 窗口基本设置
         self.setWindowTitle(tr("welcome_dialog.window.title"))
-        self.setFixedSize(450, 580)  # 增加高度 420→580，确保所有功能列表完整显示
+        self.setFixedSize(450, 680)  # 增加高度以容纳FeatureCard (580→680)
         self.setModal(True)
 
         # 主布局
@@ -55,23 +56,43 @@ class WelcomeDialog(QDialog):
         subtitle.setStyleSheet("color: #666666;")
         layout.addWidget(subtitle)
 
-        layout.addSpacing(10)
+        layout.addSpacing(15)
 
-        # 核心功能介绍
-        features = [
-            tr("welcome_dialog.features.task_progress"),
-            tr("welcome_dialog.features.smart_reminder"),
-            tr("welcome_dialog.features.rich_themes"),
-            tr("welcome_dialog.features.ai_planning")
+        # 核心功能介绍 - 使用FeatureCard组件
+        feature_list = FeatureCardList(self)
+
+        # 添加4个功能卡片
+        features_data = [
+            {
+                "icon": "progress_bar",
+                "title": tr("welcome_dialog.features.task_progress"),
+                "desc": tr("welcome_dialog.features.task_progress_desc")
+            },
+            {
+                "icon": "ai_brain",
+                "title": tr("welcome_dialog.features.ai_planning"),
+                "desc": tr("welcome_dialog.features.ai_planning_desc")
+            },
+            {
+                "icon": "palette",
+                "title": tr("welcome_dialog.features.rich_themes"),
+                "desc": tr("welcome_dialog.features.rich_themes_desc")
+            },
+            {
+                "icon": "trophy",
+                "title": tr("welcome_dialog.features.smart_reminder"),
+                "desc": tr("welcome_dialog.features.smart_reminder_desc")
+            }
         ]
 
-        for feature in features:
-            feature_label = QLabel(feature)
-            feature_font = QFont()
-            feature_font.setPointSize(13)  # 设置功能列表字号为13pt
-            feature_label.setFont(feature_font)
-            feature_label.setStyleSheet("padding: 5px 0;")
-            layout.addWidget(feature_label)
+        for feature in features_data:
+            feature_list.add_feature(
+                icon_name=feature["icon"],
+                title=feature["title"],
+                description=feature["desc"]
+            )
+
+        layout.addWidget(feature_list)
 
         layout.addSpacing(10)
 

@@ -1,0 +1,24 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 成就激励系统 - 奖杯图标 -->
+
+  <!-- 奖杯杯身 -->
+  <path d="M24 16H40V28C40 32.418 36.418 36 32 36C27.582 36 24 32.418 24 28V16Z" fill="#FCD34D" stroke="#F59E0B" stroke-width="2"/>
+
+  <!-- 奖杯手柄 - 左 -->
+  <path d="M24 18H20C17.791 18 16 19.791 16 22V24C16 26.209 17.791 28 20 28H24" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- 奖杯手柄 - 右 -->
+  <path d="M40 18H44C46.209 18 48 19.791 48 22V24C48 26.209 46.209 28 44 28H40" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- 奖杯底座 -->
+  <rect x="28" y="36" width="8" height="8" fill="#F59E0B"/>
+  <rect x="24" y="44" width="16" height="4" rx="2" fill="#F59E0B"/>
+
+  <!-- 星星装饰 -->
+  <path d="M32 22L33.236 25.528L37 26.236L34.5 28.472L35.472 32L32 30.236L28.528 32L29.5 28.472L27 26.236L30.764 25.528L32 22Z" fill="#FFFBEB"/>
+
+  <!-- 闪光效果 -->
+  <circle cx="22" cy="14" r="1.5" fill="#FCD34D" opacity="0.8"/>
+  <circle cx="42" cy="14" r="1.5" fill="#FCD34D" opacity="0.8"/>
+  <circle cx="32" cy="12" r="1.5" fill="#FCD34D" opacity="0.8"/>
+</svg>

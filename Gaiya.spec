@@ -50,6 +50,7 @@ hidden_imports = [
     'PySide6.QtCore',
     'PySide6.QtGui',
     'PySide6.QtCharts',  # 图表库(用于统计报告趋势图)
+    'PySide6.QtSvgWidgets',  # P0-1新增: SVG组件(用于FeatureCard图标)
 ]
 
 # 平台特定依赖
@@ -101,6 +102,8 @@ a = Analysis(
         ('assets/markers/', 'assets/markers/'),
         # UI资源文件（复选框对勾图标）
         ('assets/checkmark.png', 'assets/'),
+        # 新手引导SVG图标（P0-1新增）
+        ('assets/icons/', 'assets/icons/'),
         # 弹幕预设内容库
         ('gaiya/data/danmaku_presets.json', 'gaiya/data/'),
         # 行为识别数据文件
@@ -174,6 +177,12 @@ a = Analysis(
         'PySide6.QtTest',
         'PySide6.QtXml',
 
+        # P0-2新增: 额外可排除的模块（~3-5MB）
+        'PySide6.QtNetwork',  # 使用httpx替代,不需要Qt网络模块
+        'PySide6.QtPrintSupport',  # 无打印功能
+        'PySide6.QtOpenGL',  # 无3D OpenGL渲染需求
+        'PySide6.QtOpenGLWidgets',
+
         # 数据科学库
         'matplotlib', 'scipy', 'pandas', 'sklearn', 'numpy.distutils',
 
@@ -204,8 +213,20 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=False,
-    upx_exclude=[],
+    upx=True,  # ✅ P0-2: 启用UPX压缩(预期减少25-30MB)
+    upx_exclude=[
+        # 排除Qt核心库,避免压缩后崩溃
+        'Qt6Core.dll',
+        'Qt6Gui.dll',
+        'Qt6Widgets.dll',
+        'Qt6Svg.dll',  # FeatureCard使用的SVG支持
+        # 排除Python核心库
+        'python*.dll',
+        'vcruntime*.dll',
+        # 排除可能导致问题的其他库
+        'libcrypto*.dll',
+        'libssl*.dll',
+    ],
     runtime_tmpdir=None,
     console=False,
     disable_windowed_traceback=False,

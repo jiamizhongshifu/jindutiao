@@ -206,7 +206,7 @@ class TemplateSelectionPage(QWizardPage):
 
 
 class CompletionPage(QWizardPage):
-    """完成页面（第2步）"""
+    """完成页面（第2步）- 优化版本"""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -219,77 +219,114 @@ class CompletionPage(QWizardPage):
         self.setSubTitle(tr("wizard.complete_page.subtitle"))
 
         layout = QVBoxLayout(self)
-        layout.setSpacing(15)
-        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(20)
+        layout.setContentsMargins(30, 30, 30, 30)
 
-        # 配置摘要
-        summary_label = QLabel(tr("wizard.complete_page.summary_title"))
-        summary_label.setStyleSheet("font-weight: bold; font-size: 14px;")
-        layout.addWidget(summary_label)
+        # 成功图标 + 祝贺文字
+        success_container = QVBoxLayout()
+        success_container.setSpacing(15)
+
+        # 成功图标(使用Unicode字符)
+        success_icon = QLabel("✓")
+        success_icon_font = QFont()
+        success_icon_font.setPointSize(48)
+        success_icon_font.setBold(True)
+        success_icon.setFont(success_icon_font)
+        success_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        success_icon.setStyleSheet("color: #10B981;")  # 绿色
+        success_container.addWidget(success_icon)
+
+        # 祝贺文字
+        congrats = QLabel(tr("wizard.complete_page.congrats"))
+        congrats_font = QFont()
+        congrats_font.setPointSize(18)
+        congrats_font.setBold(True)
+        congrats.setFont(congrats_font)
+        congrats.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        success_container.addWidget(congrats)
+
+        layout.addLayout(success_container)
 
         layout.addSpacing(10)
+
+        # 配置摘要卡片
+        summary_card = QWidget()
+        summary_card.setStyleSheet("""
+            QWidget {
+                background-color: #F9FAFB;
+                border: 1px solid #E5E7EB;
+                border-radius: 8px;
+            }
+        """)
+        summary_layout = QVBoxLayout(summary_card)
+        summary_layout.setContentsMargins(20, 15, 20, 15)
+        summary_layout.setSpacing(10)
+
+        # 配置摘要标题
+        summary_title = QLabel(tr("wizard.complete_page.summary_title"))
+        summary_title_font = QFont()
+        summary_title_font.setPointSize(14)
+        summary_title_font.setBold(True)
+        summary_title.setFont(summary_title_font)
+        summary_layout.addWidget(summary_title)
 
         # 模板选择信息（动态更新）
         self.template_label = QLabel()
         template_font = QFont()
         template_font.setPointSize(13)
         self.template_label.setFont(template_font)
-        self.template_label.setStyleSheet("color: #333333; padding: 5px 0;")  # 使用主色 #333333
-        layout.addWidget(self.template_label)
+        self.template_label.setStyleSheet("color: #6B7280;")
+        summary_layout.addWidget(self.template_label)
 
         # 进度条位置信息
         position_label = QLabel(tr("wizard.complete_page.position_label"))
         position_font = QFont()
         position_font.setPointSize(13)
         position_label.setFont(position_font)
-        position_label.setStyleSheet("color: #333333; padding: 5px 0;")  # 使用主色 #333333
-        layout.addWidget(position_label)
+        position_label.setStyleSheet("color: #6B7280;")
+        summary_layout.addWidget(position_label)
 
-        layout.addSpacing(15)
+        layout.addWidget(summary_card)
 
-        # 下一步建议标题
-        suggestions_title = QLabel(tr("wizard.complete_page.suggestions_title"))
-        suggestions_font = QFont()
-        suggestions_font.setPointSize(13)
-        suggestions_font.setBold(True)
-        suggestions_title.setFont(suggestions_font)
-        suggestions_title.setStyleSheet("color: #333333; padding: 5px 0;")  # 使用主色 #333333
-        layout.addWidget(suggestions_title)
+        layout.addSpacing(5)
 
-        # 建议列表
-        suggestions = [
-            tr("wizard.suggestions.customize_tasks"),
-            tr("wizard.suggestions.set_reminders"),
-            tr("wizard.suggestions.choose_theme")
-        ]
-
-        for suggestion in suggestions:
-            suggestion_label = QLabel(suggestion)
-            suggestion_font = QFont()
-            suggestion_font.setPointSize(12)
-            suggestion_label.setFont(suggestion_font)
-            suggestion_label.setStyleSheet("color: #999999; padding: 3px 0; margin-left: 15px;")  # 使用浅灰色 #999999
-            layout.addWidget(suggestion_label)
-
-        # 快速上手提示
-        tips_label = QLabel(tr("wizard.complete_page.tips_title"))
-        tips_label.setStyleSheet("font-weight: bold; font-size: 14px;")  # 字号12→14px
-        layout.addWidget(tips_label)
+        # 快速上手提示(使用更清晰的布局)
+        tips_title = QLabel(tr("wizard.complete_page.tips_title"))
+        tips_title_font = QFont()
+        tips_title_font.setPointSize(14)
+        tips_title_font.setBold(True)
+        tips_title.setFont(tips_title_font)
+        layout.addWidget(tips_title)
 
         tips = [
-            tr("wizard.tips.right_click_config"),
-            tr("wizard.tips.tray_menu"),
-            tr("wizard.tips.double_click_toggle"),
-            tr("wizard.tips.free_quota")
+            ("🖱️", tr("wizard.tips.right_click_config")),
+            ("📊", tr("wizard.tips.tray_menu")),
+            ("⌨️", tr("wizard.tips.double_click_toggle")),
+            ("🎁", tr("wizard.tips.free_quota"))
         ]
 
-        for tip in tips:
-            tip_label = QLabel(tip)
+        for icon, tip_text in tips:
+            tip_container = QHBoxLayout()
+            tip_container.setSpacing(10)
+
+            # 图标
+            icon_label = QLabel(icon)
+            icon_label.setFixedWidth(30)
+            icon_font = QFont()
+            icon_font.setPointSize(16)
+            icon_label.setFont(icon_font)
+            tip_container.addWidget(icon_label)
+
+            # 提示文字
+            tip_label = QLabel(tip_text)
             tip_font = QFont()
-            tip_font.setPointSize(12)  # 设置提示条目字号为12pt
+            tip_font.setPointSize(12)
             tip_label.setFont(tip_font)
-            tip_label.setStyleSheet("color: #666666; padding: 3px 0;")  # 使用辅助色 #666666
-            layout.addWidget(tip_label)
+            tip_label.setStyleSheet("color: #4B5563;")
+            tip_label.setWordWrap(True)
+            tip_container.addWidget(tip_label, 1)
+
+            layout.addLayout(tip_container)
 
         layout.addStretch()
 
