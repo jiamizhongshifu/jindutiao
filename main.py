@@ -208,8 +208,13 @@ class TimeProgressBar(QWidget):
         if welcome_result == WelcomeDialog.DialogCode.Accepted:
             # 用户选择"开始配置"
             self.logger.info("[Onboarding] 用户点击了'开始配置',准备显示配置向导")
-            wizard = SetupWizard(self)
-            self.logger.info("[Onboarding] SetupWizard实例已创建")
+            try:
+                wizard = SetupWizard(self)
+                self.logger.info("[Onboarding] SetupWizard实例已创建")
+            except Exception as e:
+                self.logger.error(f"[Onboarding] 创建SetupWizard失败: {type(e).__name__}: {e}")
+                self.logger.error(f"[Onboarding] 错误堆栈:", exc_info=True)
+                return
 
             # 连接AI生成信号
             wizard.ai_generate_requested.connect(self.on_onboarding_ai_requested)
