@@ -202,14 +202,23 @@ class TimeProgressBar(QWidget):
 
         # 1. 显示欢迎对话框
         welcome = WelcomeDialog(self)
-        if welcome.exec() == WelcomeDialog.DialogCode.Accepted:
+        welcome_result = welcome.exec()
+        self.logger.info(f"[Onboarding] 欢迎对话框返回结果: {welcome_result}, Accepted={WelcomeDialog.DialogCode.Accepted}")
+
+        if welcome_result == WelcomeDialog.DialogCode.Accepted:
             # 用户选择"开始配置"
+            self.logger.info("[Onboarding] 用户点击了'开始配置',准备显示配置向导")
             wizard = SetupWizard(self)
+            self.logger.info("[Onboarding] SetupWizard实例已创建")
 
             # 连接AI生成信号
             wizard.ai_generate_requested.connect(self.on_onboarding_ai_requested)
 
-            if wizard.exec() == SetupWizard.DialogCode.Accepted:
+            self.logger.info("[Onboarding] 准备显示配置向导对话框")
+            wizard_result = wizard.exec()
+            self.logger.info(f"[Onboarding] 配置向导返回结果: {wizard_result}, Accepted={SetupWizard.DialogCode.Accepted}")
+
+            if wizard_result == SetupWizard.DialogCode.Accepted:
                 # 用户完成了向导配置
                 template_id = wizard.get_selected_template()
                 self.logger.info(f"新手引导完成，选择模板: {template_id}")
