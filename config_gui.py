@@ -1545,18 +1545,25 @@ class ConfigManager(QMainWindow):
         layout = QVBoxLayout(central_widget)
 
         # 添加AI功能横幅 (可关闭)
-        from gaiya.ui.components import AiFeatureBanner
-        self.ai_banner = AiFeatureBanner(self)
-        self.ai_banner.ai_generate_clicked.connect(self.on_banner_ai_clicked)
-        self.ai_banner.learn_more_clicked.connect(self.on_banner_learn_more)
-        self.ai_banner.close_clicked.connect(self.on_banner_closed)
+        try:
+            from gaiya.ui.components import AiFeatureBanner
+            self.ai_banner = AiFeatureBanner(self)
+            self.ai_banner.ai_generate_clicked.connect(self.on_banner_ai_clicked)
+            self.ai_banner.learn_more_clicked.connect(self.on_banner_learn_more)
+            self.ai_banner.close_clicked.connect(self.on_banner_closed)
 
-        # 检查是否已关闭横幅(从配置读取)
-        banner_closed = self.config.get('ai_banner_closed', False)
-        if banner_closed:
-            self.ai_banner.hide()
+            # 检查是否已关闭横幅(从配置读取)
+            banner_closed = self.config.get('ai_banner_closed', False)
+            if banner_closed:
+                self.ai_banner.hide()
+                self.logger.info("AI功能横幅已隐藏(用户之前关闭)")
+            else:
+                self.logger.info("AI功能横幅已显示")
 
-        layout.addWidget(self.ai_banner)
+            layout.addWidget(self.ai_banner)
+        except Exception as e:
+            self.logger.error(f"加载AI功能横幅失败: {type(e).__name__}: {e}", exc_info=True)
+            # 如果横幅加载失败,继续加载其他UI
 
         # 创建标签页(使用懒加载,只在切换到标签页时才创建内容)
         tabs = QTabWidget()
