@@ -223,6 +223,11 @@ class AuthClient:
         else:
             logger.info("未配置代理，使用直连")
 
+        # ✅ P0-3: Token刷新重试机制
+        self.refresh_retry_count = 0
+        self.max_retries = 3
+        self.is_refreshing = False  # 防止并发刷新
+
         # 加载已保存的Token
         self.access_token = None
         self.refresh_token = None
@@ -699,21 +704,40 @@ class AuthClient:
 
     def refresh_access_token(self) -> Dict:
         """
-        刷新访问令牌
+        刷新访问令牌 (带指数退避重试)
 
         Returns:
-            {"success": True/False, "error": "...", "access_token": "...", ...}
+            {
+                "success": True/False,
+                "error": "...",
+                "access_token": "...",
+                "refresh_token": "...",
+                "expired": True (仅当Refresh Token过期时),
+                "retry_delay": N (仅当需要重试时)
+            }
         """
-        try:
-            if not self.refresh_token:
-                return {"success": False, "error": "无刷新令牌"}
+        # 防止并发刷新
+        if self.is_refreshing:
+            logger.debug("[AUTH-REFRESH] Token刷新正在进行中,跳过")
+            return {"success": False, "error": "Refresh in progress"}
 
+        if not self.refresh_token:
+            logger.warning("[AUTH-REFRESH] 无刷新令牌")
+            return {"success": False, "error": "无刷新令牌"}
+
+        self.is_refreshing = True
+
+        try:
+            logger.info(f"[AUTH-REFRESH] 尝试刷新Token (尝试 {self.refresh_retry_count + 1}/{self.max_retries})")
+
+            # 尝试使用requests发送请求
             response = self.session.post(
                 f"{self.backend_url}/api/auth-refresh",
                 json={"refresh_token": self.refresh_token},
                 timeout=10
             )
 
+            # 成功响应
             if response.status_code == 200:
                 data = response.json()
 
@@ -724,13 +748,139 @@ class AuthClient:
                         data["refresh_token"],
                         self.user_info
                     )
+                    self.refresh_retry_count = 0  # 重置重试计数
+                    logger.info("[AUTH-REFRESH] Token刷新成功")
 
                 return data
+
+            # Refresh Token过期
+            elif response.status_code == 401:
+                logger.warning("[AUTH-REFRESH] Refresh Token过期,需要重新登录")
+                self.refresh_retry_count = 0  # 重置计数
+                return {"success": False, "error": "Refresh token expired", "expired": True}
+
+            # 其他HTTP错误
             else:
-                return {"success": False, "error": f"HTTP {response.status_code}"}
+                error_msg = f"HTTP {response.status_code}"
+                logger.error(f"[AUTH-REFRESH] 刷新失败: {error_msg}")
+                return {"success": False, "error": error_msg}
+
+        except requests.exceptions.Timeout:
+            # 超时 - 指数退避重试
+            self.refresh_retry_count += 1
+            logger.warning(f"[AUTH-REFRESH] 请求超时 (尝试 {self.refresh_retry_count}/{self.max_retries})")
+
+            if self.refresh_retry_count < self.max_retries:
+                retry_delay = 2 ** self.refresh_retry_count  # 2s, 4s, 8s
+                logger.info(f"[AUTH-REFRESH] 将在 {retry_delay} 秒后重试")
+                return {"success": False, "error": "Timeout, will retry", "retry_delay": retry_delay}
+            else:
+                logger.error("[AUTH-REFRESH] 达到最大重试次数,停止重试")
+                self.refresh_retry_count = 0  # 重置计数
+                return {"success": False, "error": "Max retries reached"}
+
+        except requests.exceptions.SSLError as e:
+            # SSL错误 - 尝试httpx作为后备
+            logger.warning(f"[AUTH-REFRESH] requests SSL错误,尝试使用httpx: {e}")
+
+            try:
+                import httpx
+
+                with httpx.Client(timeout=10.0) as client:
+                    response = client.post(
+                        f"{self.backend_url}/api/auth-refresh",
+                        json={"refresh_token": self.refresh_token}
+                    )
+
+                if response.status_code == 200:
+                    data = response.json()
+
+                    if data.get("success"):
+                        self._save_tokens(
+                            data["access_token"],
+                            data["refresh_token"],
+                            self.user_info
+                        )
+                        self.refresh_retry_count = 0
+                        logger.info("[AUTH-REFRESH] Token刷新成功 (httpx)")
+
+                    return data
+
+                elif response.status_code == 401:
+                    logger.warning("[AUTH-REFRESH] Refresh Token过期")
+                    self.refresh_retry_count = 0
+                    return {"success": False, "error": "Refresh token expired", "expired": True}
+
+                else:
+                    return {"success": False, "error": f"HTTP {response.status_code}"}
+
+            except Exception as httpx_error:
+                logger.error(f"[AUTH-REFRESH] httpx也失败: {httpx_error}")
+                return {"success": False, "error": f"SSL error: {str(e)}"}
 
         except Exception as e:
+            logger.error(f"[AUTH-REFRESH] 未预期的错误: {e}")
             return {"success": False, "error": str(e)}
+
+        finally:
+            self.is_refreshing = False
+
+    def _make_authenticated_request(self, method: str, url: str, **kwargs) -> requests.Response:
+        """
+        发起认证请求 (自动处理401并刷新Token)
+
+        Args:
+            method: HTTP方法 (GET, POST, PUT, DELETE等)
+            url: 请求URL
+            **kwargs: 传递给requests的其他参数
+
+        Returns:
+            requests.Response对象
+
+        Raises:
+            Exception: 当Session过期或Token刷新失败时
+        """
+        # 添加Authorization header
+        headers = kwargs.get('headers', {})
+        if self.access_token:
+            headers['Authorization'] = f"Bearer {self.access_token}"
+        kwargs['headers'] = headers
+
+        # 发起请求
+        response = self.session.request(method, url, **kwargs)
+
+        # 检测401 - Token过期
+        if response.status_code == 401:
+            logger.warning("[AUTH] 检测到401,尝试刷新Token")
+            refresh_result = self.refresh_access_token()
+
+            # 刷新成功 - 重试原始请求
+            if refresh_result.get("success"):
+                logger.info("[AUTH] Token刷新成功,重试请求")
+                headers['Authorization'] = f"Bearer {self.access_token}"
+                kwargs['headers'] = headers
+                response = self.session.request(method, url, **kwargs)
+
+            # Refresh Token过期 - 抛出异常
+            elif refresh_result.get("expired"):
+                logger.error("[AUTH] Refresh Token过期,需要重新登录")
+                raise Exception("Session expired, please login again")
+
+            # 需要重试 - 等待后递归调用
+            elif refresh_result.get("retry_delay"):
+                import time
+                retry_delay = refresh_result["retry_delay"]
+                logger.info(f"[AUTH] 等待 {retry_delay} 秒后重试刷新")
+                time.sleep(retry_delay)
+                return self._make_authenticated_request(method, url, **kwargs)
+
+            # 其他错误 - 抛出异常
+            else:
+                error_msg = refresh_result.get("error", "Unknown error")
+                logger.error(f"[AUTH] Token刷新失败: {error_msg}")
+                raise Exception(f"Token refresh failed: {error_msg}")
+
+        return response
 
     def reset_password(self, email: str) -> Dict:
         """
@@ -769,7 +919,7 @@ class AuthClient:
 
     def get_subscription_status(self) -> Dict:
         """
-        获取当前用户的订阅状态
+        获取当前用户的订阅状态 (自动处理Token刷新)
 
         Returns:
             {"success": True/False, "is_active": True/False, "user_tier": "...", ...}
@@ -778,7 +928,9 @@ class AuthClient:
             if not self.get_user_id():
                 return {"success": False, "error": "未登录"}
 
-            response = self.session.get(
+            # ✅ 使用新的认证请求封装 (自动处理401)
+            response = self._make_authenticated_request(
+                "GET",
                 f"{self.backend_url}/api/subscription-status",
                 params={"user_id": self.get_user_id()},
                 timeout=10
@@ -801,6 +953,7 @@ class AuthClient:
                 return {"success": False, "error": f"HTTP {response.status_code}"}
 
         except Exception as e:
+            logger.error(f"[AUTH] get_subscription_status失败: {e}")
             return {"success": False, "error": str(e)}
 
     # ==================== 支付API ====================
