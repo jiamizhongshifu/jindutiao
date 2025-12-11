@@ -7522,9 +7522,10 @@ class ConfigManager(QMainWindow):
                 self.tasks = template_tasks
                 self.load_tasks_to_table()
 
-                # 刷新时间轴（延迟执行）
+                # ✅ P1-1.5: 显式同步时间轴编辑器
                 if hasattr(self, 'timeline_editor') and self.timeline_editor:
-                    QTimer.singleShot(50, lambda: self.timeline_editor.set_tasks(template_tasks) if self.timeline_editor else None)
+                    self.timeline_editor.set_tasks(template_tasks)
+                    logging.info(f"[模板加载] 已同步时间轴编辑器({len(template_tasks)}个任务)")
 
                 QMessageBox.information(
                     self,
@@ -7789,9 +7790,10 @@ class ConfigManager(QMainWindow):
                 self.tasks = template_tasks
                 self.load_tasks_to_table()
 
-                # 刷新时间轴（延迟执行）
+                # ✅ P1-1.5: 显式同步时间轴编辑器
                 if hasattr(self, 'timeline_editor') and self.timeline_editor:
-                    QTimer.singleShot(50, lambda: self.timeline_editor.set_tasks(template_tasks) if self.timeline_editor else None)
+                    self.timeline_editor.set_tasks(template_tasks)
+                    logging.info(f"[模板加载] 已同步时间轴编辑器({len(template_tasks)}个任务)")
 
                 QMessageBox.information(
                     self,
@@ -8081,9 +8083,10 @@ class ConfigManager(QMainWindow):
                 self.tasks = template_tasks
                 self.load_tasks_to_table()
 
-                # 刷新时间轴（延迟执行）
+                # ✅ P1-1.5: 显式同步时间轴编辑器
                 if hasattr(self, 'timeline_editor') and self.timeline_editor:
-                    QTimer.singleShot(50, lambda: self.timeline_editor.set_tasks(template_tasks) if self.timeline_editor else None)
+                    self.timeline_editor.set_tasks(template_tasks)
+                    logging.info(f"[模板加载] 已同步时间轴编辑器({len(template_tasks)}个任务)")
 
                 QMessageBox.information(
                     self,
@@ -8667,6 +8670,13 @@ class ConfigManager(QMainWindow):
 
             self.config_saved.emit()
             logging.info(f"[任务保存] config_saved信号已发送")
+
+            # ✅ P1-1.5: 将主窗口提到前台,让用户看到进度条更新
+            if self.main_window:
+                from PySide6.QtCore import QTimer
+                QTimer.singleShot(100, lambda: self.main_window.raise_())
+                QTimer.singleShot(150, lambda: self.main_window.activateWindow())
+                logging.info(f"[任务保存] 已将主窗口提到前台")
 
         except Exception as e:
             QMessageBox.critical(self, self.i18n.tr("membership.payment.error"), f"保存失败:\n{str(e)}")

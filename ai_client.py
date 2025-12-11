@@ -34,8 +34,12 @@ class GaiyaAIClient:
         self.timeout = 60  # API请求超时时间（秒）
         self.service_type = "cloud"  # 云端服务
 
-        # ✅ P1-1.5: 禁用系统代理,避免代理连接问题
-        # 清除环境变量中的代理设置(与AuthClient保持一致)
+        # ✅ P1-1.5: 使用Session以确保代理设置持久化(与AuthClient保持一致)
+        self.session = requests.Session()
+        self.session.proxies = {}  # 显式禁用代理
+        self.session.trust_env = False  # 禁止读取环境变量
+
+        # 清除环境变量(防御性措施,但Session已不依赖此)
         for env_var in ['HTTP_PROXY', 'HTTPS_PROXY', 'http_proxy', 'https_proxy']:
             if env_var in os.environ:
                 del os.environ[env_var]
@@ -63,7 +67,7 @@ class GaiyaAIClient:
             logging.info(f"[AI API] 发起请求: {api_url}")
             logging.info(f"[AI API] 请求参数: user_id={self.user_id}, user_tier={self.user_tier}, input_length={len(user_input)}")
 
-            response = requests.post(
+            response = self.session.post(
                 api_url,
                 json={
                     "user_id": self.user_id,
@@ -132,7 +136,7 @@ class GaiyaAIClient:
             Markdown格式的周报文本 或 None
         """
         try:
-            response = requests.post(
+            response = self.session.post(
                 f"{self.backend_url}/api/generate-weekly-report",
                 json={
                     "user_id": self.user_id,
@@ -175,7 +179,7 @@ class GaiyaAIClient:
             AI回答 或 None
         """
         try:
-            response = requests.post(
+            response = self.session.post(
                 f"{self.backend_url}/api/chat-query",
                 json={
                     "user_id": self.user_id,
@@ -215,7 +219,7 @@ class GaiyaAIClient:
         """
         try:
             # Vercel冷启动可能需要10-15秒，使用较长的超时时间
-            response = requests.get(
+            response = self.session.get(
                 f"{self.backend_url}/api/quota-status",
                 params={
                     "user_id": self.user_id,
@@ -245,7 +249,7 @@ class GaiyaAIClient:
         """
         try:
             # AI分析需要更长的超时时间(后端可能重试多次)
-            response = requests.post(
+            response = self.session.post(
                 f"{self.backend_url}/api/analyze-task-completion",
                 json={
                     "user_id": self.user_id,
@@ -332,7 +336,7 @@ class GaiyaAIClient:
         """
         try:
             # Vercel冷启动可能需要10-15秒，使用较长的超时时间
-            response = requests.get(
+            response = self.session.get(
                 f"{self.backend_url}/api/health",
                 timeout=15
             )

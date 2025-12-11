@@ -939,6 +939,9 @@ class AuthClient:
             if response.status_code == 200:
                 data = response.json()
 
+                # 添加详细日志以诊断问题
+                logger.info(f"[AUTH] subscription-status API返回完整数据: {data}")
+
                 # 更新本地用户信息
                 if data.get("success") and self.user_info:
                     self.user_info["user_tier"] = data.get("user_tier", "free")
@@ -1114,7 +1117,10 @@ class AuthClient:
 
             response = self.session.get(
                 f"{self.backend_url}/api/quota-status",
-                params={"user_tier": user_tier},
+                params={
+                    "user_id": self.user_id,  # ✅ P1-1.5: 添加user_id参数
+                    "user_tier": user_tier
+                },
                 timeout=10
             )
 
