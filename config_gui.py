@@ -4481,29 +4481,37 @@ class ConfigManager(QMainWindow):
         """检查AI配额是否充足
 
         Returns:
-            True: 配额充足，可以继续
-            False: 配额已用完，显示升级对话框
+            True: 配额充足,可以继续
+            False: 配额已用完,显示升级对话框
         """
         from gaiya.core.auth_client import AuthClient
         from gaiya.ui.onboarding import QuotaExhaustedDialog
 
+        logging.info("[配额检查] 开始检查AI配额...")
         auth_client = AuthClient()
         user_tier = auth_client.get_user_tier()
+        logging.info(f"[配额检查] 用户等级: {user_tier}")
 
         # Pro会员或以上不受限制
         if user_tier in ['pro', 'lifetime']:
+            logging.info("[配额检查] Pro/Lifetime会员,配额充足")
             return True
 
         # 免费用户检查配额
-        remaining_quota = auth_client.get_quota_status().get('remaining', 0)
+        quota_status = auth_client.get_quota_status()
+        remaining_quota = quota_status.get('remaining', 0)
+        logging.info(f"[配额检查] 免费用户,剩余配额: {remaining_quota}")
 
         if remaining_quota <= 0:
-            # 配额已用完，显示升级对话框
+            # 配额已用完,显示升级对话框
+            logging.warning("[配额检查] 配额已用完,显示升级对话框")
             dialog = QuotaExhaustedDialog(self)
             dialog.upgrade_requested.connect(self._on_quota_upgrade_requested)
-            dialog.exec()
+            result = dialog.exec()
+            logging.info(f"[配额检查] 升级对话框关闭,返回值: {result}")
             return False
 
+        logging.info("[配额检查] 配额充足,可以继续")
         return True
 
     def _on_quota_upgrade_requested(self):
@@ -8796,25 +8804,37 @@ class ConfigManager(QMainWindow):
 
     def on_banner_ai_clicked(self):
         """横幅AI生成按钮点击"""
+        logging.info("[Banner] AI生成按钮被点击")
         # 打开改进版AI生成对话框
         from gaiya.ui.components import ImprovedAIGenerationDialog
 
         dialog = ImprovedAIGenerationDialog(self)
+        logging.info("[Banner] 创建对话框实例完成")
         dialog.generation_requested.connect(self.on_improved_ai_generation)
-        dialog.exec()
+        logging.info("[Banner] 信号连接完成,准备显示对话框")
+        result = dialog.exec()
+        logging.info(f"[Banner] 对话框关闭,返回值: {result}")
 
     def on_improved_ai_generation(self, prompt: str):
         """改进版AI对话框生成请求"""
+        logging.info(f"[改进版AI生成] 收到生成请求,prompt长度: {len(prompt)}")
+
         # 首先检查是否已登录
+        logging.info("[改进版AI生成] 检查登录状态...")
         if not self._check_login_and_guide(self.i18n.tr("config.ai.title")):
+            logging.warning("[改进版AI生成] 登录检查失败,终止")
             return
 
         # 检查AI配额
+        logging.info("[改进版AI生成] 检查AI配额...")
         if not self._check_ai_quota():
+            logging.warning("[改进版AI生成] AI配额检查失败,终止")
             return
 
         # 检查是否有正在运行的任务
+        logging.info("[改进版AI生成] 检查是否有正在运行的任务...")
         if self.ai_worker is not None and self.ai_worker.isRunning():
+            logging.warning("[改进版AI生成] 发现正在运行的任务,终止")
             QMessageBox.warning(
                 self,
                 "请稍候",
@@ -8823,7 +8843,9 @@ class ConfigManager(QMainWindow):
             return
 
         # 检查后端服务器
+        logging.info("[改进版AI生成] 检查AI客户端...")
         if not hasattr(self, 'ai_client') or not self.ai_client:
+            logging.warning("[改进版AI生成] AI客户端未初始化,终止")
             QMessageBox.warning(
                 self,
                 "AI服务正在初始化",
@@ -8833,6 +8855,7 @@ class ConfigManager(QMainWindow):
             return
 
         # 创建并启动工作线程
+        logging.info("[改进版AI生成] 创建AI工作线程...")
         self.ai_worker = AIWorker(self.ai_client, prompt)
 
         # 使用lambda包装回调
@@ -8852,6 +8875,7 @@ class ConfigManager(QMainWindow):
 
         self.ai_worker.finished.connect(on_finished)
         self.ai_worker.error.connect(on_error)
+        logging.info("[改进版AI生成] 启动AI工作线程...")
         self.ai_worker.start()
 
         # 显示进度对话框
