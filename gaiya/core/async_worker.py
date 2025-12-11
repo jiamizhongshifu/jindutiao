@@ -96,8 +96,16 @@ class AsyncAIWorker(QThread):
 
         Emits finished signal with result dict on success, or error signal on failure.
         """
+        import logging
         try:
+            logging.info(f"[AsyncAIWorker] 开始调用ai_client.plan_tasks(), prompt长度: {len(self.user_input)}")
             result = self.ai_client.plan_tasks(self.user_input, parent_widget=None)
+            logging.info(f"[AsyncAIWorker] plan_tasks()返回, 结果类型: {type(result)}")
+            if isinstance(result, dict):
+                logging.info(f"[AsyncAIWorker] 结果: success={result.get('success')}, tasks数量={len(result.get('tasks', []))}")
+            logging.info("[AsyncAIWorker] 发送finished信号")
             self.finished.emit(result)
+            logging.info("[AsyncAIWorker] finished信号已发送")
         except Exception as e:
+            logging.error(f"[AsyncAIWorker] 异常发生: {type(e).__name__}: {str(e)}", exc_info=True)
             self.error.emit(str(e))

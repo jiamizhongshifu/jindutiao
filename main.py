@@ -1987,6 +1987,7 @@ class TimeProgressBar(QWidget):
     def reload_all(self):
         """重载配置和任务"""
         self.logger.info("开始重载配置和任务...")
+        self.logger.info(f"[reload_all] 当前任务数量: {len(self.tasks)}")
         old_height = self.config.get('bar_height', 20)
         old_position = self.config.get('position', 'bottom')
         old_screen_index = self.config.get('screen_index', 0)
@@ -2012,6 +2013,9 @@ class TimeProgressBar(QWidget):
         # 重新加载配置和任务
         self.config = data_loader.load_config(self.app_dir, self.logger)
         self.tasks = data_loader.load_tasks(self.app_dir, self.logger)
+        self.logger.info(f"[reload_all] 重新加载后任务数量: {len(self.tasks)}")
+        if len(self.tasks) > 0:
+            self.logger.info(f"[reload_all] 第一个任务: {self.tasks[0].get('task', 'unknown')}")
 
         # 重新加载预设管理器配置(配置文件可能包含新的预设ID)
         if hasattr(self, 'marker_preset_manager'):
@@ -2037,6 +2041,7 @@ class TimeProgressBar(QWidget):
 
         # 重新计算时间范围
         self.calculate_time_range()
+        self.logger.info(f"[reload_all] 重新计算时间范围后task_positions数量: {len(self.task_positions)}")
 
         # 重新加载通知管理器配置
         if hasattr(self, 'notification_manager'):
@@ -2096,6 +2101,7 @@ class TimeProgressBar(QWidget):
 
         # 触发重绘
         self.update()
+        self.logger.info("[reload_all] 已调用update()触发重绘")
         self.logger.info("配置和任务重载完成")
 
     def load_scene(self, scene_name: str):
