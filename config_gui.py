@@ -1579,6 +1579,7 @@ class ConfigManager(QMainWindow):
 
         # 创建标签页(使用懒加载,只在切换到标签页时才创建内容)
         tabs = QTabWidget()
+        self.tabs = tabs  # ✅ P1-1.5: 保存为实例变量,以便AI生成后切换tab
 
         # 自定义Tab样式：总高度40px
         tabs.setStyleSheet("""
@@ -8920,15 +8921,16 @@ class ConfigManager(QMainWindow):
                 logging.info(f"[AI生成] load_tasks_to_table完成,tasks_table行数: {self.tasks_table.rowCount()}")
 
                 # ✅ P1-1.5: 自动切换到任务管理tab
-                if hasattr(self, 'main_tabs'):
+                if hasattr(self, 'tabs'):
                     # 找到任务管理tab的索引(通常是第1个tab,索引为0)
-                    task_mgmt_tab_index = 0
-                    for i in range(self.main_tabs.count()):
-                        if "任务" in self.main_tabs.tabText(i) or "Task" in self.main_tabs.tabText(i):
+                    task_mgmt_tab_index = 1  # 默认任务管理是第2个tab
+                    for i in range(self.tabs.count()):
+                        tab_text = self.tabs.tabText(i)
+                        if "任务" in tab_text or "Task" in tab_text:
                             task_mgmt_tab_index = i
                             break
-                    self.main_tabs.setCurrentIndex(task_mgmt_tab_index)
-                    logging.info(f"[AI生成] 已自动切换到任务管理tab(索引={task_mgmt_tab_index})")
+                    self.tabs.setCurrentIndex(task_mgmt_tab_index)
+                    logging.info(f"[AI生成] 已自动切换到任务管理tab(索引={task_mgmt_tab_index}, 名称={self.tabs.tabText(task_mgmt_tab_index)})")
 
                 # 显示成功消息
                 token_usage = result.get('token_usage', 0)
