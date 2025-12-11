@@ -34,6 +34,12 @@ class GaiyaAIClient:
         self.timeout = 60  # API请求超时时间（秒）
         self.service_type = "cloud"  # 云端服务
 
+        # ✅ P1-1.5: 禁用系统代理,避免代理连接问题
+        # 清除环境变量中的代理设置(与AuthClient保持一致)
+        for env_var in ['HTTP_PROXY', 'HTTPS_PROXY', 'http_proxy', 'https_proxy']:
+            if env_var in os.environ:
+                del os.environ[env_var]
+
     def set_user_tier(self, tier: str):
         """设置用户等级"""
         if tier in ["free", "pro"]:
@@ -50,9 +56,15 @@ class GaiyaAIClient:
         Returns:
             {"tasks": [...], "quota_info": {...}} 或 None(如果失败)
         """
+        import logging
+
         try:
+            api_url = f"{self.backend_url}/api/plan-tasks"
+            logging.info(f"[AI API] 发起请求: {api_url}")
+            logging.info(f"[AI API] 请求参数: user_id={self.user_id}, user_tier={self.user_tier}, input_length={len(user_input)}")
+
             response = requests.post(
-                f"{self.backend_url}/api/plan-tasks",
+                api_url,
                 json={
                     "user_id": self.user_id,
                     "input": user_input,
@@ -61,33 +73,51 @@ class GaiyaAIClient:
                 timeout=self.timeout
             )
 
+            logging.info(f"[AI API] 响应状态码: {response.status_code}")
+
             if response.status_code == 403:
                 # 配额用尽
                 data = response.json()
+                logging.warning(f"[AI API] 配额用尽: {data}")
                 self._show_quota_exceeded_dialog(data, parent_widget)
                 return None
 
             if response.status_code == 200:
-                return response.json()
+                data = response.json()
+                logging.info(f"[AI API] 请求成功, 返回数据类型: {type(data)}")
+                if isinstance(data, dict) and 'tasks' in data:
+                    logging.info(f"[AI API] 成功获取 {len(data.get('tasks', []))} 个任务")
+                return data
             else:
-                error_data = response.json()
+                try:
+                    error_data = response.json()
+                    error_msg = error_data.get('error', '未知错误')
+                except:
+                    error_msg = f"HTTP {response.status_code}: {response.text[:200]}"
+
+                logging.error(f"[AI API] 请求失败: {error_msg}")
                 self._show_error_dialog(
-                    f"任务规划失败: {error_data.get('error', '未知错误')}",
+                    f"任务规划失败: {error_msg}",
                     parent_widget
                 )
                 return None
 
         except requests.exceptions.Timeout:
-            self._show_error_dialog("请求超时,请稍后重试", parent_widget)
+            error_msg = "请求超时,请稍后重试"
+            logging.error(f"[AI API] {error_msg}")
+            self._show_error_dialog(error_msg, parent_widget)
             return None
-        except requests.exceptions.ConnectionError:
-            self._show_error_dialog(
-                "无法连接到AI云服务\n请检查网络连接",
-                parent_widget
-            )
+        except requests.exceptions.ConnectionError as e:
+            error_msg = f"无法连接到AI云服务\n请检查网络连接\n详情: {str(e)}"
+            logging.error(f"[AI API] 连接错误: {e}")
+            self._show_error_dialog(error_msg, parent_widget)
             return None
         except Exception as e:
-            self._show_error_dialog(f"发生错误: {str(e)}", parent_widget)
+            import traceback
+            error_msg = f"发生错误: {str(e)}"
+            logging.error(f"[AI API] 未知错误: {e}")
+            logging.error(f"[AI API] 错误堆栈:\n{traceback.format_exc()}")
+            self._show_error_dialog(error_msg, parent_widget)
             return None
 
     def generate_weekly_report(self, statistics: Dict, parent_widget=None) -> Optional[str]:
@@ -341,7 +371,13 @@ class GaiyaAIClient:
 
     def _show_error_dialog(self, error_message: str, parent_widget):
         """显示错误对话框"""
+        import logging
+
+        # 始终记录错误到日志
+        logging.error(f"[AI Client] 错误: {error_message}")
+
         if parent_widget is None:
+            logging.warning("[AI Client] parent_widget为None,无法显示错误对话框")
             return
 
         msg = QMessageBox(parent_widget)
