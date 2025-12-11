@@ -39,6 +39,9 @@ def calculate_task_positions(tasks, logger):
         start_seconds = time_utils.time_str_to_seconds(task['start'])
         end_seconds = time_utils.time_str_to_seconds(task['end'])
         duration = end_seconds - start_seconds
+        # ✅ P1-1.5: 处理跨天任务(如23:00-09:00)
+        if duration < 0:
+            duration += 86400  # 加上一天的秒数
         total_task_duration += duration
 
     # 构建任务位置映射表
@@ -50,6 +53,9 @@ def calculate_task_positions(tasks, logger):
         start_seconds = time_utils.time_str_to_seconds(task['start'])
         end_seconds = time_utils.time_str_to_seconds(task['end'])
         duration = end_seconds - start_seconds
+        # ✅ P1-1.5: 处理跨天任务(如23:00-09:00)
+        if duration < 0:
+            duration += 86400  # 加上一天的秒数
 
         # 计算该任务在紧凑排列中的百分比位置
         start_percentage = cumulative_duration / total_task_duration if total_task_duration > 0 else 0
