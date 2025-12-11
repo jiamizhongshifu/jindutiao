@@ -19,23 +19,13 @@ class SceneCard(QFrame):
     def __init__(self, scene_id: str, name: str, icon: str, description: str, parent=None):
         super().__init__(parent)
         self.scene_id = scene_id
+        self.is_selected = False
         self.setup_ui(name, icon, description)
 
     def setup_ui(self, name: str, icon: str, description: str):
         """设置UI"""
         self.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Raised)
-        self.setStyleSheet("""
-            SceneCard {
-                background-color: #FFFFFF;
-                border: 2px solid #E0E0E0;
-                border-radius: 10px;
-                padding: 15px;
-            }
-            SceneCard:hover {
-                border-color: #2196F3;
-                background-color: #F5F9FF;
-            }
-        """)
+        self.update_style()
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setFixedSize(140, 140)
 
@@ -70,11 +60,9 @@ class SceneCard(QFrame):
         desc_label.setStyleSheet("color: #666666;")
         layout.addWidget(desc_label)
 
-    def mousePressEvent(self, event):
-        """点击事件"""
-        if event.button() == Qt.MouseButton.LeftButton:
-            self.clicked.emit(self.scene_id)
-            # 视觉反馈
+    def update_style(self):
+        """更新样式状态"""
+        if self.is_selected:
             self.setStyleSheet("""
                 SceneCard {
                     background-color: #E3F2FD;
@@ -83,6 +71,29 @@ class SceneCard(QFrame):
                     padding: 15px;
                 }
             """)
+        else:
+            self.setStyleSheet("""
+                SceneCard {
+                    background-color: #FFFFFF;
+                    border: 2px solid #E0E0E0;
+                    border-radius: 10px;
+                    padding: 15px;
+                }
+                SceneCard:hover {
+                    border-color: #2196F3;
+                    background-color: #F5F9FF;
+                }
+            """)
+
+    def set_selected(self, selected: bool):
+        """设置选中状态"""
+        self.is_selected = selected
+        self.update_style()
+
+    def mousePressEvent(self, event):
+        """点击事件"""
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.clicked.emit(self.scene_id)
         super().mousePressEvent(event)
 
 
@@ -96,6 +107,7 @@ class AiSceneSelector(QWidget):
         super().__init__(parent)
         self.scenes_data = []
         self.selected_scene_id = None
+        self.scene_cards = {}  # 存储场景卡片引用
         self.load_presets()
         self.setup_ui()
 
@@ -153,6 +165,7 @@ class AiSceneSelector(QWidget):
             )
             card.clicked.connect(self.on_scene_clicked)
             cards_layout.addWidget(card)
+            self.scene_cards[scene['id']] = card  # 保存卡片引用
 
         layout.addLayout(cards_layout)
 
@@ -194,7 +207,14 @@ class AiSceneSelector(QWidget):
 
     def on_scene_clicked(self, scene_id: str):
         """场景卡片被点击"""
+        # 取消之前选中的卡片
+        if self.selected_scene_id and self.selected_scene_id in self.scene_cards:
+            self.scene_cards[self.selected_scene_id].set_selected(False)
+
+        # 设置新选中的卡片
         self.selected_scene_id = scene_id
+        if scene_id in self.scene_cards:
+            self.scene_cards[scene_id].set_selected(True)
 
         # 查找对应的prompt
         for scene in self.scenes_data:

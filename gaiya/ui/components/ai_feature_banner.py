@@ -21,7 +21,7 @@ class AiFeatureBanner(QFrame):
     def setup_ui(self):
         """设置UI"""
         self.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Raised)
-        self.setFixedHeight(60)
+        self.setFixedHeight(70)
 
         # 设置渐变背景
         self.setStyleSheet("""
@@ -44,8 +44,10 @@ class AiFeatureBanner(QFrame):
         # 图标
         icon_label = QLabel("🤖")
         icon_font = QFont()
-        icon_font.setPointSize(24)
+        icon_font.setPointSize(28)
         icon_label.setFont(icon_font)
+        icon_label.setFixedSize(50, 50)
+        icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(icon_label)
 
         # 引导文案
