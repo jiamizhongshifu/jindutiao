@@ -9,6 +9,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
 import json
 import os
+import sys
 
 
 class SceneCard(QFrame):
@@ -113,21 +114,27 @@ class AiSceneSelector(QWidget):
 
     def load_presets(self):
         """加载场景预设"""
+        import logging
         try:
             # 尝试从打包后的路径加载
-            if hasattr(os.sys, '_MEIPASS'):
-                presets_path = os.path.join(os.sys._MEIPASS, 'gaiya', 'data', 'ai_scene_presets.json')
+            if hasattr(sys, '_MEIPASS'):
+                presets_path = os.path.join(sys._MEIPASS, 'gaiya', 'data', 'ai_scene_presets.json')
+                logging.info(f"[场景预��] 打包模式,路径: {presets_path}")
             else:
                 presets_path = os.path.join(
                     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                     'data', 'ai_scene_presets.json'
                 )
+                logging.info(f"[场景预设] 开发模式,路径: {presets_path}")
+
+            logging.info(f"[场景预设] 文件是否存在: {os.path.exists(presets_path)}")
 
             with open(presets_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 self.scenes_data = data.get('presets', [])
+                logging.info(f"[场景预设] 成功加载 {len(self.scenes_data)} 个预设场景")
         except Exception as e:
-            print(f"加载AI场景预设失败: {e}")
+            logging.error(f"[场景预设] 加载失败: {type(e).__name__}: {e}", exc_info=True)
             self.scenes_data = []
 
     def setup_ui(self):
@@ -207,18 +214,24 @@ class AiSceneSelector(QWidget):
 
     def on_scene_clicked(self, scene_id: str):
         """场景卡片被点击"""
+        import logging
+        logging.info(f"[场景选择器] 场景卡片被点击: {scene_id}")
+
         # 取消之前选中的卡片
         if self.selected_scene_id and self.selected_scene_id in self.scene_cards:
+            logging.info(f"[场景选择器] 取消之前选中的卡片: {self.selected_scene_id}")
             self.scene_cards[self.selected_scene_id].set_selected(False)
 
         # 设置新选中的卡片
         self.selected_scene_id = scene_id
         if scene_id in self.scene_cards:
+            logging.info(f"[场景选择器] 设置新选中的卡片: {scene_id}")
             self.scene_cards[scene_id].set_selected(True)
 
         # 查找对应的prompt
         for scene in self.scenes_data:
             if scene['id'] == scene_id:
+                logging.info(f"[场景选择器] 找到场景prompt,长度: {len(scene['prompt'])}")
                 self.scene_selected.emit(scene_id, scene['prompt'])
                 break
 

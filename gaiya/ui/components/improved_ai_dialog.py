@@ -125,10 +125,17 @@ class ImprovedAIGenerationDialog(QDialog):
 
     def on_next_clicked(self):
         """下一步按钮点击"""
+        import logging
+        logging.info("[AI对话框] 下一步按钮被点击")
+
         # 获取最终的prompt
         final_prompt = self.scene_selector.get_selected_prompt()
+        logging.info(f"[AI对话框] 获取到的prompt长度: {len(final_prompt) if final_prompt else 0}")
+        logging.info(f"[AI对话框] 当前选中场景ID: {self.scene_selector.selected_scene_id}")
+        logging.info(f"[AI对话框] 自定义输入内容: {self.scene_selector.get_custom_prompt()[:50] if self.scene_selector.get_custom_prompt() else '(空)'}")
 
         if not final_prompt:
+            logging.warning("[AI对话框] prompt为空,弹出警告对话框")
             QMessageBox.warning(
                 self,
                 "请选择场景",
@@ -137,7 +144,9 @@ class ImprovedAIGenerationDialog(QDialog):
             return
 
         # 发出信号并关闭对话框
+        logging.info(f"[AI对话框] 发出generation_requested信号,prompt前50字符: {final_prompt[:50]}")
         self.generation_requested.emit(final_prompt)
+        logging.info("[AI对话框] 调用accept()关闭对话框")
         self.accept()
 
     def showEvent(self, event):
