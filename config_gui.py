@@ -8857,12 +8857,11 @@ class ConfigManager(QMainWindow):
         # 检查是否有正在运行的任务
         logging.info("[改进版AI生成] 检查是否有正在运行的任务...")
         if self.ai_worker is not None and self.ai_worker.isRunning():
-            logging.warning("[改进版AI生成] 发现正在运行的任务,终止")
-            QMessageBox.warning(
-                self,
-                "请稍候",
-                "AI正在处理上一个请求,请稍候..."
-            )
+            logging.warning("[改进版AI生成] 发现正在运行的任务,已显示进度对话框")
+            # 如果进度对话框已经存在,将其显示到前台
+            if hasattr(self, 'ai_progress_dialog') and self.ai_progress_dialog:
+                self.ai_progress_dialog.raise_()
+                self.ai_progress_dialog.activateWindow()
             return
 
         # 检查后端服务器
@@ -8877,6 +8876,11 @@ class ConfigManager(QMainWindow):
             )
             return
 
+        # 创建并显示进度对话框
+        from gaiya.ui.components import AiProgressDialog
+        self.ai_progress_dialog = AiProgressDialog(self)
+        self.ai_progress_dialog.cancel_requested.connect(self.on_ai_generation_cancelled)
+
         # 创建并启动工作线程
         logging.info("[改进版AI生成] 创建AI工作线程...")
         self.ai_worker = AIWorker(self.ai_client, prompt)
@@ -8888,6 +8892,10 @@ class ConfigManager(QMainWindow):
             self.ai_worker.error.disconnect()
             self.ai_worker.deleteLater()
             self.ai_worker = None
+            # 关闭进度对话框
+            if hasattr(self, 'ai_progress_dialog') and self.ai_progress_dialog:
+                self.ai_progress_dialog.accept()
+                self.ai_progress_dialog = None
 
         def on_error(error_msg):
             self.on_ai_generation_error(error_msg)
@@ -8895,14 +8903,36 @@ class ConfigManager(QMainWindow):
             self.ai_worker.error.disconnect()
             self.ai_worker.deleteLater()
             self.ai_worker = None
+            # 关闭进度对话框
+            if hasattr(self, 'ai_progress_dialog') and self.ai_progress_dialog:
+                self.ai_progress_dialog.reject()
+                self.ai_progress_dialog = None
 
         self.ai_worker.finished.connect(on_finished)
         self.ai_worker.error.connect(on_error)
         logging.info("[改进版AI生成] 启动AI工作线程...")
         self.ai_worker.start()
+        logging.info(f"[改进版AI生成] AI生成任务已启动,prompt长度: {len(prompt)}")
 
-        # 显示进度对话框
-        logging.info(f"开始AI生成任务,prompt长度: {len(prompt)}")
+        # 显示进度对话框(非阻塞)
+        self.ai_progress_dialog.show()
+
+    def on_ai_generation_cancelled(self):
+        """用户取消AI生成"""
+        logging.info("[改进版AI生成] 用户请求取消AI生成")
+        if self.ai_worker and self.ai_worker.isRunning():
+            # 终止工作线程
+            self.ai_worker.quit()
+            self.ai_worker.wait(2000)  # 等待最多2秒
+            if self.ai_worker.isRunning():
+                self.ai_worker.terminate()
+            self.ai_worker.deleteLater()
+            self.ai_worker = None
+            logging.info("[改进版AI生成] AI工作线程已终止")
+
+        # 清理进度对话框
+        if hasattr(self, 'ai_progress_dialog') and self.ai_progress_dialog:
+            self.ai_progress_dialog = None
 
     def on_banner_learn_more(self):
         """横幅了解更多点击"""
