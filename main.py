@@ -129,6 +129,9 @@ class TimeProgressBar(QWidget):
         self.task_focus_states = {}  # {time_block_id: focus_state}
         self.completed_focus_start_times = {}  # {time_block_id: actual_start_time (datetime)}
 
+        # ✅ P1-1.5: 日志去重 - 追踪专注记录数量,只在变化时输出日志
+        self._last_completed_count = None
+
         # Focus mode state (immersive pomodoro timer in progress bar)
         self.focus_mode = False  # Whether focus mode is active
         self.focus_mode_type = None  # 'work' or 'break'
@@ -907,13 +910,18 @@ class TimeProgressBar(QWidget):
             all_completed_today = db.get_all_completed_focus_sessions_today()
             self.completed_focus_start_times = all_completed_today
 
-            # Debug: Log completed focus sessions
-            if all_completed_today:
-                self.logger.info(f"✅ 全局加载到 {len(all_completed_today)} 个已完成的专注记录")
-                for session_key, start_time in all_completed_today.items():
-                    self.logger.info(f"  - {session_key}: {start_time.strftime('%H:%M:%S')}")
-            else:
-                self.logger.info("📝 今日暂无已完成的专注记录")
+            # ✅ P1-1.5: 日志去重 - 只在专注记录数量变化时输出日志
+            current_count = len(all_completed_today) if all_completed_today else 0
+
+            if current_count != self._last_completed_count:
+                # 状态发生变化,输出日志
+                if all_completed_today:
+                    self.logger.info(f"✅ 全局加载到 {len(all_completed_today)} 个已完成的专注记录")
+                    for session_key, start_time in all_completed_today.items():
+                        self.logger.info(f"  - {session_key}: {start_time.strftime('%H:%M:%S')}")
+                else:
+                    self.logger.info("📝 今日暂无已完成的专注记录")
+                self._last_completed_count = current_count
 
             # 如果没有任务，确保状态被清空
             if not self.tasks:

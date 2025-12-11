@@ -8574,11 +8574,16 @@ class ConfigManager(QMainWindow):
                     color_input = color_widget.findChild(QLineEdit)
                     text_color_input = text_color_widget.findChild(QLineEdit)
 
-                    # 如果选择了预设主题，使用主题颜色
-                    if theme_colors:
+                    # ✅ P1-1.5: 修复AI任务配色被主题覆盖的问题
+                    # 只有当用户明确启用"应用主题配色"时,才使用主题颜色
+                    auto_apply = self.config.get('theme', {}).get('auto_apply_task_colors', False)
+
+                    if auto_apply and theme_colors:
+                        # 用户启用了"应用主题配色",使用主题颜色
                         color_index = row % len(theme_colors)
                         task_color = theme_colors[color_index]
                     else:
+                        # 保留表格中现有的颜色(AI颜色或用户自定义颜色)
                         task_color = color_input.text() if color_input else "#4CAF50"
 
                     start_time = start_widget.time().toString("HH:mm")
