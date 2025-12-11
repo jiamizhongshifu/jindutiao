@@ -2552,10 +2552,10 @@ class ConfigManager(QMainWindow):
         ai_button_layout.addWidget(self.quota_label)
 
         # 刷新配额按钮
-        refresh_quota_btn = QPushButton(self.i18n.tr("tasks.buttons.refresh_quota"))
-        refresh_quota_btn.clicked.connect(self.refresh_quota_status)
-        refresh_quota_btn.setFixedHeight(36)
-        refresh_quota_btn.setStyleSheet("""
+        self.refresh_quota_btn = QPushButton(self.i18n.tr("tasks.buttons.refresh_quota"))
+        self.refresh_quota_btn.clicked.connect(self.refresh_quota_status)
+        self.refresh_quota_btn.setFixedHeight(36)
+        self.refresh_quota_btn.setStyleSheet("""
             QPushButton {
                 background-color: #4CAF50;
                 color: white;
@@ -2565,8 +2565,12 @@ class ConfigManager(QMainWindow):
             QPushButton:hover {
                 background-color: #45a049;
             }
+            QPushButton:disabled {
+                background-color: #cccccc;
+                color: #666666;
+            }
         """)
-        ai_button_layout.addWidget(refresh_quota_btn)
+        ai_button_layout.addWidget(self.refresh_quota_btn)
 
         ai_button_layout.addStretch()
         ai_layout.addLayout(ai_button_layout)
@@ -4242,6 +4246,17 @@ class ConfigManager(QMainWindow):
         self.account_tab_widget = None
         self._load_account_tab()
 
+        # ⚠️ 关键修复：登录成功后需要更新AI客户端的user_tier并刷新配额
+        if hasattr(self, 'ai_client') and self.ai_client:
+            # 同步更新ai_client的user_tier
+            self.ai_client.user_tier = user_tier
+            logging.info(f"[LOGIN] 已更新ai_client.user_tier: {user_tier}")
+
+        # 刷新任务管理tab中的配额显示
+        if hasattr(self, 'quota_label'):
+            logging.info("[LOGIN] 刷新任务管理tab中的配额显示")
+            self.refresh_quota_status_async()
+
     def _on_refresh_account_clicked(self):
         """
         处理刷新账户按钮点击
@@ -4305,17 +4320,29 @@ class ConfigManager(QMainWindow):
                 cached_tier = self.auth_client.user_info.get("user_tier", "unknown")
                 logging.info(f"[ACCOUNT] 刷新前auth_client.user_info中的tier: {cached_tier}")
 
+            # ⚠️ 关键修复：先更新AI客户端的user_tier,再刷新UI
+            if hasattr(self, 'ai_client') and self.ai_client:
+                self.ai_client.user_tier = user_tier
+                logging.info(f"[ACCOUNT] 已更新ai_client.user_tier: {user_tier}")
+
+            # ⚠️ 关键修复：刷新任务管理tab中的配额显示(在重新加载account_tab之前)
+            if hasattr(self, 'quota_label'):
+                logging.info("[ACCOUNT] 刷新任务管理tab中的配额显示")
+                self.refresh_quota_status_async()
+
             # 重新加载个人中心tab以显示最新状态
-            logging.info(f"[ACCOUNT] 设置account_tab_widget=None (之前值: {self.account_tab_widget})")
+            logging.info(f"[ACCOUNT] 准备重新加载个人中心tab")
+            # 先安全地清理旧widget
+            if self.account_tab_widget:
+                old_widget = self.account_tab_widget
+                logging.info(f"[ACCOUNT] 清理旧的account_tab_widget: {old_widget}")
+                # 延迟删除旧widget,避免在使用中被删除
+                old_widget.deleteLater()
+
             self.account_tab_widget = None
             logging.info(f"[ACCOUNT] 调用_load_account_tab()重新加载个人中心")
             self._load_account_tab()
             logging.info(f"[ACCOUNT] _load_account_tab()调用完成")
-
-            # ⚠️ 关键修复：刷新任务管理tab中的配额显示
-            if hasattr(self, 'quota_label'):
-                logging.info("[ACCOUNT] 刷新任务管理tab中的配额显示")
-                self.refresh_quota_status_async()
 
             QMessageBox.information(
                 self,
@@ -8650,10 +8677,17 @@ class ConfigManager(QMainWindow):
                     self.finished.emit(None)
 
         # 创建并启动工作线程
+        # ⚠️ 关键修复: 使用 auth_client 的 user_tier,确保使用最新值
+        current_user_tier = self.ai_client.user_tier
+        if hasattr(self, 'auth_client') and self.auth_client and self.auth_client.user_info:
+            current_user_tier = self.auth_client.user_info.get('user_tier', current_user_tier)
+            logging.info(f"[QUOTA] 使用auth_client的tier: {current_user_tier}")
+
+        logging.info(f"[QUOTA] 开始查询配额: user_id={self.ai_client.user_id}, user_tier={current_user_tier}")
         worker = QuotaCheckWorker(
             self.ai_client.backend_url,
             self.ai_client.user_id,
-            self.ai_client.user_tier
+            current_user_tier
         )
 
         # 使用lambda包装回调，确保worker在完成后被清理
@@ -8676,6 +8710,7 @@ class ConfigManager(QMainWindow):
             remaining = quota_info.get('remaining', {})
             daily_plan_remaining = remaining.get('daily_plan', 0)
             is_fallback = quota_info.get('fallback', False)
+            logging.info(f"[QUOTA] 配额查询结果: daily_plan_remaining={daily_plan_remaining}, user_tier={quota_info.get('user_tier', 'unknown')}, fallback={is_fallback}")
 
             if daily_plan_remaining > 0:
                 self.quota_label.setText(self.i18n.tr("account.message.quota_remaining", daily_plan_remaining=daily_plan_remaining))
