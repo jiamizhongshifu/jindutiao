@@ -1380,13 +1380,25 @@ class ConfigManager(QMainWindow):
     def _init_ai_components(self):
         """延迟初始化AI相关组件(在后台运行,不阻塞UI)"""
         try:
-            # 初始化AI客户端（默认使用代理服务器）
-            self.ai_client = GaiyaAIClient()
-
             # ✅ Fix: Initialize AuthClient in background thread to avoid UI blocking
             from gaiya.core.auth_client import AuthClient
             self.auth_client = AuthClient()
             logging.info("AuthClient initialized successfully in background")
+
+            # ✅ P1-1.5: 关键修复 - 初始化AI客户端时直接使用正确的user_id和tier
+            if self.auth_client.is_logged_in():
+                user_id = self.auth_client.get_user_id() or "user_demo"
+                user_tier = self.auth_client.get_user_tier()
+                logging.info(f"[AI Client] 使用已登录用户信息初始化: tier={user_tier}, user_id={user_id}")
+            else:
+                user_id = "user_demo"
+                user_tier = "free"
+                logging.info("[AI Client] 用户未登录,使用默认配置: tier=free, user_id=user_demo")
+
+            # 初始化AI客户端（使用正确的user_id）
+            self.ai_client = GaiyaAIClient(user_id=user_id)
+            # 设置正确的tier
+            self.ai_client.set_user_tier(user_tier)
 
             # 注意：使用代理服务器模式时，不需要启动本地后端服务
             # BackendManager仅用于向后兼容（如果用户需要本地模式）
@@ -6698,6 +6710,12 @@ class ConfigManager(QMainWindow):
                     logging.info("[PAYMENT] Manual upgrade succeeded - payment is CONFIRMED!")
                     self._stop_payment_polling()
 
+                    # ✅ P1-1.5: 刷新会员状态后同步到AI客户端
+                    new_tier = upgrade_result.get("user_tier", "free")
+                    if hasattr(self, "ai_client") and self.ai_client:
+                        self.ai_client.set_user_tier(new_tier)
+                        logging.info(f"[AI Client] 会员升级后已同步tier: {new_tier}")
+
                     # 刷新会员状态
                     self.account_tab_widget = None
                     self._load_account_tab()
@@ -6770,7 +6788,14 @@ class ConfigManager(QMainWindow):
                 subscription_result = auth_client.get_subscription_status()
 
                 if subscription_result.get("success"):
-                    logging.info(f"[PAYMENT] Subscription status refreshed: {subscription_result.get('user_tier')}")
+                    new_tier = subscription_result.get('user_tier', 'free')
+                    logging.info(f"[PAYMENT] Subscription status refreshed: {new_tier}")
+
+                    # ✅ P1-1.5: 支付成功后同步tier到AI客户端
+                    if hasattr(self, "ai_client") and self.ai_client:
+                        self.ai_client.set_user_tier(new_tier)
+                        logging.info(f"[AI Client] 会员升级后已同步tier: {new_tier}")
+
                     QMessageBox.information(self, "支付成功", f"{plan_name}已成功激活!\n\n会员状态已更新")
 
                     # 刷新UI显示
@@ -8533,6 +8558,7 @@ class ConfigManager(QMainWindow):
 
             # 保存任务
             tasks = []
+            logging.info(f"[保存任务] 开始从表格读取任务,表格行数: {self.tasks_table.rowCount()}")
             for row in range(self.tasks_table.rowCount()):
                 start_widget = self.tasks_table.cellWidget(row, 0)
                 end_widget = self.tasks_table.cellWidget(row, 1)
@@ -8562,14 +8588,42 @@ class ConfigManager(QMainWindow):
                         # 最后一个任务且结束时间是 00:00,很可能是 24:00
                         end_time = "24:00"
 
-                    # 验证结束时间必须大于开始时间
-                    if self.time_to_minutes(end_time) <= self.time_to_minutes(start_time):
-                        QMessageBox.warning(
-                            self,
-                            "时间错误",
-                            f"第 {row + 1} 个任务的结束时间必须大于开始时间!\n\n任务: {name_item.text()}"
-                        )
-                        return
+                    # ✅ P1-1.5: 修复跨天任务验证逻辑
+                    # 验证结束时间必须大于开始时间(允许跨天任务,如23:00-07:00)
+                    start_minutes = self.time_to_minutes(start_time)
+                    end_minutes = self.time_to_minutes(end_time)
+
+                    # 如果结束时间小于等于开始时间,检查是否是跨天任务
+                    if end_minutes <= start_minutes:
+                        # 跨天任务:计算实际时长(从开始时间到午夜 + 午夜到结束时间)
+                        # 例如 23:00-07:00 = (1440-1380) + 420 = 60 + 420 = 480分钟 = 8小时
+                        actual_duration = (1440 - start_minutes) + end_minutes
+
+                        # 拒绝不合理的时长:
+                        # - 太短(<5分钟):可能是输入错误
+                        # - 太长(>20小时):跨天任务超过20小时不合理
+                        if actual_duration < 5:
+                            QMessageBox.warning(
+                                self,
+                                "时间错误",
+                                f"第 {row + 1} 个任务的时长过短!\n\n"
+                                f"任务: {name_item.text()}\n"
+                                f"开始: {start_time}, 结束: {end_time}\n"
+                                f"实际时长: {actual_duration}分钟\n\n"
+                                f"请检查时间设置"
+                            )
+                            return
+                        elif actual_duration > 1200:  # 20小时 = 1200分钟
+                            QMessageBox.warning(
+                                self,
+                                "时间错误",
+                                f"第 {row + 1} 个任务的时长过长!\n\n"
+                                f"任务: {name_item.text()}\n"
+                                f"开始: {start_time}, 结束: {end_time}\n"
+                                f"实际时长: {actual_duration // 60}小时{actual_duration % 60}分钟\n\n"
+                                f"跨天任务不应超过20小时"
+                            )
+                            return
 
                     # Generate stable ID based on time and task name
                     import hashlib
@@ -8604,6 +8658,9 @@ class ConfigManager(QMainWindow):
                 json.dump(tasks, f, indent=4, ensure_ascii=False)
 
             logging.info(f"[任务保存] 任务已保存到文件: {len(tasks)}个任务")
+            if tasks:
+                logging.info(f"[任务保存] 第一个任务: {tasks[0].get('task', 'N/A')}, 开始: {tasks[0].get('start', 'N/A')}")
+                logging.info(f"[任务保存] 最后一个任务: {tasks[-1].get('task', 'N/A')}, 结束: {tasks[-1].get('end', 'N/A')}")
             logging.info(f"[任务保存] 即将发送config_saved信号")
 
             QMessageBox.information(self, self.i18n.tr("message.success"), "配置和任务已保存!\n\n如果 Gaiya 正在运行,更改会自动生效。")
@@ -8847,7 +8904,21 @@ class ConfigManager(QMainWindow):
 
                 # 加载AI生成的任务
                 self.tasks = tasks
+                logging.info(f"[AI生成] 更新self.tasks,任务数: {len(self.tasks)}")
+                logging.info(f"[AI生成] 第一个任务: {self.tasks[0].get('task', 'N/A') if self.tasks else 'N/A'}")
                 self.load_tasks_to_table()
+                logging.info(f"[AI生成] load_tasks_to_table完成,tasks_table行数: {self.tasks_table.rowCount()}")
+
+                # ✅ P1-1.5: 自动切换到任务管理tab
+                if hasattr(self, 'main_tabs'):
+                    # 找到任务管理tab的索引(通常是第1个tab,索引为0)
+                    task_mgmt_tab_index = 0
+                    for i in range(self.main_tabs.count()):
+                        if "任务" in self.main_tabs.tabText(i) or "Task" in self.main_tabs.tabText(i):
+                            task_mgmt_tab_index = i
+                            break
+                    self.main_tabs.setCurrentIndex(task_mgmt_tab_index)
+                    logging.info(f"[AI生成] 已自动切换到任务管理tab(索引={task_mgmt_tab_index})")
 
                 # 显示成功消息
                 token_usage = result.get('token_usage', 0)

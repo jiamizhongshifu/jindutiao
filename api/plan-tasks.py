@@ -136,6 +136,14 @@ class handler(BaseHTTPRequestHandler):
                 api_response = response.json()
                 content = api_response['choices'][0]['message']['content'].strip()
 
+                # ✅ P1-1.5: 提取token使用量
+                token_usage = 0
+                if 'usage' in api_response:
+                    usage = api_response['usage']
+                    # OpenAI格式: total_tokens = prompt_tokens + completion_tokens
+                    token_usage = usage.get('total_tokens', 0)
+                    print(f"Token usage: prompt={usage.get('prompt_tokens', 0)}, completion={usage.get('completion_tokens', 0)}, total={token_usage}", file=sys.stderr)
+
                 # 尝试从markdown代码块中提取JSON
                 if content.startswith("```"):
                     lines = content.split("\n")
@@ -179,7 +187,8 @@ class handler(BaseHTTPRequestHandler):
                     self._send_json_response(200, {
                         "success": True,
                         "tasks": tasks,
-                        "quota_info": quota_info
+                        "quota_info": quota_info,
+                        "token_usage": token_usage  # ✅ P1-1.5: 添加token使用量到响应
                     }, rate_info)
 
                 except json.JSONDecodeError as e:
