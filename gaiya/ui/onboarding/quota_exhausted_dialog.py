@@ -110,7 +110,7 @@ class QuotaExhaustedDialog(QDialog):
 
     def on_upgrade_clicked(self):
         """升级会员按钮点击"""
-        # 关闭对话框
-        self.accept()
-        # 发出升级信号
+        # 先发出升级信号(在关闭对话框之前)
         self.upgrade_requested.emit()
+        # 再关闭对话框
+        self.accept()

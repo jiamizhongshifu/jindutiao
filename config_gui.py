@@ -4487,37 +4487,60 @@ class ConfigManager(QMainWindow):
         from gaiya.core.auth_client import AuthClient
         from gaiya.ui.onboarding import QuotaExhaustedDialog
 
-        logging.info("[配额检查] 开始检查AI配额...")
-        auth_client = AuthClient()
-        user_tier = auth_client.get_user_tier()
-        logging.info(f"[配额检查] 用户等级: {user_tier}")
+        try:
+            logging.info("[配额检查] 开始检查AI配额...")
+            auth_client = AuthClient()
+            user_tier = auth_client.get_user_tier()
+            logging.info(f"[配额检查] 用户等级: {user_tier}")
 
-        # Pro会员或以上不受限制
-        if user_tier in ['pro', 'lifetime']:
-            logging.info("[配额检查] Pro/Lifetime会员,配额充足")
+            # Pro会员或以上不受限制
+            if user_tier in ['pro', 'lifetime']:
+                logging.info("[配额检查] Pro/Lifetime会员,配额充足")
+                return True
+
+            # 免费用户检查配额
+            quota_status = auth_client.get_quota_status()
+            logging.info(f"[配额检查] 免费用户,配额状态: {quota_status}")
+
+            # 检查 daily_plan 配额 - 处理嵌套结构
+            remaining_quota = 0
+            if isinstance(quota_status, dict):
+                # 新API格式: {'remaining': {'daily_plan': 3, ...}}
+                if 'remaining' in quota_status and isinstance(quota_status['remaining'], dict):
+                    remaining_quota = quota_status['remaining'].get('daily_plan', 0)
+                    logging.info(f"[配额检查] 嵌套格式 - daily_plan剩余配额: {remaining_quota}")
+                # 兼容直接格式: {'daily_plan': 3, ...}
+                elif 'daily_plan' in quota_status:
+                    remaining_quota = quota_status.get('daily_plan', 0)
+                    logging.info(f"[配额检查] 扁平格式 - daily_plan剩余配额: {remaining_quota}")
+                else:
+                    logging.warning(f"[配额检查] 未识别的配额格式: {quota_status}")
+            else:
+                logging.warning(f"[配额检查] 配额状态不是字典: {type(quota_status)}")
+
+            if remaining_quota <= 0:
+                # 配额已用完,显示升级对话框
+                logging.warning("[配额检查] 配额已用完,显示升级对话框")
+                dialog = QuotaExhaustedDialog(self)
+                dialog.upgrade_requested.connect(self._on_quota_upgrade_requested)
+                result = dialog.exec()
+                logging.info(f"[配额检查] 升级对话框关闭,返回值: {result}")
+                return False
+
+            logging.info("[配额检查] 配额充足,可以继续")
             return True
-
-        # 免费用户检查配额
-        quota_status = auth_client.get_quota_status()
-        remaining_quota = quota_status.get('remaining', 0)
-        logging.info(f"[配额检查] 免费用户,剩余配额: {remaining_quota}")
-
-        if remaining_quota <= 0:
-            # 配额已用完,显示升级对话框
-            logging.warning("[配额检查] 配额已用完,显示升级对话框")
-            dialog = QuotaExhaustedDialog(self)
-            dialog.upgrade_requested.connect(self._on_quota_upgrade_requested)
-            result = dialog.exec()
-            logging.info(f"[配额检查] 升级对话框关闭,返回值: {result}")
-            return False
-
-        logging.info("[配额检查] 配额充足,可以继续")
-        return True
+        except Exception as e:
+            logging.error(f"[配额检查] 检查配额时发生异常: {type(e).__name__}: {e}", exc_info=True)
+            # 发生异常时保守处理,允许继续
+            return True
 
     def _on_quota_upgrade_requested(self):
         """配额用尽对话框中用户请求升级会员"""
-        # 切换到个人中心tab（index=3）
-        self.tabs.setCurrentIndex(3)
+        import logging
+        logging.info("[配额检查] 用户点击升级会员,切换到个人中心tab")
+        # 切换到个人中心tab（index=5,因为有AI规划tab）
+        self.tabs.setCurrentIndex(5)
+        logging.info(f"[配额检查] 已切换到tab index={self.tabs.currentIndex()}")
 
     def _bind_card_click(self, card, plan_id):
         """绑定卡片点击事件，使用weakref避免循环引用"""
