@@ -1792,19 +1792,26 @@ class ConfigManager(QMainWindow):
 
     def _load_account_tab(self):
         """加载个人中心标签页"""
+        import logging
+        logging.info(f"[_load_account_tab] 被调用, account_tab_widget={self.account_tab_widget}")
+
         if self.account_tab_widget is not None:
+            logging.info("[_load_account_tab] account_tab_widget不为None,跳过重新加载")
             return  # 已经加载过了
 
+        logging.info("[_load_account_tab] 开始创建新的account_tab")
         try:
             # Block signals to prevent recursive tab change events
             self.tabs.blockSignals(True)
 
             self.account_tab_widget = self._create_account_tab()
+            logging.info(f"[_load_account_tab] 创建account_tab完成, 开始替换tab")
             self.tabs.setTabEnabled(5, True)  # 确保标签页可用
             # 替换占位widget
             self.tabs.removeTab(5)
             self.tabs.insertTab(5, self.account_tab_widget, tr("account.tab_title"))
             self.tabs.setCurrentIndex(5)  # 切换到个人中心标签页
+            logging.info(f"[_load_account_tab] tab替换完成, 当前tab index={self.tabs.currentIndex()}")
 
             # Restore signals
             self.tabs.blockSignals(False)
@@ -3836,6 +3843,7 @@ class ConfigManager(QMainWindow):
 
     def _create_account_tab(self):
         """创建个人中心标签页"""
+        import logging
         from PySide6.QtWidgets import QScrollArea
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
@@ -3859,9 +3867,11 @@ class ConfigManager(QMainWindow):
             # Fallback: if auth_client not initialized yet, create placeholder
             email = "Loading..."
             user_tier = "free"
+            logging.info("[_create_account_tab] auth_client未初始化")
         else:
             email = self.auth_client.get_user_email() or "未登录"
             user_tier = self.auth_client.get_user_tier()
+            logging.info(f"[_create_account_tab] 创建个人中心tab, email={email}, user_tier={user_tier}")
 
         if email != "未登录":
             # 添加弹性空间，推动右侧内容到右边
@@ -4252,7 +4262,7 @@ class ConfigManager(QMainWindow):
         # 显示加载提示
         loading_dialog = QMessageBox(self)
         loading_dialog.setWindowTitle("刷新中")
-        loading_dialog.setText("正在刷新会员状态，请稍候...")
+        loading_dialog.setText("正在刷新会员状态,请稍候...")
         loading_dialog.setStandardButtons(QMessageBox.StandardButton.NoButton)
         loading_dialog.setIcon(QMessageBox.Icon.Information)
         loading_dialog.show()
@@ -4260,10 +4270,16 @@ class ConfigManager(QMainWindow):
         # 强制刷新UI
         QApplication.processEvents()
 
-        auth_client = AuthClient()
+        # ⚠️ 关键修复：必须使用self.auth_client实例,而不是创建新实例
+        # 否则新实例更新的user_info不会影响self.auth_client,导致UI刷新后仍显示旧数据
+        if not self.auth_client:
+            logging.error("[ACCOUNT] self.auth_client未初始化,无法刷新")
+            loading_dialog.close()
+            QMessageBox.warning(self, "刷新失败", "认证客户端未初始化")
+            return
 
         # 创建异步Worker获取订阅状态
-        self._refresh_worker = AsyncNetworkWorker(auth_client.get_subscription_status)
+        self._refresh_worker = AsyncNetworkWorker(self.auth_client.get_subscription_status)
         self._refresh_worker.success.connect(lambda result: self._on_refresh_success(result, loading_dialog))
         self._refresh_worker.error.connect(lambda error: self._on_refresh_error(error, loading_dialog))
         self._refresh_worker.start()
@@ -4284,9 +4300,22 @@ class ConfigManager(QMainWindow):
 
             logging.info(f"[ACCOUNT] 会员状态刷新成功: tier={user_tier}, active={is_active}")
 
+            # 检查auth_client的user_info是否已更新
+            if self.auth_client and self.auth_client.user_info:
+                cached_tier = self.auth_client.user_info.get("user_tier", "unknown")
+                logging.info(f"[ACCOUNT] 刷新前auth_client.user_info中的tier: {cached_tier}")
+
             # 重新加载个人中心tab以显示最新状态
+            logging.info(f"[ACCOUNT] 设置account_tab_widget=None (之前值: {self.account_tab_widget})")
             self.account_tab_widget = None
+            logging.info(f"[ACCOUNT] 调用_load_account_tab()重新加载个人中心")
             self._load_account_tab()
+            logging.info(f"[ACCOUNT] _load_account_tab()调用完成")
+
+            # ⚠️ 关键修复：刷新任务管理tab中的配额显示
+            if hasattr(self, 'quota_label'):
+                logging.info("[ACCOUNT] 刷新任务管理tab中的配额显示")
+                self.refresh_quota_status_async()
 
             QMessageBox.information(
                 self,
@@ -8547,8 +8576,13 @@ class ConfigManager(QMainWindow):
             with open(self.tasks_file, 'w', encoding='utf-8') as f:
                 json.dump(tasks, f, indent=4, ensure_ascii=False)
 
+            logging.info(f"[任务保存] 任务已保存到文件: {len(tasks)}个任务")
+            logging.info(f"[任务保存] 即将发送config_saved信号")
+
             QMessageBox.information(self, self.i18n.tr("message.success"), "配置和任务已保存!\n\n如果 Gaiya 正在运行,更改会自动生效。")
+
             self.config_saved.emit()
+            logging.info(f"[任务保存] config_saved信号已发送")
 
         except Exception as e:
             QMessageBox.critical(self, self.i18n.tr("membership.payment.error"), f"保存失败:\n{str(e)}")
@@ -8887,6 +8921,7 @@ class ConfigManager(QMainWindow):
 
         # 使用lambda包装回调
         def on_finished(result):
+            logging.info(f"[改进版AI生成] on_finished回调触发, 结果: {type(result)}")
             self.on_ai_generation_finished(result)
             self.ai_worker.finished.disconnect()
             self.ai_worker.error.disconnect()
@@ -8894,10 +8929,12 @@ class ConfigManager(QMainWindow):
             self.ai_worker = None
             # 关闭进度对话框
             if hasattr(self, 'ai_progress_dialog') and self.ai_progress_dialog:
+                logging.info("[改进版AI生成] 关闭进度对话框(成功)")
                 self.ai_progress_dialog.accept()
                 self.ai_progress_dialog = None
 
         def on_error(error_msg):
+            logging.error(f"[改进版AI生成] on_error回调触发: {error_msg}")
             self.on_ai_generation_error(error_msg)
             self.ai_worker.finished.disconnect()
             self.ai_worker.error.disconnect()
@@ -8905,6 +8942,7 @@ class ConfigManager(QMainWindow):
             self.ai_worker = None
             # 关闭进度对话框
             if hasattr(self, 'ai_progress_dialog') and self.ai_progress_dialog:
+                logging.info("[改进版AI生成] 关闭进度对话框(失败)")
                 self.ai_progress_dialog.reject()
                 self.ai_progress_dialog = None
 
@@ -8913,6 +8951,7 @@ class ConfigManager(QMainWindow):
         logging.info("[改进版AI生成] 启动AI工作线程...")
         self.ai_worker.start()
         logging.info(f"[改进版AI生成] AI生成任务已启动,prompt长度: {len(prompt)}")
+        logging.info(f"[改进版AI生成] 工作线程isRunning: {self.ai_worker.isRunning()}")
 
         # 显示进度对话框(非阻塞)
         self.ai_progress_dialog.show()
