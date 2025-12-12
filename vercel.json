@@ -1,4 +1,9 @@
 {
+  "functions": {
+    "api/plan-tasks.py": {
+      "maxDuration": 300
+    }
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",

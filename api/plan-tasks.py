@@ -120,6 +120,7 @@ class handler(BaseHTTPRequestHandler):
             print(f"Calling API: {api_url}", file=sys.stderr)
 
             # 转发请求到真实API
+            # ✅ P1-1.6: 延长AI API请求超时时间到4分钟 (Vercel maxDuration=5分钟,留1分钟缓冲)
             response = requests.post(
                 api_url,
                 headers={
@@ -127,7 +128,7 @@ class handler(BaseHTTPRequestHandler):
                     "Content-Type": "application/json"
                 },
                 json=api_request_body,
-                timeout=60
+                timeout=240  # 4分钟 (Vercel执行限制5分钟,留1分钟缓冲处理响应)
             )
 
             print(f"API response status: {response.status_code}", file=sys.stderr)
