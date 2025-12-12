@@ -31,7 +31,7 @@ class GaiyaAIClient:
         self.backend_url = backend_url
         self.user_id = user_id
         self.user_tier = "free"  # 默认免费版
-        self.timeout = 60  # API请求超时时间（秒）
+        self.timeout = 300  # ✅ P1-1.6: API请求超时时间（秒）- 从60秒延长到5分钟
         self.service_type = "cloud"  # 云端服务
 
         # ✅ P1-1.5: 使用Session以确保代理设置持久化(与AuthClient保持一致)
