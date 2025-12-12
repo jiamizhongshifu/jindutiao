@@ -2466,6 +2466,7 @@ class TimeProgressBar(QWidget):
             # 查找当前时间所在的任务
             found = False
             cumulative_duration = 0
+            first_gap_position = None  # 记录第一个间隔位置作为备选
 
             for i, pos in enumerate(self.task_positions):
                 task_start = pos['original_start']
@@ -2507,14 +2508,13 @@ class TimeProgressBar(QWidget):
                     )
                     found = True
                     break
-                else:
-                    # 当前时间不在任务内,检查是否在任务之前(间隔中)
-                    # ✅ P1-1.6.8: 修复跨天任务的间隔判断
+                elif first_gap_position is None:
+                    # 记录第一个可能的间隔位置,但不break,继续检查后续任务
+                    # ✅ P1-1.6.8: 可能后面有跨天任务包含当前时间
                     in_gap_before_task = False
 
                     if task_start > task_end:  # 跨天任务
                         # 跨天任务的"之前"时段: task_end <= current < task_start
-                        # 例如睡眠23:00-07:00, "之前"是07:00-23:00
                         if task_end <= total_seconds < task_start:
                             in_gap_before_task = True
                     else:  # 普通任务
@@ -2523,26 +2523,28 @@ class TimeProgressBar(QWidget):
                             in_gap_before_task = True
 
                     if in_gap_before_task:
-                        new_percentage = pos['compact_start_pct']
-
-                        self.logger.debug(
-                            f"[时间标记] 当前时间 {current_time.toString('HH:mm:ss')} "
-                            f"在任务[{i}]'{task_name}'之前(间隔中) "
-                            f"({time_utils.seconds_to_time_str(task_start)}-{time_utils.seconds_to_time_str(task_end)}) "
-                            f"标记位置={new_percentage:.4f}(任务起点)"
-                        )
-                        found = True
-                        break
+                        first_gap_position = (i, pos['compact_start_pct'], task_name, task_start, task_end)
 
                 cumulative_duration += task_duration
 
-            # 如果当前时间在所有任务之后
+            # 如果没有找到匹配的任务
             if not found:
-                new_percentage = 1.0
-                self.logger.debug(
-                    f"[时间标记] 当前时间 {current_time.toString('HH:mm:ss')} "
-                    f"在所有任务之后,标记位置=1.0(最右端)"
-                )
+                if first_gap_position is not None:
+                    # 使用第一个间隔位置
+                    i, new_percentage, task_name, task_start, task_end = first_gap_position
+                    self.logger.debug(
+                        f"[时间标记] 当前时间 {current_time.toString('HH:mm:ss')} "
+                        f"在任务[{i}]'{task_name}'之前(间隔中) "
+                        f"({time_utils.seconds_to_time_str(task_start)}-{time_utils.seconds_to_time_str(task_end)}) "
+                        f"标记位置={new_percentage:.4f}(任务起点)"
+                    )
+                else:
+                    # 当前时间在所有任务之后
+                    new_percentage = 1.0
+                    self.logger.debug(
+                        f"[时间标记] 当前时间 {current_time.toString('HH:mm:ss')} "
+                        f"在所有任务之后,标记位置=1.0(最右端)"
+                    )
 
         # 仅当百分比实际变化时才重绘(避免浮点误差)
         if abs(new_percentage - self.current_time_percentage) > 0.00001:
