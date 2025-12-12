@@ -9014,6 +9014,7 @@ class ConfigManager(QMainWindow):
 
                 # ✅ P1-1.6.6: 使用API返回的quota_info直接更新UI,避免额外请求
                 quota_info = result.get('quota_info')
+                logging.info(f"[AI生成] result完整内容: success={result.get('success')}, tasks数={len(result.get('tasks', []))}, quota_info={quota_info}")
                 if quota_info:
                     logging.info(f"[AI生成] 使用API返回的配额信息更新UI: {quota_info}")
                     self._on_quota_status_finished(quota_info)
