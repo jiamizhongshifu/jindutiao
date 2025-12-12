@@ -105,9 +105,13 @@ class handler(BaseHTTPRequestHandler):
 3. 时间使用24小时制,格式为HH:MM
 4. category只能是: work, break, exercise, meeting, learning, other 之一
 5. 确保任务时间连续且合理,不重叠
+6. **重要**: 任务排序规则 - 按照用户实际执行顺序排列:
+   - 如果有睡眠任务(如00:00-07:00),应该放在数组最后一位
+   - 早上的活动(如起床、早餐)应该放在数组最前面
+   - 任务顺序应该反映用户一天的实际流程: 起床 -> 工作/学习 -> 休息 -> 睡眠
 
-示例输出:
-{"tasks": [{"start": "09:00", "end": "12:00", "task": "工作", "category": "work"}, {"start": "12:00", "end": "13:00", "task": "午休", "category": "break"}]}"""
+示例输出(注意睡眠任务在最后):
+{"tasks": [{"start": "07:00", "end": "08:00", "task": "起床早餐", "category": "break"}, {"start": "08:00", "end": "12:00", "task": "上午工作", "category": "work"}, {"start": "12:00", "end": "13:00", "task": "午休", "category": "break"}, {"start": "23:00", "end": "07:00", "task": "睡眠", "category": "break"}]}"""
                     },
                     {
                         "role": "user",

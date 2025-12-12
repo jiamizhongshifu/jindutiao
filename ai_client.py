@@ -79,10 +79,10 @@ class GaiyaAIClient:
 
             logging.info(f"[AI API] 响应状态码: {response.status_code}")
 
-            if response.status_code == 403:
-                # 配额用尽
+            # 处理配额/速率限制错误
+            if response.status_code in [403, 429]:
                 data = response.json()
-                logging.warning(f"[AI API] 配额用尽: {data}")
+                logging.warning(f"[AI API] 配额/速率限制: {data}")
                 self._show_quota_exceeded_dialog(data, parent_widget)
                 return None
 
@@ -346,7 +346,14 @@ class GaiyaAIClient:
 
     def _show_quota_exceeded_dialog(self, data: Dict, parent_widget):
         """显示配额用尽对话框"""
+        import logging
+
+        # 始终记录错误到日志
+        error_msg = data.get('error', '配额已用尽')
+        logging.error(f"[AI Client] 配额/速率限制: {error_msg}")
+
         if parent_widget is None:
+            logging.warning("[AI Client] parent_widget为None,无法显示配额对话框")
             return
 
         feature_names = {
