@@ -40,14 +40,11 @@ class QuotaManager:
             if response.data and len(response.data) > 0:
                 # 用户存在，检查是否需要更新tier和重置配额
                 user_quota = response.data[0]
-                # ⚠️ 关键修复: 如果tier发生变化,需要更新数据库
+                # ✅ P1-1.6.8: 修复自动降级Bug - 只记录差异,不自动修改
+                # 问题根因: 自动降级会将Pro(20配额)降为Free(3配额),导致配额耗尽
+                # 解决方案: 以数据库tier为准,忽略请求参数中的tier
                 if user_quota.get("user_tier") != user_tier:
-                    print(f"User tier changed: {user_quota.get('user_tier')} -> {user_tier}, updating...", file=sys.stderr)
-                    self._update_user_tier(user_id, user_tier, user_quota)
-                    # 重新获取更新后的数据
-                    response = self.client.table("user_quotas").select("*").eq("user_id", user_id).execute()
-                    if response.data and len(response.data) > 0:
-                        user_quota = response.data[0]
+                    print(f"[Quota Warning] Tier mismatch: DB={user_quota.get('user_tier')}, Request={user_tier}. Using DB value.", file=sys.stderr)
                 return self._check_and_reset_quota(user_quota)
             else:
                 # 用户不存在，创建新用户
