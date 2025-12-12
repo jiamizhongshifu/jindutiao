@@ -2605,13 +2605,21 @@ class TimeProgressBar(QWidget):
                 start_seconds = time_utils.time_str_to_seconds(task_start)
                 end_seconds = time_utils.time_str_to_seconds(task_end)
 
-                # ✅ P1-1.6: 修复跨天任务判断逻辑
+                # ✅ P1-1.6.3: 修复跨天任务在当前日期不应点亮的问题
                 if start_seconds > end_seconds:  # 跨天任务(如23:00-07:00)
-                    # 跨天逻辑: 当前时间在开始之后 OR 在结束之前
-                    if current_seconds >= start_seconds or current_seconds < end_seconds:
+                    # 跨天任务逻辑:
+                    # - 23:00之后: 任务开始(in_progress)
+                    # - 00:00-07:00: 任务继续(in_progress)
+                    # - 07:00-23:00: 任务未开始(not_started) ⚠️ 不是completed!
+                    if current_seconds >= start_seconds:
+                        # 当前时间在开始之后(如23:30),任务进行中
                         status = "in_progress"
-                    else:  # 在中间时段(如07:00-23:00)
-                        status = "completed"
+                    elif current_seconds < end_seconds:
+                        # 当前时间在结束之前(如凌晨02:00),任务进行中
+                        status = "in_progress"
+                    else:
+                        # 当前时间在中间时段(如15:00),任务未开始
+                        status = "not_started"
                 else:  # 普通任务
                     if end_seconds <= current_seconds:
                         status = "completed"
@@ -3218,11 +3226,27 @@ class TimeProgressBar(QWidget):
                 task_start = pos['original_start']
                 task_end = pos['original_end']
 
+                # ✅ P1-1.6.3: 修复跨天任务绘制逻辑(与统计逻辑保持一致)
                 if task_start > task_end:  # 跨天任务(如23:00-07:00)
-                    # 跨天逻辑: 当前时间在开始之后 OR 在结束之前
-                    is_in_progress = current_seconds >= task_start or current_seconds < task_end
-                    is_completed = task_end <= current_seconds < task_start  # 在中间时段(如07:00-23:00)
-                    is_not_started = False  # 跨天任务不存在"未开始"状态(总在进行或已完成)
+                    # 跨天任务逻辑:
+                    # - 23:00之后: 进行中 (is_in_progress=True)
+                    # - 00:00-07:00: 进行中 (is_in_progress=True)
+                    # - 07:00-23:00: 未开始 (is_not_started=True) ⚠️ 不是completed!
+                    if current_seconds >= task_start:
+                        # 当前时间在开始之后(如23:30),任务进行中
+                        is_in_progress = True
+                        is_completed = False
+                        is_not_started = False
+                    elif current_seconds < task_end:
+                        # 当前时间在结束之前(如凌晨02:00),任务进行中
+                        is_in_progress = True
+                        is_completed = False
+                        is_not_started = False
+                    else:
+                        # 当前时间在中间时段(如15:00),任务未开始
+                        is_in_progress = False
+                        is_completed = False
+                        is_not_started = True
                 else:  # 普通任务
                     is_completed = task_end <= current_seconds
                     is_in_progress = task_start <= current_seconds < task_end
