@@ -8963,8 +8963,24 @@ class ConfigManager(QMainWindow):
                 self._auto_save_ai_template(tasks)
 
             else:
-                # result为None表示已经在ai_client中显示了错误对话框
-                pass
+                # ✅ P1-1.6.4: 处理失败情况(配额用尽/速率限制/其他错误)
+                # result为None或success=False表示生成失败
+                error_msg = "AI任务生成失败"
+
+                if result and isinstance(result, dict):
+                    # 尝试从result中提取错误信息
+                    error_msg = result.get('error', error_msg)
+
+                QMessageBox.warning(
+                    self,
+                    "生成失败",
+                    f"{error_msg}\n\n"
+                    "常见原因:\n"
+                    "• 今日AI配额已用尽\n"
+                    "• 网络连接问题\n"
+                    "• 服务暂时不可用\n\n"
+                    "请稍后再试或联系客服。"
+                )
 
         except Exception as e:
             QMessageBox.critical(
