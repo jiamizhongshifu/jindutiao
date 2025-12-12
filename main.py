@@ -2471,12 +2471,29 @@ class TimeProgressBar(QWidget):
                 task_start = pos['original_start']
                 task_end = pos['original_end']
                 task_duration = task_end - task_start
+                # ✅ P1-1.6: 处理跨天任务时长
+                if task_duration < 0:
+                    task_duration += 86400
                 task_name = pos['task'].get('task', '未命名')
 
-                if task_start <= total_seconds <= task_end:
+                # ✅ P1-1.6: 修复跨天任务判断逻辑
+                is_in_task = False
+                if task_start > task_end:  # 跨天任务(如23:00-07:00)
+                    is_in_task = total_seconds >= task_start or total_seconds < task_end
+                else:  # 普通任务
+                    is_in_task = task_start <= total_seconds <= task_end
+
+                if is_in_task:
                     # 当前时间在这个任务内
                     # 计算在任务内的进度
-                    progress_in_task = (total_seconds - task_start) / task_duration if task_duration > 0 else 0
+                    if task_start > task_end:  # 跨天任务
+                        if total_seconds >= task_start:
+                            progress_in_task = (total_seconds - task_start) / task_duration if task_duration > 0 else 0
+                        else:  # total_seconds < task_end
+                            progress_in_task = (86400 - task_start + total_seconds) / task_duration if task_duration > 0 else 0
+                    else:  # 普通任务
+                        progress_in_task = (total_seconds - task_start) / task_duration if task_duration > 0 else 0
+
                     # 计算在整个进度条上的位置
                     new_percentage = pos['compact_start_pct'] + (pos['compact_end_pct'] - pos['compact_start_pct']) * progress_in_task
 
@@ -2490,8 +2507,8 @@ class TimeProgressBar(QWidget):
                     )
                     found = True
                     break
-                elif total_seconds < task_start:
-                    # 当前时间在这个任务之前(处于间隔中)
+                elif not (task_start > task_end) and total_seconds < task_start:
+                    # 普通任务: 当前时间在这个任务之前(处于间隔中)
                     # 显示在这个任务的起始位置
                     new_percentage = pos['compact_start_pct']
 
@@ -2588,13 +2605,20 @@ class TimeProgressBar(QWidget):
                 start_seconds = time_utils.time_str_to_seconds(task_start)
                 end_seconds = time_utils.time_str_to_seconds(task_end)
 
-                # 判断任务状态
-                if end_seconds <= current_seconds:
-                    status = "completed"
-                elif start_seconds <= current_seconds < end_seconds:
-                    status = "in_progress"
-                else:
-                    status = "not_started"
+                # ✅ P1-1.6: 修复跨天任务判断逻辑
+                if start_seconds > end_seconds:  # 跨天任务(如23:00-07:00)
+                    # 跨天逻辑: 当前时间在开始之后 OR 在结束之前
+                    if current_seconds >= start_seconds or current_seconds < end_seconds:
+                        status = "in_progress"
+                    else:  # 在中间时段(如07:00-23:00)
+                        status = "completed"
+                else:  # 普通任务
+                    if end_seconds <= current_seconds:
+                        status = "completed"
+                    elif start_seconds <= current_seconds < end_seconds:
+                        status = "in_progress"
+                    else:
+                        status = "not_started"
 
                 # ✅ 更新统计 (只更新内存,不立即写入文件)
                 self.statistics_manager.update_task_status(
@@ -3190,9 +3214,19 @@ class TimeProgressBar(QWidget):
                 end_pct = pos['compact_end_pct']
 
                 # 三种状态:未开始、进行中、已完成
-                is_completed = pos['original_end'] <= current_seconds  # 已完成
-                is_in_progress = pos['original_start'] <= current_seconds < pos['original_end']  # 进行中
-                is_not_started = current_seconds < pos['original_start']  # 未开始
+                # ✅ P1-1.6: 修复跨天任务判断逻辑
+                task_start = pos['original_start']
+                task_end = pos['original_end']
+
+                if task_start > task_end:  # 跨天任务(如23:00-07:00)
+                    # 跨天逻辑: 当前时间在开始之后 OR 在结束之前
+                    is_in_progress = current_seconds >= task_start or current_seconds < task_end
+                    is_completed = task_end <= current_seconds < task_start  # 在中间时段(如07:00-23:00)
+                    is_not_started = False  # 跨天任务不存在"未开始"状态(总在进行或已完成)
+                else:  # 普通任务
+                    is_completed = task_end <= current_seconds
+                    is_in_progress = task_start <= current_seconds < task_end
+                    is_not_started = current_seconds < task_start
 
                 # 计算任务块的位置和宽度
                 x = start_pct * width

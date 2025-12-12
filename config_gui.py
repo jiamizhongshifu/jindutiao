@@ -7359,6 +7359,12 @@ class ConfigManager(QMainWindow):
         try:
             with open(template_path, 'r', encoding='utf-8') as f:
                 self.tasks = json.load(f)
+
+            # ✅ P1-1.6: 同步时间轴编辑器
+            if hasattr(self, 'timeline_editor') and self.timeline_editor:
+                self.timeline_editor.set_tasks(self.tasks)
+                logging.info(f"[默认模板加载] 已同步时间轴编辑器({len(self.tasks)}个任务)")
+
         except Exception:
             # 如果加载失败,保持空列表
             self.tasks = []
@@ -8953,6 +8959,9 @@ class ConfigManager(QMainWindow):
                 # 刷新配额状态
                 self.refresh_quota_status()
 
+                # ✅ P1-1.6: 自动保存AI生成的任务为模板
+                self._auto_save_ai_template(tasks)
+
             else:
                 # result为None表示已经在ai_client中显示了错误对话框
                 pass
@@ -8982,6 +8991,68 @@ class ConfigManager(QMainWindow):
             self.generate_btn.setEnabled(True)
             self.generate_btn.setText(self.i18n.tr("account.ui.ai_smart_generate"))
 
+    def _auto_save_ai_template(self, tasks):
+        """✅ P1-1.6: AI生成任务自动保存为模板"""
+        try:
+            # 获取场景名称
+            scene_name = "未命名"
+            if hasattr(self, '_current_ai_dialog') and self._current_ai_dialog:
+                # 从对话框的场景选择器获取场景名称
+                scene_selector = getattr(self._current_ai_dialog, 'scene_selector', None)
+                if scene_selector:
+                    selected_id = getattr(scene_selector, 'selected_scene_id', None)
+                    if selected_id:
+                        # 从场景数据中查找名称
+                        scenes_data = getattr(scene_selector, 'scenes_data', [])
+                        for scene in scenes_data:
+                            if scene.get('id') == selected_id:
+                                scene_name = scene.get('name', selected_id)
+                                break
+
+            # 生成模板名称: "场景名_日期"
+            from datetime import datetime
+            template_name = f"{scene_name}_{datetime.now().strftime('%Y-%m-%d')}"
+
+            # 检查是否已存在同名模板,如果存在则添加序号
+            meta_data = self._get_custom_templates_meta()
+            existing_names = [t['name'] for t in meta_data.get('templates', [])]
+            if template_name in existing_names:
+                counter = 1
+                while f"{template_name}_{counter}" in existing_names:
+                    counter += 1
+                template_name = f"{template_name}_{counter}"
+
+            # 保存任务JSON
+            template_filename = f"tasks_custom_{template_name}.json"
+            template_path = self.app_dir / template_filename
+            with open(template_path, 'w', encoding='utf-8') as f:
+                import json
+                json.dump(tasks, f, indent=4, ensure_ascii=False)
+
+            # 保存元数据
+            import uuid
+            template_meta = {
+                "id": f"auto_{uuid.uuid4().hex[:8]}",
+                "name": template_name,
+                "filename": template_filename,
+                "description": f"AI自动生成 ({len(tasks)}个任务)",
+                "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                "task_count": len(tasks),
+                "is_auto_saved": True
+            }
+            meta_data['templates'].append(template_meta)
+            self._save_custom_templates_meta(meta_data)
+
+            # 刷新UI下拉框
+            if hasattr(self, '_reload_custom_template_combo'):
+                self._reload_custom_template_combo()
+
+            logging.info(f"[AI生成] ✅ 已自动保存模板: {template_name}")
+
+        except Exception as e:
+            logging.error(f"[AI生成] ❌ 自动保存模板失败: {e}", exc_info=True)
+            # 自动保存失败不阻塞主流程,只记录日志
+
     def on_banner_ai_clicked(self):
         """横幅AI生成按钮点击"""
         logging.info("[Banner] AI生成按钮被点击")
@@ -8990,10 +9061,17 @@ class ConfigManager(QMainWindow):
 
         dialog = ImprovedAIGenerationDialog(self)
         logging.info("[Banner] 创建对话框实例完成")
+
+        # ✅ P1-1.6: 保存对话框引用以获取场景信息
+        self._current_ai_dialog = dialog
+
         dialog.generation_requested.connect(self.on_improved_ai_generation)
         logging.info("[Banner] 信号连接完成,准备显示对话框")
         result = dialog.exec()
         logging.info(f"[Banner] 对话框关闭,返回值: {result}")
+
+        # 清理对话框引用
+        self._current_ai_dialog = None
 
     def on_improved_ai_generation(self, prompt: str):
         """改进版AI对话框生成请求"""
