@@ -176,7 +176,12 @@ class handler(BaseHTTPRequestHandler):
 
                     if quota_result.get('success'):
                         print(f"Successfully used quota for {user_id}, remaining: {quota_result['remaining']}", file=sys.stderr)
-                        quota_info = quota_manager.get_quota_status(user_id, user_tier)
+                        # ✅ 使用use_quota返回的完整配额状态,避免额外查询和缓存问题
+                        quota_info = quota_result.get('full_quota_status')
+                        if not quota_info:
+                            # 降级方案:如果没有返回完整状态,才重新查询
+                            print(f"Warning: full_quota_status not in result, falling back to get_quota_status", file=sys.stderr)
+                            quota_info = quota_manager.get_quota_status(user_id, user_tier)
                     else:
                         print(f"Failed to use quota: {quota_result}", file=sys.stderr)
                         # 即使配额扣除失败，也返回任务（已经调用了API）

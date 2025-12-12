@@ -73,9 +73,9 @@ class QuotaManager:
         # 根据用户等级设置配额
         if user_tier == "pro":
             quotas = {
-                "daily_plan_total": 999999,  # ✅ Pro用户无限配额
-                "weekly_report_total": 999999,
-                "chat_total": 999999
+                "daily_plan_total": 20,
+                "weekly_report_total": 10,
+                "chat_total": 100
             }
         else:
             quotas = {
@@ -192,14 +192,26 @@ class QuotaManager:
                 used_key: new_used
             }).eq("user_id", user_id).execute()
 
-            print(f"Used {amount} {quota_type} quota for {user_id}, remaining: {total_quota - new_used}", file=sys.stderr)
+            print(f"Used {amount} {quota_type} quota for {user_id}, new_used: {new_used}, total: {total_quota}, remaining: {total_quota - new_used}", file=sys.stderr)
+
+            # ✅ 返回完整的配额状态(而不仅仅是单个类型)
+            # 重新获取用户配额以获取最新数据
+            updated_quota = self.get_or_create_user(user_id)
 
             return {
                 "success": True,
                 "quota_type": quota_type,
                 "used": new_used,
                 "total": total_quota,
-                "remaining": total_quota - new_used
+                "remaining": total_quota - new_used,
+                "full_quota_status": {
+                    "remaining": {
+                        "daily_plan": updated_quota.get("daily_plan_total", 0) - updated_quota.get("daily_plan_used", 0),
+                        "weekly_report": updated_quota.get("weekly_report_total", 0) - updated_quota.get("weekly_report_used", 0),
+                        "chat": updated_quota.get("chat_total", 0) - updated_quota.get("chat_used", 0)
+                    },
+                    "user_tier": updated_quota.get("user_tier", "free")
+                }
             }
 
         except Exception as e:
@@ -216,9 +228,9 @@ class QuotaManager:
             if new_tier == "pro":
                 new_quotas = {
                     "user_tier": new_tier,
-                    "daily_plan_total": 999999,  # ✅ Pro用户无限配额
-                    "weekly_report_total": 999999,
-                    "chat_total": 999999
+                    "daily_plan_total": 20,
+                    "weekly_report_total": 10,
+                    "chat_total": 100
                 }
             else:
                 new_quotas = {
