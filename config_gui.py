@@ -8994,20 +8994,13 @@ class ConfigManager(QMainWindow):
     def _auto_save_ai_template(self, tasks):
         """✅ P1-1.6: AI生成任务自动保存为模板"""
         try:
-            # 获取场景名称
-            scene_name = "未命名"
-            if hasattr(self, '_current_ai_dialog') and self._current_ai_dialog:
-                # 从对话框的场景选择器获取场景名称
-                scene_selector = getattr(self._current_ai_dialog, 'scene_selector', None)
-                if scene_selector:
-                    selected_id = getattr(scene_selector, 'selected_scene_id', None)
-                    if selected_id:
-                        # 从场景数据中查找名称
-                        scenes_data = getattr(scene_selector, 'scenes_data', [])
-                        for scene in scenes_data:
-                            if scene.get('id') == selected_id:
-                                scene_name = scene.get('name', selected_id)
-                                break
+            # ✅ P1-1.6: 从实例变量获取场景名称
+            scene_name = getattr(self, '_pending_scene_name', '未命名')
+            logging.info(f"[AI生成] 准备自动保存模板,场景名称: {scene_name}")
+
+            # 清理临时变量
+            if hasattr(self, '_pending_scene_name'):
+                delattr(self, '_pending_scene_name')
 
             # 生成模板名称: "场景名_日期"
             from datetime import datetime
@@ -9062,16 +9055,22 @@ class ConfigManager(QMainWindow):
         dialog = ImprovedAIGenerationDialog(self)
         logging.info("[Banner] 创建对话框实例完成")
 
-        # ✅ P1-1.6: 保存对话框引用以获取场景信息
-        self._current_ai_dialog = dialog
+        # ✅ P1-1.6: 修改信号连接,接收两个参数 (prompt, scene_name)
+        dialog.generation_requested.connect(self.on_improved_ai_generation_with_scene)
 
-        dialog.generation_requested.connect(self.on_improved_ai_generation)
         logging.info("[Banner] 信号连接完成,准备显示对话框")
         result = dialog.exec()
         logging.info(f"[Banner] 对话框关闭,返回值: {result}")
 
-        # 清理对话框引用
-        self._current_ai_dialog = None
+    def on_improved_ai_generation_with_scene(self, prompt: str, scene_name: str):
+        """✅ P1-1.6: AI生成回调(带场景名称)"""
+        logging.info(f"[改进版AI生成] 收到生成请求,场景:{scene_name}, prompt长度: {len(prompt)}")
+
+        # 保存场景名称到实例变量
+        self._pending_scene_name = scene_name
+
+        # 调用原有的生成逻辑
+        self.on_improved_ai_generation(prompt)
 
     def on_improved_ai_generation(self, prompt: str):
         """改进版AI对话框生成请求"""

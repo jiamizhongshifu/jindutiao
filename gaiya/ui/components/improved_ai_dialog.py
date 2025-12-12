@@ -20,7 +20,8 @@ class ImprovedAIGenerationDialog(QDialog):
     集成场景快速选择功能,简化用户输入流程
     """
 
-    generation_requested = Signal(str)  # 发出prompt信号
+    # ✅ P1-1.6: 修改信号定义,添加 scene_name 参数
+    generation_requested = Signal(str, str)  # (prompt, scene_name)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -143,9 +144,19 @@ class ImprovedAIGenerationDialog(QDialog):
             )
             return
 
-        # 发出信号并关闭对话框
-        logging.info(f"[AI对话框] 发出generation_requested信号,prompt前50字符: {final_prompt[:50]}")
-        self.generation_requested.emit(final_prompt)
+        # ✅ P1-1.6: 获取场景名称以传递给信号
+        scene_name = "未命名"
+        if self.scene_selector and self.scene_selector.selected_scene_id:
+            # 从场景数据中查找名称
+            for scene in self.scene_selector.scenes_data:
+                if scene.get('id') == self.scene_selector.selected_scene_id:
+                    scene_name = scene.get('name', scene_name)
+                    logging.info(f"[AI对话框] 找到场景名称: {scene_name} (ID: {self.scene_selector.selected_scene_id})")
+                    break
+
+        # 发出信号并关闭对话框(现在包含场景名称)
+        logging.info(f"[AI对话框] 发出generation_requested信号,场景:{scene_name}, prompt前50字符: {final_prompt[:50]}")
+        self.generation_requested.emit(final_prompt, scene_name)
         logging.info("[AI对话框] 调用accept()关闭对话框")
         self.accept()
 

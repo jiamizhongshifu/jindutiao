@@ -176,13 +176,13 @@ class AiSceneSelector(QWidget):
 
         layout.addLayout(cards_layout)
 
-        # 分隔线
-        layout.addSpacing(10)
-        separator = QFrame()
-        separator.setFrameShape(QFrame.Shape.HLine)
-        separator.setFrameShadow(QFrame.Shadow.Sunken)
-        layout.addWidget(separator)
-        layout.addSpacing(10)
+        # ✅ P1-1.6: 删除多余的 HLine 分隔符,保留文字装饰即可
+        # layout.addSpacing(10)
+        # separator = QFrame()
+        # separator.setFrameShape(QFrame.Shape.HLine)
+        # separator.setFrameShadow(QFrame.Shadow.Sunken)
+        # layout.addWidget(separator)
+        # layout.addSpacing(10)
 
         # 自定义描述区域
         custom_label = QLabel("━━━ 自定义描述 ━━━")

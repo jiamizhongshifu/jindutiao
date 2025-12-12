@@ -48,7 +48,7 @@ class AiFeatureBanner(QFrame):
         icon_label.setFont(icon_font)
         icon_label.setFixedSize(50, 50)
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(icon_label)
+        layout.addWidget(icon_label, alignment=Qt.AlignmentFlag.AlignVCenter)  # ✅ P1-1.6: 垂直居中
 
         # 引导文案
         text_label = QLabel("让AI帮你规划一天吧!")
@@ -57,7 +57,7 @@ class AiFeatureBanner(QFrame):
         text_font.setBold(True)
         text_label.setFont(text_font)
         text_label.setStyleSheet("color: #1565C0;")
-        layout.addWidget(text_label)
+        layout.addWidget(text_label, alignment=Qt.AlignmentFlag.AlignVCenter)  # ✅ P1-1.6: 垂直居中
 
         layout.addStretch()
 
@@ -83,14 +83,14 @@ class AiFeatureBanner(QFrame):
             }
         """)
         self.generate_btn.clicked.connect(self.ai_generate_clicked.emit)
-        layout.addWidget(self.generate_btn)
+        layout.addWidget(self.generate_btn, alignment=Qt.AlignmentFlag.AlignVCenter)  # ✅ P1-1.6: 垂直居中
 
         # 了解更多链接
         learn_more_label = QLabel('<a href="#" style="color: #1976D2; text-decoration: none;">了解更多 ></a>')
         learn_more_label.setOpenExternalLinks(False)
         learn_more_label.linkActivated.connect(lambda: self.learn_more_clicked.emit())
         learn_more_label.setCursor(Qt.CursorShape.PointingHandCursor)
-        layout.addWidget(learn_more_label)
+        layout.addWidget(learn_more_label, alignment=Qt.AlignmentFlag.AlignVCenter)  # ✅ P1-1.6: 垂直居中
 
         # 关闭按钮
         close_btn = QPushButton("×")
@@ -109,7 +109,7 @@ class AiFeatureBanner(QFrame):
             }
         """)
         close_btn.clicked.connect(self.on_close_clicked)
-        layout.addWidget(close_btn)
+        layout.addWidget(close_btn, alignment=Qt.AlignmentFlag.AlignVCenter)  # ✅ P1-1.6: 垂直居中
 
     def on_close_clicked(self):
         """关闭按钮被点击"""
