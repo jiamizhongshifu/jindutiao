@@ -73,9 +73,9 @@ class QuotaManager:
         # 根据用户等级设置配额
         if user_tier == "pro":
             quotas = {
-                "daily_plan_total": 20,
-                "weekly_report_total": 10,
-                "chat_total": 100
+                "daily_plan_total": 999999,  # ✅ Pro用户无限配额
+                "weekly_report_total": 999999,
+                "chat_total": 999999
             }
         else:
             quotas = {
@@ -216,9 +216,9 @@ class QuotaManager:
             if new_tier == "pro":
                 new_quotas = {
                     "user_tier": new_tier,
-                    "daily_plan_total": 20,
-                    "weekly_report_total": 10,
-                    "chat_total": 100
+                    "daily_plan_total": 999999,  # ✅ Pro用户无限配额
+                    "weekly_report_total": 999999,
+                    "chat_total": 999999
                 }
             else:
                 new_quotas = {

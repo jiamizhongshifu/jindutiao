@@ -7699,10 +7699,13 @@ class ConfigManager(QMainWindow):
             self.template_type_combo.setCurrentIndex(custom_index)
             logging.info(f"[自动选择模板] 已切换到'我的模板'(索引={custom_index})")
 
-            # 2. 刷新模板列表(切换类型会自动触发 _on_template_type_changed)
-            # 给一点时间让下拉框刷新
+            # 2. ✅ P1-1.6.6: 主动刷新模板列表,确保新模板已加载
+            self._load_templates_by_type("custom")
+            logging.info("[自动选择模板] 已刷新模板列表")
+
+            # 3. 延迟选择模板(给UI一点时间渲染)
             from PySide6.QtCore import QTimer
-            QTimer.singleShot(100, lambda: self._select_template_by_name(template_name))
+            QTimer.singleShot(50, lambda: self._select_template_by_name(template_name))
 
         except Exception as e:
             logging.error(f"[自动选择模板] ❌ 自动选择模板失败: {e}", exc_info=True)
