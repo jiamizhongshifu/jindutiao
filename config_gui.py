@@ -7676,6 +7676,59 @@ class ConfigManager(QMainWindow):
             filename = template_data['filename']
             self._load_custom_template_by_filename(filename)
 
+    def _auto_select_saved_template(self, template_name):
+        """✅ P1-1.6.5: AI生成后自动切换到"我的模板"并选中指定模板"""
+        try:
+            # 1. 切换到"我的模板"类型
+            if not hasattr(self, 'template_type_combo'):
+                logging.warning("[自动选择模板] template_type_combo不存在")
+                return
+
+            # 找到"我的模板"的索引
+            custom_index = -1
+            for i in range(self.template_type_combo.count()):
+                if self.template_type_combo.itemData(i) == "custom":
+                    custom_index = i
+                    break
+
+            if custom_index == -1:
+                logging.warning("[自动选择模板] 未找到'我的模板'选项")
+                return
+
+            # 切换到"我的模板"
+            self.template_type_combo.setCurrentIndex(custom_index)
+            logging.info(f"[自动选择模板] 已切换到'我的模板'(索引={custom_index})")
+
+            # 2. 刷新模板列表(切换类型会自动触发 _on_template_type_changed)
+            # 给一点时间让下拉框刷新
+            from PySide6.QtCore import QTimer
+            QTimer.singleShot(100, lambda: self._select_template_by_name(template_name))
+
+        except Exception as e:
+            logging.error(f"[自动选择模板] ❌ 自动选择模板失败: {e}", exc_info=True)
+
+    def _select_template_by_name(self, template_name):
+        """根据模板名称选中unified_template_combo中的项"""
+        try:
+            if not hasattr(self, 'unified_template_combo'):
+                logging.warning("[选择模板] unified_template_combo不存在")
+                return
+
+            # 遍历unified_template_combo找到匹配的模板
+            for i in range(self.unified_template_combo.count()):
+                data = self.unified_template_combo.itemData(i)
+                if data and len(data) == 2:
+                    template_type, template_data = data
+                    if template_type == "custom" and template_data:
+                        if template_data.get('name') == template_name:
+                            self.unified_template_combo.setCurrentIndex(i)
+                            logging.info(f"[选择模板] ✅ 已选中模板: {template_name} (索引={i})")
+                            return
+
+            logging.warning(f"[选择模板] 未找到模板: {template_name}")
+
+        except Exception as e:
+            logging.error(f"[选择模板] ❌ 选择模板失败: {e}", exc_info=True)
 
     def _get_custom_templates_meta(self):
         """获取自定义模板元数据"""
@@ -9055,6 +9108,9 @@ class ConfigManager(QMainWindow):
             # 刷新UI下拉框
             if hasattr(self, '_reload_custom_template_combo'):
                 self._reload_custom_template_combo()
+
+            # ✅ P1-1.6.5: 自动切换到"我的模板"并选中新创建的模板
+            self._auto_select_saved_template(template_name)
 
             logging.info(f"[AI生成] ✅ 已自动保存模板: {template_name}")
 
