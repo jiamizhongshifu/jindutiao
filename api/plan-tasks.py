@@ -9,7 +9,6 @@ import traceback
 sys.path.insert(0, os.path.dirname(__file__))
 
 from quota_manager import QuotaManager
-from rate_limiter import RateLimiter
 from cors_config import get_cors_origin
 
 TUZI_API_KEY = os.getenv("TUZI_API_KEY")
@@ -58,21 +57,9 @@ class handler(BaseHTTPRequestHandler):
             user_id = user_data.get('user_id', 'user_demo')
             user_tier = user_data.get('user_tier', 'free')
 
-            # ✅ 安全修复: 速率限制检查（防止AI资源滥用）
-            limiter = RateLimiter()
-
-            # 检查速率限制 (20次/24小时，基于user_id)
-            is_allowed, rate_info = limiter.check_rate_limit("plan_tasks", user_id)
-
-            if not is_allowed:
-                # 返回429 Too Many Requests
-                print(f"[PLAN-TASKS] 🚫 Rate limit exceeded for user: {user_id}", file=sys.stderr)
-                self._send_json_response(429, {
-                    'success': False,
-                    'error': 'Daily AI quota exceeded. Please try again tomorrow.',
-                    'retry_after': rate_info.get("retry_after", 60)
-                }, rate_info)
-                return
+            # ✅ P1-1.6.4: 移除速率限制器,统一使用配额管理器
+            # 原因: 速率限制(20次)和配额系统(free:3次, pro:无限)重复,导致混淆
+            # 现在: 所有用户(免费/付费)都只受配额系统约束
 
             # 检查并扣除配额
             quota_manager = QuotaManager()
@@ -105,13 +92,21 @@ class handler(BaseHTTPRequestHandler):
 3. 时间使用24小时制,格式为HH:MM
 4. category只能是: work, break, exercise, meeting, learning, other 之一
 5. 确保任务时间连续且合理,不重叠
-6. **重要**: 任务排序规则 - 按照用户实际执行顺序排列:
-   - 如果有睡眠任务(如00:00-07:00),应该放在数组最后一位
-   - 早上的活动(如起床、早餐)应该放在数组最前面
-   - 任务顺序应该反映用户一天的实际流程: 起床 -> 工作/学习 -> 休息 -> 睡眠
 
-示例输出(注意睡眠任务在最后):
-{"tasks": [{"start": "07:00", "end": "08:00", "task": "起床早餐", "category": "break"}, {"start": "08:00", "end": "12:00", "task": "上午工作", "category": "work"}, {"start": "12:00", "end": "13:00", "task": "午休", "category": "break"}, {"start": "23:00", "end": "07:00", "task": "睡眠", "category": "break"}]}"""
+⚠️ **关键规则 - 任务排序与跨天处理**:
+6. 任务必须按照用户**一天的实际执行顺序**排列,从早晨到深夜:
+   - 第一个任务: 早上起床/早餐 (如07:00开始)
+   - 中间任务: 白天的工作/学习/活动
+   - 最后一个任务: 睡眠 (如23:00-07:00)
+
+7. **睡眠任务的正确写法** (跨天任务):
+   ✅ 正确: {"start": "23:00", "end": "07:00", "task": "睡眠", "category": "break"}  // 晚上23点睡到次日07点
+   ✅ 正确: {"start": "22:00", "end": "06:00", "task": "睡眠", "category": "break"}  // 晚上22点睡到次日06点
+   ❌ 错误: {"start": "00:00", "end": "24:00", ...}  // 不要用这种格式!
+   ❌ 错误: {"start": "00:00", "end": "07:00", ...}  // 不要把睡眠任务拆成两段!
+
+8. 完整示例(注意睡眠在最后,且是跨天格式):
+{"tasks": [{"start": "07:00", "end": "08:00", "task": "起床早餐", "category": "break"}, {"start": "08:00", "end": "12:00", "task": "上午工作", "category": "work"}, {"start": "12:00", "end": "13:00", "task": "午餐", "category": "break"}, {"start": "13:00", "end": "18:00", "task": "下午工作", "category": "work"}, {"start": "18:00", "end": "19:00", "task": "晚餐", "category": "break"}, {"start": "19:00", "end": "23:00", "task": "休闲娱乐", "category": "other"}, {"start": "23:00", "end": "07:00", "task": "睡眠", "category": "break"}]}"""
                     },
                     {
                         "role": "user",
@@ -194,7 +189,7 @@ class handler(BaseHTTPRequestHandler):
                         "tasks": tasks,
                         "quota_info": quota_info,
                         "token_usage": token_usage  # ✅ P1-1.5: 添加token使用量到响应
-                    }, rate_info)
+                    })
 
                 except json.JSONDecodeError as e:
                     print(f"JSON decode error: {str(e)}", file=sys.stderr)
@@ -221,19 +216,10 @@ class handler(BaseHTTPRequestHandler):
                 'details': str(e)
             })
 
-    def _send_json_response(self, status_code, data, rate_info: dict = None):
-        """发送JSON响应的辅助方法（包含速率限制响应头）"""
+    def _send_json_response(self, status_code, data):
+        """发送JSON响应的辅助方法"""
         self.send_response(status_code)
         self.send_header('Content-Type', 'application/json')
         self.send_header('Access-Control-Allow-Origin', getattr(self, 'allowed_origin', '*'))
-
-        # ✅ 添加速率限制响应头
-        if rate_info:
-            self.send_header('X-RateLimit-Limit', str(rate_info.get("total", 0)))
-            self.send_header('X-RateLimit-Remaining', str(rate_info.get("remaining", 0)))
-            self.send_header('X-RateLimit-Reset', rate_info.get("reset_at", ""))
-            if status_code == 429:
-                self.send_header('Retry-After', str(rate_info.get("retry_after", 60)))
-
         self.end_headers()
         self.wfile.write(json.dumps(data).encode('utf-8'))
