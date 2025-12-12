@@ -38,7 +38,7 @@ class AiFeatureBanner(QFrame):
         """)
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(20, 10, 20, 10)
+        layout.setContentsMargins(20, -20, 20, 10)
         layout.setSpacing(15)
 
         # 图标

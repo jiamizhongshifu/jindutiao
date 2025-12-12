@@ -3290,13 +3290,28 @@ class TimeProgressBar(QWidget):
                 if is_completed or is_in_progress:
                     # 计算实际绘制宽度
                     if is_in_progress:
-                        # 进行中：只绘制到当前时间
-                        task_duration = pos['original_end'] - pos['original_start']
-                        elapsed_time = current_seconds - pos['original_start']
+                        # 进行中:只绘制到当前时间
+                        # ✅ P1-1.6.4: 修复跨天任务进度计算(进度条逐渐点亮)
+                        if task_start > task_end:  # 跨天任务(如23:00-07:00)
+                            # 总时长 = (86400 - start) + end
+                            task_duration = 86400 - task_start + task_end
+
+                            # 经过时间根据current_seconds位置确定
+                            if current_seconds >= task_start:
+                                # 当前时间在开始时间之后(如23:30)
+                                elapsed_time = current_seconds - task_start
+                            else:
+                                # 当前时间在结束时间之前(如凌晨02:00)
+                                # 需要跨越午夜线:(86400-start) + current_seconds
+                                elapsed_time = (86400 - task_start) + current_seconds
+                        else:  # 普通任务(start < end)
+                            task_duration = task_end - task_start
+                            elapsed_time = current_seconds - task_start
+
                         progress_ratio = elapsed_time / task_duration if task_duration > 0 else 0
                         actual_task_width = task_width * progress_ratio
                     else:
-                        # 已完成：绘制整个任务块
+                        # 已完成:绘制整个任务块
                         actual_task_width = task_width
 
                     # 绘制进度部分（使用任务原色）
