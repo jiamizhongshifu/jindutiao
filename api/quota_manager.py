@@ -194,19 +194,33 @@ class QuotaManager:
 
             print(f"Used {amount} {quota_type} quota for {user_id}, new_used: {new_used}, total: {total_quota}, remaining: {total_quota - new_used}", file=sys.stderr)
 
-            # ✅ P1-1.6.7: 直接使用计算值,避免数据库读取缓存延迟问题
-            # 问题分析: 第199行 get_or_create_user() 从数据库读取可能得到更新前的缓存值
-            # 解决方案: 基于已知的最新值(new_used)直接构造返回数据,无需重新查询数据库
+            # ✅ P1-1.6.8: 彻底修复配额显示延迟问题
+            # 问题根因: L202-206先用旧快照构造字典,L209的覆盖操作可能失效
+            # 解决方案: 直接在构造时判断,当前更新的quota_type使用new_used,其他使用快照值
 
-            # 构造更新后的配额状态(使用user_quota中的其他配额值)
+            # 记录快照值用于调试
+            print(f"[Quota Debug] Snapshot values - daily_plan_used: {user_quota.get('daily_plan_used')}, weekly_report_used: {user_quota.get('weekly_report_used')}, chat_used: {user_quota.get('chat_used')}", file=sys.stderr)
+
+            # 构造remaining_quotas:直接使用正确的值,无需后续覆盖
+            def get_remaining(qtype: str, total_key: str, used_key: str) -> int:
+                """获取剩余配额:当前更新的类型使用new_used,其他使用快照值"""
+                if qtype == quota_type:
+                    # 当前正在更新的配额类型,使用最新的new_used
+                    return user_quota.get(total_key, 0) - new_used
+                else:
+                    # 其他配额类型,使用快照值
+                    return user_quota.get(total_key, 0) - user_quota.get(used_key, 0)
+
             remaining_quotas = {
-                "daily_plan": user_quota.get("daily_plan_total", 0) - user_quota.get("daily_plan_used", 0),
-                "weekly_report": user_quota.get("weekly_report_total", 0) - user_quota.get("weekly_report_used", 0),
-                "chat": user_quota.get("chat_total", 0) - user_quota.get("chat_used", 0)
+                "daily_plan": get_remaining("daily_plan", "daily_plan_total", "daily_plan_used"),
+                "weekly_report": get_remaining("weekly_report", "weekly_report_total", "weekly_report_used"),
+                "chat": get_remaining("chat", "chat_total", "chat_used")
             }
 
-            # 将当前更新的quota_type设置为最新计算值
-            remaining_quotas[quota_type] = total_quota - new_used
+            # 记录构造结果用于验证
+            print(f"[Quota Debug] Constructed remaining_quotas: {remaining_quotas}", file=sys.stderr)
+            print(f"[Quota Debug] Current quota_type: {quota_type}, new_used: {new_used}, calculated_remaining: {total_quota - new_used}", file=sys.stderr)
+            print(f"[Quota Debug] Returning full response: remaining={total_quota - new_used}, full_status={remaining_quotas}", file=sys.stderr)
 
             return {
                 "success": True,
