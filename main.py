@@ -2507,9 +2507,11 @@ class TimeProgressBar(QWidget):
                     )
                     found = True
                     break
-                elif not (task_start > task_end) and total_seconds < task_start:
-                    # 普通任务: 当前时间在这个任务之前(处于间隔中)
-                    # 显示在这个任务的起始位置
+                elif total_seconds < task_start:
+                    # 当前时间在这个任务之前(处于间隔中)
+                    # 包括:
+                    # 1. 普通任务: current_time < task_start
+                    # 2. 跨天任务结束后: task_end < current_time < task_start (如07:00-23:00之间)
                     new_percentage = pos['compact_start_pct']
 
                     self.logger.debug(
@@ -3231,7 +3233,7 @@ class TimeProgressBar(QWidget):
                     # 跨天任务逻辑:
                     # - 23:00之后: 进行中 (is_in_progress=True)
                     # - 00:00-07:00: 进行中 (is_in_progress=True)
-                    # - 07:00-23:00: 未开始 (is_not_started=True) ⚠️ 不是completed!
+                    # - 07:00之后当天其余时间: 已完成 (is_completed=True)
                     if current_seconds >= task_start:
                         # 当前时间在开始之后(如23:30),任务进行中
                         is_in_progress = True
@@ -3243,10 +3245,10 @@ class TimeProgressBar(QWidget):
                         is_completed = False
                         is_not_started = False
                     else:
-                        # 当前时间在中间时段(如15:00),任务未开始
+                        # 当前时间在结束后的中间时段(如15:00),任务已完成
                         is_in_progress = False
-                        is_completed = False
-                        is_not_started = True
+                        is_completed = True
+                        is_not_started = False
                 else:  # 普通任务
                     is_completed = task_end <= current_seconds
                     is_in_progress = task_start <= current_seconds < task_end
