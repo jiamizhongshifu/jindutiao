@@ -2507,21 +2507,32 @@ class TimeProgressBar(QWidget):
                     )
                     found = True
                     break
-                elif total_seconds < task_start:
-                    # 当前时间在这个任务之前(处于间隔中)
-                    # 包括:
-                    # 1. 普通任务: current_time < task_start
-                    # 2. 跨天任务结束后: task_end < current_time < task_start (如07:00-23:00之间)
-                    new_percentage = pos['compact_start_pct']
+                else:
+                    # 当前时间不在任务内,检查是否在任务之前(间隔中)
+                    # ✅ P1-1.6.8: 修复跨天任务的间隔判断
+                    in_gap_before_task = False
 
-                    self.logger.debug(
-                        f"[时间标记] 当前时间 {current_time.toString('HH:mm:ss')} "
-                        f"在任务[{i}]'{task_name}'之前(间隔中) "
-                        f"({time_utils.seconds_to_time_str(task_start)}-{time_utils.seconds_to_time_str(task_end)}) "
-                        f"标记位置={new_percentage:.4f}(任务起点)"
-                    )
-                    found = True
-                    break
+                    if task_start > task_end:  # 跨天任务
+                        # 跨天任务的"之前"时段: task_end <= current < task_start
+                        # 例如睡眠23:00-07:00, "之前"是07:00-23:00
+                        if task_end <= total_seconds < task_start:
+                            in_gap_before_task = True
+                    else:  # 普通任务
+                        # 普通任务的"之前": current < task_start
+                        if total_seconds < task_start:
+                            in_gap_before_task = True
+
+                    if in_gap_before_task:
+                        new_percentage = pos['compact_start_pct']
+
+                        self.logger.debug(
+                            f"[时间标记] 当前时间 {current_time.toString('HH:mm:ss')} "
+                            f"在任务[{i}]'{task_name}'之前(间隔中) "
+                            f"({time_utils.seconds_to_time_str(task_start)}-{time_utils.seconds_to_time_str(task_end)}) "
+                            f"标记位置={new_percentage:.4f}(任务起点)"
+                        )
+                        found = True
+                        break
 
                 cumulative_duration += task_duration
 
@@ -3250,9 +3261,29 @@ class TimeProgressBar(QWidget):
                         is_completed = True
                         is_not_started = False
                 else:  # 普通任务
-                    is_completed = task_end <= current_seconds
-                    is_in_progress = task_start <= current_seconds < task_end
-                    is_not_started = current_seconds < task_start
+                    # ✅ P1-1.6.8: 修复跨天后的任务状态判断
+                    # 当当前时间是次日凌晨(如00:38),需要判断是否有后续的跨天任务
+                    # 如果有,则此普通任务应该显示为已完成
+                    has_crossday_task_after = False
+                    for j in range(i + 1, len(self.task_positions)):
+                        next_task_start = self.task_positions[j]['original_start']
+                        next_task_end = self.task_positions[j]['original_end']
+                        if next_task_start > next_task_end:  # 发现后续跨天任务
+                            has_crossday_task_after = True
+                            break
+
+                    # 判断任务状态
+                    if has_crossday_task_after and current_seconds < task_start and current_seconds < task_end:
+                        # 当前是次日凌晨,且后面有跨天任务,则此任务应该是已完成
+                        # 例如: 工作18:00结束, 当前00:38, 后面有睡眠23:00-07:00
+                        is_completed = True
+                        is_in_progress = False
+                        is_not_started = False
+                    else:
+                        # 正常的同日判断
+                        is_completed = task_end <= current_seconds
+                        is_in_progress = task_start <= current_seconds < task_end
+                        is_not_started = current_seconds < task_start
 
                 # 计算任务块的位置和宽度
                 x = start_pct * width
