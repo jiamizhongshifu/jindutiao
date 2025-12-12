@@ -9009,8 +9009,15 @@ class ConfigManager(QMainWindow):
                 # 清空输入框
                 self.ai_input.clear()
 
-                # 刷新配额状态
-                self.refresh_quota_status()
+                # ✅ P1-1.6.6: 使用API返回的quota_info直接更新UI,避免额外请求
+                quota_info = result.get('quota_info')
+                if quota_info:
+                    logging.info(f"[AI生成] 使用API返回的配额信息更新UI: {quota_info}")
+                    self._on_quota_status_finished(quota_info)
+                else:
+                    # 如果API没有返回quota_info,才发起新请求
+                    logging.warning("[AI生成] API未返回quota_info,发起新的配额查询")
+                    self.refresh_quota_status()
 
                 # ✅ P1-1.6: 自动保存AI生成的任务为模板
                 self._auto_save_ai_template(tasks)
@@ -9071,18 +9078,14 @@ class ConfigManager(QMainWindow):
             if hasattr(self, '_pending_scene_name'):
                 delattr(self, '_pending_scene_name')
 
-            # 生成模板名称: "场景名_日期"
+            # ✅ P1-1.6.6: 优化模板命名 - 加上时分秒避免覆盖
+            # 格式: "场景名_日期_时分秒" (例如: 休息日_2025-12-12_143025)
             from datetime import datetime
-            template_name = f"{scene_name}_{datetime.now().strftime('%Y-%m-%d')}"
+            now = datetime.now()
+            template_name = f"{scene_name}_{now.strftime('%Y-%m-%d_%H%M%S')}"
 
-            # 检查是否已存在同名模板,如果存在则添加序号
+            # 获取元数据(不再需要检查重名,因为时间戳保证唯一性)
             meta_data = self._get_custom_templates_meta()
-            existing_names = [t['name'] for t in meta_data.get('templates', [])]
-            if template_name in existing_names:
-                counter = 1
-                while f"{template_name}_{counter}" in existing_names:
-                    counter += 1
-                template_name = f"{template_name}_{counter}"
 
             # 保存任务JSON
             template_filename = f"tasks_custom_{template_name}.json"
