@@ -194,9 +194,19 @@ class QuotaManager:
 
             print(f"Used {amount} {quota_type} quota for {user_id}, new_used: {new_used}, total: {total_quota}, remaining: {total_quota - new_used}", file=sys.stderr)
 
-            # ✅ 返回完整的配额状态(而不仅仅是单个类型)
-            # 重新获取用户配额以获取最新数据
-            updated_quota = self.get_or_create_user(user_id)
+            # ✅ P1-1.6.7: 直接使用计算值,避免数据库读取缓存延迟问题
+            # 问题分析: 第199行 get_or_create_user() 从数据库读取可能得到更新前的缓存值
+            # 解决方案: 基于已知的最新值(new_used)直接构造返回数据,无需重新查询数据库
+
+            # 构造更新后的配额状态(使用user_quota中的其他配额值)
+            remaining_quotas = {
+                "daily_plan": user_quota.get("daily_plan_total", 0) - user_quota.get("daily_plan_used", 0),
+                "weekly_report": user_quota.get("weekly_report_total", 0) - user_quota.get("weekly_report_used", 0),
+                "chat": user_quota.get("chat_total", 0) - user_quota.get("chat_used", 0)
+            }
+
+            # 将当前更新的quota_type设置为最新计算值
+            remaining_quotas[quota_type] = total_quota - new_used
 
             return {
                 "success": True,
@@ -205,12 +215,8 @@ class QuotaManager:
                 "total": total_quota,
                 "remaining": total_quota - new_used,
                 "full_quota_status": {
-                    "remaining": {
-                        "daily_plan": updated_quota.get("daily_plan_total", 0) - updated_quota.get("daily_plan_used", 0),
-                        "weekly_report": updated_quota.get("weekly_report_total", 0) - updated_quota.get("weekly_report_used", 0),
-                        "chat": updated_quota.get("chat_total", 0) - updated_quota.get("chat_used", 0)
-                    },
-                    "user_tier": updated_quota.get("user_tier", "free")
+                    "remaining": remaining_quotas,
+                    "user_tier": user_quota.get("user_tier", "free")
                 }
             }
 
