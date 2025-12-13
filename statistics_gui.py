@@ -1362,15 +1362,59 @@ class StatisticsWindow(QWidget):
             QMessageBox.warning(self, tr("statistics.error.error_title"), tr("statistics.error.loading_failed_message", error=str(e)))
 
     def load_today_statistics(self):
-        """加载今日统计 (方案A: 全自动推理模式)"""
-        summary = self.stats_manager.get_today_summary()
+        """加载今日统计 - 从数据库获取实际活动数据"""
+        try:
+            # ✅ P1-1.6.21: 直接从数据库加载今日活动数据,与时间回放保持一致
+            activity_stats = db.get_today_activity_stats()
 
-        # 注: 今日统计页签已完全重构为自动推理模式
-        # 统计卡片已移除,数据通过自动推理引擎实时更新
-        # 用户通过"确认/修正任务完成度"按钮查看任务详情
+            if activity_stats:
+                total_seconds = activity_stats.get('total_seconds', 0)
+                total_minutes = total_seconds // 60
+                top_apps = activity_stats.get('top_apps', [])
 
-        # 更新AI推理数据摘要 (保留用于兼容性)
-        self.update_ai_summary(summary)
+                # 计算工作任务数量(使用PRODUCTIVE类别的应用数量)
+                productive_apps = [app for app in top_apps if app.get('category') == 'PRODUCTIVE']
+                task_count = len(productive_apps)
+
+                # 计算工作时长(PRODUCTIVE类别的总时长)
+                categories = activity_stats.get('categories', {})
+                work_seconds = categories.get('PRODUCTIVE', 0)
+                work_minutes = work_seconds // 60
+
+                # 更新UI显示
+                self.inference_summary_label.setText(
+                    f"今日已识别 <b>{task_count}</b> 个工作任务 · "
+                    f"总计工作时长: <b>{work_minutes}分钟</b>"
+                )
+
+                # 更新最后更新时间
+                from datetime import datetime
+                self.last_inference_time_label.setText(f"最后更新: {datetime.now().strftime('%H:%M')}")
+
+                # 清空现有任务列表
+                while self.inference_task_list_layout.count():
+                    child = self.inference_task_list_layout.takeAt(0)
+                    if child.widget():
+                        child.widget().deleteLater()
+
+                # 添加TOP应用卡片(只显示PRODUCTIVE类别的前5个)
+                for app in productive_apps[:5]:
+                    app_minutes = app.get('duration', 0) // 60
+                    task_data = {
+                        'name': app.get('name', '未知应用'),
+                        'duration_minutes': app_minutes,
+                        'confidence': 1.0,  # 实际数据,置信度100%
+                        'apps': [app.get('name', '')]
+                    }
+                    card = self.create_inferred_task_card(task_data)
+                    self.inference_task_list_layout.addWidget(card)
+
+                self.logger.info(f"今日统计已加载: {task_count} 个工作任务, {work_minutes}分钟")
+            else:
+                self.logger.info("今日统计: 暂无活动数据")
+
+        except Exception as e:
+            self.logger.error(f"加载今日统计失败: {e}", exc_info=True)
 
     def update_ai_summary(self, summary: dict):
         """更新AI推理数据摘要 (已废弃,保留用于兼容性)
