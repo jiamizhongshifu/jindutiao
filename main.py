@@ -3241,12 +3241,12 @@ class TimeProgressBar(QWidget):
                 task_start = pos['original_start']
                 task_end = pos['original_end']
 
-                # ✅ P1-1.6.3: 修复跨天任务绘制逻辑(与统计逻辑保持一致)
+                # ✅ P1-1.6.10: 修复跨天任务状态判断逻辑
                 if task_start > task_end:  # 跨天任务(如23:00-07:00)
-                    # 跨天任务逻辑:
-                    # - 23:00之后: 进行中 (is_in_progress=True)
-                    # - 00:00-07:00: 进行中 (is_in_progress=True)
-                    # - 07:00之后当天其余时间: 已完成 (is_completed=True)
+                    # 跨天任务的三个时间段:
+                    # 1. 23:00-23:59: 进行中
+                    # 2. 00:00-07:00: 进行中
+                    # 3. 07:00-23:00: 未开始(今天的任务还没到时间)
                     if current_seconds >= task_start:
                         # 当前时间在开始之后(如23:30),任务进行中
                         is_in_progress = True
@@ -3258,10 +3258,11 @@ class TimeProgressBar(QWidget):
                         is_completed = False
                         is_not_started = False
                     else:
-                        # 当前时间在结束后的中间时段(如15:00),任务已完成
+                        # 当前时间在结束后的中间时段(如13:06,在07:00-23:00之间)
+                        # 今天的睡眠任务还未开始,显示为未开始状态
                         is_in_progress = False
-                        is_completed = True
-                        is_not_started = False
+                        is_completed = False
+                        is_not_started = True
                 else:  # 普通任务
                     # ✅ P1-1.6.9: 修复跨天后的任务状态判断
                     # 需要区分三个时间段:
