@@ -33,8 +33,8 @@ class ThemeManager(QObject):
             "id": "business",
             "name": "商务专业",
             "type": "preset",
-            "background_color": "#1E1E1E",
-            "background_opacity": 220,
+            "background_color": "#000000",
+            "background_opacity": 204,
             "task_colors": ["#1976D2", "#388E3C", "#F57C00", "#7B1FA2"],
             "marker_color": "#FF5252",
             "text_color": "#FFFFFF",
@@ -281,7 +281,7 @@ class ThemeManager(QObject):
             
             theme_config = config.get('theme', {})
             theme_mode = theme_config.get('mode', 'preset')
-            current_theme_id = theme_config.get('current_theme_id', 'fresh')
+            current_theme_id = theme_config.get('current_theme_id', 'business')
             
             # 根据模式加载主题（静默加载，不触发信号）
             if theme_mode == 'system':
@@ -307,7 +307,7 @@ class ThemeManager(QObject):
     
     def _set_default_theme_silent(self):
         """设置默认主题（静默，不触发信号）"""
-        self._load_theme_by_id_silent('fresh', 'preset')
+        self._load_theme_by_id_silent('business', 'preset')
     
     def _load_theme_by_id_silent(self, theme_id: str, theme_type: str = 'preset') -> bool:
         """根据ID加载主题（静默版本，不触发信号）

@@ -54,8 +54,8 @@ def load_config(app_dir: Path, logger: logging.Logger) -> Dict[str, Any]:
         "language": "auto",  # "auto", "zh_CN", "en_US"
         "bar_height": 6,
         "position": "bottom",
-        "background_color": "#505050",
-        "background_opacity": 180,
+        "background_color": "#000000",
+        "background_opacity": 204,
         "marker_color": "#FF0000",
         "marker_width": 2,
         "marker_type": "gif",  # "line", "image", "gif"

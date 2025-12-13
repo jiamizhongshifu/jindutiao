@@ -25,12 +25,21 @@ MARKER_PRESETS = {
     },
     "gaiya": {
         "id": "gaiya",
-        "name": "GaiYa 走路",
+        "name": "GaiYa",
         "file": "gaiya.gif",
         "default_size": 60,
         "default_x_offset": 0,
         "default_y_offset": 0,
         "description": "GaiYa 吉祥物走路动画"
+    },
+    "dianjuren": {
+        "id": "dianjuren",
+        "name": "电锯人",
+        "file": "dianjuren.gif",
+        "default_size": 80,
+        "default_x_offset": 0,
+        "default_y_offset": 0,
+        "description": "电锯人奔跑动画"
     },
     "custom": {
         "id": "custom",

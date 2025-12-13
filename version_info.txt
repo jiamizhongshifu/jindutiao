@@ -6,8 +6,8 @@ VSVersionInfo(
   ffi=FixedFileInfo(
     # filevers and prodvers should be always a tuple with four items: (1, 2, 3, 4)
     # Set not needed items to zero 0.
-    filevers=(1, 6, 8, 0),
-    prodvers=(1, 6, 8, 0),
+    filevers=(1, 7, 0, 0),
+    prodvers=(1, 7, 0, 0),
     # Contains a bitmask that specifies the valid bits 'flags'
     mask=0x3f,
     # Contains a bitmask that specifies the Boolean attributes of the file.
@@ -31,12 +31,12 @@ VSVersionInfo(
         u'080404b0',
         [StringStruct(u'CompanyName', u'PyDayBar Project'),
         StringStruct(u'FileDescription', u'PyDayBar - 桌面进度条时间管理工具'),
-        StringStruct(u'FileVersion', u'1.6.8.0'),
+        StringStruct(u'FileVersion', u'1.7.0.0'),
         StringStruct(u'InternalName', u'GaiYa'),
         StringStruct(u'LegalCopyright', u'Copyright (C) 2025 PyDayBar Project. Open Source Software.'),
-        StringStruct(u'OriginalFilename', u'GaiYa-v1.6.exe'),
+        StringStruct(u'OriginalFilename', u'GaiYa-v1.7.exe'),
         StringStruct(u'ProductName', u'GaiYa'),
-        StringStruct(u'ProductVersion', u'1.6.8.0'),
+        StringStruct(u'ProductVersion', u'1.7.0.0'),
         StringStruct(u'Comments', u'一款开源的桌面进度条时间管理工具,帮助您直观地了解一天的进度。支持自定义任务、主题配置、AI智能规划等功能。')])
       ]),
     VarFileInfo([VarStruct(u'Translation', [2052, 1200])])

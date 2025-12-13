@@ -421,7 +421,7 @@ class ConfigManager(QMainWindow):
 
             # 更新颜色控件
             if hasattr(self, 'bg_color_input'):
-                bg_color = self.config.get('background_color', '#505050')
+                bg_color = self.config.get('background_color', '#000000')
                 self.bg_color_input.setText(bg_color)
                 # 更新颜色预览按钮样式
                 if hasattr(self, 'bg_color_preview'):
@@ -438,7 +438,7 @@ class ConfigManager(QMainWindow):
 
             # 更新背景透明度滑块(将0-255转换为0-100百分比)
             if hasattr(self, 'opacity_slider'):
-                opacity_value = self.config.get('background_opacity', 180)
+                opacity_value = self.config.get('background_opacity', 204)
                 opacity_percent = int(opacity_value / 255 * 100)
                 self.opacity_slider.setValue(opacity_percent)
                 if hasattr(self, 'opacity_label'):
@@ -2031,7 +2031,7 @@ class ConfigManager(QMainWindow):
         colors_row_layout = QHBoxLayout()
 
         # 背景颜色
-        bg_color = self.config.get('background_color', '#505050') if self.config else '#505050'
+        bg_color = self.config.get('background_color', '#000000') if self.config else '#000000'
         self.bg_color_input = QLineEdit(bg_color)
         self.bg_color_input.setVisible(False)  # 隐藏色值输入框
 
@@ -2084,7 +2084,7 @@ class ConfigManager(QMainWindow):
         self.opacity_slider = QSlider(Qt.Orientation.Horizontal)
         self.opacity_slider.setRange(0, 100)
         # 将0-255转换为0-100百分比
-        opacity_value = self.config.get('background_opacity', 180) if self.config else 180
+        opacity_value = self.config.get('background_opacity', 204) if self.config else 204
         opacity_percent = int(opacity_value / 255 * 100)
         self.opacity_slider.setValue(opacity_percent)
         self.opacity_slider.setFixedWidth(150)  # 缩短滑块长度
@@ -3053,6 +3053,24 @@ class ConfigManager(QMainWindow):
         if hasattr(self, 'colors_preview_widget'):
             self.update_colors_preview(task_colors)
 
+        # 只更新标记色，保留用户自定义的背景色和透明度
+        if theme_data:
+            theme_marker_color = theme_data.get('marker_color', '#FF0000')
+
+            # 注意：不再自动更新背景色和透明度，保留用户自定义设置
+            # 用户可以在"外观设置"中手动调整背景色和透明度
+
+            # 更新标记色输入框
+            if hasattr(self, 'marker_color_input'):
+                self.marker_color_input.setText(theme_marker_color)
+                # 更新颜色预览按钮
+                if hasattr(self, 'marker_color_btn'):
+                    self.marker_color_btn.setStyleSheet(
+                        f"background-color: {theme_marker_color}; border: 1px solid #ccc; border-radius: 3px;"
+                    )
+
+            logging.info(f"主题 {theme_id} 已选择，更新标记色={theme_marker_color}（保留用户自定义背景色和透明度）")
+
         # 实时更新时间轴编辑器预览（不修改实际任务数据）
         if hasattr(self, 'timeline_editor') and self.timeline_editor:
             # 创建临时任务列表，应用主题配色
@@ -3067,6 +3085,22 @@ class ConfigManager(QMainWindow):
 
             # 更新时间轴编辑器显示（仅预览，不保存）
             QTimer.singleShot(50, lambda: self.timeline_editor.set_tasks(temp_tasks) if self.timeline_editor else None)
+
+        # 同时更新任务表格中的颜色输入框（确保保存时使用主题配色）
+        if task_colors and hasattr(self, 'tasks_table') and self.tasks_table:
+            for row in range(self.tasks_table.rowCount()):
+                color_widget = self.tasks_table.cellWidget(row, 3)
+                if color_widget:
+                    color_input = color_widget.findChild(QLineEdit)
+                    if color_input:
+                        color_index = row % len(task_colors)
+                        new_color = task_colors[color_index]
+                        color_input.setText(new_color)
+                        # 更新颜色按钮预览
+                        color_btn = color_widget.findChild(QPushButton)
+                        if color_btn:
+                            color_btn.setStyleSheet(f"background-color: {new_color}; border: 1px solid #ccc; border-radius: 3px;")
+            logging.info(f"主题 {theme_id} 已应用到任务表格: {len(task_colors)} 种配色")
 
 
     def create_scene_tab(self):
@@ -8732,12 +8766,13 @@ class ConfigManager(QMainWindow):
             if tasks:
                 logging.info(f"[任务保存] 第一个任务: {tasks[0].get('task', 'N/A')}, 开始: {tasks[0].get('start', 'N/A')}")
                 logging.info(f"[任务保存] 最后一个任务: {tasks[-1].get('task', 'N/A')}, 结束: {tasks[-1].get('end', 'N/A')}")
-            logging.info(f"[任务保存] 即将发送config_saved信号")
+            logging.info(f"[任务保存] 即将等待ConfigDebouncer保存完成")
 
             QMessageBox.information(self, self.i18n.tr("message.success"), "配置和任务已保存!\n\n如果 Gaiya 正在运行,更改会自动生效。")
 
-            self.config_saved.emit()
-            logging.info(f"[任务保存] config_saved信号已发送")
+            # 注意：config_saved 信号已由 ConfigDebouncer 的回调自动发送，无需重复发送
+            # 移除了重复的 self.config_saved.emit() 调用，避免触发两次 reload_all()
+            logging.info(f"[任务保存] 配置保存完成，信号由ConfigDebouncer回调发送")
 
             # ✅ P1-1.5: 将主窗口提到前台,让用户看到进度条更新
             if self.main_window:
@@ -9686,25 +9721,40 @@ del /f /q "%~f0"
         """获取最新版本信息(在后台线程中执行)"""
         from version import __version__, APP_METADATA
         import requests
+        from requests.adapters import HTTPAdapter
+        from urllib3.util.retry import Retry
 
         # 调用GitHub API获取最新版本
         repo = APP_METADATA['repository'].replace('https://github.com/', '')
         api_url = f"https://api.github.com/repos/{repo}/releases/latest"
 
-        response = requests.get(api_url, timeout=10)
-        response.raise_for_status()
+        # 创建带重试机制的 Session，解决 SSL 连接复用问题
+        session = requests.Session()
+        retry_strategy = Retry(
+            total=3,
+            backoff_factor=0.5,
+            status_forcelist=[500, 502, 503, 504],
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        session.mount("https://", adapter)
 
-        latest_release = response.json()
-        latest_version = latest_release['tag_name'].lstrip('v')
-        current_version = __version__
+        try:
+            response = session.get(api_url, timeout=15)
+            response.raise_for_status()
 
-        return {
-            "success": True,
-            "latest_release": latest_release,
-            "latest_version": latest_version,
-            "current_version": current_version,
-            "has_update": self._compare_versions(latest_version, current_version) > 0
-        }
+            latest_release = response.json()
+            latest_version = latest_release['tag_name'].lstrip('v')
+            current_version = __version__
+
+            return {
+                "success": True,
+                "latest_release": latest_release,
+                "latest_version": latest_version,
+                "current_version": current_version,
+                "has_update": self._compare_versions(latest_version, current_version) > 0
+            }
+        finally:
+            session.close()
 
     def _on_update_check_success(self, result: dict):
         """版本检查成功回调"""

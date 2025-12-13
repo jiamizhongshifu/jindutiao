@@ -2020,6 +2020,7 @@ class TimeProgressBar(QWidget):
 
         # 重新加载配置和任务
         self.config = data_loader.load_config(self.app_dir, self.logger)
+        self.logger.info(f"[reload_all] 加载的配置: 背景色={self.config.get('background_color')}, 透明度={self.config.get('background_opacity')}")
         self.tasks = data_loader.load_tasks(self.app_dir, self.logger)
         self.logger.info(f"[reload_all] 重新加载后任务数量: {len(self.tasks)}")
         if len(self.tasks) > 0:
@@ -2092,12 +2093,21 @@ class TimeProgressBar(QWidget):
         # 更新定时器间隔
         self.timer.setInterval(self.config['update_interval'])
 
-        # 重新应用主题（确保主题配置立即生效）
+        # 检查主题是否改变（只在主题ID改变时才应用主题，避免覆盖用户自定义颜色）
         if hasattr(self, 'theme_manager') and self.theme_manager:
-            # 重新加载主题管理器的配置
-            self.theme_manager._load_current_theme()
-            # 应用主题到进度条
-            self.apply_theme()
+            old_theme_id = getattr(self, '_last_theme_id', None)
+            theme_config = self.config.get('theme', {})
+            new_theme_id = theme_config.get('current_theme_id', 'business')
+
+            if old_theme_id != new_theme_id:
+                # 主题ID改变，重新加载主题（但保留用户自定义的背景色和透明度）
+                self.logger.info(f"检测到主题切换: {old_theme_id} -> {new_theme_id}")
+                self.theme_manager._load_current_theme()
+                self.apply_theme(force_apply_colors=False)  # 不强制覆盖背景色/透明度
+                self._last_theme_id = new_theme_id
+            else:
+                # 主题未改变，只更新标记色，保留用户自定义颜色
+                self.logger.debug(f"主题未改变 ({new_theme_id})，保留用户自定义颜色")
 
         # 重新加载场景配置
         if hasattr(self, 'scene_manager'):
@@ -3166,6 +3176,11 @@ class TimeProgressBar(QWidget):
         if not (scene_enabled and scene_config):
             bg_color = QColor(self.config['background_color'])
             bg_color.setAlpha(self.config['background_opacity'])
+            # DEBUG: 验证实际绘制的颜色 (只在第一次绘制或颜色变化时输出)
+            current_bg = self.config['background_color']
+            if not hasattr(self, '_last_painted_bg') or self._last_painted_bg != current_bg:
+                self.logger.info(f"[paintEvent] 绘制背景: color={current_bg}, opacity={self.config['background_opacity']}, bar_y={bar_y_offset}, bar_h={bar_height}")
+                self._last_painted_bg = current_bg
             painter.fillRect(0, bar_y_offset, width, bar_height, bg_color)
 
         # 1.5. 绘制场景(如果已启用) - 在任务色块之前绘制,让道路层作为背景
@@ -3768,8 +3783,13 @@ class TimeProgressBar(QWidget):
 
         painter.end()
     
-    def apply_theme(self):
-        """应用当前主题到进度条"""
+    def apply_theme(self, force_apply_colors: bool = False):
+        """应用当前主题到进度条
+
+        Args:
+            force_apply_colors: 如果为True，强制应用主题的背景色和透明度；
+                              如果为False（默认），只应用标记色和任务配色，保留用户自定义的背景设置
+        """
         try:
             if not hasattr(self, 'theme_manager') or not self.theme_manager:
                 return
@@ -3778,21 +3798,31 @@ class TimeProgressBar(QWidget):
             if not theme:
                 return
 
-            # 更新config中的颜色配置（保持向后兼容）
-            old_bg_color = self.config.get('background_color', '#505050')
-            new_bg_color = theme.get('background_color', old_bg_color)
-            old_opacity = self.config.get('background_opacity', 180)
-            new_opacity = theme.get('background_opacity', old_opacity)
+            # 获取主题配置
+            theme_config = self.config.get('theme', {})
+
+            # 标记色总是从主题获取
             old_marker_color = self.config.get('marker_color', '#FF0000')
             new_marker_color = theme.get('marker_color', old_marker_color)
-
-            self.config['background_color'] = new_bg_color
-            self.config['background_opacity'] = new_opacity
             self.config['marker_color'] = new_marker_color
 
+            # 背景色和透明度：只在初始化或用户明确切换主题时应用
+            # 这样用户在外观配置中的自定义设置不会被覆盖
+            old_bg_color = self.config.get('background_color', '#000000')
+            old_opacity = self.config.get('background_opacity', 204)
+
+            if force_apply_colors:
+                # 用户明确切换主题，应用主题的颜色
+                new_bg_color = theme.get('background_color', old_bg_color)
+                new_opacity = theme.get('background_opacity', old_opacity)
+                self.config['background_color'] = new_bg_color
+                self.config['background_opacity'] = new_opacity
+            else:
+                # 保留用户自定义颜色
+                new_bg_color = old_bg_color
+                new_opacity = old_opacity
+
             # 应用主题配色到任务(如果主题提供了task_colors且用户启用了自动应用)
-            # 检查config中的auto_apply_task_colors设置
-            theme_config = self.config.get('theme', {})
             auto_apply = theme_config.get('auto_apply_task_colors', False)
 
             task_colors = theme.get('task_colors', [])
@@ -3813,16 +3843,19 @@ class TimeProgressBar(QWidget):
             elif task_colors and len(self.tasks) > 0 and not auto_apply:
                 self.logger.info(f"主题包含 {len(task_colors)} 种配色，但auto_apply_task_colors=False，保留用户自定义颜色")
 
-            # 保存主题配置到config.json
+            # 保存配置到config.json
             try:
                 config_file = self.app_dir / 'config.json'
                 with open(config_file, 'r', encoding='utf-8') as f:
                     config_data = json.load(f)
 
-                # 更新主题相关配置
-                config_data['background_color'] = new_bg_color
-                config_data['background_opacity'] = new_opacity
+                # 更新标记色
                 config_data['marker_color'] = new_marker_color
+
+                # 只在force_apply_colors时更新背景色和透明度
+                if force_apply_colors:
+                    config_data['background_color'] = new_bg_color
+                    config_data['background_opacity'] = new_opacity
 
                 with open(config_file, 'w', encoding='utf-8') as f:
                     json.dump(config_data, f, indent=4, ensure_ascii=False)
@@ -3830,14 +3863,18 @@ class TimeProgressBar(QWidget):
                 self.logger.error(f"保存主题配置失败: {e}")
 
             # 强制刷新整个窗口（确保变化可见）
-            self.update()
+            self.repaint()
+
+            # 记录当前主题ID，用于reload_all()检测主题是否改变
+            self._last_theme_id = theme_config.get('current_theme_id', 'business')
 
             self.logger.info(f"已应用主题: {theme.get('name', 'Unknown')}")
-            self.logger.info(f"  背景色: {old_bg_color} -> {new_bg_color}")
-            self.logger.info(f"  透明度: {old_opacity} -> {new_opacity}")
+            if force_apply_colors:
+                self.logger.info(f"  背景色: {old_bg_color} -> {new_bg_color}")
+                self.logger.info(f"  透明度: {old_opacity} -> {new_opacity}")
             self.logger.info(f"  标记色: {old_marker_color} -> {new_marker_color}")
             if task_colors:
-                self.logger.info(f"  任务配色: 已应用 {len(task_colors)} 种颜色")
+                self.logger.info(f"  任务配色: {len(task_colors)} 种颜色可用")
         except Exception as e:
             self.logger.error(f"应用主题失败: {e}", exc_info=True)
 
