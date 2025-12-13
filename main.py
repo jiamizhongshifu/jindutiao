@@ -3263,24 +3263,38 @@ class TimeProgressBar(QWidget):
                         is_completed = True
                         is_not_started = False
                 else:  # 普通任务
-                    # ✅ P1-1.6.8: 修复跨天后的任务状态判断
-                    # 当当前时间是次日凌晨(如00:38),需要判断是否有后续的跨天任务
-                    # 如果有,则此普通任务应该显示为已完成
+                    # ✅ P1-1.6.9: 修复跨天后的任务状态判断
+                    # 需要区分三个时间段:
+                    # 1. 跨天任务结束前的凌晨(如00:38): 普通任务显示已完成
+                    # 2. 跨天任务结束后的早上(如09:08): 普通任务显示未开始(新一天)
+                    # 3. 正常时段: 按秒数判断
+
+                    # 检测是否有后续的跨天任务
                     has_crossday_task_after = False
+                    crossday_task_end = None
                     for j in range(i + 1, len(self.task_positions)):
                         next_task_start = self.task_positions[j]['original_start']
                         next_task_end = self.task_positions[j]['original_end']
                         if next_task_start > next_task_end:  # 发现后续跨天任务
                             has_crossday_task_after = True
+                            crossday_task_end = next_task_end
                             break
 
                     # 判断任务状态
                     if has_crossday_task_after and current_seconds < task_start and current_seconds < task_end:
-                        # 当前是次日凌晨,且后面有跨天任务,则此任务应该是已完成
-                        # 例如: 工作18:00结束, 当前00:38, 后面有睡眠23:00-07:00
-                        is_completed = True
-                        is_in_progress = False
-                        is_not_started = False
+                        # 当前时间小于任务开始时间,需要进一步判断
+                        if current_seconds < crossday_task_end:
+                            # 在跨天任务结束前(如00:38 < 07:00),此任务显示为已完成
+                            # 例如: 工作18:00结束, 当前00:38, 睡眠07:00结束
+                            is_completed = True
+                            is_in_progress = False
+                            is_not_started = False
+                        else:
+                            # 在跨天任务结束后(如09:08 > 07:00),此任务显示为未开始(新一天)
+                            # 例如: 工作08:00开始, 当前09:08, 睡眠07:00已结束
+                            is_completed = False
+                            is_in_progress = False
+                            is_not_started = True
                     else:
                         # 正常的同日判断
                         is_completed = task_end <= current_seconds
