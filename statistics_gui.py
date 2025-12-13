@@ -149,7 +149,8 @@ class AIGuideDialog(QWidget):
     def setup_ui(self):
         """设置UI界面"""
         # 窗口基本设置
-        self.setWindowFlags(Qt.Window | Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+        # ✅ P1-1.6.20: 移除WindowStaysOnTopHint,避免阻止其他窗口交互
+        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
         self.setFixedSize(500, 520)
 
         # 浅色主题背景和圆角
@@ -386,8 +387,8 @@ class StatisticsWindow(QWidget):
         # 应用初始主题
         self.apply_theme()
 
-        # 首次使用时显示AI功能引导对话框
-        self._show_ai_guide_if_needed()
+        # ✅ P1-1.6.20: 延迟显示AI引导对话框,避免与统计窗口冲突
+        # self._show_ai_guide_if_needed()  # 移到showEvent中处理
 
         # 启动定时器: 每5分钟自动更新目标和成就
         self.motivation_timer = QTimer(self)
@@ -3165,11 +3166,17 @@ class StatisticsWindow(QWidget):
             self.auto_inference_engine = None
 
     def showEvent(self, event):
-        """窗口显示事件 - 延迟连接自动推理引擎"""
+        """窗口显示事件 - 延迟连接自动推理引擎和显示AI引导"""
         super().showEvent(event)
         # 首次显示时连接自动推理引擎
         if not self._engine_connected:
             self._connect_inference_engine()
+
+        # ✅ P1-1.6.20: 延迟显示AI引导对话框
+        # 使用QTimer确保在事件循环下一轮执行,避免窗口堆叠冲突
+        if not hasattr(self, '_guide_checked'):
+            self._guide_checked = True
+            QTimer.singleShot(300, self._show_ai_guide_if_needed)
 
     def closeEvent(self, event):
         """窗口关闭事件 - 清理资源"""
