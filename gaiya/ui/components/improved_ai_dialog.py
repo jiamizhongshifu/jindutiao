@@ -30,17 +30,17 @@ class ImprovedAIGenerationDialog(QDialog):
 
     def setup_ui(self):
         """设置UI"""
-        self.setWindowTitle("🤖")  # ✅ P1-1.6.18: 窗口标题只保留机器人图标
-        self.setFixedSize(550, 500)
+        self.setWindowTitle("AI任务生成助手")  # ✅ P1-1.6.19: 恢复文字标题
+        self.setFixedSize(550, 440)  # ✅ P1-1.6.19: 移除60px标题栏后调整总高度
         self.setModal(True)
 
         layout = QVBoxLayout(self)
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        # 标题栏
-        title_widget = self.create_title_bar()
-        layout.addWidget(title_widget)
+        # ✅ P1-1.6.19: 移除标题栏,直接显示场景选择器
+        # title_widget = self.create_title_bar()
+        # layout.addWidget(title_widget)
 
         # 场景选择器
         self.scene_selector = AiSceneSelector(self)
