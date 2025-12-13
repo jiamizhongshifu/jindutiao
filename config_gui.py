@@ -9719,7 +9719,7 @@ del /f /q "%~f0"
 
         if has_update:
             # 有新版本
-            self.check_update_btn.setText(self.i18n.tr("general.text_8527"))
+            self.check_update_btn.setText(self.i18n.tr("general.text_8527", latest_version=latest_version))
             self.check_update_btn.setStyleSheet("""
                 QPushButton {
                     background-color: #FF5722;
@@ -9744,7 +9744,7 @@ del /f /q "%~f0"
             msg = QMessageBox(self)
             msg.setIcon(QMessageBox.Icon.Information)
             msg.setWindowTitle(self.i18n.tr("general.text_377"))
-            msg.setText(self.i18n.tr("general.text_1975"))
+            msg.setText(self.i18n.tr("general.text_1975", latest_version=latest_version))
             msg.setInformativeText(f"当前版本: v{current_version}\n\n核心更新:\n{changelog_highlights}")
             msg.setStandardButtons(QMessageBox.StandardButton.Cancel)
 
