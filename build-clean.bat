@@ -15,7 +15,13 @@ echo    5. build-fast.bat 打包失败时
 echo.
 echo 💡 建议：日常开发请使用 build-fast.bat（更快）
 echo.
-pause
+echo 🔄 同步版本信息...
+python update_version_info.py
+if errorlevel 1 (
+    echo ❌ 版本同步失败！
+    pause
+    exit /b 1
+)
 echo.
 echo 开始清理缓存...
 

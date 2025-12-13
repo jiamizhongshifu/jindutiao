@@ -7,11 +7,21 @@ echo === GaiYa 快速打包（智能增量）===
 echo ========================================
 echo.
 
-REM 1. 结束占用进程
+REM 1. 同步版本信息
+echo 🔄 同步版本信息...
+python update_version_info.py
+if errorlevel 1 (
+    echo ❌ 版本同步失败！
+    pause
+    exit /b 1
+)
+echo.
+
+REM 2. 结束占用进程
 taskkill /F /IM GaiYa-v1.6.exe >nul 2>&1
 timeout /t 1 /nobreak >nul
 
-REM 2. 检测是否需要清理(关键代码修改)
+REM 3. 检测是否需要清理(关键代码修改)
 set NEED_CLEAN=0
 
 REM 检查 main.py 是否更新
@@ -26,7 +36,7 @@ if exist "build\Gaiya\gaiya\ui\membership_ui.pyc" (
     if "!NEWER!"=="membership_ui.py" set NEED_CLEAN=1
 )
 
-REM 3. 智能清理
+REM 4. 智能清理
 if !NEED_CLEAN!==1 (
     echo 🔍 检测到核心代码修改,清理缓存确保最新代码...
     rmdir /s /q build 2>nul
@@ -45,10 +55,10 @@ echo.
 echo 开始打包...
 echo.
 
-REM 4. 执行打包(带后台进度监控)
+REM 5. 执行打包(带后台进度监控)
 start /B "" cmd /c "pyinstaller Gaiya.spec >nul 2>&1"
 
-REM 5. 显示进度(避免卡死假象)
+REM 6. 显示进度(避免卡死假象)
 set ELAPSED=0
 :wait
 timeout /t 5 /nobreak >nul
