@@ -48,6 +48,8 @@ class AiFeatureBanner(QFrame):
         icon_label.setFont(icon_font)
         icon_label.setFixedSize(50, 50)
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        # ✅ P1-1.6.12: 添加padding确保emoji垂直居中显示
+        icon_label.setStyleSheet("padding-top: 5px;")
         layout.addWidget(icon_label, alignment=Qt.AlignmentFlag.AlignVCenter)  # ✅ P1-1.6: 垂直居中
 
         # 引导文案
