@@ -46,7 +46,7 @@ class AiFeatureBanner(QFrame):
         icon_font = QFont()
         icon_font.setPointSize(28)
         icon_label.setFont(icon_font)
-        icon_label.setFixedSize(50, 50)
+        icon_label.setFixedSize(60, 60)  # ✅ P1-1.6.17: 扩大容器避免截断
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         # ✅ P1-1.6.16: 继续向上移动20px,使emoji与文字完美对齐
         icon_label.setStyleSheet("margin-top: -30px;")

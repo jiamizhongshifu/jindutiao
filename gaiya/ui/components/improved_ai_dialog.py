@@ -30,7 +30,7 @@ class ImprovedAIGenerationDialog(QDialog):
 
     def setup_ui(self):
         """设置UI"""
-        self.setWindowTitle("🤖 AI任务生成助手")
+        self.setWindowTitle("🤖")  # ✅ P1-1.6.18: 窗口标题只保留机器人图标
         self.setFixedSize(550, 500)
         self.setModal(True)
 
@@ -107,10 +107,10 @@ class ImprovedAIGenerationDialog(QDialog):
         title_layout = QHBoxLayout(title_widget)
         title_layout.setContentsMargins(20, 0, 20, 0)
 
-        # 标题文字
-        title_label = QLabel("🤖 AI任务生成助手")
+        # 标题文字 - ✅ P1-1.6.18: 只保留机器人图标,移除文字
+        title_label = QLabel("🤖")
         title_font = QFont()
-        title_font.setPointSize(14)
+        title_font.setPointSize(24)  # 增大图标字号
         title_font.setBold(True)
         title_label.setFont(title_font)
         title_label.setStyleSheet("color: white;")
