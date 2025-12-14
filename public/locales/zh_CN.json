@@ -1,4 +1,4 @@
-{
+﻿{
   "nav": {
     "home": "首页",
     "features": "功能",
@@ -18,7 +18,7 @@
     "detail_desc": "透明置顶显示，AI智能规划，让每一天都清晰可见",
     "detail_desc2": "完全免费体验核心功能，Windows 10/11 支持",
     "download_windows": "下载 Windows 版本",
-    "version_badge": "v1.6.3 · 免费体验 · 每日3次AI智能规划 · 开源 MIT License",
+    "version_badge": "v1.7.0 · 免费体验 · 每日3次AI智能规划 · 开源 MIT License",
     "download_btn": "立即下载",
     "learn_more": "了解更多",
     "free_download": "免费下载"
@@ -172,7 +172,7 @@
     "title": "立即开始掌控你的时间",
     "subtitle": "完全免费体验核心功能，无需信用卡",
     "download_btn": "下载 Windows 版本",
-    "version_info": "v1.6.3 · 支持 Windows 10/11 · 完全开源 · MIT License"
+    "version_info": "v1.7.0 · 支持 Windows 10/11 · 完全开源 · MIT License"
   },
   "footer": {
     "product": "产品",
@@ -256,7 +256,7 @@
   "download": {
     "page_title": "Download - GaiYa Time Progress Bar",
     "hero_title": "Download GaiYa",
-    "version_badge": "⭐ Latest v1.6.3 | Completely Free | Open Source MIT License",
+    "version_badge": "⭐ Latest v1.7.0 | Completely Free | Open Source MIT License",
     "github_download": "Download from GitHub",
     "github_download_desc": "Recommended · Latest Version · Safe & Reliable",
     "history_versions": "Previous Versions",

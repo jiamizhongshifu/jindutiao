@@ -1,4 +1,4 @@
-{
+﻿{
   "nav": {
     "home": "Home",
     "features": "Features",
@@ -18,7 +18,7 @@
     "detail_desc": "Transparent overlay, AI smart planning, making every day clear",
     "detail_desc2": "Completely free core features, Windows 10/11 support",
     "download_windows": "Download for Windows",
-    "version_badge": "v1.6.3 · Free Trial · 3 AI Generations Daily · Open Source MIT License",
+    "version_badge": "v1.7.0 · Free Trial · 3 AI Generations Daily · Open Source MIT License",
     "download_btn": "Download Now",
     "learn_more": "Learn More",
     "free_download": "Free Download"
@@ -172,7 +172,7 @@
     "title": "Start Taking Control of Your Time",
     "subtitle": "Try core features completely free, no credit card required",
     "download_btn": "Download for Windows",
-    "version_info": "v1.6.3 · Windows 10/11 Support · Open Source · MIT License"
+    "version_info": "v1.7.0 · Windows 10/11 Support · Open Source · MIT License"
   },
   "footer": {
     "product": "Product",
@@ -256,7 +256,7 @@
   "download": {
     "page_title": "Download - GaiYa Time Progress Bar",
     "hero_title": "Download GaiYa",
-    "version_badge": "⭐ Latest v1.6.3 | Completely Free | Open Source MIT License",
+    "version_badge": "⭐ Latest v1.7.0 | Completely Free | Open Source MIT License",
     "github_download": "Download from GitHub",
     "github_download_desc": "Recommended · Latest Version · Safe & Reliable",
     "history_versions": "Previous Versions",
