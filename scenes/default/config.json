@@ -21,10 +21,10 @@
           "id": "item_1",
           "image": "assets/tree1.png",
           "position": {
-            "x_percent": 40.48843187660669,
-            "y_pixel": 38
+            "x_percent": 40.666666666666664,
+            "y_pixel": 53
           },
-          "scale": 0.38,
+          "scale": 0.3,
           "z_index": 51,
           "events": []
         },
@@ -32,10 +32,10 @@
           "id": "item_2",
           "image": "assets/tree2.png",
           "position": {
-            "x_percent": 7.726006855184229,
-            "y_pixel": 30
+            "x_percent": 7.583333333333334,
+            "y_pixel": 45
           },
-          "scale": 0.32,
+          "scale": 0.26,
           "z_index": 52,
           "events": []
         },
@@ -43,10 +43,10 @@
           "id": "item_3",
           "image": "assets/cao.png",
           "position": {
-            "x_percent": 84.22285562903511,
-            "y_pixel": 81
+            "x_percent": 85.51452229570175,
+            "y_pixel": 88
           },
-          "scale": 0.21,
+          "scale": 0.16,
           "z_index": 53,
           "events": []
         },
@@ -54,8 +54,8 @@
           "id": "item_4",
           "image": "assets/hua2.png",
           "position": {
-            "x_percent": 76.86685285318498,
-            "y_pixel": 91
+            "x_percent": 76.40851951985162,
+            "y_pixel": 89
           },
           "scale": 0.18,
           "z_index": 54,
@@ -65,8 +65,8 @@
           "id": "item_5",
           "image": "assets/hua3.png",
           "position": {
-            "x_percent": 82.55734556657849,
-            "y_pixel": 89
+            "x_percent": 83.64067889991182,
+            "y_pixel": 91
           },
           "scale": 0.16,
           "z_index": 55,
@@ -77,7 +77,7 @@
           "image": "assets/hua1.png",
           "position": {
             "x_percent": 68.05352877268534,
-            "y_pixel": 93
+            "y_pixel": 100
           },
           "scale": 0.12,
           "z_index": 56,
@@ -87,8 +87,8 @@
           "id": "item_7",
           "image": "assets/hua1_1.png",
           "position": {
-            "x_percent": 22.557840616966576,
-            "y_pixel": 85
+            "x_percent": 22.474507283633244,
+            "y_pixel": 89
           },
           "scale": 0.18000000000000002,
           "z_index": 56,
@@ -99,7 +99,7 @@
           "image": "assets/hua2_1.png",
           "position": {
             "x_percent": 52.36997568455212,
-            "y_pixel": 94
+            "y_pixel": 99
           },
           "scale": 0.12,
           "z_index": 54,
@@ -120,8 +120,8 @@
           "id": "item_10",
           "image": "assets/cao_2.png",
           "position": {
-            "x_percent": 11.564979154364737,
-            "y_pixel": 88
+            "x_percent": 11.564979154364735,
+            "y_pixel": 90
           },
           "scale": 0.16,
           "z_index": 53,
@@ -131,7 +131,7 @@
           "id": "item_11",
           "image": "assets/baiyun.png",
           "position": {
-            "x_percent": 47.23650385604113,
+            "x_percent": 47.291666666666664,
             "y_pixel": 53
           },
           "scale": 0.21,
@@ -143,7 +143,7 @@
           "image": "assets/baiyun_1.png",
           "position": {
             "x_percent": 20.02761102657097,
-            "y_pixel": 41
+            "y_pixel": 40
           },
           "scale": 0.21,
           "z_index": 61,
@@ -153,8 +153,8 @@
           "id": "item_13",
           "image": "assets/baiyun_2.png",
           "position": {
-            "x_percent": 85.97847824186643,
-            "y_pixel": 39
+            "x_percent": 86.81181157519975,
+            "y_pixel": 47
           },
           "scale": 0.21,
           "z_index": 61,
@@ -164,8 +164,8 @@
           "id": "item_14",
           "image": "assets/caocong1.png",
           "position": {
-            "x_percent": 88.24783827997196,
-            "y_pixel": 84
+            "x_percent": 89.97401223324516,
+            "y_pixel": 89
           },
           "scale": 0.21,
           "z_index": 46,
@@ -175,8 +175,8 @@
           "id": "item_16",
           "image": "assets/caocong2.png",
           "position": {
-            "x_percent": 54.18561691306202,
-            "y_pixel": 82
+            "x_percent": 54.68561691306203,
+            "y_pixel": 84
           },
           "scale": 0.21,
           "z_index": 66,
@@ -187,7 +187,7 @@
           "image": "assets/mutou.png",
           "position": {
             "x_percent": 18.755784061696662,
-            "y_pixel": 86
+            "y_pixel": 90
           },
           "scale": 0.24,
           "z_index": 67,
@@ -198,7 +198,7 @@
           "image": "assets/hua3_1.png",
           "position": {
             "x_percent": 58.11820197699039,
-            "y_pixel": 89
+            "y_pixel": 90
           },
           "scale": 0.16,
           "z_index": 74,
@@ -208,8 +208,8 @@
           "id": "item_19",
           "image": "assets/hua2_2.png",
           "position": {
-            "x_percent": 65.69405618420512,
-            "y_pixel": 96
+            "x_percent": 65.81905618420512,
+            "y_pixel": 94
           },
           "scale": 0.12,
           "z_index": 54,
@@ -219,8 +219,8 @@
           "id": "item_20",
           "image": "assets/hua2_3.png",
           "position": {
-            "x_percent": 14.132640500652037,
-            "y_pixel": 92
+            "x_percent": 14.299307167318705,
+            "y_pixel": 94
           },
           "scale": 0.12,
           "z_index": 54,
@@ -230,8 +230,8 @@
           "id": "item_21",
           "image": "assets/cao_3.png",
           "position": {
-            "x_percent": 70.75998262417737,
-            "y_pixel": 92
+            "x_percent": 70.90238951753844,
+            "y_pixel": 90
           },
           "scale": 0.16,
           "z_index": 47,
@@ -241,8 +241,8 @@
           "id": "item_22",
           "image": "assets/caocong2_1.png",
           "position": {
-            "x_percent": 29.276028277634953,
-            "y_pixel": 86
+            "x_percent": 29.48436161096829,
+            "y_pixel": 85
           },
           "scale": 0.21,
           "z_index": 66,
@@ -252,8 +252,8 @@
           "id": "item_22",
           "image": "assets/baiyun_3.png",
           "position": {
-            "x_percent": 72.6963227865301,
-            "y_pixel": 50
+            "x_percent": 72.34519543935201,
+            "y_pixel": 53
           },
           "scale": 0.21,
           "z_index": 61,
@@ -263,10 +263,10 @@
           "id": "item_23",
           "image": "assets/baiyun_4.png",
           "position": {
-            "x_percent": 36.12714945526619,
-            "y_pixel": 44
+            "x_percent": 36.08548278859953,
+            "y_pixel": 50
           },
-          "scale": 0.26,
+          "scale": 0.22,
           "z_index": 61,
           "events": []
         },
@@ -274,8 +274,8 @@
           "id": "item_24",
           "image": "assets/caocong1_1.png",
           "position": {
-            "x_percent": 79.69712029337906,
-            "y_pixel": 82
+            "x_percent": 79.220195439352,
+            "y_pixel": 84
           },
           "scale": 0.24,
           "z_index": 58,
@@ -285,8 +285,8 @@
           "id": "item_25",
           "image": "assets/caocong1_2.png",
           "position": {
-            "x_percent": 26.207588453462584,
-            "y_pixel": 91
+            "x_percent": 25.96411739502999,
+            "y_pixel": 94
           },
           "scale": 0.14,
           "z_index": 58,
@@ -296,8 +296,8 @@
           "id": "item_26",
           "image": "assets/hua2_4.png",
           "position": {
-            "x_percent": 35.09030878656459,
-            "y_pixel": 96
+            "x_percent": 35.0,
+            "y_pixel": 93
           },
           "scale": 0.12,
           "z_index": 54,
@@ -307,10 +307,10 @@
           "id": "item_27",
           "image": "assets/tree2_1.png",
           "position": {
-            "x_percent": 62.92952013710368,
-            "y_pixel": 37
+            "x_percent": 63.310616913062,
+            "y_pixel": 48
           },
-          "scale": 0.3,
+          "scale": 0.24,
           "z_index": 52,
           "events": []
         }

@@ -68,6 +68,7 @@ def load_config(app_dir: Path, logger: logging.Logger) -> Dict[str, Any]:
         "update_interval": 1000,
         "enable_shadow": True,
         "corner_radius": 0,
+        "autostart_initialized": False,  # 首次运行标志，用于自动开启自启动
         "activity_tracking": {
             "enabled": True,  # 默认开启行为识别
             "polling_interval": 5,

@@ -2790,6 +2790,12 @@ class SceneEditorWindow(QMainWindow):
         export_btn.setToolTip(tr("scene_editor.main_window.buttons.export_tooltip"))
         status_layout.addWidget(export_btn)
 
+        # 打开场景目录按钮
+        open_dir_btn = QPushButton("📂 打开场景目录")
+        open_dir_btn.clicked.connect(self.open_scenes_directory)
+        open_dir_btn.setToolTip(f"打开场景保存目录：{self.scenes_dir}")
+        status_layout.addWidget(open_dir_btn)
+
         main_layout.addLayout(status_layout)
 
         # 初始化图层列表
@@ -3100,6 +3106,25 @@ class SceneEditorWindow(QMainWindow):
         # 获取场景名称
         scene_name = self.property_panel.scene_name_input.text()
         logger.debug(f"场景名称: '{scene_name}'")
+
+        # 检查是否为默认模板名称，如果是则弹出命名对话框
+        default_names = ["森林步道", "森林步道（模板）", "Forest Trail", "default", ""]
+        if scene_name.strip() in default_names or not scene_name.strip():
+            # 弹出命名对话框
+            from PySide6.QtWidgets import QInputDialog
+            new_name, ok = QInputDialog.getText(
+                self,
+                "场景命名",
+                "请为您的场景命名：\n（名称只能包含字母、数字、下划线和中文）",
+                text="我的场景"
+            )
+            if not ok or not new_name.strip():
+                logger.info("用户取消命名，取消导出")
+                return
+            scene_name = new_name.strip()
+            # 同步更新属性面板中的名称
+            self.property_panel.scene_name_input.setText(scene_name)
+            logger.debug(f"用户输入的新场景名称: '{scene_name}'")
         if not scene_name:
             logger.error("场景名称为空！")
             QMessageBox.warning(self, tr("scene_editor.dialogs.export.error_no_name_title"), tr("scene_editor.dialogs.export.error_no_name_msg"))
@@ -3442,6 +3467,31 @@ class SceneEditorWindow(QMainWindow):
 
         if cleanup_count > 0:
             logger.info(f"已清理 {cleanup_count} 个临时备份文件")
+
+    def open_scenes_directory(self):
+        """打开场景保存目录"""
+        import subprocess
+        import platform
+
+        try:
+            # 确保目录存在
+            self.scenes_dir.mkdir(parents=True, exist_ok=True)
+
+            if platform.system() == "Windows":
+                os.startfile(str(self.scenes_dir))
+            elif platform.system() == "Darwin":  # macOS
+                subprocess.run(["open", str(self.scenes_dir)])
+            else:  # Linux
+                subprocess.run(["xdg-open", str(self.scenes_dir)])
+
+            self.logger.info(f"已打开场景目录: {self.scenes_dir}")
+        except Exception as e:
+            self.logger.error(f"打开场景目录失败: {e}")
+            QMessageBox.warning(
+                self,
+                "打开目录失败",
+                f"无法打开场景目录：\n{self.scenes_dir}\n\n错误：{e}"
+            )
 
     def _copy_file_with_rename(self, src_path: Path, dest_dir: Path, preferred_name: str) -> str:
         """

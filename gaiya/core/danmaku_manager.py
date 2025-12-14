@@ -7,6 +7,7 @@ import json
 import os
 import random
 import time
+from datetime import datetime
 from typing import List, Dict, Optional
 from PySide6.QtCore import QTimer
 from PySide6.QtGui import QPainter, QFont, QColor, QPen, QPainterPath
@@ -125,8 +126,9 @@ class DanmakuManager:
         if not tasks:
             return "default"
 
-        # Find current task based on time percentage
-        current_minute = int(current_time_percentage * 24 * 60)
+        # Use actual current time instead of percentage (percentage is for compact mode display, not real time)
+        now = datetime.now()
+        current_minute = now.hour * 60 + now.minute
 
         for task in tasks:
             # Parse time strings using time_utils
@@ -374,7 +376,9 @@ class DanmakuManager:
         if not tasks:
             return
 
-        current_minute = int(current_time_percentage * 24 * 60)
+        # Use actual current time instead of percentage
+        now = datetime.now()
+        current_minute = now.hour * 60 + now.minute
 
         for task in tasks:
             task_start = task.get('start', '')
@@ -444,7 +448,9 @@ class DanmakuManager:
         if '{' not in content:
             return content
 
-        current_minute = int(current_time_percentage * 24 * 60)
+        # Use actual current time instead of percentage
+        now = datetime.now()
+        current_minute = now.hour * 60 + now.minute
 
         # 替换任务名称
         if '{task_name}' in content:

@@ -38,6 +38,7 @@ from gaiya.utils.time_block_utils import generate_time_block_id, legacy_time_blo
 from gaiya.scene import SceneLoader, SceneRenderer, SceneEventManager, ResourceCache, SceneManager
 from gaiya.core.marker_presets import MarkerPresetManager
 from gaiya.core.danmaku_manager import DanmakuManager
+from autostart_manager import AutoStartManager
 
 # i18n support
 try:
@@ -186,6 +187,9 @@ class TimeProgressBar(QWidget):
         # 延迟检查是否首次运行，显示新手引导
         QTimer.singleShot(500, self.check_first_run)
 
+        # 延迟初始化自启动（首次运行时自动开启）
+        QTimer.singleShot(600, self.init_autostart)
+
         # 延迟初始化行为追踪服务（确保所有组件都已加载完成）
         QTimer.singleShot(1000, self.init_activity_tracker)
 
@@ -197,6 +201,27 @@ class TimeProgressBar(QWidget):
         if detector.is_first_run():
             self.logger.info("检测到首次运行，显示新手引导")
             self.show_onboarding()
+
+    def init_autostart(self):
+        """首次运行时自动开启开机自启动"""
+        try:
+            # 检查是否已经初始化过自启动
+            if self.config.get('autostart_initialized', False):
+                return
+
+            # 首次运行，自动开启自启动
+            autostart_manager = AutoStartManager()
+            if autostart_manager.enable():
+                self.logger.info("首次运行：已自动开启开机自启动")
+            else:
+                self.logger.warning("首次运行：自动开启开机自启动失败")
+
+            # 标记已初始化，避免重复执行
+            self.config['autostart_initialized'] = True
+            self.save_config()
+
+        except Exception as e:
+            self.logger.error(f"初始化自启动失败: {e}")
 
     def show_onboarding(self):
         """显示新手引导流程"""
