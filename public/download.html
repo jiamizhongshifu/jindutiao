@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="下载GaiYa盖亚 - Windows桌面时间管理工具">
-    <title>下载 - GaiYa每日进度�?/title>
+    <title>下载 - GaiYa每日进度条</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
@@ -219,7 +219,7 @@
         }
 
         .requirement-card li::before {
-            content: "�?;
+            content: "✓";
             color: var(--primary-color);
             font-weight: bold;
             margin-right: 8px;
@@ -282,7 +282,7 @@
             line-height: 1.6;
         }
 
-        /* FAQ�?*/
+        /* FAQ项 */
         .faq-item {
             background: white;
             padding: var(--spacing-lg);
@@ -300,7 +300,7 @@
         }
 
         .faq-item h4::before {
-            content: "�?;
+            content: "❓";
             font-size: 20px;
         }
 
@@ -339,7 +339,7 @@
             line-height: 1.6;
         }
 
-        /* 响应�?*/
+        /* 响应式 */
         @media (max-width: 768px) {
             .download-hero h1 {
                 font-size: 32px;
@@ -363,12 +363,12 @@
     </style>
 </head>
 <body>
-    <!-- 导航�?-->
+    <!-- 导航栏 -->
     <nav class="navbar">
         <div class="navbar-container">
             <a href="index.html" class="navbar-logo">
                 <img src="images/logo.png" alt="GaiYa Logo" style="height: 36px; width: 36px; border-radius: 8px;">
-                <span style="font-weight: 700; color: var(--text-primary); margin-left: 8px;">GaiYa每日进度�?/span>
+                <span style="font-weight: 700; color: var(--text-primary); margin-left: 8px;">GaiYa每日进度条</span>
             </a>
             <ul class="navbar-menu">
                 <li><a href="index.html#features" data-i18n="nav.features">功能</a></li>
@@ -381,7 +381,7 @@
             <div class="navbar-actions">
                 <!-- Language Switcher -->
                 <div class="language-switcher">
-                    <button class="lang-btn" data-lang-switch="zh_CN" onclick="switchLanguage('zh_CN')">�?/button>
+                    <button class="lang-btn" data-lang-switch="zh_CN" onclick="switchLanguage('zh_CN')">中</button>
                     <button class="lang-btn" data-lang-switch="en_US" onclick="switchLanguage('en_US')">EN</button>
                 </div>
                 <a href="https://github.com/jiamizhongshifu/jindutiao" target="_blank" class="btn btn-secondary btn-small">GitHub</a>
@@ -395,11 +395,11 @@
         <div class="download-hero-icon">💻</div>
         <h1 data-i18n="download.hero_title">下载 GaiYa</h1>
         <div class="version-badge" data-i18n="download.version_badge">
-            �?最新版�?v1.7.0 | 完全免费 | 开�?MIT License
+            ⭐ 最新版本 v1.7.0 | 完全免费 | 开源 MIT License
         </div>
     </section>
 
-    <!-- 主下载卡�?-->
+    <!-- 主下载卡片 -->
     <div class="container" id="download-section">
         <div class="download-card">
             <div class="download-options">
@@ -410,11 +410,11 @@
                     <div class="download-btn-left">
                         <div class="download-btn-icon">🚀</div>
                         <div class="download-btn-text">
-                            <h3 data-i18n="download.github_download">�?GitHub 下载</h3>
-                            <p data-i18n="download.github_download_desc">推荐 · 最新版�?· 安全可靠</p>
+                            <h3 data-i18n="download.github_download">从 GitHub 下载</h3>
+                            <p data-i18n="download.github_download_desc">推荐 · 最新版本 · 安全可靠</p>
                         </div>
                     </div>
-                    <div class="download-btn-right">�?/div>
+                    <div class="download-btn-right">→</div>
                 </a>
 
                 <!-- 备用下载 -->
@@ -428,19 +428,19 @@
                             <p data-i18n="download.history_versions_desc">查看所有版本和更新日志</p>
                         </div>
                     </div>
-                    <div class="download-btn-right">�?/div>
+                    <div class="download-btn-right">→</div>
                 </a>
             </div>
 
             <div class="download-info">
                 <div class="download-info-grid">
                     <div class="download-info-item">
-                        <span class="download-info-label" data-i18n="download.version">版本�?/span>
+                        <span class="download-info-label" data-i18n="download.version">版本号</span>
                         <span class="download-info-value">v1.7.0</span>
                     </div>
                     <div class="download-info-item">
                         <span class="download-info-label" data-i18n="download.file_size">文件大小</span>
-                        <span class="download-info-value" data-i18n="download.file_size_value">�?82 MB</span>
+                        <span class="download-info-value" data-i18n="download.file_size_value">约 82 MB</span>
                     </div>
                     <div class="download-info-item">
                         <span class="download-info-label" data-i18n="download.platform">支持平台</span>
@@ -454,11 +454,11 @@
             </div>
 
             <div class="alert-box">
-                <h4 data-i18n="download.security_alert_title">🛡�?安全提示</h4>
+                <h4 data-i18n="download.security_alert_title">🛡️ 安全提示</h4>
                 <p>
-                    <span data-i18n="download.security_alert_content">部分杀毒软件可能会误报。这是因为软件使用了 PyInstaller 打包，且涉及系统窗口置顶等功能�?/span>
+                    <span data-i18n="download.security_alert_content">部分杀毒软件可能会误报。这是因为软件使用了 PyInstaller 打包，且涉及系统窗口置顶等功能。</span>
                     <br><br>
-                    <strong data-i18n="download.security_guarantee">我们保证�?/strong><span data-i18n="download.security_guarantee_desc">GaiYa 是完全开源的软件，不包含任何恶意代码。您可以�?GitHub 查看完整源代码�?/span>
+                    <strong data-i18n="download.security_guarantee">我们保证：</strong><span data-i18n="download.security_guarantee_desc">GaiYa 是完全开源的软件，不包含任何恶意代码。您可以在 GitHub 查看完整源代码。</span>
                 </p>
             </div>
         </div>
@@ -468,15 +468,15 @@
     <section class="section bg-light">
         <div class="container">
             <h2 class="section-title" data-i18n="download.system_requirements">💻 系统要求</h2>
-            <p class="section-subtitle" data-i18n="download.system_requirements_desc">确保您的设备满足以下最低配置要�?/p>
+            <p class="section-subtitle" data-i18n="download.system_requirements_desc">确保您的设备满足以下最低配置要求</p>
 
             <div class="requirements-grid">
                 <div class="requirement-card">
-                    <div class="requirement-card-icon">🖥�?/div>
+                    <div class="requirement-card-icon">🖥️</div>
                     <h4>操作系统</h4>
                     <ul>
-                        <li>Windows 10 (64�? 或更高版�?/li>
-                        <li>Windows 11 (64�? 推荐</li>
+                        <li>Windows 10 (64位) 或更高版本</li>
+                        <li>Windows 11 (64位) 推荐</li>
                     </ul>
                 </div>
 
@@ -485,18 +485,18 @@
                     <h4>硬件配置</h4>
                     <ul>
                         <li>处理器：Intel Core i3 或同等性能</li>
-                        <li>内存�? GB RAM（推�?8 GB�?/li>
-                        <li>磁盘空间：至�?100 MB 可用空间</li>
+                        <li>内存：4 GB RAM（推荐 8 GB）</li>
+                        <li>磁盘空间：至少 100 MB 可用空间</li>
                     </ul>
                 </div>
 
                 <div class="requirement-card">
-                    <div class="requirement-card-icon">🖼�?/div>
+                    <div class="requirement-card-icon">🖼️</div>
                     <h4>显示要求</h4>
                     <ul>
-                        <li>屏幕分辨率：1280×720 或更�?/li>
+                        <li>屏幕分辨率：1280×720 或更高</li>
                         <li>支持多显示器配置</li>
-                        <li>支持�?DPI 缩放</li>
+                        <li>支持高 DPI 缩放</li>
                     </ul>
                 </div>
 
@@ -504,9 +504,9 @@
                     <div class="requirement-card-icon">🌐</div>
                     <h4>网络要求</h4>
                     <ul>
-                        <li>初次使用需联网激�?/li>
-                        <li>AI 功能需要网络连�?/li>
-                        <li>云同步功能需要网络连�?/li>
+                        <li>初次使用需联网激活</li>
+                        <li>AI 功能需要网络连接</li>
+                        <li>云同步功能需要网络连接</li>
                     </ul>
                 </div>
             </div>
@@ -517,17 +517,17 @@
     <section class="section">
         <div class="container">
             <h2 class="section-title" data-i18n="download.install_guide">📖 安装指南</h2>
-            <p class="section-subtitle" data-i18n="download.install_guide_desc">简�?4 步，快速开始使�?/p>
+            <p class="section-subtitle" data-i18n="download.install_guide_desc">简单 4 步，快速开始使用</p>
 
             <div class="install-steps">
                 <div class="install-step">
-                    <h4>下载安装�?/h4>
-                    <p>点击上方"�?GitHub 下载"按钮，前往 GitHub Releases 页面，下载最新版本的 GaiYa-v1.7.0.exe 安装�?/p>
+                    <h4>下载安装包</h4>
+                    <p>点击上方"从 GitHub 下载"按钮，前往 GitHub Releases 页面，下载最新版本的 GaiYa-v1.7.0.exe 安装包</p>
                 </div>
 
                 <div class="install-step">
                     <h4>运行安装程序</h4>
-                    <p>双击下载�?.exe 文件。如�?Windows SmartScreen 提示"无法识别的应�?，点�?更多信息" �?"仍要运行"</p>
+                    <p>双击下载的 .exe 文件。如果 Windows SmartScreen 提示"无法识别的应用"，点击"更多信息" → "仍要运行"</p>
                 </div>
 
                 <div class="install-step">
@@ -537,7 +537,7 @@
 
                 <div class="install-step">
                     <h4>首次运行</h4>
-                    <p>双击桌面快捷方式启动 GaiYa。首次运行会显示欢迎向导，按照提示完成初始配置即可开始使�?/p>
+                    <p>双击桌面快捷方式启动 GaiYa。首次运行会显示欢迎向导，按照提示完成初始配置即可开始使用</p>
                 </div>
             </div>
         </div>
@@ -552,76 +552,76 @@
                 <div class="faq-item">
                     <h4>为什么杀毒软件报毒？</h4>
                     <p>
-                        这是误报。GaiYa 使用 PyInstaller 打包，部分杀毒软件会将其标记�?未知应用"�?
-                        我们的软件完全开源，不包含任何恶意代码�?
+                        这是误报。GaiYa 使用 PyInstaller 打包，部分杀毒软件会将其标记为"未知应用"。
+                        我们的软件完全开源，不包含任何恶意代码。
                         <br><br>
-                        <strong>解决方法�?/strong>在杀毒软件中�?GaiYa 添加到白名单，或者暂时关闭杀毒软件进行安装�?
+                        <strong>解决方法：</strong>在杀毒软件中将 GaiYa 添加到白名单，或者暂时关闭杀毒软件进行安装。
                     </p>
                 </div>
 
                 <div class="faq-item">
                     <h4>Windows SmartScreen 阻止运行怎么办？</h4>
                     <p>
-                        这是因为软件没有购买微软的代码签名证书（费用较高）�?
+                        这是因为软件没有购买微软的代码签名证书（费用较高）。
                         <br><br>
-                        <strong>解决方法�?/strong>点击"更多信息" �?"仍要运行"即可正常安装�?
+                        <strong>解决方法：</strong>点击"更多信息" → "仍要运行"即可正常安装。
                     </p>
                 </div>
 
                 <div class="faq-item">
-                    <h4>支持 Mac �?Linux 吗？</h4>
+                    <h4>支持 Mac 或 Linux 吗？</h4>
                     <p>
-                        目前 GaiYa 仅支�?Windows 平台�?
+                        目前 GaiYa 仅支持 Windows 平台。
                         <br><br>
-                        我们正在评估跨平台版本的可行性，敬请期待未来的更新�?
+                        我们正在评估跨平台版本的可行性，敬请期待未来的更新。
                     </p>
                 </div>
 
                 <div class="faq-item">
                     <h4>安装后无法启动怎么办？</h4>
                     <p>
-                        可能的原因和解决方法�?
+                        可能的原因和解决方法：
                         <br><br>
-                        <strong>1. 系统版本过低�?/strong>请确保您使用的是 Windows 10 (64�? 或更高版�?
+                        <strong>1. 系统版本过低：</strong>请确保您使用的是 Windows 10 (64位) 或更高版本
                         <br>
-                        <strong>2. 缺少运行库：</strong>请安�?Microsoft Visual C++ Redistributable
+                        <strong>2. 缺少运行库：</strong>请安装 Microsoft Visual C++ Redistributable
                         <br>
-                        <strong>3. 权限问题�?/strong>右键点击快捷方式 �?"以管理员身份运行"
+                        <strong>3. 权限问题：</strong>右键点击快捷方式 → "以管理员身份运行"
                         <br>
-                        <strong>4. 杀毒软件拦截：</strong>检查杀毒软件日志，�?GaiYa 添加到白名单
+                        <strong>4. 杀毒软件拦截：</strong>检查杀毒软件日志，将 GaiYa 添加到白名单
                     </p>
                 </div>
 
                 <div class="faq-item">
                     <h4>GitHub 下载速度慢怎么办？</h4>
                     <p>
-                        如果 GitHub 下载速度较慢，您可以�?
+                        如果 GitHub 下载速度较慢，您可以：
                         <br><br>
-                        <strong>1. 使用加速服务：</strong>尝试使用 GitHub 镜像站点或加速工�?
+                        <strong>1. 使用加速服务：</strong>尝试使用 GitHub 镜像站点或加速工具
                         <br>
-                        <strong>2. 换个时间下载�?/strong>避开网络高峰期，选择凌晨或清晨下�?
+                        <strong>2. 换个时间下载：</strong>避开网络高峰期，选择凌晨或清晨下载
                         <br>
-                        <strong>3. 联系我们�?/strong>如果持续无法下载，可以通过 GitHub Issues 联系开发团队获取备用下载方�?
+                        <strong>3. 联系我们：</strong>如果持续无法下载，可以通过 GitHub Issues 联系开发团队获取备用下载方式
                     </p>
                 </div>
 
                 <div class="faq-item">
                     <h4>如何更新到最新版本？</h4>
                     <p>
-                        GaiYa 会自动检测新版本并提示更新�?
+                        GaiYa 会自动检测新版本并提示更新。
                         <br><br>
-                        您也可以手动下载最新版本，直接覆盖安装即可，所有配置和数据会自动保留�?
+                        您也可以手动下载最新版本，直接覆盖安装即可，所有配置和数据会自动保留。
                     </p>
                 </div>
 
                 <div class="faq-item">
-                    <h4>如何卸载 GaiYa�?/h4>
+                    <h4>如何卸载 GaiYa？</h4>
                     <p>
-                        <strong>方法一�?/strong>打开 Windows 设置 �?应用 �?应用和功�?�?找到 GaiYa �?卸载
+                        <strong>方法一：</strong>打开 Windows 设置 → 应用 → 应用和功能 → 找到 GaiYa → 卸载
                         <br>
                         <strong>方法二：</strong>运行安装目录下的 uninstall.exe
                         <br><br>
-                        卸载后，用户配置文件会保留在 %APPDATA%\GaiYa 目录，如需彻底删除请手动删除该文件夹�?
+                        卸载后，用户配置文件会保留在 %APPDATA%\GaiYa 目录，如需彻底删除请手动删除该文件夹。
                     </p>
                 </div>
             </div>
@@ -632,13 +632,13 @@
     <section class="section">
         <div class="container text-center">
             <h2 class="section-title">🚀 准备好开始了吗？</h2>
-            <p class="section-subtitle">下载 GaiYa，让时间管理变得简单高�?/p>
+            <p class="section-subtitle">下载 GaiYa，让时间管理变得简单高效</p>
             <div class="hero-actions">
                 <a href="https://github.com/jiamizhongshifu/jindutiao/releases/latest" target="_blank" class="btn btn-primary btn-large">📥 立即下载</a>
                 <a href="help.html" class="btn btn-secondary btn-large">📚 查看帮助文档</a>
             </div>
             <p style="margin-top: 24px; color: var(--text-secondary); font-size: 14px;">
-                �?完全免费 | 开�?MIT License | GitHub 5000+ Stars
+                ⭐ 完全免费 | 开源 MIT License | GitHub 5000+ Stars
             </p>
         </div>
     </section>
@@ -650,7 +650,7 @@
                 <div class="footer-column">
                     <h4>产品</h4>
                     <ul>
-                        <li><a href="index.html#features">功能特�?/a></li>
+                        <li><a href="index.html#features">功能特性</a></li>
                         <li><a href="pricing.html">会员定价</a></li>
                         <li><a href="download.html">下载中心</a></li>
                         <li><a href="https://github.com/jiamizhongshifu/jindutiao/releases">更新日志</a></li>
@@ -670,7 +670,7 @@
                     <ul>
                         <li><a href="about.html">关于我们</a></li>
                         <li><a href="about.html#story">团队介绍</a></li>
-                        <li><a href="https://github.com/jiamizhongshifu/jindutiao">开源项�?/a></li>
+                        <li><a href="https://github.com/jiamizhongshifu/jindutiao">开源项目</a></li>
                         <li><a href="about.html#contact">联系我们</a></li>
                     </ul>
                 </div>
@@ -679,7 +679,7 @@
                     <ul>
                         <li><a href="#">用户协议</a></li>
                         <li><a href="#">隐私政策</a></li>
-                        <li><a href="#">退款政�?/a></li>
+                        <li><a href="#">退款政策</a></li>
                         <li><a href="#">Cookie政策</a></li>
                     </ul>
                 </div>
