@@ -879,7 +879,7 @@
                         throw new Error(data.error || 'Stripe支付创建失败');
                     }
                 } else {
-                    // Alipay or WeChat
+                    // Alipay or WeChat - 使用跳转模式
                     const payType = paymentMethod === 'alipay' ? 'alipay' : 'wxpay';
                     const response = await fetch(`${API_URL}/api/payment-create-order.py`, {
                         method: 'POST',
@@ -889,7 +889,8 @@
                         body: JSON.stringify({
                             user_id: userId,
                             plan_type: planType,
-                            pay_type: payType
+                            pay_type: payType,
+                            mode: 'redirect'  // 官网使用跳转模式
                         })
                     });
 

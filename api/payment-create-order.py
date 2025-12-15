@@ -110,7 +110,15 @@ class handler(BaseHTTPRequestHandler):
                 self._send_error(400, "Invalid pay_type", rate_info)
                 return
 
-            print(f"[PAYMENT-CREATE] User {user_id} requesting {plan_type} (¥{correct_price}) via {pay_type}", file=sys.stderr)
+            # ✅ 新增：支付模式参数
+            # mode=qrcode (默认): 返回二维码URL，用于桌面端扫码支付
+            # mode=redirect: 返回表单参数，用于官网跳转支付
+            mode = data.get("mode", "qrcode")
+            if mode not in ["qrcode", "redirect"]:
+                self._send_error(400, "Invalid mode, must be 'qrcode' or 'redirect'", rate_info)
+                return
+
+            print(f"[PAYMENT-CREATE] User {user_id} requesting {plan_type} (¥{correct_price}) via {pay_type}, mode={mode}", file=sys.stderr)
 
             # 3. 获取计划信息（现在价格已经从validators获取，确保一致）
             zpay = ZPayManager()
@@ -133,47 +141,81 @@ class handler(BaseHTTPRequestHandler):
             return_url = f"gaiya://payment-success?out_trade_no={out_trade_no}"
 
             # 6. 创建支付订单
-            # ✅ 关键修复: 回退到submit.php方式
-            # 原因: mapi.php返回的payurl是二维码扫码URL(https://qr.alipay.com/...),
-            #       不适合桌面浏览器支付,会导致重定向到支付宝错误页面
-            # submit.php返回网页支付URL,适合浏览器打开
-            # 支付完成通过Z-Pay回调通知(payment-notify.py)更新会员状态,无需轮询查询
-            print(f"[PAYMENT-CREATE] Creating order via mapi.php for user {user_id}", file=sys.stderr)
-
             # 获取客户端IP
             client_ip = self.headers.get('x-forwarded-for', '').split(',')[0].strip() or \
                        self.headers.get('x-real-ip', '127.0.0.1')
 
-            result = zpay.create_api_order(
-                out_trade_no=out_trade_no,
-                name=plan_info["name"],
-                money=plan_info["price"],
-                pay_type=pay_type,
-                notify_url=notify_url,
-                clientip=client_ip,
-                param=f"{user_id}|{plan_type}"
-            )
+            if mode == "redirect":
+                # ===== 官网跳转模式 (submit.php) =====
+                # 适合浏览器端，用户点击后跳转到支付宝/微信收银台
+                print(f"[PAYMENT-CREATE] Creating order via submit.php (redirect mode) for user {user_id}", file=sys.stderr)
 
-            if result["success"]:
-                # 7. 返回支付信息（包含二维码URL）
-                # ✅ 修复: 使用img字段(二维码图片URL),而不是payurl(支付链接)
-                qrcode_url = result.get("img") or result.get("qrcode") or result.get("payurl", "")
-                trade_no = result.get("trade_no", "")
+                # 构建同步回调URL (支付完成后用户浏览器跳转)
+                web_base_url = os.getenv("WEB_FRONTEND_URL", "https://www.gaiyatime.com")
+                return_url = f"{web_base_url}/payment-success.html?out_trade_no={out_trade_no}"
 
-                self._send_success({
-                    "success": True,
-                    "qrcode_url": qrcode_url,  # 二维码图片URL供客户端显示
-                    "trade_no": trade_no,
-                    "out_trade_no": out_trade_no,
-                    "amount": plan_info["price"],
-                    "plan_name": plan_info["name"]
-                }, rate_info)
+                result = zpay.create_order(
+                    out_trade_no=out_trade_no,
+                    name=plan_info["name"],
+                    money=plan_info["price"],
+                    pay_type=pay_type,
+                    notify_url=notify_url,
+                    return_url=return_url,
+                    param=f"{user_id}|{plan_type}"
+                )
 
-                print(f"[PAYMENT-CREATE] ✓ Order created via mapi.php: {out_trade_no}, trade_no: {trade_no}", file=sys.stderr)
-                print(f"[PAYMENT-CREATE] ℹ️ QR code URL: {qrcode_url}", file=sys.stderr)
+                if result["success"]:
+                    # 返回表单参数供前端提交
+                    self._send_success({
+                        "success": True,
+                        "payment_url": result.get("payment_url"),
+                        "params": result.get("params"),
+                        "out_trade_no": out_trade_no,
+                        "amount": plan_info["price"],
+                        "plan_name": plan_info["name"]
+                    }, rate_info)
+
+                    print(f"[PAYMENT-CREATE] ✓ Order created via submit.php: {out_trade_no}", file=sys.stderr)
+                    print(f"[PAYMENT-CREATE] ℹ️ Payment URL: {result.get('payment_url')}", file=sys.stderr)
+                else:
+                    print(f"[PAYMENT-CREATE] ✗ Order creation failed: {result.get('error')}", file=sys.stderr)
+                    self._send_error(500, result.get("error", "Failed to create order"), rate_info)
+
             else:
-                print(f"[PAYMENT-CREATE] ✗ Order creation failed: {result.get('error')}", file=sys.stderr)
-                self._send_error(500, result.get("error", "Failed to create order"), rate_info)
+                # ===== 桌面端二维码模式 (mapi.php) =====
+                # 适合桌面应用，返回二维码URL供用户扫码支付
+                print(f"[PAYMENT-CREATE] Creating order via mapi.php (qrcode mode) for user {user_id}", file=sys.stderr)
+
+                result = zpay.create_api_order(
+                    out_trade_no=out_trade_no,
+                    name=plan_info["name"],
+                    money=plan_info["price"],
+                    pay_type=pay_type,
+                    notify_url=notify_url,
+                    clientip=client_ip,
+                    param=f"{user_id}|{plan_type}"
+                )
+
+                if result["success"]:
+                    # 返回二维码URL
+                    # ✅ 修复: 使用img字段(二维码图片URL),而不是payurl(支付链接)
+                    qrcode_url = result.get("img") or result.get("qrcode") or result.get("payurl", "")
+                    trade_no = result.get("trade_no", "")
+
+                    self._send_success({
+                        "success": True,
+                        "qrcode_url": qrcode_url,  # 二维码图片URL供客户端显示
+                        "trade_no": trade_no,
+                        "out_trade_no": out_trade_no,
+                        "amount": plan_info["price"],
+                        "plan_name": plan_info["name"]
+                    }, rate_info)
+
+                    print(f"[PAYMENT-CREATE] ✓ Order created via mapi.php: {out_trade_no}, trade_no: {trade_no}", file=sys.stderr)
+                    print(f"[PAYMENT-CREATE] ℹ️ QR code URL: {qrcode_url}", file=sys.stderr)
+                else:
+                    print(f"[PAYMENT-CREATE] ✗ Order creation failed: {result.get('error')}", file=sys.stderr)
+                    self._send_error(500, result.get("error", "Failed to create order"), rate_info)
 
         except json.JSONDecodeError:
             self._send_error(400, "Invalid JSON")
