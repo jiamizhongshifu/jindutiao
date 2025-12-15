@@ -3674,7 +3674,7 @@ class ConfigManager(QMainWindow):
 
         # 启用弹幕行为识别
         self.behavior_danmaku_enabled = QCheckBox("启用行为感知弹幕")
-        self.behavior_danmaku_enabled.setChecked(behavior_config.get('enabled', False))
+        self.behavior_danmaku_enabled.setChecked(behavior_config.get('enabled', True))
         self.behavior_danmaku_enabled.setMinimumHeight(36)
         behavior_layout.addRow("弹幕识别:", self.behavior_danmaku_enabled)
 
@@ -8623,7 +8623,7 @@ class ConfigManager(QMainWindow):
                     "data_retention_days": self.activity_retention_days.value() if hasattr(self, 'activity_retention_days') else self.config.get('activity_tracking', {}).get('data_retention_days', 90)
                 },
                 "behavior_recognition": {
-                    "enabled": self.behavior_danmaku_enabled.isChecked() if hasattr(self, 'behavior_danmaku_enabled') else self.config.get('behavior_recognition', {}).get('enabled', False),
+                    "enabled": self.behavior_danmaku_enabled.isChecked() if hasattr(self, 'behavior_danmaku_enabled') else self.config.get('behavior_recognition', {}).get('enabled', True),
                     "collection_interval": self.behavior_collection_interval.value() if hasattr(self, 'behavior_collection_interval') else self.config.get('behavior_recognition', {}).get('collection_interval', 5),
                     "trigger_probability": self.behavior_trigger_probability.value() if hasattr(self, 'behavior_trigger_probability') else self.config.get('behavior_recognition', {}).get('trigger_probability', 0.4),
                     "global_cooldown": self.behavior_global_cooldown.value() if hasattr(self, 'behavior_global_cooldown') else self.config.get('behavior_recognition', {}).get('global_cooldown', 30),

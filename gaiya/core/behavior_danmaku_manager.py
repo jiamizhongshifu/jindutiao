@@ -51,7 +51,7 @@ class BehaviorDanmakuManager:
 
         # 行为识别配置
         behavior_config = config.get("behavior_recognition", {})
-        self.enabled = behavior_config.get("enabled", False)
+        self.enabled = behavior_config.get("enabled", True)
         self.collection_interval = behavior_config.get("collection_interval", 5)
         self.trigger_probability = behavior_config.get("trigger_probability", 0.4)
 
@@ -275,7 +275,7 @@ class BehaviorDanmakuManager:
 
         behavior_config = config.get("behavior_recognition", {})
         old_enabled = self.enabled
-        self.enabled = behavior_config.get("enabled", False)
+        self.enabled = behavior_config.get("enabled", True)
 
         # 更新配置
         self.collection_interval = behavior_config.get("collection_interval", 5)

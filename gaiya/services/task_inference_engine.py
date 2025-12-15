@@ -462,6 +462,15 @@ class InferenceEngine:
         # 计算完成度和置信度
         completion, confidence, inference_data = self.calculate_completion_percentage(signals)
 
+        # 降级推理：当没有任何信号时，基于时间流逝估算
+        if completion == 0 and confidence == 'unknown':
+            completion, confidence = self._fallback_estimation(
+                date, planned_start, planned_end
+            )
+            inference_data['fallback'] = True
+            inference_data['fallback_reason'] = 'no_signal'
+            logger.info(f"使用降级推理: {task_name} -> {completion}% (fallback)")
+
         # 估算实际开始/结束时间
         actual_start = planned_start  # 简化处理,使用计划时间
         actual_end = planned_end
@@ -486,3 +495,52 @@ class InferenceEngine:
             'actual_duration': actual_duration,
             'inference_data': json.dumps(inference_data, ensure_ascii=False)
         }
+
+    def _fallback_estimation(self, date: str, planned_start: str,
+                            planned_end: str) -> Tuple[int, str]:
+        """
+        降级推理：当没有任何信号时，基于时间流逝估算完成度
+
+        逻辑：
+        - 计划时间已完全过去 → 70%（假设大概率完成）
+        - 计划时间部分过去 → 按比例计算（最高70%）
+        - 计划时间未开始 → 0%
+
+        Args:
+            date: 日期 (YYYY-MM-DD)
+            planned_start: 计划开始时间 (HH:MM)
+            planned_end: 计划结束时间 (HH:MM)
+
+        Returns:
+            (completion_percentage, confidence_level)
+        """
+        now = datetime.now()
+
+        # 解析计划时间
+        try:
+            start_dt = datetime.strptime(f"{date} {planned_start}", "%Y-%m-%d %H:%M")
+            end_dt = datetime.strptime(f"{date} {planned_end}", "%Y-%m-%d %H:%M")
+        except ValueError as e:
+            logger.warning(f"解析时间失败: {e}")
+            return 0, 'fallback'
+
+        # 处理跨午夜的情况
+        if end_dt <= start_dt:
+            end_dt = end_dt + timedelta(days=1)
+
+        planned_duration = (end_dt - start_dt).total_seconds()
+
+        if planned_duration <= 0:
+            return 0, 'fallback'
+
+        if now >= end_dt:
+            # 计划时间已完全过去，推断大概率完成
+            return 70, 'fallback'
+        elif now <= start_dt:
+            # 计划时间未开始
+            return 0, 'fallback'
+        else:
+            # 计划时间进行中，按比例计算
+            elapsed = (now - start_dt).total_seconds()
+            ratio = elapsed / planned_duration
+            return int(ratio * 70), 'fallback'  # 最高70%，留空间给用户调整

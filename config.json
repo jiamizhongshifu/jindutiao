@@ -54,12 +54,15 @@
         "color_mode": "auto"
     },
     "behavior_recognition": {
-        "enabled": false,
+        "enabled": true,
         "collection_interval": 5,
         "trigger_probability": 0.4,
         "global_cooldown": 30,
         "category_cooldown": 60,
         "tone_cooldown": 120
+    },
+    "task_completion_scheduler": {
+        "auto_confirm_threshold": 100
     },
     "marker_preset_id": "gaiya",
     "marker_presets_params": {

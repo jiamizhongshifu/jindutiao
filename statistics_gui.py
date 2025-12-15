@@ -566,6 +566,372 @@ class StatisticsWindow(QWidget):
 
         return shortcut_card
 
+    def create_today_overview_card(self) -> QWidget:
+        """创建今日概览卡片"""
+        card = QGroupBox("📊 今日概览")
+        card.setStyleSheet(f"""
+            QGroupBox {{
+                background-color: {LightTheme.BG_SECONDARY};
+                border: 1px solid {LightTheme.BORDER_LIGHT};
+                border-radius: {LightTheme.RADIUS_LARGE}px;
+                font-weight: bold;
+                font-size: 14px;
+                padding-top: 20px;
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                subcontrol-position: top left;
+                padding: 0 8px;
+                color: {LightTheme.TEXT_PRIMARY};
+            }}
+        """)
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(16, 24, 16, 16)
+        layout.setSpacing(12)
+
+        # 统计数据行
+        stats_layout = QHBoxLayout()
+        stats_layout.setSpacing(20)
+
+        # 获取推理任务数据
+        tasks = self._get_inferred_tasks()
+        total_minutes = sum(t.get('duration_minutes', 0) for t in tasks)
+        hours = total_minutes // 60
+        mins = total_minutes % 60
+        time_str = f"{hours}小时{mins}分" if hours > 0 else f"{mins}分钟"
+
+        # 总工作时长
+        time_widget = self._create_stat_item("⏱️", "总工作时长", time_str)
+        stats_layout.addWidget(time_widget)
+
+        # 完成任务数
+        task_count = len(tasks)
+        count_widget = self._create_stat_item("📋", "完成任务", f"{task_count}个")
+        stats_layout.addWidget(count_widget)
+
+        # 最活跃时段
+        active_period = self._get_most_active_period(tasks)
+        period_widget = self._create_stat_item("🔥", "最活跃时段", active_period)
+        stats_layout.addWidget(period_widget)
+
+        stats_layout.addStretch()
+        layout.addLayout(stats_layout)
+
+        # 快捷操作按钮
+        buttons_layout = QHBoxLayout()
+        buttons_layout.setContentsMargins(0, 8, 0, 0)
+
+        timeline_btn = QPushButton("⏱️ 时间轴回放")
+        timeline_btn.setStyleSheet(StyleManager.button_minimal())
+        timeline_btn.setFixedHeight(32)
+        timeline_btn.clicked.connect(self.open_time_review_window)
+        buttons_layout.addWidget(timeline_btn)
+
+        apps_btn = QPushButton("📊 应用统计")
+        apps_btn.setStyleSheet(StyleManager.button_minimal())
+        apps_btn.setFixedHeight(32)
+        apps_btn.clicked.connect(lambda: self.tab_widget.setCurrentIndex(3))
+        buttons_layout.addWidget(apps_btn)
+
+        buttons_layout.addStretch()
+        layout.addLayout(buttons_layout)
+
+        return card
+
+    def _create_stat_item(self, icon: str, label: str, value: str) -> QWidget:
+        """创建统计数据项"""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(4)
+
+        # 图标和标签
+        header = QLabel(f"{icon} {label}")
+        header.setStyleSheet(f"color: {LightTheme.TEXT_SECONDARY}; font-size: {LightTheme.FONT_SMALL}px;")
+        layout.addWidget(header)
+
+        # 数值
+        value_label = QLabel(value)
+        value_label.setStyleSheet(f"color: {LightTheme.TEXT_PRIMARY}; font-size: 18px; font-weight: bold;")
+        layout.addWidget(value_label)
+
+        return widget
+
+    def create_task_timeline_card(self) -> QWidget:
+        """创建任务时间线卡片"""
+        card = QGroupBox("📋 今日任务时间线")
+        card.setStyleSheet(f"""
+            QGroupBox {{
+                background-color: {LightTheme.BG_SECONDARY};
+                border: 1px solid {LightTheme.BORDER_LIGHT};
+                border-radius: {LightTheme.RADIUS_LARGE}px;
+                font-weight: bold;
+                font-size: 14px;
+                padding-top: 20px;
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                subcontrol-position: top left;
+                padding: 0 8px;
+                color: {LightTheme.TEXT_PRIMARY};
+            }}
+        """)
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(16, 24, 16, 16)
+        layout.setSpacing(8)
+
+        # 任务时间线列表容器
+        self.timeline_task_list_widget = QWidget()
+        self.timeline_task_list_layout = QVBoxLayout(self.timeline_task_list_widget)
+        self.timeline_task_list_layout.setContentsMargins(0, 0, 0, 0)
+        self.timeline_task_list_layout.setSpacing(8)
+
+        # 初始加载任务
+        tasks = self._get_inferred_tasks()
+        if tasks:
+            # 按开始时间排序
+            sorted_tasks = sorted(tasks, key=lambda t: t.get('start_time', '00:00'))
+            for task in sorted_tasks:
+                task_widget = self._create_timeline_task_item(task)
+                self.timeline_task_list_layout.addWidget(task_widget)
+        else:
+            empty_label = QLabel("暂无任务记录")
+            empty_label.setStyleSheet(f"color: {LightTheme.TEXT_HINT}; font-size: {LightTheme.FONT_BODY}px; padding: 20px;")
+            empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.timeline_task_list_layout.addWidget(empty_label)
+
+        layout.addWidget(self.timeline_task_list_widget)
+
+        return card
+
+    def _create_timeline_task_item(self, task: dict) -> QWidget:
+        """创建时间线任务项"""
+        widget = QWidget()
+        widget.setStyleSheet(f"""
+            QWidget {{
+                background-color: {LightTheme.BG_TERTIARY};
+                border-radius: {LightTheme.RADIUS_MEDIUM}px;
+                padding: 8px;
+            }}
+        """)
+        layout = QHBoxLayout(widget)
+        layout.setContentsMargins(12, 8, 12, 8)
+        layout.setSpacing(16)
+
+        # 时间列
+        start_time = task.get('start_time', '--:--')
+        end_time = task.get('end_time', '--:--')
+        time_label = QLabel(f"{start_time}-{end_time}")
+        time_label.setStyleSheet(f"color: {LightTheme.ACCENT_BLUE}; font-size: {LightTheme.FONT_BODY}px; font-weight: bold; min-width: 90px;")
+        layout.addWidget(time_label)
+
+        # 任务名称
+        task_name = task.get('name', '未知任务')
+        name_label = QLabel(task_name)
+        name_label.setStyleSheet(f"color: {LightTheme.TEXT_PRIMARY}; font-size: {LightTheme.FONT_BODY}px;")
+        layout.addWidget(name_label, 1)
+
+        # 时长
+        duration = task.get('duration_minutes', 0)
+        if duration >= 60:
+            duration_str = f"{duration // 60}h{duration % 60}m"
+        else:
+            duration_str = f"{duration}min"
+        duration_label = QLabel(duration_str)
+        duration_label.setStyleSheet(f"color: {LightTheme.TEXT_SECONDARY}; font-size: {LightTheme.FONT_SMALL}px;")
+        layout.addWidget(duration_label)
+
+        # 应用列表
+        apps = task.get('apps', [])
+        if apps:
+            apps_text = ", ".join(apps[:2])
+            if len(apps) > 2:
+                apps_text += f" +{len(apps) - 2}"
+            apps_label = QLabel(f"💻 {apps_text}")
+            apps_label.setStyleSheet(f"color: {LightTheme.TEXT_HINT}; font-size: {LightTheme.FONT_SMALL}px;")
+            layout.addWidget(apps_label)
+
+        return widget
+
+    def create_daily_summary_card(self) -> QWidget:
+        """创建今日总结分析卡片"""
+        card = QGroupBox("📝 今日总结")
+        card.setStyleSheet(f"""
+            QGroupBox {{
+                background-color: {LightTheme.BG_SECONDARY};
+                border: 1px solid {LightTheme.BORDER_LIGHT};
+                border-radius: {LightTheme.RADIUS_LARGE}px;
+                font-weight: bold;
+                font-size: 14px;
+                padding-top: 20px;
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                subcontrol-position: top left;
+                padding: 0 8px;
+                color: {LightTheme.TEXT_PRIMARY};
+            }}
+        """)
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(16, 24, 16, 16)
+        layout.setSpacing(16)
+
+        tasks = self._get_inferred_tasks()
+
+        # 主要工作 (Top 3)
+        main_work_label = QLabel("🏆 主要工作")
+        main_work_label.setStyleSheet(f"color: {LightTheme.TEXT_PRIMARY}; font-size: {LightTheme.FONT_BODY}px; font-weight: bold;")
+        layout.addWidget(main_work_label)
+
+        top_tasks = self._get_top_tasks_by_duration(tasks, 3)
+        if top_tasks:
+            for i, task in enumerate(top_tasks, 1):
+                name = task.get('name', '未知任务')
+                duration = task.get('duration_minutes', 0)
+                if duration >= 60:
+                    duration_str = f"{duration // 60}小时{duration % 60}分"
+                else:
+                    duration_str = f"{duration}分钟"
+                item_label = QLabel(f"  {i}. {name} - {duration_str}")
+                item_label.setStyleSheet(f"color: {LightTheme.TEXT_SECONDARY}; font-size: {LightTheme.FONT_BODY}px;")
+                layout.addWidget(item_label)
+        else:
+            empty_label = QLabel("  暂无数据")
+            empty_label.setStyleSheet(f"color: {LightTheme.TEXT_HINT}; font-size: {LightTheme.FONT_BODY}px;")
+            layout.addWidget(empty_label)
+
+        # 应用使用分布
+        app_usage_label = QLabel("💻 应用使用")
+        app_usage_label.setStyleSheet(f"color: {LightTheme.TEXT_PRIMARY}; font-size: {LightTheme.FONT_BODY}px; font-weight: bold; margin-top: 8px;")
+        layout.addWidget(app_usage_label)
+
+        app_summary = self._get_app_usage_summary(tasks)
+        if app_summary:
+            usage_text = " | ".join([f"{app} {pct}%" for app, pct in app_summary[:4]])
+            usage_label = QLabel(f"  {usage_text}")
+            usage_label.setStyleSheet(f"color: {LightTheme.TEXT_SECONDARY}; font-size: {LightTheme.FONT_BODY}px;")
+            layout.addWidget(usage_label)
+        else:
+            empty_label = QLabel("  暂无数据")
+            empty_label.setStyleSheet(f"color: {LightTheme.TEXT_HINT}; font-size: {LightTheme.FONT_BODY}px;")
+            layout.addWidget(empty_label)
+
+        # 专注度评估
+        focus_label = QLabel("🎯 专注度评估")
+        focus_label.setStyleSheet(f"color: {LightTheme.TEXT_PRIMARY}; font-size: {LightTheme.FONT_BODY}px; font-weight: bold; margin-top: 8px;")
+        layout.addWidget(focus_label)
+
+        focus_score, focus_text, switch_count, avg_duration = self._calculate_focus_metrics(tasks)
+        stars = "⭐" * focus_score + "☆" * (5 - focus_score)
+        focus_detail = QLabel(f"  {stars} ({focus_text})")
+        focus_detail.setStyleSheet(f"color: {LightTheme.TEXT_SECONDARY}; font-size: {LightTheme.FONT_BODY}px;")
+        layout.addWidget(focus_detail)
+
+        if switch_count > 0:
+            focus_stats = QLabel(f"  任务切换{switch_count}次，平均专注时长{avg_duration}分钟")
+            focus_stats.setStyleSheet(f"color: {LightTheme.TEXT_HINT}; font-size: {LightTheme.FONT_SMALL}px;")
+            layout.addWidget(focus_stats)
+
+        return card
+
+    def _get_inferred_tasks(self) -> list:
+        """获取推理任务列表"""
+        if hasattr(self, 'auto_inference_engine') and self.auto_inference_engine:
+            return self.auto_inference_engine.inferred_tasks or []
+        return []
+
+    def _get_most_active_period(self, tasks: list) -> str:
+        """获取最活跃时段"""
+        if not tasks:
+            return "--"
+
+        # 按小时统计时长
+        hour_duration = {}
+        for task in tasks:
+            start_time = task.get('start_time', '00:00')
+            duration = task.get('duration_minutes', 0)
+            try:
+                hour = int(start_time.split(':')[0])
+                hour_duration[hour] = hour_duration.get(hour, 0) + duration
+            except (ValueError, IndexError):
+                continue
+
+        if not hour_duration:
+            return "--"
+
+        # 找到最活跃的小时
+        max_hour = max(hour_duration, key=hour_duration.get)
+        return f"{max_hour:02d}:00-{max_hour+1:02d}:00"
+
+    def _get_top_tasks_by_duration(self, tasks: list, limit: int) -> list:
+        """获取按时长排序的Top N任务"""
+        if not tasks:
+            return []
+        return sorted(tasks, key=lambda t: t.get('duration_minutes', 0), reverse=True)[:limit]
+
+    def _get_app_usage_summary(self, tasks: list) -> list:
+        """获取应用使用分布"""
+        if not tasks:
+            return []
+
+        # 统计每个应用的总时长
+        app_duration = {}
+        total_duration = 0
+        for task in tasks:
+            duration = task.get('duration_minutes', 0)
+            apps = task.get('apps', [])
+            # 将任务时长平均分配给使用的应用
+            if apps:
+                per_app_duration = duration / len(apps)
+                for app in apps:
+                    app_duration[app] = app_duration.get(app, 0) + per_app_duration
+                    total_duration += per_app_duration
+
+        if total_duration == 0:
+            return []
+
+        # 计算百分比并排序
+        result = []
+        for app, duration in sorted(app_duration.items(), key=lambda x: x[1], reverse=True):
+            pct = int(duration / total_duration * 100)
+            if pct > 0:
+                result.append((app, pct))
+
+        return result
+
+    def _calculate_focus_metrics(self, tasks: list) -> tuple:
+        """计算专注度指标"""
+        if not tasks:
+            return (3, "一般", 0, 0)
+
+        task_count = len(tasks)
+        total_minutes = sum(t.get('duration_minutes', 0) for t in tasks)
+
+        if total_minutes == 0:
+            return (3, "一般", 0, 0)
+
+        avg_duration = total_minutes // task_count if task_count > 0 else 0
+        switch_count = max(0, task_count - 1)
+
+        # 根据平均专注时长评分
+        if avg_duration >= 60:
+            score = 5
+            text = "非常专注"
+        elif avg_duration >= 45:
+            score = 4
+            text = "较专注"
+        elif avg_duration >= 30:
+            score = 3
+            text = "一般"
+        elif avg_duration >= 15:
+            score = 2
+            text = "较分散"
+        else:
+            score = 1
+            text = "需改进"
+
+        return (score, text, switch_count, avg_duration)
+
     def create_auto_inference_summary(self):
         """创建自动推理摘要卡片 (方案A: 全自动推理模式)"""
         summary_group = QGroupBox("🎯 今日工作任务 (AI自动识别)")
@@ -788,101 +1154,32 @@ class StatisticsWindow(QWidget):
         content_layout.setSpacing(15)  # 设置组件之间的间距
         content_layout.setContentsMargins(15, 15, 15, 15)  # 设置内容边距
 
-        # 添加顶部价值主张说明
-        value_card = QWidget()
-        value_card.setStyleSheet(f"""
-            QWidget {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #E3F2FD, stop:1 #BBDEFB);
-                border-radius: {LightTheme.RADIUS_LARGE}px;
-                padding: 16px;
-            }}
-        """)
-        value_layout = QVBoxLayout(value_card)
-        value_layout.setSpacing(8)
+        # 今日概览卡片
+        overview_card = self.create_today_overview_card()
+        content_layout.addWidget(overview_card)
 
-        # 标题
-        value_title = QLabel("🤖 智能工作日志 (自动生成)")
-        value_title.setStyleSheet(f"font-size: 16px; font-weight: bold; color: {LightTheme.TEXT_PRIMARY};")
-        value_layout.addWidget(value_title)
+        # 任务时间线
+        timeline_card = self.create_task_timeline_card()
+        content_layout.addWidget(timeline_card)
 
-        # 说明文字
-        value_desc = QLabel(
-            "GaiYa在后台默默记录您的工作,就像一个贴心的私人助理:\n"
-            "• 📱 追踪您使用的所有应用和网站\n"
-            "• 🧠 AI智能识别您在做什么工作\n"
-            "• 📊 自动生成工作时长和任务清单\n\n"
-            "完全自动,无需手动记录 | 隐私本地存储,不上传云端"
-        )
-        value_desc.setStyleSheet(f"color: {LightTheme.TEXT_SECONDARY}; font-size: {LightTheme.FONT_SMALL}px; line-height: 1.6;")
-        value_desc.setWordWrap(True)
-        value_layout.addWidget(value_desc)
+        # 今日总结分析
+        summary_card = self.create_daily_summary_card()
+        content_layout.addWidget(summary_card)
 
-        content_layout.addWidget(value_card)
+        # 导出按钮区域
+        export_layout = QHBoxLayout()
+        export_layout.addStretch()
 
-        # 行为摘要快捷跳转卡片 (移除重复模块,统一跳转到今日回放)
-        # shortcut_card = self.create_behavior_shortcut()
-        # content_layout.addWidget(shortcut_card)  # 已删除,冗余模块
-
-        # AI推理数据摘要区域 (方案A: 全自动推理模式)
-        auto_inference_summary = self.create_auto_inference_summary()
-        content_layout.addWidget(auto_inference_summary)
-
-        # 价值输出提示卡片
-        value_output_card = QWidget()
-        value_output_card.setStyleSheet(f"""
-            QWidget {{
-                background-color: {LightTheme.BG_TERTIARY};
-                border: 2px dashed {LightTheme.BORDER_LIGHT};
-                border-radius: {LightTheme.RADIUS_LARGE}px;
-                padding: 16px;
-            }}
-        """)
-        value_output_layout = QVBoxLayout(value_output_card)
-        value_output_layout.setSpacing(10)
-
-        # 标题
-        value_output_title = QLabel("🚀 这些数据能做什么?")
-        value_output_title.setStyleSheet(f"font-size: 15px; font-weight: bold; color: {LightTheme.TEXT_PRIMARY};")
-        value_output_layout.addWidget(value_output_title)
-
-        # 功能说明
-        value_output_desc = QLabel(
-            "✅ 导出工作日志 - 向客户/领导汇报工作\n"
-            "✅ 生成时间账单 - 自由职业者必备\n"
-            "✅ 分析工作效率 - 了解时间都花在哪了\n"
-            "✅ 回顾今日成就 - 看到自己的进步"
-        )
-        value_output_desc.setStyleSheet(f"color: {LightTheme.TEXT_SECONDARY}; font-size: {LightTheme.FONT_SMALL}px; line-height: 1.8;")
-        value_output_desc.setWordWrap(True)
-        value_output_layout.addWidget(value_output_desc)
-
-        # 操作按钮行
-        value_output_buttons = QHBoxLayout()
-
-        # 导出工作日志按钮
-        export_log_btn = QPushButton("📄 导出工作日志")
+        export_log_btn = QPushButton("📤 导出工作日志")
         export_log_btn.setStyleSheet(StyleManager.button_primary())
         export_log_btn.setFixedHeight(36)
         export_log_btn.clicked.connect(self.export_work_log)
         export_log_btn.setToolTip("将今日工作任务导出为Markdown格式")
-        value_output_buttons.addWidget(export_log_btn)
+        export_layout.addWidget(export_log_btn)
 
-        # 查看详细统计按钮
-        view_stats_btn = QPushButton("📊 查看详细统计")
-        view_stats_btn.setStyleSheet(StyleManager.button_minimal())
-        view_stats_btn.setFixedHeight(36)
-        view_stats_btn.clicked.connect(lambda: self.tab_widget.setCurrentIndex(1))  # 跳转到本周统计
-        view_stats_btn.setToolTip("查看本周和本月的完整统计分析")
-        value_output_buttons.addWidget(view_stats_btn)
+        export_layout.addStretch()
+        content_layout.addLayout(export_layout)
 
-        value_output_buttons.addStretch()
-
-        value_output_layout.addLayout(value_output_buttons)
-
-        content_layout.addWidget(value_output_card)
-
-        # 移除原来的操作按钮区域 (已经集成到价值输出卡片中)
         # 保留confirm_button和ai_analysis_button的引用,避免其他代码报错
         self.confirm_button = QPushButton()  # 占位按钮,不添加到界面
         self.ai_analysis_button = QPushButton()  # 占位按钮,不添加到界面
@@ -3210,17 +3507,13 @@ class StatisticsWindow(QWidget):
             self.auto_inference_engine = None
 
     def showEvent(self, event):
-        """窗口显示事件 - 延迟连接自动推理引擎和显示AI引导"""
+        """窗口显示事件 - 延迟连接自动推理引擎"""
         super().showEvent(event)
         # 首次显示时连接自动推理引擎
         if not self._engine_connected:
             self._connect_inference_engine()
 
-        # ✅ P1-1.6.20: 延迟显示AI引导对话框
-        # 使用QTimer确保在事件循环下一轮执行,避免窗口堆叠冲突
-        if not hasattr(self, '_guide_checked'):
-            self._guide_checked = True
-            QTimer.singleShot(300, self._show_ai_guide_if_needed)
+        # AI引导对话框已移除 - 用户无需手动确认，系统自动处理
 
     def closeEvent(self, event):
         """窗口关闭事件 - 清理资源"""

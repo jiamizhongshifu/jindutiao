@@ -92,17 +92,20 @@ class ActivityTracker(QThread):
     """
     session_ended = Signal(str, str, int) # process_name, title, duration
     
-    def __init__(self, parent=None, polling_interval=5, min_session_duration=5):
+    def __init__(self, parent=None, polling_interval=5, min_session_duration=5,
+                 flush_interval=30):
         super().__init__(parent)
         self.is_running = False
         self.polling_interval = max(1, int(polling_interval))  # seconds
         self.min_session_duration = max(1, int(min_session_duration))  # seconds
-        
+        self.flush_interval = max(10, int(flush_interval))  # seconds, minimum 10s
+
         # Current tracking state
         self.current_process = None
         self.current_title = None
         self.current_start_time = None
-        
+        self.last_flush_time = None  # For periodic checkpoint
+
         # Thread safety
         self.mutex = QMutex()
         self.condition = QWaitCondition()
@@ -135,7 +138,7 @@ class ActivityTracker(QThread):
     def _check_activity(self):
         """Polls current window and handles session logic."""
         process_name, window_title = get_active_window_info()
-        
+
         if not process_name:
             return
 
@@ -146,41 +149,46 @@ class ActivityTracker(QThread):
             self.current_process = process_name
             self.current_title = window_title
             self.current_start_time = now
+            self.last_flush_time = now  # Initialize flush time
             return
 
         # Check if context changed (different app or different window title)
-        # Note: We treat different window titles of same app as same session 
-        # ONLY IF the app is usually a single-task thing? 
+        # Note: We treat different window titles of same app as same session
+        # ONLY IF the app is usually a single-task thing?
         # For MVP, let's strictly separate if process name OR title changes significantly.
         # Actually, for "Activity Classification", usually Process Name is enough.
         # But the PRD says: "continuous samples if process_name AND window_title same".
-        
+
         # Let's relax title matching slightly: ignore empty titles or minor changes?
         # For now, strict adherence to PRD: same process AND same title.
-        
+
         has_changed = (process_name != self.current_process) or (window_title != self.current_title)
-        
+
         if has_changed:
             # 1. End current session
             self._flush_current_session()
-            
+
             # 2. Start new session
             self.current_process = process_name
             self.current_title = window_title
             self.current_start_time = now
+            self.last_flush_time = now  # Reset flush time
+        else:
+            # No change - check if periodic checkpoint is needed
+            self._check_periodic_flush(now)
 
     def _flush_current_session(self):
         """Saves the current session to DB."""
         if not self.current_process or not self.current_start_time:
             return
-            
+
         end_time = datetime.now()
         duration_seconds = int((end_time - self.current_start_time).total_seconds())
-        
+
         # Ignore very short sessions (noise)
         if duration_seconds < self.min_session_duration:
             return
-            
+
         try:
             # Save to DB
             db.save_activity_session(
@@ -190,12 +198,58 @@ class ActivityTracker(QThread):
                 end_time,
                 duration_seconds
             )
-            
+
             # Emit signal (optional, for UI updates)
             self.session_ended.emit(self.current_process, self.current_title, duration_seconds)
-            
+
         except Exception as e:
             logger.error(f"Failed to save activity session: {e}")
+
+    def _check_periodic_flush(self, now: datetime):
+        """Check if periodic checkpoint is needed (for long sessions without app switch)."""
+        if self.last_flush_time is None:
+            self.last_flush_time = now
+            return
+
+        elapsed = (now - self.last_flush_time).total_seconds()
+
+        if elapsed >= self.flush_interval:
+            self._checkpoint_session(now)
+
+    def _checkpoint_session(self, now: datetime):
+        """
+        Save current session progress without ending it.
+        This creates a checkpoint record and resets the start time.
+        """
+        if not self.current_process or not self.current_start_time:
+            return
+
+        duration_seconds = int((now - self.current_start_time).total_seconds())
+
+        # Only save if duration meets minimum threshold
+        if duration_seconds < self.min_session_duration:
+            return
+
+        try:
+            # Save checkpoint to DB
+            db.save_activity_session(
+                self.current_process,
+                self.current_title,
+                self.current_start_time,
+                now,
+                duration_seconds
+            )
+
+            logger.debug(
+                f"Checkpoint: {self.current_process} ({duration_seconds}s)"
+            )
+
+            # Reset timestamps to start new checkpoint period
+            self.current_start_time = now
+            self.last_flush_time = now
+
+        except Exception as e:
+            logger.error(f"Checkpoint failed: {e}")
 
 # Test execution
 if __name__ == "__main__":

@@ -356,8 +356,28 @@ class TaskReviewWindow(QDialog):
 
         button_layout.addStretch()
 
+        # 接受AI推理按钮 - 一键确认所有
+        accept_ai_btn = QPushButton("✓ 接受AI推理")
+        accept_ai_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #2196F3;
+                color: white;
+                border: none;
+                padding: 8px 24px;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #1976D2;
+            }
+        """)
+        accept_ai_btn.setToolTip("接受所有AI推理结果并确认")
+        accept_ai_btn.clicked.connect(self.accept_ai_and_confirm)
+        button_layout.addWidget(accept_ai_btn)
+
         # 全部确认按钮
-        confirm_all_btn = QPushButton("全部确认")
+        confirm_all_btn = QPushButton("保存修改")
         confirm_all_btn.setStyleSheet("""
             QPushButton {
                 background-color: #4CAF50;
@@ -424,6 +444,23 @@ class TaskReviewWindow(QDialog):
 
         # 更新统计信息
         self.stats_label.setText(self._get_stats_text())
+
+    def accept_ai_and_confirm(self):
+        """接受AI推理值并直接确认所有任务"""
+        # 重置所有卡片为原始AI推理值
+        for completion_id, card in self.task_cards.items():
+            for task_data in self.task_completions:
+                if task_data['id'] == completion_id:
+                    original = task_data.get('completion_percentage', 0)
+                    card.set_completion(original)
+                    break
+
+        # 清空修改记录
+        self.modifications.clear()
+        self.stats_label.setText(self._get_stats_text())
+
+        # 直接调用确认
+        self.confirm_all()
 
     def confirm_all(self):
         """确认所有任务"""

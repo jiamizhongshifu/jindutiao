@@ -803,11 +803,13 @@ class TimeProgressBar(QWidget):
 
         polling_interval = max(1, int(settings.get('polling_interval', 5)))
         min_session_duration = max(1, int(settings.get('min_session_duration', 5)))
+        flush_interval = max(10, int(settings.get('flush_interval', 30)))
 
-        self.logger.info(f"启动行为追踪服务 (间隔{polling_interval}s, 最短会话{min_session_duration}s)")
+        self.logger.info(f"启动行为追踪服务 (间隔{polling_interval}s, 最短会话{min_session_duration}s, 定时保存{flush_interval}s)")
         self.activity_tracker = ActivityTracker(
             polling_interval=polling_interval,
-            min_session_duration=min_session_duration
+            min_session_duration=min_session_duration,
+            flush_interval=flush_interval
         )
         self.activity_tracker.session_ended.connect(self.on_activity_session_ended)
         self.activity_tracker.start()
