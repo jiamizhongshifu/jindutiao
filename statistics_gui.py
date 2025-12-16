@@ -603,16 +603,19 @@ class StatisticsWindow(QWidget):
         # 总工作时长
         time_widget = self._create_stat_item("⏱️", "总工作时长", time_str)
         stats_layout.addWidget(time_widget)
+        self.overview_time_widget = time_widget  # 保存引用
 
         # 完成任务数
         task_count = len(tasks)
         count_widget = self._create_stat_item("📋", "完成任务", f"{task_count}个")
         stats_layout.addWidget(count_widget)
+        self.overview_count_widget = count_widget  # 保存引用
 
         # 最活跃时段
         active_period = self._get_most_active_period(tasks)
         period_widget = self._create_stat_item("🔥", "最活跃时段", active_period)
         stats_layout.addWidget(period_widget)
+        self.overview_period_widget = period_widget  # 保存引用
 
         stats_layout.addStretch()
         layout.addLayout(stats_layout)
@@ -654,6 +657,9 @@ class StatisticsWindow(QWidget):
         value_label = QLabel(value)
         value_label.setStyleSheet(f"color: {LightTheme.TEXT_PRIMARY}; font-size: 18px; font-weight: bold;")
         layout.addWidget(value_label)
+
+        # 保存引用以便后续更新
+        widget.value_label = value_label
 
         return widget
 
@@ -776,7 +782,22 @@ class StatisticsWindow(QWidget):
         layout.setContentsMargins(16, 24, 16, 16)
         layout.setSpacing(16)
 
-        tasks = self._get_inferred_tasks()
+        # 创建可刷新的内容容器
+        self.summary_content_widget = QWidget()
+        self.summary_content_layout = QVBoxLayout(self.summary_content_widget)
+        self.summary_content_layout.setContentsMargins(0, 0, 0, 0)
+        self.summary_content_layout.setSpacing(8)
+
+        # 填充初始内容
+        self._populate_daily_summary_content(self._get_inferred_tasks())
+
+        layout.addWidget(self.summary_content_widget)
+
+        return card
+
+    def _populate_daily_summary_content(self, tasks: list):
+        """填充今日总结内容"""
+        layout = self.summary_content_layout
 
         # 主要工作 (Top 3)
         main_work_label = QLabel("🏆 主要工作")
@@ -832,7 +853,63 @@ class StatisticsWindow(QWidget):
             focus_stats.setStyleSheet(f"color: {LightTheme.TEXT_HINT}; font-size: {LightTheme.FONT_SMALL}px;")
             layout.addWidget(focus_stats)
 
-        return card
+    def _refresh_today_overview(self, tasks: list):
+        """刷新今日概览卡片"""
+        if not hasattr(self, 'overview_time_widget'):
+            return
+
+        # 计算统计数据
+        total_minutes = sum(t.get('duration_minutes', 0) for t in tasks)
+        hours = total_minutes // 60
+        mins = total_minutes % 60
+        time_str = f"{hours}小时{mins}分" if hours > 0 else f"{mins}分钟"
+        task_count = len(tasks)
+        active_period = self._get_most_active_period(tasks)
+
+        # 更新标签
+        if hasattr(self.overview_time_widget, 'value_label'):
+            self.overview_time_widget.value_label.setText(time_str)
+        if hasattr(self.overview_count_widget, 'value_label'):
+            self.overview_count_widget.value_label.setText(f"{task_count}个")
+        if hasattr(self.overview_period_widget, 'value_label'):
+            self.overview_period_widget.value_label.setText(active_period)
+
+    def _refresh_task_timeline(self, tasks: list):
+        """刷新任务时间线"""
+        if not hasattr(self, 'timeline_task_list_layout'):
+            return
+
+        # 清空现有内容
+        while self.timeline_task_list_layout.count():
+            item = self.timeline_task_list_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+
+        # 重新填充
+        if tasks:
+            sorted_tasks = sorted(tasks, key=lambda t: t.get('start_time', '00:00'))
+            for task in sorted_tasks:
+                task_widget = self._create_timeline_task_item(task)
+                self.timeline_task_list_layout.addWidget(task_widget)
+        else:
+            empty_label = QLabel("暂无任务记录")
+            empty_label.setStyleSheet(f"color: {LightTheme.TEXT_HINT}; font-size: {LightTheme.FONT_BODY}px; padding: 20px;")
+            empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.timeline_task_list_layout.addWidget(empty_label)
+
+    def _refresh_daily_summary(self, tasks: list):
+        """刷新今日总结"""
+        if not hasattr(self, 'summary_content_layout'):
+            return
+
+        # 清空现有内容
+        while self.summary_content_layout.count():
+            item = self.summary_content_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+
+        # 重新填充内容
+        self._populate_daily_summary_content(tasks)
 
     def _get_inferred_tasks(self) -> list:
         """获取推理任务列表"""
@@ -1099,6 +1176,19 @@ class StatisticsWindow(QWidget):
             inferred_tasks: 推理任务列表
         """
         try:
+            # 新版工作日志Tab - 刷新三个卡片
+            if not hasattr(self, 'inference_summary_label') or self.inference_summary_label is None:
+                self.logger.debug(f"推理数据已更新: {len(inferred_tasks)} 个任务")
+                # 刷新今日概览卡片
+                self._refresh_today_overview(inferred_tasks)
+                # 刷新任务时间线
+                self._refresh_task_timeline(inferred_tasks)
+                # 刷新今日总结
+                self._refresh_daily_summary(inferred_tasks)
+                self.logger.info(f"工作日志已刷新: {len(inferred_tasks)} 个任务")
+                return
+
+            # 旧版UI更新逻辑（兼容）
             # 计算总工作时长
             total_minutes = sum(t.get('duration_minutes', 0) for t in inferred_tasks)
 
@@ -1110,18 +1200,20 @@ class StatisticsWindow(QWidget):
 
             # 更新时间
             from datetime import datetime
-            self.last_inference_time_label.setText(f"最后更新: {datetime.now().strftime('%H:%M')}")
+            if hasattr(self, 'last_inference_time_label') and self.last_inference_time_label:
+                self.last_inference_time_label.setText(f"最后更新: {datetime.now().strftime('%H:%M')}")
 
             # 清空现有任务列表
-            while self.inference_task_list_layout.count():
-                child = self.inference_task_list_layout.takeAt(0)
-                if child.widget():
-                    child.widget().deleteLater()
+            if hasattr(self, 'inference_task_list_layout') and self.inference_task_list_layout:
+                while self.inference_task_list_layout.count():
+                    child = self.inference_task_list_layout.takeAt(0)
+                    if child.widget():
+                        child.widget().deleteLater()
 
-            # 添加新任务卡片 (只显示最近5个)
-            for task in inferred_tasks[-5:]:
-                card = self.create_inferred_task_card(task)
-                self.inference_task_list_layout.addWidget(card)
+                # 添加新任务卡片 (只显示最近5个)
+                for task in inferred_tasks[-5:]:
+                    card = self.create_inferred_task_card(task)
+                    self.inference_task_list_layout.addWidget(card)
 
             self.logger.info(f"推理UI已更新: {len(inferred_tasks)} 个任务")
 
@@ -1661,6 +1753,11 @@ class StatisticsWindow(QWidget):
     def load_today_statistics(self):
         """加载今日统计 - 从数据库获取实际活动数据"""
         try:
+            # 新版工作日志Tab不再使用旧组件,数据在打开窗口时通过 _get_inferred_tasks() 获取
+            if not hasattr(self, 'inference_summary_label') or self.inference_summary_label is None:
+                self.logger.debug("今日统计已加载 (新版UI在创建时获取数据)")
+                return
+
             # ✅ P1-1.6.21: 直接从数据库加载今日活动数据,与时间回放保持一致
             activity_stats = db.get_today_activity_stats()
 
@@ -1686,25 +1783,27 @@ class StatisticsWindow(QWidget):
 
                 # 更新最后更新时间
                 from datetime import datetime
-                self.last_inference_time_label.setText(f"最后更新: {datetime.now().strftime('%H:%M')}")
+                if hasattr(self, 'last_inference_time_label') and self.last_inference_time_label:
+                    self.last_inference_time_label.setText(f"最后更新: {datetime.now().strftime('%H:%M')}")
 
                 # 清空现有任务列表
-                while self.inference_task_list_layout.count():
-                    child = self.inference_task_list_layout.takeAt(0)
-                    if child.widget():
-                        child.widget().deleteLater()
+                if hasattr(self, 'inference_task_list_layout') and self.inference_task_list_layout:
+                    while self.inference_task_list_layout.count():
+                        child = self.inference_task_list_layout.takeAt(0)
+                        if child.widget():
+                            child.widget().deleteLater()
 
-                # 添加TOP应用卡片(只显示PRODUCTIVE类别的前5个)
-                for app in productive_apps[:5]:
-                    app_minutes = app.get('duration', 0) // 60
-                    task_data = {
-                        'name': app.get('name', '未知应用'),
-                        'duration_minutes': app_minutes,
-                        'confidence': 1.0,  # 实际数据,置信度100%
-                        'apps': [app.get('name', '')]
-                    }
-                    card = self.create_inferred_task_card(task_data)
-                    self.inference_task_list_layout.addWidget(card)
+                    # 添加TOP应用卡片(只显示PRODUCTIVE类别的前5个)
+                    for app in productive_apps[:5]:
+                        app_minutes = app.get('duration', 0) // 60
+                        task_data = {
+                            'name': app.get('name', '未知应用'),
+                            'duration_minutes': app_minutes,
+                            'confidence': 1.0,  # 实际数据,置信度100%
+                            'apps': [app.get('name', '')]
+                        }
+                        card = self.create_inferred_task_card(task_data)
+                        self.inference_task_list_layout.addWidget(card)
 
                 self.logger.info(f"今日统计已加载: {task_count} 个工作任务, {work_minutes}分钟")
             else:
@@ -3297,87 +3396,211 @@ class StatisticsWindow(QWidget):
             return
 
         try:
-            from PySide6.QtWidgets import QMessageBox, QVBoxLayout, QWidget
+            from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame
+            from PySide6.QtCore import Qt
 
             # 取出所有待显示的成就
             achievements = self.pending_achievements[:]
             self.pending_achievements.clear()
 
-            msg_box = QMessageBox(self)
-            msg_box.setWindowTitle("🏆 成就解锁!")
+            # 创建自定义对话框
+            dialog = QDialog(self)
+            dialog.setWindowTitle("成就解锁!")
+            dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+            dialog.setFixedWidth(340)
+            dialog.setModal(True)
 
-            # 根据数量决定标题
+            # 主布局
+            main_layout = QVBoxLayout(dialog)
+            main_layout.setSpacing(16)
+            main_layout.setContentsMargins(24, 20, 24, 20)
+
             if len(achievements) == 1:
                 achievement = achievements[0]
-                # 使用纯文本显示emoji,避免字体问题
-                msg_box.setText(f"解锁新成就:")
-                msg_box.setInformativeText(
-                    f"\n{achievement.emoji} 【{achievement.name}】\n\n"
-                    f"{achievement.description}\n\n"
-                    f"稀有度: {self._get_rarity_cn(achievement.rarity)}"
-                )
+                rarity_cn = self._get_rarity_cn(achievement.rarity)
 
-                # 根据稀有度选择颜色
+                # 稀有度颜色映射
                 rarity_colors = {
-                    'common': LightTheme.TEXT_SECONDARY,
-                    'rare': LightTheme.ACCENT_BLUE,
-                    'epic': LightTheme.ACCENT_PURPLE,
-                    'legendary': LightTheme.ACCENT_ORANGE
+                    'common': '#78909C',
+                    'rare': '#2196F3',
+                    'epic': '#9C27B0',
+                    'legendary': '#FF9800'
                 }
-                color = rarity_colors.get(achievement.rarity, LightTheme.ACCENT_GREEN)
+                rarity_bg_colors = {
+                    'common': '#ECEFF1',
+                    'rare': '#E3F2FD',
+                    'epic': '#F3E5F5',
+                    'legendary': '#FFF3E0'
+                }
+                color = rarity_colors.get(achievement.rarity, '#4CAF50')
+                bg_color = rarity_bg_colors.get(achievement.rarity, '#E8F5E9')
+
+                # 成就图标区域
+                icon_container = QFrame()
+                icon_container.setStyleSheet(f"""
+                    QFrame {{
+                        background-color: {bg_color};
+                        border-radius: 12px;
+                        padding: 16px;
+                    }}
+                """)
+                icon_layout = QVBoxLayout(icon_container)
+                icon_layout.setAlignment(Qt.AlignCenter)
+
+                icon_label = QLabel(achievement.emoji)
+                icon_label.setStyleSheet("""
+                    QLabel {
+                        font-size: 48px;
+                        font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji";
+                    }
+                """)
+                icon_label.setAlignment(Qt.AlignCenter)
+                icon_layout.addWidget(icon_label)
+                main_layout.addWidget(icon_container)
+
+                # 成就名称
+                name_label = QLabel(achievement.name)
+                name_label.setStyleSheet(f"""
+                    QLabel {{
+                        font-size: 18px;
+                        font-weight: bold;
+                        color: {LightTheme.TEXT_PRIMARY};
+                    }}
+                """)
+                name_label.setAlignment(Qt.AlignCenter)
+                main_layout.addWidget(name_label)
+
+                # 成就描述
+                desc_label = QLabel(achievement.description)
+                desc_label.setStyleSheet(f"""
+                    QLabel {{
+                        font-size: 14px;
+                        color: {LightTheme.TEXT_SECONDARY};
+                    }}
+                """)
+                desc_label.setAlignment(Qt.AlignCenter)
+                desc_label.setWordWrap(True)
+                main_layout.addWidget(desc_label)
+
+                # 稀有度徽章
+                rarity_badge = QLabel(f"⭐ 稀有度: {rarity_cn}")
+                rarity_badge.setStyleSheet(f"""
+                    QLabel {{
+                        background-color: {bg_color};
+                        color: {color};
+                        font-size: 13px;
+                        font-weight: 500;
+                        padding: 6px 16px;
+                        border-radius: 12px;
+                    }}
+                """)
+                rarity_badge.setAlignment(Qt.AlignCenter)
+
+                badge_container = QHBoxLayout()
+                badge_container.addStretch()
+                badge_container.addWidget(rarity_badge)
+                badge_container.addStretch()
+                main_layout.addLayout(badge_container)
+
             else:
                 # 多个成就
-                msg_box.setText(f"恭喜!同时解锁 {len(achievements)} 个成就:")
+                title_label = QLabel(f"🎉 恭喜!同时解锁 {len(achievements)} 个成就")
+                title_label.setStyleSheet(f"""
+                    QLabel {{
+                        font-size: 16px;
+                        font-weight: bold;
+                        color: {LightTheme.TEXT_PRIMARY};
+                    }}
+                """)
+                title_label.setAlignment(Qt.AlignCenter)
+                main_layout.addWidget(title_label)
 
-                # 组装成就列表
-                achievement_list = []
+                # 成就列表
                 for ach in achievements:
                     rarity_cn = self._get_rarity_cn(ach.rarity)
-                    achievement_list.append(
-                        f"{ach.emoji} 【{ach.name}】({rarity_cn})\n  {ach.description}"
-                    )
 
-                msg_box.setInformativeText("\n\n".join(achievement_list))
-                color = LightTheme.ACCENT_PURPLE  # 多个成就使用紫色
+                    item_frame = QFrame()
+                    item_frame.setStyleSheet(f"""
+                        QFrame {{
+                            background-color: {LightTheme.BG_SECONDARY};
+                            border-radius: 8px;
+                            padding: 8px;
+                        }}
+                    """)
+                    item_layout = QHBoxLayout(item_frame)
+                    item_layout.setContentsMargins(12, 8, 12, 8)
 
-            msg_box.setIcon(QMessageBox.Information)
-            msg_box.setStandardButtons(QMessageBox.Ok)
+                    emoji_label = QLabel(ach.emoji)
+                    emoji_label.setStyleSheet("""
+                        QLabel {
+                            font-size: 24px;
+                            font-family: "Segoe UI Emoji", "Apple Color Emoji";
+                        }
+                    """)
+                    item_layout.addWidget(emoji_label)
 
-            # 应用样式
-            msg_box.setStyleSheet(f"""
-                QMessageBox {{
-                    background-color: {LightTheme.BG_PRIMARY};
-                    min-width: 400px;
-                }}
-                QLabel {{
-                    color: {LightTheme.TEXT_PRIMARY};
-                    font-size: {LightTheme.FONT_BODY}px;
-                    font-family: "Microsoft YaHei UI", "Segoe UI Emoji", "Apple Color Emoji";
-                }}
+                    text_layout = QVBoxLayout()
+                    text_layout.setSpacing(2)
+
+                    name_lbl = QLabel(ach.name)
+                    name_lbl.setStyleSheet(f"""
+                        QLabel {{
+                            font-size: 14px;
+                            font-weight: bold;
+                            color: {LightTheme.TEXT_PRIMARY};
+                        }}
+                    """)
+                    text_layout.addWidget(name_lbl)
+
+                    desc_lbl = QLabel(f"{ach.description} ({rarity_cn})")
+                    desc_lbl.setStyleSheet(f"""
+                        QLabel {{
+                            font-size: 12px;
+                            color: {LightTheme.TEXT_SECONDARY};
+                        }}
+                    """)
+                    text_layout.addWidget(desc_lbl)
+
+                    item_layout.addLayout(text_layout, 1)
+                    main_layout.addWidget(item_frame)
+
+                color = '#9C27B0'  # 多个成就使用紫色
+
+            # 确定按钮
+            main_layout.addSpacing(8)
+            btn_layout = QHBoxLayout()
+            btn_layout.addStretch()
+
+            ok_btn = QPushButton("确定")
+            ok_btn.setFixedWidth(100)
+            ok_btn.setCursor(Qt.PointingHandCursor)
+            ok_btn.setStyleSheet(f"""
                 QPushButton {{
-                    background-color: {color};
+                    background-color: {color if len(achievements) == 1 else '#9C27B0'};
                     color: white;
                     border: none;
-                    border-radius: {LightTheme.RADIUS_SMALL}px;
-                    padding: 8px 16px;
-                    font-size: {LightTheme.FONT_BODY}px;
+                    border-radius: 6px;
+                    padding: 10px 24px;
+                    font-size: 14px;
                     font-weight: bold;
                 }}
                 QPushButton:hover {{
                     opacity: 0.9;
                 }}
             """)
+            ok_btn.clicked.connect(dialog.accept)
+            btn_layout.addWidget(ok_btn)
+            btn_layout.addStretch()
+            main_layout.addLayout(btn_layout)
 
-            # 为所有QLabel设置emoji字体 (更可靠的方式)
-            emoji_font = QFont()
-            emoji_font.setPointSize(LightTheme.FONT_BODY)
-            emoji_font.setFamilies(["Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji"])
+            # 对话框样式
+            dialog.setStyleSheet(f"""
+                QDialog {{
+                    background-color: {LightTheme.BG_PRIMARY};
+                }}
+            """)
 
-            for label in msg_box.findChildren(QLabel):
-                label.setFont(emoji_font)
-
-            # 显示对话框
-            msg_box.exec()
+            dialog.exec()
 
         except Exception as e:
             self.logger.error(f"Failed to show batched achievements: {e}", exc_info=True)

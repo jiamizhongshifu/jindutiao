@@ -293,7 +293,11 @@ class TaskCompletionScheduler:
 
     def _auto_confirm_high_confidence(self, date: str) -> int:
         """
-        自动确认高置信度任务
+        自动确认任务
+
+        支持两种模式:
+        1. auto_confirm_all=True: 完全自动确认所有任务，不弹窗
+        2. auto_confirm_threshold>0: 仅自动确认高置信度任务
 
         Args:
             date: 日期
@@ -301,6 +305,26 @@ class TaskCompletionScheduler:
         Returns:
             自动确认的任务数量
         """
+        # 完全自动确认模式: 所有任务自动确认，不弹窗
+        auto_confirm_all = self.config.get('auto_confirm_all', False)
+        if auto_confirm_all:
+            try:
+                unconfirmed = self.db.get_unconfirmed_task_completions(date)
+                for task_completion in unconfirmed:
+                    self.db.update_task_completion_confirmation(
+                        completion_id=task_completion['id'],
+                        user_confirmed=True,
+                        user_corrected=False,
+                        user_note='完全自动确认'
+                    )
+                if unconfirmed:
+                    logger.info(f"完全自动确认: {len(unconfirmed)} 个任务")
+                return len(unconfirmed)
+            except Exception as e:
+                logger.error(f"完全自动确认失败: {e}", exc_info=True)
+                return 0
+
+        # 原有逻辑: 仅自动确认高置信度任务
         threshold = self.config.get('auto_confirm_threshold', 0)
 
         # 如果阈值为0,则不自动确认

@@ -89,8 +89,10 @@ class AutoInferenceEngine(QObject):
             start_time = datetime.now()
             logger.info(f"[自动推理] 开始执行推理...")
 
-            # 1. 获取最近的应用使用记录 (最近30分钟)
-            recent_activities = self._get_recent_activities(minutes=30)
+            # 1. 获取今日所有应用使用记录 (从0点到现在)
+            now = datetime.now()
+            minutes_since_midnight = now.hour * 60 + now.minute + 1
+            recent_activities = self._get_recent_activities(minutes=minutes_since_midnight)
 
             if not recent_activities:
                 logger.info("[自动推理] 无活动记录,跳过本次推理")

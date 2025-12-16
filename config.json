@@ -53,6 +53,12 @@
         "y_offset": 80,
         "color_mode": "auto"
     },
+    "activity_tracking": {
+        "enabled": true,
+        "polling_interval": 5,
+        "min_session_duration": 5,
+        "data_retention_days": 90
+    },
     "behavior_recognition": {
         "enabled": true,
         "collection_interval": 5,
@@ -62,6 +68,7 @@
         "tone_cooldown": 120
     },
     "task_completion_scheduler": {
+        "auto_confirm_all": true,
         "auto_confirm_threshold": 100
     },
     "marker_preset_id": "gaiya",

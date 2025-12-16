@@ -95,6 +95,7 @@ def load_config(app_dir: Path, logger: logging.Logger) -> Dict[str, Any]:
             "enabled": True,                    # 是否启用自动推理
             "trigger_time": "21:00",            # 每日触发时间
             "trigger_on_startup": False,        # 启动时是否推理昨日数据
+            "auto_confirm_all": False,          # 完全自动确认 (True=所有任务自动确认,不弹窗)
             "auto_confirm_threshold": 0         # 自动确认阈值 (0=不自动确认, 90=自动确认完成度≥90%的高置信度任务)
         }
     }
