@@ -92,3 +92,6 @@ ssl_test.txt
 
 # 旧打包脚本备份
 .old_build_scripts/
+
+# 漫画脚本（本地创作，不推送）
+comics/
