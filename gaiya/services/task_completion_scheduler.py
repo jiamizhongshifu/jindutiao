@@ -88,6 +88,16 @@ class TaskCompletionScheduler:
             self.scheduler_thread.join(timeout=5)
         logger.info("任务完成推理调度器已停止")
 
+    def reload_config(self, new_config: Dict):
+        """
+        重新加载配置
+
+        Args:
+            new_config: 新的调度配置
+        """
+        self.config = new_config
+        logger.info(f"任务完成推理调度器配置已更新: {new_config}")
+
     def _schedule_loop(self):
         """调度循环 - 每分钟检查是否到达触发时间"""
         trigger_time = self.config.get('trigger_time', '21:00')

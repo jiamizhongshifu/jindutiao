@@ -68,6 +68,7 @@
         "tone_cooldown": 120
     },
     "task_completion_scheduler": {
+        "enabled": false,
         "auto_confirm_all": true,
         "auto_confirm_threshold": 100
     },

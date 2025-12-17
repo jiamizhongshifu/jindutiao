@@ -10,7 +10,8 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                                QSpinBox, QComboBox, QDialogButtonBox, QFormLayout,
                                QGridLayout)
 from PySide6.QtCore import Qt, Signal, Q_ARG, Slot, QDateTime, QPropertyAnimation, QEasingCurve, QTimer
-from PySide6.QtGui import QColor, QFont, QPainter, QPen
+from PySide6.QtGui import QColor, QFont, QPainter, QPen, QIcon
+from PySide6.QtWidgets import QGraphicsDropShadowEffect, QFrame
 from PySide6.QtCharts import QChart, QChartView, QLineSeries, QValueAxis, QDateTimeAxis, QPieSeries, QPieSlice
 from statistics_manager import StatisticsManager
 from gaiya.core.theme_manager import ThemeManager
@@ -3104,7 +3105,9 @@ class StatisticsWindow(QWidget):
         self.create_goals_tab()
 
     def create_achievements_tab(self):
-        """创建成就展示页签 (Sprint 4 - Task 4.2)"""
+        """创建成就展示页签 (Sprint 4 - Task 4.2) - 增强版 with 分类筛选和进度条"""
+        from gaiya.core.achievement_manager import ACHIEVEMENT_CATEGORIES, RARITY_COLORS
+
         tab = QWidget()
         layout = QVBoxLayout(tab)
         layout.setContentsMargins(20, 20, 20, 20)
@@ -3117,13 +3120,30 @@ class StatisticsWindow(QWidget):
         content_layout = QVBoxLayout(content_widget)
         content_layout.setSpacing(15)
 
-        # 标题
+        # 标题和用户称号
+        header_layout = QHBoxLayout()
         title_label = QLabel("🏆 成就系统")
         title_label.setStyleSheet(f"font-size: {LightTheme.FONT_TITLE}px; font-weight: bold; color: {LightTheme.TEXT_PRIMARY};")
-        content_layout.addWidget(title_label)
+        header_layout.addWidget(title_label)
+
+        # 用户称号和积分
+        stats = self.achievement_manager.get_statistics()
+        title_text = stats.get('user_title', '时间新手')
+        total_points = stats.get('total_points', 0)
+        title_badge = QLabel(f"🎖️ {title_text} ({total_points}分)")
+        title_badge.setStyleSheet(f"""
+            color: {LightTheme.ACCENT_ORANGE};
+            font-size: {LightTheme.FONT_SUBTITLE}px;
+            font-weight: bold;
+            padding: 5px 10px;
+            border: 2px solid {LightTheme.ACCENT_ORANGE};
+            border-radius: 12px;
+        """)
+        header_layout.addStretch()
+        header_layout.addWidget(title_badge)
+        content_layout.addLayout(header_layout)
 
         # 成就统计卡片
-        stats = self.achievement_manager.get_statistics()
         stats_card = QGroupBox("📊 成就统计")
         stats_card.setStyleSheet(f"QGroupBox::title {{ color: {LightTheme.TEXT_PRIMARY}; font-weight: bold; font-size: {LightTheme.FONT_SUBTITLE}px; }}")
         stats_layout = QGridLayout(stats_card)
@@ -3162,7 +3182,7 @@ class StatisticsWindow(QWidget):
 
         for rarity_name, count, color in rarity_info:
             rarity_label = QLabel(f"{rarity_name}: {count}")
-            rarity_label.setStyleSheet(f"color: {color}; font-size: {LightTheme.FONT_SMALL}px; font-weight: bold;")
+            rarity_label.setStyleSheet(f"color: {color}; font-size: {LightTheme.FONT_BODY}px; font-weight: bold;")
             rarity_layout.addWidget(rarity_label)
 
         rarity_widget = QWidget()
@@ -3171,53 +3191,150 @@ class StatisticsWindow(QWidget):
 
         content_layout.addWidget(stats_card)
 
-        # 已解锁成就
-        unlocked_achievements = self.achievement_manager.get_unlocked_achievements()
-        if unlocked_achievements:
-            unlocked_group = QGroupBox(f"✅ 已解锁成就 ({len(unlocked_achievements)}个)")
-            unlocked_group.setStyleSheet(f"QGroupBox::title {{ color: {LightTheme.TEXT_PRIMARY}; font-weight: bold; font-size: {LightTheme.FONT_SUBTITLE}px; }}")
-            unlocked_layout = QVBoxLayout(unlocked_group)
-            unlocked_layout.setSpacing(10)
+        # 分类筛选按钮
+        filter_layout = QHBoxLayout()
+        filter_label = QLabel("分类筛选:")
+        filter_label.setStyleSheet(f"color: {LightTheme.TEXT_PRIMARY}; font-weight: bold; font-size: {LightTheme.FONT_SUBTITLE}px;")
+        filter_layout.addWidget(filter_label)
 
-            for achievement in unlocked_achievements:
-                achievement_card = self._create_achievement_card(achievement, unlocked=True)
-                unlocked_layout.addWidget(achievement_card)
+        # "全部" 按钮
+        self.achievement_filter_buttons = {}
+        all_btn = QPushButton("全部")
+        all_btn.setCheckable(True)
+        all_btn.setChecked(True)
+        all_btn.setStyleSheet(self._get_filter_button_style(True))
+        all_btn.clicked.connect(lambda: self._filter_achievements_by_category(None))
+        self.achievement_filter_buttons['all'] = all_btn
+        filter_layout.addWidget(all_btn)
 
-            content_layout.addWidget(unlocked_group)
+        # 分类按钮
+        category_icons = {
+            'consistency': '🔥',
+            'productivity': '⚡',
+            'focus': '🎯',
+            'explorer': '🔍',
+            'special': '✨'
+        }
+        for category_id, category_info in ACHIEVEMENT_CATEGORIES.items():
+            icon = category_icons.get(category_id, '📌')
+            btn = QPushButton(f"{icon} {category_info['name']}")
+            btn.setCheckable(True)
+            btn.setStyleSheet(self._get_filter_button_style(False, category_info['color']))
+            btn.clicked.connect(lambda checked, c=category_id: self._filter_achievements_by_category(c))
+            self.achievement_filter_buttons[category_id] = btn
+            filter_layout.addWidget(btn)
 
-        # 未解锁成就 (始终显示,即使为空)
-        locked_achievements = self.achievement_manager.get_locked_achievements()
+        filter_layout.addStretch()
+        content_layout.addLayout(filter_layout)
 
-        # Debug logging
-        all_achievements = self.achievement_manager.get_all_achievements()
-        unlocked_count = len(unlocked_achievements)
-        locked_count = len(locked_achievements)
-        total_count = len(all_achievements)
-        self.logger.info(f"成就统计: 总数={total_count}, 已解锁={unlocked_count}, 未解锁={locked_count}")
+        # 成就容器 (用于筛选时替换内容)
+        self.achievements_container = QWidget()
+        self.achievements_container_layout = QVBoxLayout(self.achievements_container)
+        self.achievements_container_layout.setSpacing(10)
 
-        locked_group = QGroupBox(f"🔒 未解锁成就 ({len(locked_achievements)}个)")
-        locked_group.setStyleSheet(f"QGroupBox::title {{ color: {LightTheme.TEXT_PRIMARY}; font-weight: bold; font-size: {LightTheme.FONT_SUBTITLE}px; }}")
-        locked_layout = QVBoxLayout(locked_group)
-        locked_layout.setSpacing(10)
+        # 显示所有成就 (默认)
+        self._populate_achievements_container(None)
 
-        if locked_achievements:
-            for achievement in locked_achievements:
-                achievement_card = self._create_achievement_card(achievement, unlocked=False)
-                locked_layout.addWidget(achievement_card)
-        else:
-            # 如果所有成就都解锁了,显示祝贺信息
-            congrats_label = QLabel("🎉 恭喜!你已解锁所有成就!")
-            congrats_label.setStyleSheet(f"color: {LightTheme.TEXT_SECONDARY}; font-size: {LightTheme.FONT_BODY}px; padding: 20px;")
-            congrats_label.setAlignment(Qt.AlignCenter)
-            locked_layout.addWidget(congrats_label)
-
-        content_layout.addWidget(locked_group)
+        content_layout.addWidget(self.achievements_container)
 
         content_layout.addStretch()
         scroll.setWidget(content_widget)
         layout.addWidget(scroll)
 
         self.tab_widget.addTab(tab, "🏆 成就")
+
+    def _get_filter_button_style(self, selected: bool, color: str = None) -> str:
+        """获取分类筛选按钮样式"""
+        if selected:
+            return f"""
+                QPushButton {{
+                    background-color: {color or LightTheme.ACCENT_BLUE};
+                    color: white;
+                    border: none;
+                    padding: 6px 12px;
+                    border-radius: 12px;
+                    font-size: {LightTheme.FONT_BODY}px;
+                    font-weight: bold;
+                }}
+            """
+        return f"""
+            QPushButton {{
+                background-color: {LightTheme.BG_SECONDARY};
+                color: {LightTheme.TEXT_PRIMARY};
+                border: 1px solid {LightTheme.BORDER_LIGHT};
+                padding: 6px 12px;
+                border-radius: 12px;
+                font-size: {LightTheme.FONT_BODY}px;
+            }}
+            QPushButton:hover {{
+                background-color: {color or LightTheme.ACCENT_BLUE}20;
+                border-color: {color or LightTheme.ACCENT_BLUE};
+            }}
+            QPushButton:checked {{
+                background-color: {color or LightTheme.ACCENT_BLUE};
+                color: white;
+                border: none;
+            }}
+        """
+
+    def _filter_achievements_by_category(self, category: str = None):
+        """按分类筛选成就"""
+        # 更新按钮状态
+        for btn_id, btn in self.achievement_filter_buttons.items():
+            if category is None:
+                btn.setChecked(btn_id == 'all')
+            else:
+                btn.setChecked(btn_id == category)
+
+        # 重新填充成就容器
+        self._populate_achievements_container(category)
+
+    def _populate_achievements_container(self, category: str = None):
+        """填充成就容器"""
+        from gaiya.core.achievement_manager import ACHIEVEMENT_CATEGORIES
+
+        # 清空现有内容
+        while self.achievements_container_layout.count():
+            item = self.achievements_container_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+
+        # 获取成就
+        if category:
+            achievements = self.achievement_manager.get_achievements_by_category(category)
+            categories_to_show = [(category, ACHIEVEMENT_CATEGORIES.get(category, {}))]
+        else:
+            achievements = self.achievement_manager.get_all_achievements()
+            categories_to_show = list(ACHIEVEMENT_CATEGORIES.items())
+
+        # 按分类分组显示
+        for cat_id, cat_info in categories_to_show:
+            cat_achievements = [a for a in achievements if a.category == cat_id]
+            if not cat_achievements:
+                continue
+
+            unlocked = [a for a in cat_achievements if a.unlocked]
+            locked = [a for a in cat_achievements if not a.unlocked]
+
+            # 分类标题
+            cat_icon = {'consistency': '🔥', 'productivity': '⚡', 'focus': '🎯', 'explorer': '🔍', 'special': '✨'}.get(cat_id, '📌')
+            group = QGroupBox(f"{cat_icon} {cat_info.get('name', cat_id)} ({len(unlocked)}/{len(cat_achievements)})")
+            group.setStyleSheet(f"""
+                QGroupBox::title {{
+                    color: {cat_info.get('color', LightTheme.TEXT_PRIMARY)};
+                    font-weight: bold;
+                    font-size: 16px;
+                }}
+            """)
+            group_layout = QVBoxLayout(group)
+            group_layout.setSpacing(8)
+
+            # 先显示已解锁,再显示未解锁
+            for achievement in unlocked + locked:
+                card = self._create_achievement_card(achievement, achievement.unlocked)
+                group_layout.addWidget(card)
+
+            self.achievements_container_layout.addWidget(group)
 
     def _create_achievement_stat_card(self, label: str, value: str, color: str) -> QWidget:
         """创建成就统计卡片"""
@@ -3233,19 +3350,19 @@ class StatisticsWindow(QWidget):
         layout.setSpacing(5)
 
         value_label = QLabel(value)
-        value_label.setStyleSheet(f"font-size: 20px; font-weight: bold; color: {color};")
+        value_label.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {color};")
         value_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(value_label)
 
         label_label = QLabel(label)
-        label_label.setStyleSheet(f"color: {LightTheme.TEXT_SECONDARY}; font-size: {LightTheme.FONT_SMALL}px;")
+        label_label.setStyleSheet(f"color: {LightTheme.TEXT_SECONDARY}; font-size: {LightTheme.FONT_BODY}px;")
         label_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(label_label)
 
         return card
 
     def _create_achievement_card(self, achievement: Achievement, unlocked: bool) -> QWidget:
-        """创建成就卡片"""
+        """创建成就卡片 - 增强版 with 进度条"""
         card = QWidget()
 
         # 根据稀有度选择颜色
@@ -3299,7 +3416,7 @@ class StatisticsWindow(QWidget):
         # 名称和稀有度
         name_layout = QHBoxLayout()
         name_label = QLabel(achievement.name)  # 始终显示成就名称
-        name_label.setStyleSheet(f"font-size: {LightTheme.FONT_SUBTITLE}px; font-weight: bold; color: {LightTheme.TEXT_PRIMARY if unlocked else LightTheme.TEXT_SECONDARY};")
+        name_label.setStyleSheet(f"font-size: 16px; font-weight: bold; color: {LightTheme.TEXT_PRIMARY if unlocked else LightTheme.TEXT_SECONDARY};")
         name_layout.addWidget(name_label)
 
         # 稀有度标签: 移除背景色,使用彩色文本
@@ -3313,10 +3430,19 @@ class StatisticsWindow(QWidget):
         rarity_badge = QLabel(f"[{rarity_text}]")
         rarity_badge.setStyleSheet(f"""
             color: {border_color};
-            font-size: {LightTheme.FONT_TINY}px;
+            font-size: {LightTheme.FONT_BODY}px;
             font-weight: bold;
         """)
         name_layout.addWidget(rarity_badge)
+
+        # 积分显示
+        points_label = QLabel(f"+{achievement.points}分")
+        points_label.setStyleSheet(f"""
+            color: {LightTheme.ACCENT_ORANGE};
+            font-size: {LightTheme.FONT_BODY}px;
+            font-weight: bold;
+        """)
+        name_layout.addWidget(points_label)
         name_layout.addStretch()
 
         info_layout.addLayout(name_layout)
@@ -3324,16 +3450,49 @@ class StatisticsWindow(QWidget):
         # 描述
         desc_label = QLabel(achievement.description)  # 始终显示成就描述
         desc_label.setWordWrap(True)
-        desc_label.setStyleSheet(f"color: {LightTheme.TEXT_PRIMARY if unlocked else LightTheme.TEXT_SECONDARY}; font-size: {LightTheme.FONT_SMALL}px;")
+        desc_label.setStyleSheet(f"color: {LightTheme.TEXT_PRIMARY if unlocked else LightTheme.TEXT_SECONDARY}; font-size: {LightTheme.FONT_SUBTITLE}px;")
         info_layout.addWidget(desc_label)
 
-        # 解锁时间 (仅已解锁)
-        if unlocked and achievement.unlocked_at:
-            from datetime import datetime
-            unlock_time = datetime.fromisoformat(achievement.unlocked_at)
-            time_label = QLabel(f"解锁于: {unlock_time.strftime('%Y-%m-%d %H:%M')}")
-            time_label.setStyleSheet(f"color: {LightTheme.TEXT_HINT}; font-size: {LightTheme.FONT_TINY}px;")
-            info_layout.addWidget(time_label)
+        # 进度条 (仅未解锁成就显示)
+        if not unlocked:
+            progress_layout = QHBoxLayout()
+            progress_layout.setSpacing(8)
+
+            # 进度条
+            progress_bar = QProgressBar()
+            progress_bar.setRange(0, 100)
+            progress_percentage = achievement.get_progress_percentage()
+            progress_bar.setValue(int(progress_percentage))
+            progress_bar.setTextVisible(False)
+            progress_bar.setFixedHeight(8)
+            progress_bar.setStyleSheet(f"""
+                QProgressBar {{
+                    background-color: {LightTheme.BG_TERTIARY};
+                    border: none;
+                    border-radius: 4px;
+                }}
+                QProgressBar::chunk {{
+                    background-color: {border_color};
+                    border-radius: 4px;
+                }}
+            """)
+            progress_layout.addWidget(progress_bar, 1)
+
+            # 进度文本
+            progress_text = achievement.get_progress_text()
+            progress_label = QLabel(progress_text)
+            progress_label.setStyleSheet(f"color: {LightTheme.TEXT_HINT}; font-size: {LightTheme.FONT_BODY}px;")
+            progress_layout.addWidget(progress_label)
+
+            info_layout.addLayout(progress_layout)
+        else:
+            # 解锁时间 (仅已解锁)
+            if achievement.unlocked_at:
+                from datetime import datetime
+                unlock_time = datetime.fromisoformat(achievement.unlocked_at)
+                time_label = QLabel(f"✅ 解锁于: {unlock_time.strftime('%Y-%m-%d %H:%M')}")
+                time_label.setStyleSheet(f"color: {LightTheme.TEXT_HINT}; font-size: {LightTheme.FONT_BODY}px;")
+                info_layout.addWidget(time_label)
 
         layout.addLayout(info_layout, 1)
 
@@ -3410,6 +3569,11 @@ class StatisticsWindow(QWidget):
             dialog.setFixedWidth(340)
             dialog.setModal(True)
 
+            # 设置窗口图标 - 使用奖杯图标
+            trophy_icon_path = Path(__file__).parent / "assets" / "icons" / "trophy.svg"
+            if trophy_icon_path.exists():
+                dialog.setWindowIcon(QIcon(str(trophy_icon_path)))
+
             # 主布局
             main_layout = QVBoxLayout(dialog)
             main_layout.setSpacing(16)
@@ -3419,43 +3583,103 @@ class StatisticsWindow(QWidget):
                 achievement = achievements[0]
                 rarity_cn = self._get_rarity_cn(achievement.rarity)
 
-                # 稀有度颜色映射
-                rarity_colors = {
-                    'common': '#78909C',
-                    'rare': '#2196F3',
-                    'epic': '#9C27B0',
-                    'legendary': '#FF9800'
+                # 稀有度颜色映射 - 升级版（包含渐变色和边框色）
+                rarity_styles = {
+                    'common': {
+                        'color': '#78909C',
+                        'bg_light': '#F5F5F5',
+                        'bg_dark': '#E0E0E0',
+                        'border': '#BDBDBD',
+                        'glow': False
+                    },
+                    'rare': {
+                        'color': '#2196F3',
+                        'bg_light': '#E3F2FD',
+                        'bg_dark': '#BBDEFB',
+                        'border': '#64B5F6',
+                        'glow': False
+                    },
+                    'epic': {
+                        'color': '#9C27B0',
+                        'bg_light': '#F3E5F5',
+                        'bg_dark': '#E1BEE7',
+                        'border': '#BA68C8',
+                        'glow': True
+                    },
+                    'legendary': {
+                        'color': '#FF9800',
+                        'bg_light': '#FFF8E1',
+                        'bg_dark': '#FFE082',
+                        'border': '#FFB74D',
+                        'glow': True
+                    }
                 }
-                rarity_bg_colors = {
-                    'common': '#ECEFF1',
-                    'rare': '#E3F2FD',
-                    'epic': '#F3E5F5',
-                    'legendary': '#FFF3E0'
-                }
-                color = rarity_colors.get(achievement.rarity, '#4CAF50')
-                bg_color = rarity_bg_colors.get(achievement.rarity, '#E8F5E9')
+                style = rarity_styles.get(achievement.rarity, rarity_styles['common'])
+                color = style['color']
+                bg_light = style['bg_light']
+                bg_dark = style['bg_dark']
+                border_color = style['border']
+                has_glow = style['glow']
 
-                # 成就图标区域
+                # 成就图标区域 - 外层渐变容器
                 icon_container = QFrame()
                 icon_container.setStyleSheet(f"""
                     QFrame {{
-                        background-color: {bg_color};
-                        border-radius: 12px;
-                        padding: 16px;
+                        background: qlineargradient(
+                            x1:0, y1:0, x2:0, y2:1,
+                            stop:0 {bg_light},
+                            stop:1 {bg_dark}
+                        );
+                        border-radius: 16px;
+                        border: 2px solid {border_color};
                     }}
                 """)
+                icon_container.setFixedHeight(120)
+
+                # 高稀有度添加光晕效果
+                if has_glow:
+                    shadow = QGraphicsDropShadowEffect()
+                    shadow.setBlurRadius(25)
+                    shadow.setColor(QColor(color))
+                    shadow.setOffset(0, 0)
+                    icon_container.setGraphicsEffect(shadow)
+
                 icon_layout = QVBoxLayout(icon_container)
                 icon_layout.setAlignment(Qt.AlignCenter)
+
+                # 内层圆形图标容器 - 带高光效果
+                icon_circle = QFrame()
+                icon_circle.setFixedSize(80, 80)
+                icon_circle.setStyleSheet(f"""
+                    QFrame {{
+                        background: qradialgradient(
+                            cx:0.5, cy:0.3, radius:0.8,
+                            fx:0.5, fy:0.3,
+                            stop:0 white,
+                            stop:0.5 {bg_light},
+                            stop:1 {bg_dark}
+                        );
+                        border-radius: 40px;
+                        border: 1px solid {border_color};
+                    }}
+                """)
+                circle_layout = QVBoxLayout(icon_circle)
+                circle_layout.setAlignment(Qt.AlignCenter)
+                circle_layout.setContentsMargins(0, 0, 0, 0)
 
                 icon_label = QLabel(achievement.emoji)
                 icon_label.setStyleSheet("""
                     QLabel {
-                        font-size: 48px;
+                        font-size: 42px;
                         font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji";
+                        background: transparent;
+                        border: none;
                     }
                 """)
                 icon_label.setAlignment(Qt.AlignCenter)
-                icon_layout.addWidget(icon_label)
+                circle_layout.addWidget(icon_label)
+
+                icon_layout.addWidget(icon_circle, alignment=Qt.AlignCenter)
                 main_layout.addWidget(icon_container)
 
                 # 成就名称
@@ -3482,16 +3706,21 @@ class StatisticsWindow(QWidget):
                 desc_label.setWordWrap(True)
                 main_layout.addWidget(desc_label)
 
-                # 稀有度徽章
+                # 稀有度徽章 - 升级版（渐变背景+边框）
                 rarity_badge = QLabel(f"⭐ 稀有度: {rarity_cn}")
                 rarity_badge.setStyleSheet(f"""
                     QLabel {{
-                        background-color: {bg_color};
+                        background: qlineargradient(
+                            x1:0, y1:0, x2:1, y2:0,
+                            stop:0 {bg_light},
+                            stop:1 {bg_dark}
+                        );
                         color: {color};
                         font-size: 13px;
-                        font-weight: 500;
-                        padding: 6px 16px;
-                        border-radius: 12px;
+                        font-weight: 600;
+                        padding: 8px 20px;
+                        border-radius: 14px;
+                        border: 1px solid {border_color};
                     }}
                 """)
                 rarity_badge.setAlignment(Qt.AlignCenter)

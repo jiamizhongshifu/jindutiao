@@ -2144,6 +2144,11 @@ class TimeProgressBar(QWidget):
                 scene_name = self.scene_manager.get_current_scene_name()
                 self.load_scene(scene_name)
 
+        # 重新加载任务完成调度器配置
+        if hasattr(self, 'task_completion_scheduler'):
+            scheduler_config = self.config.get('task_completion_scheduler', {})
+            self.task_completion_scheduler.reload_config(scheduler_config)
+
         # 触发重绘
         self.update()
         self.logger.info("[reload_all] 已调用update()触发重绘")
