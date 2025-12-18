@@ -5,6 +5,10 @@
       "unlocked_at": "2025-12-09T22:12:17.660138"
     },
     {
+      "achievement_id": "tasks_50",
+      "unlocked_at": "2025-12-18T13:52:15.806404"
+    },
+    {
       "achievement_id": "tasks_100",
       "unlocked_at": "2025-12-09T22:12:17.660138"
     },
@@ -13,9 +17,47 @@
       "unlocked_at": "2025-12-09T22:12:17.661341"
     },
     {
+      "achievement_id": "focus_50_hours",
+      "unlocked_at": "2025-12-18T13:52:15.807382"
+    },
+    {
       "achievement_id": "focus_100_hours",
       "unlocked_at": "2025-12-09T22:12:17.661341"
     }
   ],
-  "last_updated": "2025-12-09T22:12:17.661341"
+  "progress": {
+    "streak_3_days": 1.0,
+    "streak_7_days": 1.0,
+    "streak_30_days": 1.0,
+    "streak_100_days": 1.0,
+    "streak_365_days": 1.0,
+    "early_bird": 0.0,
+    "night_owl": 0.0,
+    "weekend_warrior": 0.0,
+    "tasks_10": 10,
+    "tasks_50": 50,
+    "tasks_100": 100,
+    "tasks_500": 170.0,
+    "tasks_1000": 170.0,
+    "perfect_day": 54.2,
+    "perfect_week": 0.0,
+    "speed_demon": 6.0,
+    "focus_10_hours": 10,
+    "focus_50_hours": 50,
+    "focus_100_hours": 100,
+    "focus_500_hours": 323.48333333333335,
+    "focus_1000_hours": 323.48333333333335,
+    "deep_work": 0.0,
+    "code_warrior": 0.0,
+    "first_task": 0.0,
+    "scene_creator": 0.0,
+    "ai_user": 0.0,
+    "stats_viewer": 0.0,
+    "power_user": 0.0,
+    "new_year": 0.0,
+    "anniversary": 27.0,
+    "midnight_worker": 0.0,
+    "holiday_hero": 0.0
+  },
+  "last_updated": "2025-12-18T13:52:15.812263"
 }

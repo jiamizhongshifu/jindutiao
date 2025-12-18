@@ -209,8 +209,9 @@ def validate_payment_amount(plan_type: str, submitted_amount: Any) -> Tuple[bool
         return False, error
 
     # 3. 严格验证：提交的金额必须与计划价格完全一致
+    # [SECURITY] 使用极小容差(0.001)处理浮点转换误差，但不允许实际金额差异
     correct_decimal = Decimal(str(correct_amount))
-    if abs(decimal_amount - correct_decimal) > Decimal("0.01"):  # 允许0.01的浮点误差
+    if abs(decimal_amount - correct_decimal) > Decimal("0.001"):
         return False, f"金额不正确，{plan_type}的价格应为¥{correct_amount:.2f}"
 
     return True, ""

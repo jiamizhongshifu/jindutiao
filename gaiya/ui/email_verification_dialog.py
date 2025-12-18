@@ -19,6 +19,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # 添加父目录到路径以导入core模块
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from i18n.translator import tr
+from gaiya.core.async_worker import AsyncNetworkWorker
 
 
 class EmailVerificationDialog(QDialog):
@@ -261,7 +262,7 @@ class EmailVerificationDialog(QDialog):
         self._auto_login()
 
     def _auto_login(self):
-        """验证成功后自动登录"""
+        """验证成功后自动登录 - 异步版本，避免UI阻塞"""
         print(tr("email_verification.log.auto_login_start"))
 
         if not self.password:
@@ -274,84 +275,107 @@ class EmailVerificationDialog(QDialog):
             self.accept()
             return
 
-        try:
-            # 调用登录API
-            from gaiya.core.auth_client import AuthClient
-            auth_client = AuthClient()
+        # ✅ 性能优化: 使用异步Worker避免UI卡顿
+        from gaiya.core.auth_client import AuthClient
+        auth_client = AuthClient()
 
-            result = auth_client.signin(self.email, self.password)
+        self._auto_login_worker = AsyncNetworkWorker(
+            auth_client.signin,
+            self.email,
+            self.password
+        )
+        self._auto_login_worker.success.connect(self._on_auto_login_success)
+        self._auto_login_worker.error.connect(self._on_auto_login_error)
+        self._auto_login_worker.start()
 
-            if result.get("success"):
-                # 登录成功
-                user_info = {
-                    "user_id": result.get("user_id"),
-                    "email": result.get("email"),
-                    "user_tier": result.get("user_tier", "free")
-                }
+    def _on_auto_login_success(self, result: dict):
+        """自动登录成功回调"""
+        if result.get("success"):
+            # 登录成功
+            user_info = {
+                "user_id": result.get("user_id"),
+                "email": result.get("email"),
+                "user_tier": result.get("user_tier", "free")
+            }
 
-                print(tr("email_verification.log.auto_login_success"))
+            print(tr("email_verification.log.auto_login_success"))
 
-                # 发出验证成功信号（携带用户信息）
-                self.verification_success.emit(user_info)
+            # 发出验证成功信号（携带用户信息）
+            self.verification_success.emit(user_info)
 
-                # 关闭对话框
-                self.accept()
-            else:
-                # 登录失败
-                error_msg = result.get("error", tr("email_verification.message.login_failed_title"))
-                QMessageBox.warning(
-                    self,
-                    tr("email_verification.message.auto_login_failed_title"),
-                    tr("email_verification.message.auto_login_failed_message", error=error_msg)
-                )
-                self.accept()
-
-        except Exception as e:
-            print(tr("email_verification.log.auto_login_error", e=str(e)))
+            # 关闭对话框
+            self.accept()
+        else:
+            # 登录失败
+            error_msg = result.get("error", tr("email_verification.message.login_failed_title"))
             QMessageBox.warning(
                 self,
                 tr("email_verification.message.auto_login_failed_title"),
-                tr("email_verification.message.auto_login_error_message", error=str(e))
+                tr("email_verification.message.auto_login_failed_message", error=error_msg)
             )
             self.accept()
 
+    def _on_auto_login_error(self, error_msg: str):
+        """自动登录API失败回调"""
+        print(tr("email_verification.log.auto_login_error", e=error_msg))
+        QMessageBox.warning(
+            self,
+            tr("email_verification.message.auto_login_failed_title"),
+            tr("email_verification.message.auto_login_error_message", error=error_msg)
+        )
+        self.accept()
+
     def _resend_verification_email(self):
-        """重新发送验证邮件"""
-        try:
-            self.resend_button.setEnabled(False)
-            self.resend_button.setText(tr("email_verification.button.sending"))
+        """重新发送验证邮件 - 异步版本，避免UI阻塞"""
+        self.resend_button.setEnabled(False)
+        self.resend_button.setText(tr("email_verification.button.sending"))
 
-            # 调用注册API（Supabase会重新发送验证邮件）
-            from gaiya.core.auth_client import AuthClient
-            auth_client = AuthClient()
+        # ✅ 性能优化: 使用异步Worker避免UI卡顿
+        from gaiya.core.auth_client import AuthClient
+        auth_client = AuthClient()
 
-            # 使用原密码重新注册（Supabase会检测到已存在，只发送验证邮件）
-            result = auth_client.signup(self.email, self.password or "temp_password_for_resend")
+        # 使用原密码重新注册（Supabase会检测到已存在，只发送验证邮件）
+        self._resend_worker = AsyncNetworkWorker(
+            auth_client.signup,
+            email=self.email,
+            password=self.password or "temp_password_for_resend"
+        )
+        self._resend_worker.success.connect(self._on_resend_success)
+        self._resend_worker.error.connect(self._on_resend_error)
+        self._resend_worker.start()
 
-            if result.get("success") or "already registered" in result.get("error", "").lower():
-                QMessageBox.information(
-                    self,
-                    tr("email_verification.message.resend_success_title"),
-                    tr("email_verification.message.resend_success_message")
-                )
-                # 重置计数器
-                self.check_count = 0
-            else:
-                QMessageBox.warning(
-                    self,
-                    tr("email_verification.message.resend_failed_title"),
-                    result.get("error", tr("email_verification.message.resend_failed_message"))
-                )
+    def _on_resend_success(self, result: dict):
+        """重发验证邮件成功回调"""
+        # 恢复按钮状态
+        self.resend_button.setEnabled(True)
+        self.resend_button.setText(tr("email_verification.button.resend"))
 
-        except Exception as e:
-            QMessageBox.critical(
+        if result.get("success") or "already registered" in result.get("error", "").lower():
+            QMessageBox.information(
                 self,
-                tr("email_verification.message.resend_error_title"),
-                tr("email_verification.message.resend_error_message", error=str(e))
+                tr("email_verification.message.resend_success_title"),
+                tr("email_verification.message.resend_success_message")
             )
-        finally:
-            self.resend_button.setEnabled(True)
-            self.resend_button.setText(tr("email_verification.button.resend"))
+            # 重置计数器
+            self.check_count = 0
+        else:
+            QMessageBox.warning(
+                self,
+                tr("email_verification.message.resend_failed_title"),
+                result.get("error", tr("email_verification.message.resend_failed_message"))
+            )
+
+    def _on_resend_error(self, error_msg: str):
+        """重发验证邮件失败回调"""
+        # 恢复按钮状态
+        self.resend_button.setEnabled(True)
+        self.resend_button.setText(tr("email_verification.button.resend"))
+
+        QMessageBox.critical(
+            self,
+            tr("email_verification.message.resend_error_title"),
+            tr("email_verification.message.resend_error_message", error=error_msg)
+        )
 
     def _on_cancel(self):
         """用户点击取消"""

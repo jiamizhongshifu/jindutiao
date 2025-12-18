@@ -30,8 +30,8 @@ if not _IS_PRODUCTION:
         "http://127.0.0.1:5000",
     ])
 
-# 开发模式：允许所有源（仅用于测试，生产环境禁用）
-DEV_MODE = os.getenv("CORS_DEV_MODE") == "true"
+# [SECURITY] 已移除DEV_MODE - 不再支持允许所有源的不安全模式
+# 本地开发时使用 VERCEL_ENV != "production" 自动添加localhost
 
 
 def get_cors_origin(request_origin: str) -> str:
@@ -45,11 +45,7 @@ def get_cors_origin(request_origin: str) -> str:
         允许的CORS Origin（如果请求源在白名单中）
         或默认的第一个允许源（如果请求源不在白名单中）
     """
-    # 开发模式：允许所有源（仅用于测试）
-    if DEV_MODE:
-        return request_origin if request_origin else "*"
-
-    # 生产模式：仅允许白名单中的源
+    # 仅允许白名单中的源
     if request_origin in ALLOWED_ORIGINS:
         return request_origin
 
@@ -68,9 +64,6 @@ def is_origin_allowed(request_origin: str) -> bool:
     Returns:
         True if allowed, False otherwise
     """
-    if DEV_MODE:
-        return True
-
     return request_origin in ALLOWED_ORIGINS
 
 
@@ -88,8 +81,9 @@ def get_cors_headers(request_origin: str = None) -> dict:
     if request_origin:
         allowed_origin = get_cors_origin(request_origin)
     else:
-        # 如果没有提供请求源，使用默认源或 *（开发模式）
-        allowed_origin = "*" if DEV_MODE else ALLOWED_ORIGINS[0]
+        # 如果没有提供请求源，使用默认源
+        # [SECURITY] 非生产环境也不使用 "*"，始终使用白名单
+        allowed_origin = ALLOWED_ORIGINS[0]
 
     return {
         "Access-Control-Allow-Origin": allowed_origin,

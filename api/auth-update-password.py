@@ -71,7 +71,8 @@ class handler(BaseHTTPRequestHandler):
                 print(f"[AUTH-UPDATE-PASSWORD] Invalid password: {password_error}", file=sys.stderr)
                 return
 
-            print(f"[AUTH-UPDATE-PASSWORD] Updating password for token: {access_token[:20]}...", file=sys.stderr)
+            # [SECURITY] 不记录token内容，仅记录操作
+            print(f"[AUTH-UPDATE-PASSWORD] Processing password update request", file=sys.stderr)
 
             # 3. 调用认证管理器
             auth_manager = AuthManager()

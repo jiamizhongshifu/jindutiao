@@ -43,8 +43,12 @@ from scene_editor import SceneEditorWindow
 from gaiya.core.async_worker import AsyncAIWorker as AIWorker
 from gaiya.core.marker_presets import MarkerPresetManager
 
+# Payment module (extracted for maintainability)
+from gaiya.ui.config_modules.payment_manager import PaymentManager, PaymentOptionCard
+from gaiya.ui.config_modules.account_manager import AccountManager
 
-class PaymentOptionCard(QWidget):
+
+class _OriginalPaymentOptionCard(QWidget):
     """Payment option card widget - uses QPainter for reliable rendering in PyInstaller
 
     Card-based selection without radio buttons:
@@ -341,6 +345,12 @@ class ConfigManager(QMainWindow):
         self.autostart_manager = AutoStartManager()  # 自启动管理器
         self.theme_ai_helper = None
 
+        # ✅ Payment module (extracted from config_gui.py for maintainability)
+        self.payment_manager = None  # Initialized lazily after i18n is ready
+
+        # ✅ Account module (extracted from config_gui.py for maintainability)
+        self.account_manager = None  # Initialized lazily after auth_client is ready
+
         # 延迟初始化主题管理器(避免同步文件I/O阻塞UI)
         self.theme_manager = None
         # 延迟初始化模板管理器
@@ -389,151 +399,151 @@ class ConfigManager(QMainWindow):
         except Exception as e:
             logging.error(f"加载配置和任务失败: {e}")
     
+    # ========== _update_ui_from_config 辅助方法 (Phase B.5 重构) ==========
+
+    def _set_widget_value(self, attr_name: str, value, method: str = 'setValue') -> bool:
+        """安全设置UI控件值。
+
+        Args:
+            attr_name: 控件属性名
+            value: 要设置的值
+            method: 设置方法名 ('setValue', 'setChecked', 'setText', 'setCurrentText')
+
+        Returns:
+            True 如果成功设置，False 如果控件不存在
+        """
+        if not hasattr(self, attr_name):
+            return False
+        widget = getattr(self, attr_name)
+        if widget is None:
+            return False
+        setter = getattr(widget, method, None)
+        if setter:
+            setter(value)
+            return True
+        return False
+
+    def _set_color_preview_style(self, preview_attr: str, color: str) -> None:
+        """设置颜色预览按钮样式。"""
+        if not hasattr(self, preview_attr):
+            return
+        preview = getattr(self, preview_attr)
+        if preview:
+            preview.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: {color};
+                    border: 2px solid #CCCCCC;
+                    border-radius: 4px;
+                }}
+                QPushButton:hover {{
+                    border: 2px solid #999999;
+                }}
+            """)
+
+    def _update_basic_ui(self) -> None:
+        """更新基础配置UI（高度、位置、显示器、间隔、自启动）。"""
+        self._set_widget_value('height_spin', self.config.get('bar_height', 20))
+        if hasattr(self, 'height_preset_buttons'):
+            self.update_height_preset_buttons()
+
+        self._set_widget_value('position_combo', self.config.get('position', 'bottom'), 'setCurrentText')
+        self._set_widget_value('screen_spin', self.config.get('screen_index', 0))
+        self._set_widget_value('interval_spin', self.config.get('update_interval', 1000))
+
+        # 自启动复选框（从注册表读取真实状态）
+        if hasattr(self, 'autostart_check') and self.autostart_manager:
+            self.autostart_check.setChecked(self.autostart_manager.is_enabled())
+            self._update_autostart_status_label()
+
+    def _update_color_ui(self) -> None:
+        """更新颜色相关UI（背景色、透明度）。"""
+        bg_color = self.config.get('background_color', '#000000')
+        if self._set_widget_value('bg_color_input', bg_color, 'setText'):
+            self._set_color_preview_style('bg_color_preview', bg_color)
+
+        # 背景透明度 (0-255 → 0-100%)
+        opacity_value = self.config.get('background_opacity', 204)
+        opacity_percent = int(opacity_value / 255 * 100)
+        if self._set_widget_value('opacity_slider', opacity_percent):
+            self._set_widget_value('opacity_label', f"{opacity_percent}%", 'setText')
+
+    def _update_marker_ui(self) -> None:
+        """更新标记相关UI。"""
+        # 标记颜色
+        marker_color = self.config.get('marker_color', '#FF0000')
+        if self._set_widget_value('marker_color_input', marker_color, 'setText'):
+            self._set_color_preview_style('marker_color_preview', marker_color)
+
+        # 标记基本参数
+        self._set_widget_value('marker_width_spin', self.config.get('marker_width', 2))
+        self._set_widget_value('marker_type_combo', self.config.get('marker_type', 'line'), 'setCurrentText')
+        self._set_widget_value('marker_image_input', self.config.get('marker_image_path', ''), 'setText')
+
+        self._set_widget_value('marker_size_spin', self.config.get('marker_size', 50))
+        if hasattr(self, 'marker_size_preset_buttons'):
+            self.update_marker_size_preset_buttons()
+
+        self._set_widget_value('marker_speed_spin', self.config.get('marker_speed', 100))
+        self._set_widget_value('marker_always_visible_check', self.config.get('marker_always_visible', True), 'setChecked')
+        self._set_widget_value('marker_x_offset_spin', self.config.get('marker_x_offset', 0))
+        self._set_widget_value('marker_y_offset_spin', self.config.get('marker_y_offset', 0))
+
+        # 标记图片预设
+        if self.marker_preset_manager:
+            self.marker_preset_manager.load_from_config(self.config)
+            if hasattr(self, 'marker_preset_combo'):
+                current_id = self.marker_preset_manager.get_current_preset_id()
+                for i in range(self.marker_preset_combo.count()):
+                    if self.marker_preset_combo.itemData(i) == current_id:
+                        self.marker_preset_combo.setCurrentIndex(i)
+                        break
+
+    def _update_danmaku_ui(self) -> None:
+        """更新弹幕相关UI。"""
+        cfg = self.config.get('danmaku', {})
+
+        self._set_widget_value('danmaku_enabled_check', cfg.get('enabled', True), 'setChecked')
+        self._set_widget_value('danmaku_frequency_spin', cfg.get('frequency', 30))
+        self._set_widget_value('danmaku_speed_spin', cfg.get('speed', 1.0))
+        self._set_widget_value('danmaku_font_size_spin', cfg.get('font_size', 14))
+
+        # 弹幕透明度 (0-1 → 0-100%)
+        opacity_percent = int(cfg.get('opacity', 1.0) * 100)
+        if self._set_widget_value('danmaku_opacity_slider', opacity_percent):
+            self._set_widget_value('danmaku_opacity_label', f"{opacity_percent}%", 'setText')
+
+        self._set_widget_value('danmaku_max_count_spin', cfg.get('max_count', 3))
+        self._set_widget_value('danmaku_y_offset_spin', cfg.get('y_offset', 80))
+
+        # 颜色模式下拉框
+        if hasattr(self, 'danmaku_color_mode_combo'):
+            index = self.danmaku_color_mode_combo.findData(cfg.get('color_mode', 'auto'))
+            if index >= 0:
+                self.danmaku_color_mode_combo.setCurrentIndex(index)
+
+    def _update_language_ui(self) -> None:
+        """更新语言UI。"""
+        if hasattr(self, 'language_combo'):
+            index = self.language_combo.findData(self.config.get('language', 'zh_CN'))
+            if index >= 0:
+                self.language_combo.setCurrentIndex(index)
+
+    # ========== _update_ui_from_config 主方法 ==========
+
     def _update_ui_from_config(self):
-        """从配置更新UI控件值"""
+        """从配置更新UI控件值。
+
+        Note: Refactored in Phase B.5 to use helper methods for lower complexity.
+        """
         if not self.config:
             return
-        
+
         try:
-            # 更新高度控件
-            if hasattr(self, 'height_spin'):
-                self.height_spin.setValue(self.config.get('bar_height', 20))
-                if hasattr(self, 'height_preset_buttons'):
-                    self.update_height_preset_buttons()
-            
-            # 更新位置控件
-            if hasattr(self, 'position_combo'):
-                self.position_combo.setCurrentText(self.config.get('position', 'bottom'))
-            
-            # 更新显示器索引
-            if hasattr(self, 'screen_spin'):
-                self.screen_spin.setValue(self.config.get('screen_index', 0))
-            
-            # 更新间隔
-            if hasattr(self, 'interval_spin'):
-                self.interval_spin.setValue(self.config.get('update_interval', 1000))
-
-            # 更新自启动复选框（从注册表读取真实状态）
-            if hasattr(self, 'autostart_check') and self.autostart_manager:
-                registry_status = self.autostart_manager.is_enabled()
-                self.autostart_check.setChecked(registry_status)
-                self._update_autostart_status_label()
-
-            # 更新颜色控件
-            if hasattr(self, 'bg_color_input'):
-                bg_color = self.config.get('background_color', '#000000')
-                self.bg_color_input.setText(bg_color)
-                # 更新颜色预览按钮样式
-                if hasattr(self, 'bg_color_preview'):
-                    self.bg_color_preview.setStyleSheet(f"""
-                        QPushButton {{
-                            background-color: {bg_color};
-                            border: 2px solid #CCCCCC;
-                            border-radius: 4px;
-                        }}
-                        QPushButton:hover {{
-                            border: 2px solid #999999;
-                        }}
-                    """)
-
-            # 更新背景透明度滑块(将0-255转换为0-100百分比)
-            if hasattr(self, 'opacity_slider'):
-                opacity_value = self.config.get('background_opacity', 204)
-                opacity_percent = int(opacity_value / 255 * 100)
-                self.opacity_slider.setValue(opacity_percent)
-                if hasattr(self, 'opacity_label'):
-                    self.opacity_label.setText(f"{opacity_percent}%")
-
-            if hasattr(self, 'marker_color_input'):
-                marker_color = self.config.get('marker_color', '#FF0000')
-                self.marker_color_input.setText(marker_color)
-                # 更新颜色预览按钮样式
-                if hasattr(self, 'marker_color_preview'):
-                    self.marker_color_preview.setStyleSheet(f"""
-                        QPushButton {{
-                            background-color: {marker_color};
-                            border: 2px solid #CCCCCC;
-                            border-radius: 4px;
-                        }}
-                        QPushButton:hover {{
-                            border: 2px solid #999999;
-                        }}
-                    """)
-            
-            if hasattr(self, 'marker_width_spin'):
-                self.marker_width_spin.setValue(self.config.get('marker_width', 2))
-            
-            if hasattr(self, 'marker_type_combo'):
-                self.marker_type_combo.setCurrentText(self.config.get('marker_type', 'line'))
-            
-            if hasattr(self, 'marker_image_input'):
-                self.marker_image_input.setText(self.config.get('marker_image_path', ''))
-            
-            if hasattr(self, 'marker_size_spin'):
-                self.marker_size_spin.setValue(self.config.get('marker_size', 50))
-                if hasattr(self, 'marker_size_preset_buttons'):
-                    self.update_marker_size_preset_buttons()
-            
-            if hasattr(self, 'marker_speed_spin'):
-                self.marker_speed_spin.setValue(self.config.get('marker_speed', 100))
-
-            if hasattr(self, 'marker_always_visible_check'):
-                self.marker_always_visible_check.setChecked(self.config.get('marker_always_visible', True))
-
-            if hasattr(self, 'marker_x_offset_spin'):
-                self.marker_x_offset_spin.setValue(self.config.get('marker_x_offset', 0))
-
-            if hasattr(self, 'marker_y_offset_spin'):
-                self.marker_y_offset_spin.setValue(self.config.get('marker_y_offset', 0))
-
-            # 加载标记图片预设配置
-            if self.marker_preset_manager:
-                self.marker_preset_manager.load_from_config(self.config)
-
-                # 同步预设下拉框选中项
-                if hasattr(self, 'marker_preset_combo'):
-                    current_preset_id = self.marker_preset_manager.get_current_preset_id()
-                    # 查找对应的下拉框索引
-                    for i in range(self.marker_preset_combo.count()):
-                        if self.marker_preset_combo.itemData(i) == current_preset_id:
-                            self.marker_preset_combo.setCurrentIndex(i)
-                            break
-
-            # 更新弹幕参数
-            danmaku_config = self.config.get('danmaku', {})
-            if hasattr(self, 'danmaku_enabled_check'):
-                self.danmaku_enabled_check.setChecked(danmaku_config.get('enabled', True))
-            if hasattr(self, 'danmaku_frequency_spin'):
-                self.danmaku_frequency_spin.setValue(danmaku_config.get('frequency', 30))
-            if hasattr(self, 'danmaku_speed_spin'):
-                self.danmaku_speed_spin.setValue(danmaku_config.get('speed', 1.0))
-            if hasattr(self, 'danmaku_font_size_spin'):
-                self.danmaku_font_size_spin.setValue(danmaku_config.get('font_size', 14))
-
-            # 更新弹幕透明度滑块(将0-1转换为0-100百分比)
-            if hasattr(self, 'danmaku_opacity_slider'):
-                opacity_value = danmaku_config.get('opacity', 1.0)
-                opacity_percent = int(opacity_value * 100)
-                self.danmaku_opacity_slider.setValue(opacity_percent)
-                if hasattr(self, 'danmaku_opacity_label'):
-                    self.danmaku_opacity_label.setText(f"{opacity_percent}%")
-
-            if hasattr(self, 'danmaku_max_count_spin'):
-                self.danmaku_max_count_spin.setValue(danmaku_config.get('max_count', 3))
-            if hasattr(self, 'danmaku_y_offset_spin'):
-                self.danmaku_y_offset_spin.setValue(danmaku_config.get('y_offset', 80))
-            if hasattr(self, 'danmaku_color_mode_combo'):
-                color_mode = danmaku_config.get('color_mode', 'auto')
-                index = self.danmaku_color_mode_combo.findData(color_mode)
-                if index >= 0:
-                    self.danmaku_color_mode_combo.setCurrentIndex(index)
-
-            # Update language combo box
-            if hasattr(self, 'language_combo'):
-                current_lang = self.config.get('language', 'zh_CN')
-                index = self.language_combo.findData(current_lang)
-                if index >= 0:
-                    self.language_combo.setCurrentIndex(index)
+            self._update_basic_ui()
+            self._update_color_ui()
+            self._update_marker_ui()
+            self._update_danmaku_ui()
+            self._update_language_ui()
         except Exception as e:
             logging.error(f"更新UI控件失败: {e}")
     
@@ -1435,6 +1445,29 @@ class ConfigManager(QMainWindow):
 
             # 初次更新UI状态（异步）
             QTimer.singleShot(500, self._update_ai_status_async)
+
+            # ✅ Initialize PaymentManager after ai_client is ready
+            self.payment_manager = PaymentManager(
+                parent_widget=self,
+                i18n=self.i18n,
+                ai_client=self.ai_client
+            )
+            # Connect PaymentManager signals to update UI
+            self.payment_manager.subscription_refreshed.connect(self._on_payment_subscription_refreshed)
+            logging.info("PaymentManager initialized successfully")
+
+            # ✅ Initialize AccountManager after auth_client is ready
+            self.account_manager = AccountManager(
+                parent_widget=self,
+                auth_client=self.auth_client,
+                ai_client=self.ai_client,
+                i18n=self.i18n
+            )
+            # Connect AccountManager signals to update UI
+            self.account_manager.login_success.connect(self._on_account_login_success)
+            self.account_manager.logout_success.connect(self._on_account_logout_success)
+            self.account_manager.subscription_updated.connect(self._on_account_subscription_updated)
+            logging.info("AccountManager initialized successfully")
 
         except Exception as e:
             logging.error(f"初始化AI组件失败: {e}")
@@ -2493,22 +2526,10 @@ class ConfigManager(QMainWindow):
         scroll_area.setWidget(widget)
         return scroll_area
 
-    def create_tasks_tab(self):
-        """创建任务管理标签页"""
-        # 创建滚动区域容器
-        from PySide6.QtWidgets import QScrollArea
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+    # ========== create_tasks_tab 辅助方法 (Phase B.5 重构) ==========
 
-        # 创建内容widget
-        widget = QWidget()
-        layout = QVBoxLayout(widget)
-
-        # 顶部信息和模板加载区域
-        top_layout = QVBoxLayout()
-
-        # AI任务规划区域
+    def _create_ai_planning_group(self) -> QGroupBox:
+        """创建AI任务规划区域组件。"""
         ai_group = QGroupBox("🤖 " + self.i18n.tr("tasks.sections.ai_planning"))
         ai_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
         ai_layout = QVBoxLayout()
@@ -2528,67 +2549,155 @@ class ConfigManager(QMainWindow):
         self.ai_input.setStyleSheet(StyleManager.input_text())
         self.ai_input.setPlaceholderText(self.i18n.tr("general.text_5947"))
         self.ai_input.setMinimumHeight(35)
-        self.ai_input.returnPressed.connect(self.on_ai_generate_clicked)  # 支持回车键
+        self.ai_input.returnPressed.connect(self.on_ai_generate_clicked)
         input_container.addWidget(self.ai_input)
-
         ai_layout.addLayout(input_container)
 
         # 按钮行
         ai_button_layout = QHBoxLayout()
 
-        # AI生成按钮
         self.generate_btn = QPushButton(self.i18n.tr("account.ui.ai_smart_generate"))
         self.generate_btn.clicked.connect(self.on_ai_generate_clicked)
         self.generate_btn.setFixedHeight(36)
         self.generate_btn.setStyleSheet("""
             QPushButton {
-                background-color: #FF6B00;
-                color: white;
-                padding: 8px 16px;
-                font-weight: bold;
-                font-size: 13px;
-                border-radius: 4px;
+                background-color: #FF6B00; color: white;
+                padding: 8px 16px; font-weight: bold; font-size: 13px; border-radius: 4px;
             }
-            QPushButton:hover {
-                background-color: #FF8500;
-            }
-            QPushButton:disabled {
-                background-color: #ccc;
-                color: #666;
-            }
+            QPushButton:hover { background-color: #FF8500; }
+            QPushButton:disabled { background-color: #ccc; color: #666; }
         """)
         ai_button_layout.addWidget(self.generate_btn)
 
-        # 配额状态标签
         self.quota_label = QLabel(self.i18n.tr("tasks.labels.quota_status_loading"))
         self.quota_label.setStyleSheet("color: #333333; padding: 5px;")
         ai_button_layout.addWidget(self.quota_label)
 
-        # 刷新配额按钮
         self.refresh_quota_btn = QPushButton(self.i18n.tr("tasks.buttons.refresh_quota"))
         self.refresh_quota_btn.clicked.connect(self.refresh_quota_status)
         self.refresh_quota_btn.setFixedHeight(36)
         self.refresh_quota_btn.setStyleSheet("""
             QPushButton {
-                background-color: #4CAF50;
-                color: white;
-                padding: 8px 12px;
-                border-radius: 4px;
+                background-color: #4CAF50; color: white;
+                padding: 8px 12px; border-radius: 4px;
             }
-            QPushButton:hover {
-                background-color: #45a049;
-            }
-            QPushButton:disabled {
-                background-color: #cccccc;
-                color: #666666;
-            }
+            QPushButton:hover { background-color: #45a049; }
+            QPushButton:disabled { background-color: #cccccc; color: #666666; }
         """)
         ai_button_layout.addWidget(self.refresh_quota_btn)
-
         ai_button_layout.addStretch()
-        ai_layout.addLayout(ai_button_layout)
 
+        ai_layout.addLayout(ai_button_layout)
         ai_group.setLayout(ai_layout)
+        return ai_group
+
+    def _create_theme_selection_group(self) -> QGroupBox:
+        """创建预设主题选择区域组件。"""
+        theme_group = QGroupBox("🎨 " + self.i18n.tr("tasks.sections.preset_themes"))
+        theme_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
+        theme_layout = QHBoxLayout()
+
+        theme_label = QLabel(self.i18n.tr("tasks.labels.select_theme"))
+        theme_layout.addWidget(theme_label)
+
+        self.theme_combo = QComboBox()
+        self.theme_combo.setStyleSheet(StyleManager.dropdown())
+        self.theme_combo.setMinimumWidth(150)
+        QTimer.singleShot(200, self._load_preset_themes)
+        self.theme_combo.currentIndexChanged.connect(self.on_preset_theme_changed_with_preview)
+        theme_layout.addWidget(self.theme_combo)
+
+        preview_label = QLabel(self.i18n.tr("tasks.labels.color_preview"))
+        preview_label.setStyleSheet("color: #333333; margin-left: 10px;")
+        theme_layout.addWidget(preview_label)
+
+        self.colors_preview_widget = QWidget()
+        colors_preview_layout = QHBoxLayout(self.colors_preview_widget)
+        colors_preview_layout.setContentsMargins(0, 0, 0, 0)
+        colors_preview_layout.setSpacing(3)
+        theme_layout.addWidget(self.colors_preview_widget)
+
+        theme_layout.addStretch()
+        theme_group.setLayout(theme_layout)
+        return theme_group
+
+    def _create_schedule_management_group(self) -> QGroupBox:
+        """创建模板自动应用管理组件。"""
+        schedule_title = self.i18n.tr("tasks.sections.auto_apply_management")
+        if not schedule_title.startswith("📅"):
+            schedule_title = "📅 " + schedule_title
+        schedule_panel = QGroupBox(schedule_title)
+        schedule_panel.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
+        schedule_layout = QVBoxLayout()
+
+        # 说明文字
+        schedule_hint = QLabel(self.i18n.tr("config.settings_9"))
+        schedule_hint.setStyleSheet("color: #333333; font-style: italic; padding: 5px;")
+        schedule_layout.addWidget(schedule_hint)
+
+        # 已配置规则表格
+        self.schedule_table = QTableWidget()
+        self.schedule_table.setStyleSheet(StyleManager.table())
+        self.schedule_table.setColumnCount(4)
+        self.schedule_table.setHorizontalHeaderLabels([
+            self.i18n.tr("config.template.template_name"),
+            self.i18n.tr("config.template.apply_time"),
+            self.i18n.tr("config.template.status"),
+            self.i18n.tr("config.table.actions")
+        ])
+        self.schedule_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.schedule_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+        self.schedule_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.schedule_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        self.schedule_table.setMinimumHeight(150)
+        self.schedule_table.setMaximumHeight(300)
+        self.schedule_table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.schedule_table.setSelectionMode(QTableWidget.SingleSelection)
+        QTimer.singleShot(300, self._load_schedule_table)
+        schedule_layout.addWidget(self.schedule_table)
+
+        # 操作按钮行
+        button_row = QHBoxLayout()
+        add_schedule_btn = QPushButton(self.i18n.tr("tasks.buttons.add_rule"))
+        add_schedule_btn.setFixedHeight(36)
+        add_schedule_btn.setStyleSheet(StyleManager.button_primary())
+        add_schedule_btn.clicked.connect(self._add_schedule_dialog)
+        button_row.addWidget(add_schedule_btn)
+
+        test_date_btn = QPushButton(self.i18n.tr("tasks.buttons.test_date"))
+        test_date_btn.setToolTip(self.i18n.tr("config.tooltips.test_date_match"))
+        test_date_btn.setFixedHeight(36)
+        test_date_btn.setStyleSheet("QPushButton { padding: 8px 16px; border-radius: 4px; }")
+        test_date_btn.clicked.connect(self._test_date_matching)
+        button_row.addWidget(test_date_btn)
+        button_row.addStretch()
+
+        schedule_layout.addLayout(button_row)
+        schedule_panel.setLayout(schedule_layout)
+        return schedule_panel
+
+    # ========== create_tasks_tab 主方法 ==========
+
+    def create_tasks_tab(self):
+        """创建任务管理标签页
+
+        Note: Refactored in Phase B.5 - major sections extracted to helper methods.
+        """
+        # 创建滚动区域容器
+        from PySide6.QtWidgets import QScrollArea
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+        # 创建内容widget
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+
+        # 顶部信息和模板加载区域
+        top_layout = QVBoxLayout()
+
+        # ✅ B.5 重构: 使用辅助方法创建 AI 规划区域
+        ai_group = self._create_ai_planning_group()
         top_layout.addWidget(ai_group)
 
         # 延迟加载配额状态，避免初始化时阻塞
@@ -2606,38 +2715,8 @@ class ConfigManager(QMainWindow):
         info_label.setStyleSheet("color: #333333; font-style: italic;")
         top_layout.addWidget(info_label)
 
-        # 预设主题选择区域
-        theme_group = QGroupBox("🎨 " + self.i18n.tr("tasks.sections.preset_themes"))
-        theme_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
-        theme_layout = QHBoxLayout()
-
-        theme_label = QLabel(self.i18n.tr("tasks.labels.select_theme"))
-        theme_layout.addWidget(theme_label)
-
-        # 创建主题下拉框
-        self.theme_combo = QComboBox()
-        self.theme_combo.setStyleSheet(StyleManager.dropdown())
-        self.theme_combo.setMinimumWidth(150)
-
-        # 延迟加载主题列表
-        QTimer.singleShot(200, self._load_preset_themes)
-
-        self.theme_combo.currentIndexChanged.connect(self.on_preset_theme_changed_with_preview)
-        theme_layout.addWidget(self.theme_combo)
-
-        # 主题配色预览区域
-        preview_label = QLabel(self.i18n.tr("tasks.labels.color_preview"))
-        preview_label.setStyleSheet("color: #333333; margin-left: 10px;")
-        theme_layout.addWidget(preview_label)
-
-        self.colors_preview_widget = QWidget()
-        colors_preview_layout = QHBoxLayout(self.colors_preview_widget)
-        colors_preview_layout.setContentsMargins(0, 0, 0, 0)
-        colors_preview_layout.setSpacing(3)
-        theme_layout.addWidget(self.colors_preview_widget)
-
-        theme_layout.addStretch()
-        theme_group.setLayout(theme_layout)
+        # ✅ B.5 重构: 使用辅助方法创建主题选择区域
+        theme_group = self._create_theme_selection_group()
         top_layout.addWidget(theme_group)
 
         # 合并的模板管理区域
@@ -2805,65 +2884,8 @@ class ConfigManager(QMainWindow):
 
         layout.addLayout(button_layout)
 
-        # ========== 模板自动应用管理（放在最底部） ==========
-        # 智能添加图标,避免重复
-        schedule_title = self.i18n.tr("tasks.sections.auto_apply_management")
-        if not schedule_title.startswith("📅"):
-            schedule_title = "📅 " + schedule_title
-        schedule_panel = QGroupBox(schedule_title)
-        schedule_panel.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
-        schedule_layout = QVBoxLayout()
-
-        # 说明文字
-        schedule_hint = QLabel(self.i18n.tr("config.settings_9"))
-        schedule_hint.setStyleSheet("color: #333333; font-style: italic; padding: 5px;")
-        schedule_layout.addWidget(schedule_hint)
-
-        # 已配置规则表格
-        self.schedule_table = QTableWidget()
-        self.schedule_table.setStyleSheet(StyleManager.table())
-        self.schedule_table.setColumnCount(4)
-        self.schedule_table.setHorizontalHeaderLabels([
-            self.i18n.tr("config.template.template_name"),
-            self.i18n.tr("config.template.apply_time"),
-            self.i18n.tr("config.template.status"),
-            self.i18n.tr("config.table.actions")
-        ])
-        self.schedule_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        self.schedule_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
-        self.schedule_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        self.schedule_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        self.schedule_table.setMinimumHeight(150)
-        self.schedule_table.setMaximumHeight(300)
-        self.schedule_table.setSelectionBehavior(QTableWidget.SelectRows)
-        self.schedule_table.setSelectionMode(QTableWidget.SingleSelection)
-
-        # 延迟加载时间表数据
-        QTimer.singleShot(300, self._load_schedule_table)
-
-        schedule_layout.addWidget(self.schedule_table)
-
-        # 操作按钮行
-        button_row = QHBoxLayout()
-
-        add_schedule_btn = QPushButton(self.i18n.tr("tasks.buttons.add_rule"))
-        add_schedule_btn.setFixedHeight(36)
-        add_schedule_btn.setStyleSheet(StyleManager.button_primary())
-        add_schedule_btn.clicked.connect(self._add_schedule_dialog)
-        button_row.addWidget(add_schedule_btn)
-
-        test_date_btn = QPushButton(self.i18n.tr("tasks.buttons.test_date"))
-        test_date_btn.setToolTip(self.i18n.tr("config.tooltips.test_date_match"))
-        test_date_btn.setFixedHeight(36)
-        test_date_btn.setStyleSheet("QPushButton { padding: 8px 16px; border-radius: 4px; }")
-        test_date_btn.clicked.connect(self._test_date_matching)
-        button_row.addWidget(test_date_btn)
-
-        button_row.addStretch()
-
-        schedule_layout.addLayout(button_row)
-
-        schedule_panel.setLayout(schedule_layout)
+        # ✅ B.5 重构: 使用辅助方法创建模板自动应用管理区域
+        schedule_panel = self._create_schedule_management_group()
         layout.addWidget(schedule_panel)
 
         # 将内容widget设置到滚动区域
@@ -4253,8 +4275,46 @@ class ConfigManager(QMainWindow):
         scroll_area.setWidget(content_widget)
         return scroll_area
 
+    # ==================== AccountManager Callbacks ====================
+
+    def _on_account_login_success(self, user_info: dict):
+        """Callback when AccountManager login succeeds."""
+        # Reload account tab
+        self.account_tab_widget = None
+        self._load_account_tab()
+
+        # Refresh quota display in task management tab
+        if hasattr(self, 'quota_label'):
+            logging.info("[LOGIN] Refreshing quota display")
+            self.refresh_quota_status_async()
+
+    def _on_account_logout_success(self):
+        """Callback when AccountManager logout succeeds."""
+        # Close config manager
+        self.close()
+
+    def _on_account_subscription_updated(self, new_tier: str):
+        """Callback when AccountManager subscription is updated."""
+        # Reload account tab to show new status
+        if self.account_tab_widget:
+            self.account_tab_widget.deleteLater()
+        self.account_tab_widget = None
+        self._load_account_tab()
+
+        # Refresh quota display
+        if hasattr(self, 'quota_label'):
+            self.refresh_quota_status_async()
+
+    # ==================== Account Methods (Proxy to AccountManager) ====================
+
     def _on_show_login_dialog(self):
-        """显示登录/注册对话框"""
+        """显示登录/注册对话框 - 代理到 AccountManager"""
+        # ✅ Use AccountManager if available
+        if self.account_manager:
+            self.account_manager.show_login_dialog()
+            return
+
+        # Fallback to legacy implementation
         from gaiya.ui.auth_ui import AuthDialog
 
         # 创建登录对话框
@@ -4306,7 +4366,7 @@ class ConfigManager(QMainWindow):
 
     def _on_refresh_account_clicked(self):
         """
-        处理刷新账户按钮点击
+        处理刷新账户按钮点击 - 代理到 AccountManager
 
         ⚠️ 关键功能：用于支付成功后手动刷新会员状态
         流程：
@@ -4314,6 +4374,12 @@ class ConfigManager(QMainWindow):
         2. 更新本地缓存的用户信息
         3. 重新加载个人中心页面显示最新状态
         """
+        # ✅ Use AccountManager if available
+        if self.account_manager:
+            self.account_manager.refresh_account()
+            return
+
+        # Fallback to legacy implementation
         from PySide6.QtWidgets import QMessageBox
         from gaiya.core.auth_client import AuthClient
         from gaiya.core.async_worker import AsyncNetworkWorker
@@ -4425,7 +4491,13 @@ class ConfigManager(QMainWindow):
         )
 
     def _on_logout_clicked(self):
-        """处理退出登录按钮点击"""
+        """处理退出登录按钮点击 - 代理到 AccountManager"""
+        # ✅ Use AccountManager if available
+        if self.account_manager:
+            self.account_manager.logout()
+            return
+
+        # Fallback to legacy implementation
         from PySide6.QtWidgets import QMessageBox
 
         # 确认对话框
@@ -5785,8 +5857,22 @@ class ConfigManager(QMainWindow):
                         }}
                     """)
 
+    def _on_payment_subscription_refreshed(self):
+        """Callback when PaymentManager signals subscription refresh."""
+        # Refresh account tab UI
+        self.account_tab_widget = None
+        self._load_account_tab()
+        if hasattr(self, "update_account_display"):
+            self.update_account_display()
+
     def _show_payment_method_dialog(self, plan_id: str):
-        """显示支付方式选择对话框"""
+        """显示支付方式选择对话框 - 代理到 PaymentManager"""
+        # ✅ Use PaymentManager if available (modular implementation)
+        if self.payment_manager:
+            self.payment_manager.show_payment_method_dialog(plan_id)
+            return
+
+        # Fallback to legacy implementation (for backward compatibility)
         from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QRadioButton, QButtonGroup, QPushButton
         from PySide6.QtCore import Qt
 
@@ -6779,9 +6865,10 @@ class ConfigManager(QMainWindow):
         logging.warning(f"[PAYMENT] Status check error (continuing polling): {error_msg}")
 
     def _confirm_payment_manually(self, dialog, out_trade_no, plan_name):
-        """手动确认支付完成"""
+        """手动确认支付完成 - 异步版本，避免UI阻塞"""
         from PySide6.QtWidgets import QMessageBox
         from gaiya.core.auth_client import AuthClient
+        from gaiya.core.async_worker import AsyncNetworkWorker
         import logging
 
         # 停止轮询
@@ -6793,61 +6880,114 @@ class ConfigManager(QMainWindow):
 
         logging.info(f"[PAYMENT] User manually confirmed payment: {out_trade_no}")
 
-        # 直接触发会员升级
-        try:
-            # 提取user_id和plan_type
-            auth_client = AuthClient()
-            user_id = auth_client.get_user_id()
+        # 提取user_id和plan_type (本地内存读取，不阻塞)
+        auth_client = AuthClient()
+        user_id = auth_client.get_user_id()
 
-            # 从plan_name推断plan_type
-            plan_type_map = {
-                "Pro月度订阅": "pro_monthly",
-                "Pro年度订阅": "pro_yearly",
-                "团队合伙人": "team_partner"
-            }
-            plan_type = plan_type_map.get(plan_name, "pro_monthly")
+        # 从plan_name推断plan_type
+        plan_type_map = {
+            "Pro月度订阅": "pro_monthly",
+            "Pro年度订阅": "pro_yearly",
+            "团队合伙人": "team_partner"
+        }
+        plan_type = plan_type_map.get(plan_name, "pro_monthly")
 
-            logging.info(f"[PAYMENT] Triggering manual upgrade for user {user_id}, plan {plan_type}")
+        logging.info(f"[PAYMENT] Triggering manual upgrade for user {user_id}, plan {plan_type}")
 
-            # 调用手动升级API
-            result = auth_client.trigger_manual_upgrade(
-                out_trade_no=out_trade_no,
-                user_id=user_id,
-                plan_type=plan_type
-            )
+        # 保存上下文供回调使用
+        self._manual_upgrade_context = {
+            'plan_name': plan_name,
+            'out_trade_no': out_trade_no,
+            'auth_client': auth_client
+        }
 
-            if result.get("success"):
-                # 刷新会员状态
-                from gaiya.core.auth_client import AuthClient
-                auth_client = AuthClient()
-                subscription_result = auth_client.get_subscription_status()
+        # ✅ 性能优化: 使用异步Worker避免UI卡顿
+        self._manual_upgrade_worker = AsyncNetworkWorker(
+            auth_client.trigger_manual_upgrade,
+            out_trade_no=out_trade_no,
+            user_id=user_id,
+            plan_type=plan_type
+        )
+        self._manual_upgrade_worker.success.connect(self._on_manual_upgrade_success)
+        self._manual_upgrade_worker.error.connect(self._on_manual_upgrade_error)
+        self._manual_upgrade_worker.start()
 
-                if subscription_result.get("success"):
-                    new_tier = subscription_result.get('user_tier', 'free')
-                    logging.info(f"[PAYMENT] Subscription status refreshed: {new_tier}")
+    def _on_manual_upgrade_success(self, result: dict):
+        """手动升级API成功回调"""
+        from PySide6.QtWidgets import QMessageBox
+        from gaiya.core.async_worker import AsyncNetworkWorker
+        import logging
 
-                    # ✅ P1-1.5: 支付成功后同步tier到AI客户端
-                    if hasattr(self, "ai_client") and self.ai_client:
-                        self.ai_client.set_user_tier(new_tier)
-                        logging.info(f"[AI Client] 会员升级后已同步tier: {new_tier}")
+        ctx = getattr(self, '_manual_upgrade_context', {})
+        plan_name = ctx.get('plan_name', '会员')
+        out_trade_no = ctx.get('out_trade_no', '')
+        auth_client = ctx.get('auth_client')
 
-                    QMessageBox.information(self, "支付成功", f"{plan_name}已成功激活!\n\n会员状态已更新")
+        if result.get("success"):
+            logging.info(f"[PAYMENT] Manual upgrade API success: {out_trade_no}")
 
-                    # 刷新UI显示
-                    if hasattr(self, 'update_account_display'):
-                        self.update_account_display()
-                else:
-                    QMessageBox.information(self, "支付成功", f"{plan_name}已成功激活!\n\n请重启应用以刷新会员状态。")
-
-                logging.info(f"[PAYMENT] Manual upgrade successful: {out_trade_no}")
+            # 继续异步刷新会员状态
+            if auth_client:
+                self._subscription_refresh_worker = AsyncNetworkWorker(
+                    auth_client.get_subscription_status
+                )
+                self._subscription_refresh_worker.success.connect(
+                    lambda r: self._on_manual_upgrade_subscription_refreshed(r, plan_name)
+                )
+                self._subscription_refresh_worker.error.connect(
+                    lambda e: self._on_manual_upgrade_subscription_error(e, plan_name)
+                )
+                self._subscription_refresh_worker.start()
             else:
-                error_msg = result.get("error", "激活失败")
-                QMessageBox.warning(self, "激活失败", f"会员激活失败: {error_msg}\n\n请联系客服处理")
-                logging.error(f"[PAYMENT] Manual upgrade failed: {error_msg}")
+                QMessageBox.information(self, "支付成功", f"{plan_name}已成功激活!\n\n请重启应用以刷新会员状态。")
+        else:
+            error_msg = result.get("error", "激活失败")
+            QMessageBox.warning(self, "激活失败", f"会员激活失败: {error_msg}\n\n请联系客服处理")
+            logging.error(f"[PAYMENT] Manual upgrade failed: {error_msg}")
 
-        except Exception as e:
-            logging.error(f"[PAYMENT] Manual upgrade error: {e}")
-            QMessageBox.critical(self, "错误", f"激活过程出错: {str(e)}\n\n请联系客服处理")
+    def _on_manual_upgrade_error(self, error_msg: str):
+        """手动升级API失败回调"""
+        from PySide6.QtWidgets import QMessageBox
+        import logging
+
+        logging.error(f"[PAYMENT] Manual upgrade error: {error_msg}")
+        QMessageBox.critical(self, "错误", f"激活过程出错: {error_msg}\n\n请联系客服处理")
+
+    def _on_manual_upgrade_subscription_refreshed(self, subscription_result: dict, plan_name: str):
+        """手动升级后会员状态刷新成功回调"""
+        from PySide6.QtWidgets import QMessageBox
+        import logging
+
+        ctx = getattr(self, '_manual_upgrade_context', {})
+        out_trade_no = ctx.get('out_trade_no', '')
+
+        if subscription_result.get("success"):
+            new_tier = subscription_result.get('user_tier', 'free')
+            logging.info(f"[PAYMENT] Subscription status refreshed: {new_tier}")
+
+            # ✅ P1-1.5: 支付成功后同步tier到AI客户端
+            if hasattr(self, "ai_client") and self.ai_client:
+                self.ai_client.set_user_tier(new_tier)
+                logging.info(f"[AI Client] 会员升级后已同步tier: {new_tier}")
+
+            QMessageBox.information(self, "支付成功", f"{plan_name}已成功激活!\n\n会员状态已更新")
+
+            # 刷新UI显示
+            if hasattr(self, 'update_account_display'):
+                self.update_account_display()
+        else:
+            QMessageBox.information(self, "支付成功", f"{plan_name}已成功激活!\n\n请重启应用以刷新会员状态。")
+
+        logging.info(f"[PAYMENT] Manual upgrade successful: {out_trade_no}")
+
+    def _on_manual_upgrade_subscription_error(self, error_msg: str, plan_name: str):
+        """手动升级后会员状态刷新失败回调(非关键错误)"""
+        from PySide6.QtWidgets import QMessageBox
+        import logging
+
+        logging.warning(f"[PAYMENT] Subscription refresh failed after upgrade: {error_msg}")
+        # 升级本身成功，只是刷新状态失败，不算错误
+        QMessageBox.information(self, "支付成功", f"{plan_name}已成功激活!\n\n请重启应用以刷新会员状态。")
 
     def _cancel_payment_dialog(self, dialog):
         """取消支付对话框"""
@@ -8514,62 +8654,211 @@ class ConfigManager(QMainWindow):
         seconds = time_utils.time_str_to_seconds(time_str)
         return seconds // 60
 
+    # ========== save_all 辅助方法 (Phase B.4 重构) ==========
+
+    def _collect_notification_minutes(self) -> tuple[list[int], list[int]]:
+        """收集通知时间配置。
+
+        Returns:
+            (before_start_minutes, before_end_minutes)
+        """
+        notification_config = self.config.get('notification', {})
+
+        # 开始前提醒
+        if hasattr(self, 'notify_before_start_checks'):
+            before_start = [m for m, cb in self.notify_before_start_checks.items() if cb.isChecked()]
+        else:
+            before_start = notification_config.get('before_start_minutes', [10, 5])
+
+        # 结束前提醒
+        if hasattr(self, 'notify_before_end_checks'):
+            before_end = [m for m, cb in self.notify_before_end_checks.items() if cb.isChecked()]
+        else:
+            before_end = notification_config.get('before_end_minutes', [5])
+
+        return before_start, before_end
+
+    def _get_ui_value(self, attr_name: str, default, getter: str = 'value'):
+        """安全获取UI控件值。
+
+        Args:
+            attr_name: 控件属性名
+            default: 默认值
+            getter: 获取值的方法名 ('value', 'isChecked', 'text', 'currentIndex')
+        """
+        if not hasattr(self, attr_name):
+            return default
+        widget = getattr(self, attr_name)
+        if widget is None:
+            return default
+        method = getattr(widget, getter, None)
+        if method is None:
+            return default
+        return method()
+
+    def _handle_autostart_setting(self, enabled: bool) -> None:
+        """处理开机自启动设置。"""
+        if not hasattr(self, 'autostart_manager') or not self.autostart_manager:
+            return
+        if self.autostart_manager.set_enabled(enabled):
+            logging.info(f"自启动设置{'启用' if enabled else '禁用'}成功")
+        else:
+            logging.error(f"自启动设置{'启用' if enabled else '禁用'}失败")
+            QMessageBox.warning(self, "警告", "开机自启动设置失败\n\n可能需要管理员权限或系统限制")
+
+    def _validate_task_duration(self, row: int, task_name: str, start_time: str, end_time: str) -> bool:
+        """验证任务时长是否合理。
+
+        Args:
+            row: 任务行号 (0-based)
+            task_name: 任务名称
+            start_time: 开始时间 HH:mm
+            end_time: 结束时间 HH:mm
+
+        Returns:
+            True 如果时长合理, False 如果有问题
+        """
+        start_minutes = self.time_to_minutes(start_time)
+        end_minutes = self.time_to_minutes(end_time)
+
+        # 非跨天任务无需特殊验证
+        if end_minutes > start_minutes:
+            return True
+
+        # 跨天任务: 计算实际时长
+        actual_duration = (1440 - start_minutes) + end_minutes
+
+        if actual_duration < 5:
+            QMessageBox.warning(
+                self, "时间错误",
+                f"第 {row + 1} 个任务的时长过短!\n\n"
+                f"任务: {task_name}\n开始: {start_time}, 结束: {end_time}\n"
+                f"实际时长: {actual_duration}分钟\n\n请检查时间设置"
+            )
+            return False
+
+        if actual_duration > 1200:  # 20小时
+            QMessageBox.warning(
+                self, "时间错误",
+                f"第 {row + 1} 个任务的时长过长!\n\n"
+                f"任务: {task_name}\n开始: {start_time}, 结束: {end_time}\n"
+                f"实际时长: {actual_duration // 60}小时{actual_duration % 60}分钟\n\n"
+                f"跨天任务不应超过20小时"
+            )
+            return False
+
+        return True
+
+    def _collect_tasks_from_table(self, theme_colors: list) -> list[dict] | None:
+        """从任务表格收集任务列表。
+
+        Args:
+            theme_colors: 主题颜色列表 (可能为空)
+
+        Returns:
+            任务列表, 如果验证失败返回 None
+        """
+        import hashlib
+
+        tasks = []
+        auto_apply = self.config.get('theme', {}).get('auto_apply_task_colors', False)
+        logging.info(f"[保存任务] 开始从表格读取任务,表格行数: {self.tasks_table.rowCount()}")
+
+        for row in range(self.tasks_table.rowCount()):
+            start_widget = self.tasks_table.cellWidget(row, 0)
+            end_widget = self.tasks_table.cellWidget(row, 1)
+            name_item = self.tasks_table.item(row, 2)
+            color_widget = self.tasks_table.cellWidget(row, 3)
+            text_color_widget = self.tasks_table.cellWidget(row, 4)
+
+            if not all([start_widget, end_widget, name_item, color_widget, text_color_widget]):
+                continue
+
+            color_input = color_widget.findChild(QLineEdit)
+            text_color_input = text_color_widget.findChild(QLineEdit)
+
+            # 确定任务颜色
+            if auto_apply and theme_colors:
+                task_color = theme_colors[row % len(theme_colors)]
+            else:
+                task_color = color_input.text() if color_input else "#4CAF50"
+
+            start_time = start_widget.time().toString("HH:mm")
+            end_time = end_widget.time().toString("HH:mm")
+
+            # 处理午夜时间
+            if end_widget.property("is_midnight") or (end_time == "00:00" and row == self.tasks_table.rowCount() - 1):
+                end_time = "24:00"
+
+            task_name = name_item.text()
+
+            # 验证任务时长
+            if not self._validate_task_duration(row, task_name, start_time, end_time):
+                return None
+
+            # 生成稳定ID
+            stable_key = f"{start_time}|{end_time}|{task_name}"
+            task_id = hashlib.sha1(stable_key.encode('utf-8')).hexdigest()
+
+            tasks.append({
+                "id": task_id,
+                "start": start_time,
+                "end": end_time,
+                "task": task_name,
+                "color": task_color,
+                "text_color": text_color_input.text() if text_color_input else "#FFFFFF"
+            })
+
+        return tasks
+
+    def _get_theme_colors(self) -> list:
+        """获取当前选中主题的颜色列表。"""
+        if not hasattr(self, 'selected_theme_id') or not self.selected_theme_id:
+            return []
+
+        if not self.theme_manager:
+            preset_themes = ThemeManager.DEFAULT_PRESET_THEMES.copy()
+        else:
+            all_themes = self.theme_manager.get_all_themes()
+            preset_themes = all_themes.get('preset_themes', {})
+
+        theme_data = preset_themes.get(self.selected_theme_id, {})
+        return theme_data.get('task_colors', [])
+
+    # ========== save_all 主方法 ==========
+
     def save_all(self) -> None:
         """Save all settings to config file
 
         Collects configuration from UI widgets and persists to disk using debounced save.
         Also updates tasks.json with current task list.
+
+        Note: Refactored in Phase B.4 to use helper methods for lower complexity.
         """
         try:
-            # 收集通知配置
-            # 收集开始前提醒时间（安全检查，避免属性不存在）
-            before_start_minutes = []
-            if hasattr(self, 'notify_before_start_checks'):
-                before_start_minutes = [
-                    minutes for minutes, checkbox in self.notify_before_start_checks.items()
-                    if checkbox.isChecked()
-                ]
-            else:
-                # 如果属性不存在，使用配置中的默认值
-                notification_config = self.config.get('notification', {})
-                before_start_minutes = notification_config.get('before_start_minutes', [10, 5])
+            # ========== 1. 收集通知和自启动配置 ==========
+            before_start_minutes, before_end_minutes = self._collect_notification_minutes()
+            autostart_enabled = self._get_ui_value('autostart_check', False, 'isChecked')
+            self._handle_autostart_setting(autostart_enabled)
 
-            # 收集结束前提醒时间（安全检查，避免属性不存在）
-            before_end_minutes = []
-            if hasattr(self, 'notify_before_end_checks'):
-                before_end_minutes = [
-                    minutes for minutes, checkbox in self.notify_before_end_checks.items()
-                    if checkbox.isChecked()
-                ]
-            else:
-                # 如果属性不存在，使用配置中的默认值
-                notification_config = self.config.get('notification', {})
-                before_end_minutes = notification_config.get('before_end_minutes', [5])
+            # ========== 2. 构建config字典 ==========
+            # 获取各子配置的默认值
+            notif_cfg = self.config.get('notification', {})
+            quiet_cfg = notif_cfg.get('quiet_hours', {})
+            scene_cfg = self.config.get('scene', {})
+            danmaku_cfg = self.config.get('danmaku', {})
+            activity_cfg = self.config.get('activity_tracking', {})
+            behavior_cfg = self.config.get('behavior_recognition', {})
 
-            # 处理开机自启动设置
-            autostart_enabled = self.autostart_check.isChecked() if hasattr(self, 'autostart_check') else False
-            if hasattr(self, 'autostart_manager') and self.autostart_manager:
-                if self.autostart_manager.set_enabled(autostart_enabled):
-                    logging.info(f"自启动设置{'启用' if autostart_enabled else '禁用'}成功")
-                else:
-                    logging.error(f"自启动设置{'启用' if autostart_enabled else '禁用'}失败")
-                    QMessageBox.warning(
-                        self,
-                        "警告",
-                        f"开机自启动设置失败\n\n可能需要管理员权限或系统限制"
-                    )
-
-            # 保存配置
             config = {
+                # 基础配置
                 "bar_height": self.height_spin.value(),
-                "position": "bottom",  # 固定位置为屏幕底部
+                "position": "bottom",
                 "background_color": self.bg_color_input.text(),
-                # 将百分比(0-100)转换为0-255
                 "background_opacity": int(self.opacity_slider.value() * 255 / 100),
                 "marker_color": self.marker_color_input.text(),
                 "marker_width": self.marker_width_spin.value(),
                 "marker_type": self.marker_type_combo.currentText(),
-                # 标记图片路径:使用预设系统的正确路径(而非UI输入框的文本)
                 "marker_image_path": self.marker_preset_manager.get_current_marker_path() if self.marker_preset_manager else self.marker_image_input.text(),
                 "marker_size": self.marker_size_spin.value(),
                 "marker_speed": self.marker_speed_spin.value(),
@@ -8581,178 +8870,82 @@ class ConfigManager(QMainWindow):
                 "enable_shadow": self.shadow_check.isChecked(),
                 "corner_radius": self.radius_spin.value(),
                 "autostart_enabled": autostart_enabled,
+                # 主题配置
                 "theme": {
                     "mode": "preset",
-                    "current_theme_id": self.selected_theme_id if hasattr(self, 'selected_theme_id') and self.selected_theme_id else self.config.get('theme', {}).get('current_theme_id', 'business'),
+                    "current_theme_id": getattr(self, 'selected_theme_id', None) or self.config.get('theme', {}).get('current_theme_id', 'business'),
                     "auto_apply_task_colors": False
                 },
+                # 通知配置
                 "notification": {
-                    "enabled": (getattr(self, 'notify_enabled_check', None) and self.notify_enabled_check.isChecked()) if hasattr(self, 'notify_enabled_check') else self.config.get('notification', {}).get('enabled', True),
+                    "enabled": self._get_ui_value('notify_enabled_check', notif_cfg.get('enabled', True), 'isChecked'),
                     "before_start_minutes": before_start_minutes,
-                    "on_start": (getattr(self, 'notify_on_start_check', None) and self.notify_on_start_check.isChecked()) if hasattr(self, 'notify_on_start_check') else self.config.get('notification', {}).get('on_start', True),
+                    "on_start": self._get_ui_value('notify_on_start_check', notif_cfg.get('on_start', True), 'isChecked'),
                     "before_end_minutes": before_end_minutes,
-                    "on_end": (getattr(self, 'notify_on_end_check', None) and self.notify_on_end_check.isChecked()) if hasattr(self, 'notify_on_end_check') else self.config.get('notification', {}).get('on_end', False),
-                    "sound_enabled": (getattr(self, 'notify_sound_check', None) and self.notify_sound_check.isChecked()) if hasattr(self, 'notify_sound_check') else self.config.get('notification', {}).get('sound_enabled', True),
+                    "on_end": self._get_ui_value('notify_on_end_check', notif_cfg.get('on_end', False), 'isChecked'),
+                    "sound_enabled": self._get_ui_value('notify_sound_check', notif_cfg.get('sound_enabled', True), 'isChecked'),
                     "sound_file": "",
                     "quiet_hours": {
-                        "enabled": (getattr(self, 'quiet_enabled_check', None) and self.quiet_enabled_check.isChecked()) if hasattr(self, 'quiet_enabled_check') else self.config.get('notification', {}).get('quiet_hours', {}).get('enabled', False),
-                        "start": self.quiet_start_time.time().toString("HH:mm") if hasattr(self, 'quiet_start_time') else self.config.get('notification', {}).get('quiet_hours', {}).get('start', '22:00'),
-                        "end": self.quiet_end_time.time().toString("HH:mm") if hasattr(self, 'quiet_end_time') else self.config.get('notification', {}).get('quiet_hours', {}).get('end', '08:00')
+                        "enabled": self._get_ui_value('quiet_enabled_check', quiet_cfg.get('enabled', False), 'isChecked'),
+                        "start": self.quiet_start_time.time().toString("HH:mm") if hasattr(self, 'quiet_start_time') else quiet_cfg.get('start', '22:00'),
+                        "end": self.quiet_end_time.time().toString("HH:mm") if hasattr(self, 'quiet_end_time') else quiet_cfg.get('end', '08:00')
                     }
                 },
+                # 场景配置
                 "scene": {
-                    "enabled": (getattr(self, 'scene_enabled_check', None) and self.scene_enabled_check.isChecked()) if hasattr(self, 'scene_enabled_check') else self.config.get('scene', {}).get('enabled', False),
-                    "current_scene": self.scene_combo.itemData(self.scene_combo.currentIndex()) if hasattr(self, 'scene_combo') and self.scene_combo.currentIndex() >= 0 else self.config.get('scene', {}).get('current_scene'),
-                    "show_progress_bar": (getattr(self, 'show_progress_in_scene_check', None) and self.show_progress_in_scene_check.isChecked()) if hasattr(self, 'show_progress_in_scene_check') else self.config.get('scene', {}).get('show_progress_bar', False)
+                    "enabled": self._get_ui_value('scene_enabled_check', scene_cfg.get('enabled', False), 'isChecked'),
+                    "current_scene": self.scene_combo.itemData(self.scene_combo.currentIndex()) if hasattr(self, 'scene_combo') and self.scene_combo.currentIndex() >= 0 else scene_cfg.get('current_scene'),
+                    "show_progress_bar": self._get_ui_value('show_progress_in_scene_check', scene_cfg.get('show_progress_bar', False), 'isChecked')
                 },
+                # 弹幕配置
                 "danmaku": {
-                    "enabled": (getattr(self, 'danmaku_enabled_check', None) and self.danmaku_enabled_check.isChecked()) if hasattr(self, 'danmaku_enabled_check') else self.config.get('danmaku', {}).get('enabled', True),
-                    "frequency": self.danmaku_frequency_spin.value() if hasattr(self, 'danmaku_frequency_spin') else self.config.get('danmaku', {}).get('frequency', 30),
-                    "speed": self.danmaku_speed_spin.value() if hasattr(self, 'danmaku_speed_spin') else self.config.get('danmaku', {}).get('speed', 1.0),
-                    "font_size": self.danmaku_font_size_spin.value() if hasattr(self, 'danmaku_font_size_spin') else self.config.get('danmaku', {}).get('font_size', 14),
-                    # 将百分比(0-100)转换为0-1浮点数
-                    "opacity": round(self.danmaku_opacity_slider.value() / 100, 2) if hasattr(self, 'danmaku_opacity_slider') else self.config.get('danmaku', {}).get('opacity', 1.0),
-                    "max_count": self.danmaku_max_count_spin.value() if hasattr(self, 'danmaku_max_count_spin') else self.config.get('danmaku', {}).get('max_count', 3),
-                    "y_offset": self.danmaku_y_offset_spin.value() if hasattr(self, 'danmaku_y_offset_spin') else self.config.get('danmaku', {}).get('y_offset', 80),
-                    "color_mode": self.danmaku_color_mode_combo.itemData(self.danmaku_color_mode_combo.currentIndex()) if hasattr(self, 'danmaku_color_mode_combo') else self.config.get('danmaku', {}).get('color_mode', 'auto')
+                    "enabled": self._get_ui_value('danmaku_enabled_check', danmaku_cfg.get('enabled', True), 'isChecked'),
+                    "frequency": self._get_ui_value('danmaku_frequency_spin', danmaku_cfg.get('frequency', 30)),
+                    "speed": self._get_ui_value('danmaku_speed_spin', danmaku_cfg.get('speed', 1.0)),
+                    "font_size": self._get_ui_value('danmaku_font_size_spin', danmaku_cfg.get('font_size', 14)),
+                    "opacity": round(self._get_ui_value('danmaku_opacity_slider', danmaku_cfg.get('opacity', 1.0) * 100) / 100, 2),
+                    "max_count": self._get_ui_value('danmaku_max_count_spin', danmaku_cfg.get('max_count', 3)),
+                    "y_offset": self._get_ui_value('danmaku_y_offset_spin', danmaku_cfg.get('y_offset', 80)),
+                    "color_mode": self.danmaku_color_mode_combo.itemData(self.danmaku_color_mode_combo.currentIndex()) if hasattr(self, 'danmaku_color_mode_combo') else danmaku_cfg.get('color_mode', 'auto')
                 },
+                # 活动追踪配置
                 "activity_tracking": {
-                    "enabled": self.activity_tracking_enabled.isChecked() if hasattr(self, 'activity_tracking_enabled') else self.config.get('activity_tracking', {}).get('enabled', False),
-                    "polling_interval": self.activity_polling_interval.value() if hasattr(self, 'activity_polling_interval') else self.config.get('activity_tracking', {}).get('polling_interval', 5),
-                    "min_session_duration": self.config.get('activity_tracking', {}).get('min_session_duration', 5),
-                    "data_retention_days": self.activity_retention_days.value() if hasattr(self, 'activity_retention_days') else self.config.get('activity_tracking', {}).get('data_retention_days', 90)
+                    "enabled": self._get_ui_value('activity_tracking_enabled', activity_cfg.get('enabled', False), 'isChecked'),
+                    "polling_interval": self._get_ui_value('activity_polling_interval', activity_cfg.get('polling_interval', 5)),
+                    "min_session_duration": activity_cfg.get('min_session_duration', 5),
+                    "data_retention_days": self._get_ui_value('activity_retention_days', activity_cfg.get('data_retention_days', 90))
                 },
+                # 行为识别配置
                 "behavior_recognition": {
-                    "enabled": self.behavior_danmaku_enabled.isChecked() if hasattr(self, 'behavior_danmaku_enabled') else self.config.get('behavior_recognition', {}).get('enabled', True),
-                    "collection_interval": self.behavior_collection_interval.value() if hasattr(self, 'behavior_collection_interval') else self.config.get('behavior_recognition', {}).get('collection_interval', 5),
-                    "trigger_probability": self.behavior_trigger_probability.value() if hasattr(self, 'behavior_trigger_probability') else self.config.get('behavior_recognition', {}).get('trigger_probability', 0.4),
-                    "global_cooldown": self.behavior_global_cooldown.value() if hasattr(self, 'behavior_global_cooldown') else self.config.get('behavior_recognition', {}).get('global_cooldown', 30),
-                    "category_cooldown": self.behavior_category_cooldown.value() if hasattr(self, 'behavior_category_cooldown') else self.config.get('behavior_recognition', {}).get('category_cooldown', 60),
-                    "tone_cooldown": self.config.get('behavior_recognition', {}).get('tone_cooldown', 120)
+                    "enabled": self._get_ui_value('behavior_danmaku_enabled', behavior_cfg.get('enabled', True), 'isChecked'),
+                    "collection_interval": self._get_ui_value('behavior_collection_interval', behavior_cfg.get('collection_interval', 5)),
+                    "trigger_probability": self._get_ui_value('behavior_trigger_probability', behavior_cfg.get('trigger_probability', 0.4)),
+                    "global_cooldown": self._get_ui_value('behavior_global_cooldown', behavior_cfg.get('global_cooldown', 30)),
+                    "category_cooldown": self._get_ui_value('behavior_category_cooldown', behavior_cfg.get('category_cooldown', 60)),
+                    "tone_cooldown": behavior_cfg.get('tone_cooldown', 120)
                 }
             }
 
             # 合并标记图片预设配置
             if self.marker_preset_manager:
-                preset_config = self.marker_preset_manager.save_to_config()
-                config.update(preset_config)
+                config.update(self.marker_preset_manager.save_to_config())
 
-            # 使用防抖动保存（此处是save_all函数，通常是手动点击保存按钮触发）
-            # 更新内存中的配置
+            # ========== 3. 保存配置 ==========
             self.config = config
-            # 防抖动保存到磁盘
             self.config_debouncer.save_debounced(config)
 
-            # 获取主题颜色（如果用户选择了预设主题）
-            theme_colors = []
-            if hasattr(self, 'selected_theme_id') and self.selected_theme_id:
-                # 获取主题数据
-                if not self.theme_manager:
-                    preset_themes = ThemeManager.DEFAULT_PRESET_THEMES.copy()
-                else:
-                    all_themes = self.theme_manager.get_all_themes()
-                    preset_themes = all_themes.get('preset_themes', {})
-
-                theme_data = preset_themes.get(self.selected_theme_id, {})
-                theme_colors = theme_data.get('task_colors', [])
-
-            # 保存任务
-            tasks = []
-            logging.info(f"[保存任务] 开始从表格读取任务,表格行数: {self.tasks_table.rowCount()}")
-            for row in range(self.tasks_table.rowCount()):
-                start_widget = self.tasks_table.cellWidget(row, 0)
-                end_widget = self.tasks_table.cellWidget(row, 1)
-                name_item = self.tasks_table.item(row, 2)
-                color_widget = self.tasks_table.cellWidget(row, 3)
-                text_color_widget = self.tasks_table.cellWidget(row, 4)  # 文字颜色
-
-                if start_widget and end_widget and name_item and color_widget and text_color_widget:
-                    color_input = color_widget.findChild(QLineEdit)
-                    text_color_input = text_color_widget.findChild(QLineEdit)
-
-                    # ✅ P1-1.5: 修复AI任务配色被主题覆盖的问题
-                    # 只有当用户明确启用"应用主题配色"时,才使用主题颜色
-                    auto_apply = self.config.get('theme', {}).get('auto_apply_task_colors', False)
-
-                    if auto_apply and theme_colors:
-                        # 用户启用了"应用主题配色",使用主题颜色
-                        color_index = row % len(theme_colors)
-                        task_color = theme_colors[color_index]
-                    else:
-                        # 保留表格中现有的颜色(AI颜色或用户自定义颜色)
-                        task_color = color_input.text() if color_input else "#4CAF50"
-
-                    start_time = start_widget.time().toString("HH:mm")
-                    end_time = end_widget.time().toString("HH:mm")
-
-                    # 检查是否是标记为午夜的 00:00(实际是 24:00)
-                    if end_widget.property("is_midnight"):
-                        end_time = "24:00"
-                    # 如果结束时间是 00:00 且是最后一个任务或下一个任务从 00:00 开始,可能是 24:00
-                    elif end_time == "00:00" and row == self.tasks_table.rowCount() - 1:
-                        # 最后一个任务且结束时间是 00:00,很可能是 24:00
-                        end_time = "24:00"
-
-                    # ✅ P1-1.5: 修复跨天任务验证逻辑
-                    # 验证结束时间必须大于开始时间(允许跨天任务,如23:00-07:00)
-                    start_minutes = self.time_to_minutes(start_time)
-                    end_minutes = self.time_to_minutes(end_time)
-
-                    # 如果结束时间小于等于开始时间,检查是否是跨天任务
-                    if end_minutes <= start_minutes:
-                        # 跨天任务:计算实际时长(从开始时间到午夜 + 午夜到结束时间)
-                        # 例如 23:00-07:00 = (1440-1380) + 420 = 60 + 420 = 480分钟 = 8小时
-                        actual_duration = (1440 - start_minutes) + end_minutes
-
-                        # 拒绝不合理的时长:
-                        # - 太短(<5分钟):可能是输入错误
-                        # - 太长(>20小时):跨天任务超过20小时不合理
-                        if actual_duration < 5:
-                            QMessageBox.warning(
-                                self,
-                                "时间错误",
-                                f"第 {row + 1} 个任务的时长过短!\n\n"
-                                f"任务: {name_item.text()}\n"
-                                f"开始: {start_time}, 结束: {end_time}\n"
-                                f"实际时长: {actual_duration}分钟\n\n"
-                                f"请检查时间设置"
-                            )
-                            return
-                        elif actual_duration > 1200:  # 20小时 = 1200分钟
-                            QMessageBox.warning(
-                                self,
-                                "时间错误",
-                                f"第 {row + 1} 个任务的时长过长!\n\n"
-                                f"任务: {name_item.text()}\n"
-                                f"开始: {start_time}, 结束: {end_time}\n"
-                                f"实际时长: {actual_duration // 60}小时{actual_duration % 60}分钟\n\n"
-                                f"跨天任务不应超过20小时"
-                            )
-                            return
-
-                    # Generate stable ID based on time and task name
-                    import hashlib
-                    task_name = name_item.text()
-                    stable_key = f"{start_time}|{end_time}|{task_name}"
-                    task_id = hashlib.sha1(stable_key.encode('utf-8')).hexdigest()
-
-                    task = {
-                        "id": task_id,  # Stable ID for focus session tracking
-                        "start": start_time,
-                        "end": end_time,
-                        "task": task_name,
-                        "color": task_color,  # 使用主题颜色或用户自定义颜色
-                        "text_color": text_color_input.text() if text_color_input else "#FFFFFF"
-                    }
-                    tasks.append(task)
+            # ========== 4. 收集并保存任务 ==========
+            theme_colors = self._get_theme_colors()
+            tasks = self._collect_tasks_from_table(theme_colors)
+            if tasks is None:
+                return  # 验证失败
 
             # 检查任务时间重叠
             overlap = self.check_task_overlap(tasks)
             if overlap:
                 row1, row2, task1_name, task2_name = overlap
                 reply = QMessageBox.warning(
-                    self,
-                    "时间重叠警告",
+                    self, "时间重叠警告",
                     f"第 {row1} 个任务 ({task1_name}) 和第 {row2} 个任务 ({task2_name}) 的时间段有重叠!\n\n是否仍要保存?",
                     QMessageBox.Yes | QMessageBox.No
                 )
@@ -8762,24 +8955,20 @@ class ConfigManager(QMainWindow):
             with open(self.tasks_file, 'w', encoding='utf-8') as f:
                 json.dump(tasks, f, indent=4, ensure_ascii=False)
 
+            # ========== 5. 日志和用户反馈 ==========
             logging.info(f"[任务保存] 任务已保存到文件: {len(tasks)}个任务")
             if tasks:
                 logging.info(f"[任务保存] 第一个任务: {tasks[0].get('task', 'N/A')}, 开始: {tasks[0].get('start', 'N/A')}")
                 logging.info(f"[任务保存] 最后一个任务: {tasks[-1].get('task', 'N/A')}, 结束: {tasks[-1].get('end', 'N/A')}")
-            logging.info(f"[任务保存] 即将等待ConfigDebouncer保存完成")
 
             QMessageBox.information(self, self.i18n.tr("message.success"), "配置和任务已保存!\n\n如果 Gaiya 正在运行,更改会自动生效。")
+            logging.info("[任务保存] 配置保存完成，信号由ConfigDebouncer回调发送")
 
-            # 注意：config_saved 信号已由 ConfigDebouncer 的回调自动发送，无需重复发送
-            # 移除了重复的 self.config_saved.emit() 调用，避免触发两次 reload_all()
-            logging.info(f"[任务保存] 配置保存完成，信号由ConfigDebouncer回调发送")
-
-            # ✅ P1-1.5: 将主窗口提到前台,让用户看到进度条更新
+            # 将主窗口提到前台
             if self.main_window:
-                from PySide6.QtCore import QTimer
                 QTimer.singleShot(100, lambda: self.main_window.raise_())
                 QTimer.singleShot(150, lambda: self.main_window.activateWindow())
-                logging.info(f"[任务保存] 已将主窗口提到前台")
+                logging.info("[任务保存] 已将主窗口提到前台")
 
         except Exception as e:
             QMessageBox.critical(self, self.i18n.tr("membership.payment.error"), f"保存失败:\n{str(e)}")

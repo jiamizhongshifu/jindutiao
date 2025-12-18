@@ -114,14 +114,15 @@ class handler(BaseHTTPRequestHandler):
             if not cache_success:
                 print(f"[PAYMENT-NOTIFY] ⚠️ Failed to cache payment status, but continue processing", file=sys.stderr)
 
-            # 7. 创建支付记录
+            # 7. 创建支付记录（状态为pending，等订阅成功后再标记completed）
             payment_id = self._create_payment_record(
                 user_id=user_id,
                 order_id=out_trade_no,
                 trade_no=trade_no,
                 amount=money,
                 plan_type=plan_type,
-                payment_method=params.get("type", "alipay")
+                payment_method=params.get("type", "alipay"),
+                status="pending"  # [SECURITY] 先创建pending状态，订阅成功后才completed
             )
 
             if not payment_id:
@@ -134,9 +135,17 @@ class handler(BaseHTTPRequestHandler):
             result = sub_manager.create_subscription(user_id, plan_type, payment_id)
 
             if result["success"]:
-                print(f"[PAYMENT-NOTIFY] Subscription activated for user {user_id}", file=sys.stderr)
-                self._send_response("success")
+                # [SECURITY] 订阅成功后，将支付状态更新为completed
+                if self._complete_payment_record(payment_id):
+                    print(f"[PAYMENT-NOTIFY] Subscription activated for user {user_id}", file=sys.stderr)
+                    self._send_response("success")
+                else:
+                    # 支付状态更新失败，但订阅已创建，记录警告但仍返回成功
+                    print(f"[PAYMENT-NOTIFY] ⚠️ Subscription created but payment status update failed", file=sys.stderr)
+                    self._send_response("success")
             else:
+                # [SECURITY] 订阅创建失败，删除pending状态的支付记录，允许重试
+                self._delete_pending_payment(payment_id)
                 print(f"[PAYMENT-NOTIFY] Failed to create subscription: {result.get('error')}", file=sys.stderr)
                 self._send_response("fail")
 
@@ -207,9 +216,14 @@ class handler(BaseHTTPRequestHandler):
         trade_no: str,
         amount: float,
         plan_type: str,
-        payment_method: str
+        payment_method: str,
+        status: str = "pending"
     ) -> str:
-        """创建支付记录"""
+        """创建支付记录
+
+        Args:
+            status: 支付状态，默认"pending"，订阅成功后更新为"completed"
+        """
         try:
             client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -220,14 +234,17 @@ class handler(BaseHTTPRequestHandler):
                 "currency": "CNY",
                 "payment_method": payment_method,
                 "payment_provider": "zpay",
-                "status": "completed",
+                "status": status,
                 "item_type": "subscription",
                 "item_metadata": json.dumps({
                     "plan_type": plan_type,
                     "trade_no": trade_no
                 }),
-                "completed_at": "now()"
             }
+
+            # 只有completed状态才设置completed_at
+            if status == "completed":
+                payment_data["completed_at"] = "now()"
 
             response = client.table("payments").insert(payment_data).execute()
 
@@ -239,6 +256,45 @@ class handler(BaseHTTPRequestHandler):
         except Exception as e:
             print(f"[PAYMENT-NOTIFY] Error creating payment record: {e}", file=sys.stderr)
             return None
+
+    def _complete_payment_record(self, payment_id: str) -> bool:
+        """将支付记录状态更新为completed
+
+        [SECURITY] 仅在订阅创建成功后调用，确保事务一致性
+        """
+        try:
+            client = create_client(SUPABASE_URL, SUPABASE_KEY)
+            response = client.table("payments").update({
+                "status": "completed",
+                "completed_at": "now()"
+            }).eq("id", payment_id).execute()
+
+            return bool(response.data)
+
+        except Exception as e:
+            print(f"[PAYMENT-NOTIFY] Error completing payment: {e}", file=sys.stderr)
+            return False
+
+    def _delete_pending_payment(self, payment_id: str) -> bool:
+        """删除pending状态的支付记录
+
+        [SECURITY] 仅在订阅创建失败时调用，允许ZPAY重试
+        仅删除pending状态的记录，防止误删已完成的支付
+        """
+        try:
+            client = create_client(SUPABASE_URL, SUPABASE_KEY)
+            response = client.table("payments").delete().eq(
+                "id", payment_id
+            ).eq("status", "pending").execute()
+
+            if response.data:
+                print(f"[PAYMENT-NOTIFY] Deleted pending payment: {payment_id}", file=sys.stderr)
+                return True
+            return False
+
+        except Exception as e:
+            print(f"[PAYMENT-NOTIFY] Error deleting pending payment: {e}", file=sys.stderr)
+            return False
 
     def _send_response(self, status: str):
         """

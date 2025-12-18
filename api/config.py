@@ -194,12 +194,19 @@ class Config:
 
     @staticmethod
     def is_ssl_verify_disabled() -> bool:
-        """是否禁用SSL验证（仅用于开发/测试）"""
-        return os.getenv("DISABLE_SSL_VERIFY", "false").lower() == "true"
+        """
+        SSL验证状态 - 始终启用
+
+        [SECURITY] 已移除DISABLE_SSL_VERIFY环境变量支持
+        SSL验证在所有环境中强制启用，防止中间人攻击
+        """
+        return False  # 永不禁用SSL验证
 
     @staticmethod
     def is_zpay_debug_mode() -> bool:
-        """是否启用Zpay调试模式"""
+        """是否启用Zpay调试模式（仅在非生产环境有效）"""
+        if os.getenv("VERCEL_ENV") == "production":
+            return False  # 生产环境强制禁用调试模式
         return os.getenv("ZPAY_DEBUG_MODE", "false").lower() == "true"
 
     # ========================================

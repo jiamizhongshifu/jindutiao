@@ -30,8 +30,9 @@ class ImprovedAIGenerationDialog(QDialog):
 
     def setup_ui(self):
         """设置UI"""
-        self.setWindowTitle("AI任务生成助手")  # ✅ P1-1.6.19: 恢复文字标题
-        self.setFixedSize(550, 440)  # ✅ P1-1.6.19: 移除60px标题栏后调整总高度
+        self.setWindowTitle("AI任务生成助手")
+        # 使用 minimumSize 确保首次显示有足够空间，避免布局压缩
+        self.setMinimumSize(500, 520)
         self.setModal(True)
 
         layout = QVBoxLayout(self)
@@ -49,8 +50,8 @@ class ImprovedAIGenerationDialog(QDialog):
 
         # 底部按钮
         button_layout = QHBoxLayout()
-        button_layout.setContentsMargins(20, 10, 20, 20)
-        button_layout.setSpacing(10)
+        button_layout.setContentsMargins(24, 16, 24, 20)  # 增加上边距
+        button_layout.setSpacing(16)
 
         cancel_btn = QPushButton("取消")
         cancel_btn.setFixedHeight(40)
@@ -161,8 +162,10 @@ class ImprovedAIGenerationDialog(QDialog):
         self.accept()
 
     def showEvent(self, event):
-        """窗口显示时自动居中"""
+        """窗口显示时调整大小并居中"""
         super().showEvent(event)
+        # 首次显示时重新计算布局，确保有足够空间
+        self.adjustSize()
         self.center_on_screen()
 
     def center_on_screen(self):

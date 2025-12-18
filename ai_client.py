@@ -234,7 +234,10 @@ class GaiyaAIClient:
                 return response.json()
             return None
 
-        except Exception:
+        except requests.RequestException as e:
+            # 网络请求异常，静默处理（配额查询失败不应阻塞用户操作）
+            import logging
+            logging.debug(f"[AI Client] 配额查询失败: {e}")
             return None
 
     def analyze_task_completion(self, date: str, task_completions: List[Dict], parent_widget=None) -> Optional[str]:
@@ -343,7 +346,8 @@ class GaiyaAIClient:
                 timeout=15
             )
             return response.status_code == 200
-        except Exception:
+        except requests.RequestException:
+            # 健康检查失败，返回False（静默处理，不记录日志避免刷屏）
             return False
 
     def _show_quota_exceeded_dialog(self, data: Dict, parent_widget):

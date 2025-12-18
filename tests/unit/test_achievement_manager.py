@@ -100,8 +100,8 @@ class TestAchievementManagerInit:
 
     def test_init_loads_predefined_achievements(self, achievement_manager):
         """测试初始化加载预定义成就"""
-        # 应该加载11个预定义成就
-        assert len(achievement_manager.achievements) == 11
+        # 应该加载32个预定义成就
+        assert len(achievement_manager.achievements) == 32
 
         # 检查特定成就是否存在
         assert "streak_3_days" in achievement_manager.achievements
@@ -243,7 +243,7 @@ class TestAchievementRetrieval:
         """测试获取所有成就"""
         all_achievements = achievement_manager.get_all_achievements()
 
-        assert len(all_achievements) == 11
+        assert len(all_achievements) == 32
         assert all(isinstance(a, Achievement) for a in all_achievements)
 
     def test_get_unlocked_achievements(self, achievement_manager):
@@ -264,40 +264,39 @@ class TestAchievementRetrieval:
 
         locked = achievement_manager.get_locked_achievements()
 
-        # 应该还有10个未解锁
-        assert len(locked) == 10
+        # 应该还有31个未解锁 (32-1)
+        assert len(locked) == 31
 
 
 class TestAchievementCategories:
     """测试成就分类"""
 
-    def test_streak_achievements(self, achievement_manager):
-        """测试连续打卡成就"""
-        streak_achievements = [
+    def test_consistency_achievements(self, achievement_manager):
+        """测试一致性/连续打卡成就"""
+        consistency_achievements = [
             a for a in achievement_manager.get_all_achievements()
-            if a.category == "streak"
+            if a.category == "consistency"
         ]
 
-        assert len(streak_achievements) == 3
-        assert all(a.requirement_type == "continuous_days" for a in streak_achievements)
+        assert len(consistency_achievements) == 8
 
-    def test_milestone_achievements(self, achievement_manager):
-        """测试里程碑成就"""
-        milestone_achievements = [
+    def test_productivity_achievements(self, achievement_manager):
+        """测试生产力成就"""
+        productivity_achievements = [
             a for a in achievement_manager.get_all_achievements()
-            if a.category == "milestone"
+            if a.category == "productivity"
         ]
 
-        assert len(milestone_achievements) == 6  # 3个任务 + 3个专注时长
+        assert len(productivity_achievements) == 8
 
-    def test_performance_achievements(self, achievement_manager):
-        """测试表现成就"""
-        performance_achievements = [
+    def test_focus_achievements(self, achievement_manager):
+        """测试专注成就"""
+        focus_achievements = [
             a for a in achievement_manager.get_all_achievements()
-            if a.category == "performance"
+            if a.category == "focus"
         ]
 
-        assert len(performance_achievements) == 2  # 完美一天 + 完美一周
+        assert len(focus_achievements) == 7
 
 
 class TestAchievementRarity:
@@ -315,11 +314,11 @@ class TestAchievementRarity:
         for achievement in achievement_manager.get_all_achievements():
             rarity_counts[achievement.rarity] += 1
 
-        # 验证各稀有度数量
-        assert rarity_counts["common"] == 3
-        assert rarity_counts["rare"] == 4
-        assert rarity_counts["epic"] == 3
-        assert rarity_counts["legendary"] == 1
+        # 验证各稀有度数量 (32个成就)
+        assert rarity_counts["common"] == 10
+        assert rarity_counts["rare"] == 12
+        assert rarity_counts["epic"] == 6
+        assert rarity_counts["legendary"] == 4
 
 
 class TestAchievementStatistics:
@@ -329,7 +328,7 @@ class TestAchievementStatistics:
         """测试初始统计"""
         stats = achievement_manager.get_statistics()
 
-        assert stats["total_achievements"] == 11
+        assert stats["total_achievements"] == 32
         assert stats["unlocked_count"] == 0
         assert stats["unlock_percentage"] == 0.0
         assert stats["rarity_counts"]["common"] == 0
@@ -337,16 +336,14 @@ class TestAchievementStatistics:
     def test_statistics_with_unlocked_achievements(self, achievement_manager):
         """测试有解锁成就的统计"""
         # 解锁一些成就
-        achievement_manager.check_and_unlock("continuous_days", 7.0)  # common + rare
-        achievement_manager.check_and_unlock("total_tasks_completed", 100.0)  # common + rare
+        achievement_manager.check_and_unlock("continuous_days", 7.0)  # 3天、7天
+        achievement_manager.check_and_unlock("total_tasks_completed", 100.0)  # 10、50、100任务
 
         stats = achievement_manager.get_statistics()
 
-        assert stats["total_achievements"] == 11
-        assert stats["unlocked_count"] == 4  # 3天、7天、10任务、100任务
-        assert stats["unlock_percentage"] == pytest.approx(36.36, rel=1e-2)
-        assert stats["rarity_counts"]["common"] == 2
-        assert stats["rarity_counts"]["rare"] == 2
+        assert stats["total_achievements"] == 32
+        assert stats["unlocked_count"] == 5  # 3天、7天、10任务、50任务、100任务
+        assert stats["unlock_percentage"] == pytest.approx(15.625, rel=1e-2)
 
 
 class TestRequirementTypes:
@@ -371,9 +368,11 @@ class TestRequirementTypes:
             current_value=100.0
         )
 
-        assert len(newly_unlocked) == 2  # 10小时 + 100小时
+        # 应该解锁 10小时、50小时、100小时 共3个成就
+        assert len(newly_unlocked) == 3
         achievement_ids = [a.achievement_id for a in newly_unlocked]
         assert "focus_10_hours" in achievement_ids
+        assert "focus_50_hours" in achievement_ids
         assert "focus_100_hours" in achievement_ids
 
     def test_daily_completion_rate_requirement(self, achievement_manager):
@@ -387,12 +386,12 @@ class TestRequirementTypes:
         assert len(newly_unlocked) == 1
         assert newly_unlocked[0].achievement_id == "perfect_day"
 
-    def test_weekly_completion_rate_requirement(self, achievement_manager):
-        """测试每周完成率需求"""
-        # 解锁完美一周
+    def test_perfect_day_streak_requirement(self, achievement_manager):
+        """测试完美一周需求 (连续7天完美完成)"""
+        # 解锁完美一周 (需要连续7天完美完成)
         newly_unlocked = achievement_manager.check_and_unlock(
-            requirement_type="weekly_completion_rate",
-            current_value=100.0
+            requirement_type="perfect_day_streak",
+            current_value=7.0
         )
 
         assert len(newly_unlocked) == 1

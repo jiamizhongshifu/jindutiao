@@ -604,7 +604,14 @@ class AuthClient:
 
                 return data
             else:
-                return {"success": False, "error": f"HTTP {response.status_code}"}
+                # 尝试解析服务器返回的详细错误信息
+                try:
+                    error_data = response.json()
+                    error_msg = error_data.get("error", f"HTTP {response.status_code}")
+                    logger.warning(f"[AUTH-SIGNIN] 登录失败: {error_msg}")
+                    return {"success": False, "error": error_msg}
+                except (ValueError, json.JSONDecodeError):
+                    return {"success": False, "error": f"HTTP {response.status_code}"}
 
         except requests.exceptions.Timeout:
             return {"success": False, "error": "请求超时"}
@@ -653,7 +660,14 @@ class AuthClient:
 
                     return data
                 else:
-                    return {"success": False, "error": f"HTTP {response.status_code}"}
+                    # 尝试解析服务器返回的详细错误信息
+                    try:
+                        error_data = response.json()
+                        error_msg = error_data.get("error", f"HTTP {response.status_code}")
+                        logger.warning(f"[AUTH-SIGNIN-HTTPX] 登录失败: {error_msg}")
+                        return {"success": False, "error": error_msg}
+                    except (ValueError, json.JSONDecodeError):
+                        return {"success": False, "error": f"HTTP {response.status_code}"}
 
             except Exception as httpx_error:
                 logger.error(f"[AUTH-SIGNIN] httpx方案也失败: {httpx_error}")
@@ -869,8 +883,13 @@ class AuthClient:
             # 需要重试 - 等待后递归调用
             elif refresh_result.get("retry_delay"):
                 import time
+                import threading
                 retry_delay = refresh_result["retry_delay"]
-                logger.info(f"[AUTH] 等待 {retry_delay} 秒后重试刷新")
+                # 检测是否在主线程，如果是则警告（可能阻塞UI）
+                if threading.current_thread() is threading.main_thread():
+                    logger.warning(f"[AUTH] ⚠️ 在主线程中等待 {retry_delay} 秒，可能导致UI阻塞！建议使用 AsyncNetworkWorker")
+                else:
+                    logger.info(f"[AUTH] 在工作线程中等待 {retry_delay} 秒后重试刷新")
                 time.sleep(retry_delay)
                 return self._make_authenticated_request(method, url, **kwargs)
 

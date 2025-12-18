@@ -3,6 +3,7 @@ GaiYa每日进度条 - 用户认证管理器
 使用Supabase Auth进行用户认证和会话管理
 """
 import os
+import hashlib
 from datetime import datetime, timedelta
 from typing import Dict, Optional
 from functools import lru_cache
@@ -10,6 +11,23 @@ from supabase import create_client, Client
 import sys
 import requests
 import jwt  # PyJWT for secure token verification
+
+
+def _hash_otp(otp_code: str, email: str) -> str:
+    """
+    对OTP进行哈希处理
+
+    [SECURITY] 使用SHA-256哈希OTP，email作为盐值防止彩虹表攻击
+
+    Args:
+        otp_code: 原始OTP验证码
+        email: 邮箱地址（作为盐值）
+
+    Returns:
+        哈希后的OTP字符串
+    """
+    salted = f"{email.lower()}:{otp_code}"
+    return hashlib.sha256(salted.encode('utf-8')).hexdigest()
 
 
 @lru_cache(maxsize=1)
@@ -62,18 +80,9 @@ class AuthManager:
         """
         jwt_secret = _get_jwt_secret()
         if not jwt_secret:
-            # 无密钥配置时，降级使用不安全解码（仅供向后兼容）
-            print("[AUTH] WARNING: JWT secret not configured, using insecure decode", file=sys.stderr)
-            try:
-                import base64
-                import json as jsonlib
-                parts = access_token.split(".")
-                if len(parts) >= 2:
-                    payload = parts[1] + "=" * (-len(parts[1]) % 4)
-                    data = jsonlib.loads(base64.urlsafe_b64decode(payload))
-                    return data.get("sub")
-            except Exception:
-                return None
+            # [SECURITY] 生产环境必须配置JWT密钥，拒绝不安全的降级解码
+            print("[AUTH] CRITICAL: JWT secret not configured - rejecting token verification", file=sys.stderr)
+            print("[AUTH] Please set SUPABASE_JWT_SECRET environment variable", file=sys.stderr)
             return None
 
         try:
@@ -720,11 +729,11 @@ class AuthManager:
             # 尝试使用Resend邮件服务
             resend_api_key = os.getenv("RESEND_API_KEY")
 
-            # 诊断日志：检查环境变量
+            # 诊断日志：检查环境变量（不泄露密钥信息）
             if resend_api_key:
-                print(f"[AUTH-OTP-DEBUG] RESEND_API_KEY found, length: {len(resend_api_key)}", file=sys.stderr)
+                print(f"[AUTH-OTP] RESEND_API_KEY configured, using production email", file=sys.stderr)
             else:
-                print(f"[AUTH-OTP-DEBUG] RESEND_API_KEY not found, using dev mode", file=sys.stderr)
+                print(f"[AUTH-OTP] RESEND_API_KEY not found, using dev mode", file=sys.stderr)
 
             if resend_api_key:
                 # 生产环境：使用Resend发送邮件
@@ -860,10 +869,11 @@ class AuthManager:
             # 先删除该邮箱的旧验证码
             self.client.table("otp_codes").delete().eq("email", email).execute()
 
-            # 插入新验证码
+            # [SECURITY] 插入哈希后的验证码，防止数据库泄露时OTP明文暴露
+            hashed_otp = _hash_otp(otp_code, email)
             self.client.table("otp_codes").insert({
                 "email": email,
-                "code": otp_code,
+                "code": hashed_otp,
                 "purpose": purpose,
                 "expires_at": expires_at,
                 "attempts": 0
@@ -917,8 +927,10 @@ class AuthManager:
                 self.client.table("otp_codes").delete().eq("email", email).execute()
                 return {"success": False, "error": "验证尝试次数过多，请重新获取验证码"}
 
-            # 验证OTP
-            if stored_otp["code"] != otp_code:
+            # [SECURITY] 验证哈希后的OTP，使用常量时间比较防止时序攻击
+            import hmac
+            hashed_input = _hash_otp(otp_code, email)
+            if not hmac.compare_digest(stored_otp["code"], hashed_input):
                 # 增加尝试次数
                 self.client.table("otp_codes").update({
                     "attempts": stored_otp["attempts"] + 1

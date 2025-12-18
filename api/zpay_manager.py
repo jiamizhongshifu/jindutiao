@@ -8,8 +8,9 @@ import hmac
 import json
 import requests
 import threading
+import time
 from datetime import datetime
-from typing import Dict, Optional, Set
+from typing import Dict, Optional
 import sys
 
 # ZPAY配置
@@ -19,12 +20,31 @@ ZPAY_API_URL = "https://zpayz.cn"
 ZPAY_PID = os.getenv("ZPAY_PID")
 ZPAY_PKEY = os.getenv("ZPAY_PKEY")
 
-# 防重放攻击: Nonce缓存（线程安全）
+# 防重放攻击: Nonce缓存（线程安全，TTL过期机制）
 # 注意：Vercel Serverless环境中，每个实例有独立缓存
 # 建议后续迁移至Redis等分布式缓存
-_processed_nonces: Set[str] = set()
+_processed_nonces: Dict[str, float] = {}  # {nonce: timestamp}
 _nonce_lock = threading.Lock()
 _NONCE_CACHE_MAX_SIZE = 10000  # 防止内存无限增长
+_NONCE_TTL_SECONDS = 300  # 5分钟TTL，与时间戳验证窗口一致
+
+
+def _cleanup_expired_nonces() -> int:
+    """
+    清理过期的nonce（内部函数，需要在持有锁的情况下调用）
+
+    Returns:
+        清理的nonce数量
+    """
+    global _processed_nonces
+    now = time.time()
+    expired_nonces = [
+        nonce for nonce, ts in _processed_nonces.items()
+        if now - ts > _NONCE_TTL_SECONDS
+    ]
+    for nonce in expired_nonces:
+        del _processed_nonces[nonce]
+    return len(expired_nonces)
 
 
 class ZPayManager:
@@ -405,14 +425,27 @@ class ZPayManager:
             # 使用 out_trade_no + trade_no 作为唯一标识
             nonce = f"{params.get('out_trade_no')}:{params.get('trade_no')}"
             with _nonce_lock:
+                # 先清理过期的nonce
+                expired_count = _cleanup_expired_nonces()
+                if expired_count > 0:
+                    print(f"[SECURITY] Cleaned up {expired_count} expired nonces", file=sys.stderr)
+
+                # 检查是否重复
                 if nonce in _processed_nonces:
                     print(f"[SECURITY] Duplicate payment callback detected (nonce: {nonce[:20]}...)", file=sys.stderr)
                     return False
-                # 缓存大小控制：超限时清空（简单策略，生产环境建议用LRU或Redis）
+
+                # 缓存大小控制：超限时强制清理最旧的条目
                 if len(_processed_nonces) >= _NONCE_CACHE_MAX_SIZE:
-                    print(f"[SECURITY] Nonce cache full, clearing (size: {len(_processed_nonces)})", file=sys.stderr)
-                    _processed_nonces.clear()
-                _processed_nonces.add(nonce)
+                    # 按时间戳排序，删除最旧的一半
+                    sorted_nonces = sorted(_processed_nonces.items(), key=lambda x: x[1])
+                    to_remove = len(sorted_nonces) // 2
+                    for old_nonce, _ in sorted_nonces[:to_remove]:
+                        del _processed_nonces[old_nonce]
+                    print(f"[SECURITY] Nonce cache overflow, evicted {to_remove} oldest entries", file=sys.stderr)
+
+                # 添加当前nonce及其时间戳
+                _processed_nonces[nonce] = time.time()
 
             # ✅ 安全检查4：时间戳验证（防止重放攻击）
             timestamp = params.get("timestamp")

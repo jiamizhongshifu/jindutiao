@@ -51,6 +51,16 @@ hidden_imports = [
     'PySide6.QtGui',
     'PySide6.QtCharts',  # 图表库(用于统计报告趋势图)
     'PySide6.QtSvgWidgets',  # P0-1新增: SVG组件(用于FeatureCard图标)
+    # jaraco 依赖 (pkg_resources需要)
+    'jaraco',
+    'jaraco.classes',
+    'jaraco.functools',
+    'jaraco.context',
+    'jaraco.text',
+    'more_itertools',
+    'autocommand',  # jaraco.text依赖
+    'backports.tarfile',  # jaraco.context依赖
+    'platformdirs',  # pkg_resources依赖
 ]
 
 # 平台特定依赖
@@ -180,7 +190,7 @@ a = Analysis(
         'PySide6.QtXml',
 
         # P0-2新增: 额外可排除的模块（~3-5MB）
-        'PySide6.QtNetwork',  # 使用httpx替代,不需要Qt网络模块
+        # 'PySide6.QtNetwork',  # ❌ 已启用 - PaymentManager异步网络请求需要
         'PySide6.QtPrintSupport',  # 无打印功能
         'PySide6.QtOpenGL',  # 无3D OpenGL渲染需求
         'PySide6.QtOpenGLWidgets',

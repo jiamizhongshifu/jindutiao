@@ -140,8 +140,8 @@ class AiSceneSelector(QWidget):
     def setup_ui(self):
         """设置UI"""
         layout = QVBoxLayout(self)
-        layout.setSpacing(20)
-        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(12)  # 基础间距
+        layout.setContentsMargins(24, 20, 24, 10)  # 增加左右边距
 
         # 快速生成区域
         quick_label = QLabel("━━━ 快速生成 ━━━  (推荐)")
@@ -153,14 +153,18 @@ class AiSceneSelector(QWidget):
         quick_label.setStyleSheet("color: #2196F3;")
         layout.addWidget(quick_label)
 
+        layout.addSpacing(4)  # 标题与提示间距
+
         # 场景选择提示
         hint_label = QLabel("选择你的场景:")
         hint_label.setStyleSheet("color: #666666; font-size: 11pt;")
         layout.addWidget(hint_label)
 
+        layout.addSpacing(4)  # 提示与卡片间距
+
         # 场景卡片网格
         cards_layout = QHBoxLayout()
-        cards_layout.setSpacing(15)
+        cards_layout.setSpacing(16)  # 卡片间距
         cards_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         for scene in self.scenes_data:
@@ -175,6 +179,8 @@ class AiSceneSelector(QWidget):
             self.scene_cards[scene['id']] = card  # 保存卡片引用
 
         layout.addLayout(cards_layout)
+
+        layout.addSpacing(16)  # 场景卡片与自定义区域间距
 
         # ✅ P1-1.6: 删除多余的 HLine 分隔符,保留文字装饰即可
         # layout.addSpacing(10)
@@ -196,6 +202,7 @@ class AiSceneSelector(QWidget):
         # 自定义输入框
         self.custom_input = QTextEdit()
         self.custom_input.setPlaceholderText("或者详细描述你的计划...")
+        self.custom_input.setMinimumHeight(60)
         self.custom_input.setMaximumHeight(80)
         self.custom_input.setStyleSheet("""
             QTextEdit {
@@ -210,7 +217,7 @@ class AiSceneSelector(QWidget):
         """)
         layout.addWidget(self.custom_input)
 
-        layout.addStretch()
+        # 底部留白（由父容器 ImprovedAIGenerationDialog 的按钮区域提供）
 
     def on_scene_clicked(self, scene_id: str):
         """场景卡片被点击"""

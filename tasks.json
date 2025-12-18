@@ -4,9 +4,6 @@
         "start": "00:00",
         "end": "06:00",
         "task": "深度睡眠",
-        "emoji": "😴",
-        "description": "保证充足睡眠,恢复精力",
-        "progress": 100,
         "color": "#1976D2",
         "text_color": "#FFFFFF"
     },
@@ -15,9 +12,6 @@
         "start": "06:00",
         "end": "07:00",
         "task": "起床准备",
-        "emoji": "🌅",
-        "description": "洗漱、整理床铺、准备新的一天",
-        "progress": 100,
         "color": "#388E3C",
         "text_color": "#FFFFFF"
     },
@@ -26,9 +20,6 @@
         "start": "07:00",
         "end": "08:00",
         "task": "早餐时间",
-        "emoji": "🍳",
-        "description": "营养早餐,补充能量",
-        "progress": 100,
         "color": "#F57C00",
         "text_color": "#FFFFFF"
     },
@@ -37,8 +28,6 @@
         "start": "08:00",
         "end": "09:00",
         "task": "晨间通勤",
-        "emoji": "🚇",
-        "description": "通勤路上可以听播客或音乐",
         "color": "#7B1FA2",
         "text_color": "#FFFFFF"
     },
@@ -47,9 +36,6 @@
         "start": "09:00",
         "end": "12:00",
         "task": "上午工作",
-        "emoji": "💼",
-        "description": "处理重要任务,保持专注",
-        "progress": 65,
         "color": "#1976D2",
         "text_color": "#FFFFFF"
     },
@@ -58,8 +44,6 @@
         "start": "12:00",
         "end": "13:00",
         "task": "午餐休息",
-        "emoji": "🍱",
-        "description": "营养午餐,适当休息",
         "color": "#388E3C",
         "text_color": "#FFFFFF"
     },
@@ -68,8 +52,6 @@
         "start": "13:00",
         "end": "14:00",
         "task": "午休小憩",
-        "emoji": "☕",
-        "description": "短暂午休或喝杯咖啡",
         "color": "#F57C00",
         "text_color": "#FFFFFF"
     },
@@ -78,9 +60,6 @@
         "start": "14:00",
         "end": "18:00",
         "task": "下午工作",
-        "emoji": "📊",
-        "description": "完成计划任务,保持效率",
-        "progress": 40,
         "color": "#7B1FA2",
         "text_color": "#FFFFFF"
     },
@@ -89,8 +68,6 @@
         "start": "18:00",
         "end": "19:00",
         "task": "晚间通勤",
-        "emoji": "🚌",
-        "description": "回家路上放松心情",
         "color": "#1976D2",
         "text_color": "#FFFFFF"
     },
@@ -99,8 +76,6 @@
         "start": "19:00",
         "end": "20:00",
         "task": "晚餐时间",
-        "emoji": "🍽️",
-        "description": "享受晚餐,补充营养",
         "color": "#388E3C",
         "text_color": "#FFFFFF"
     },
@@ -109,9 +84,6 @@
         "start": "20:00",
         "end": "21:00",
         "task": "健身运动",
-        "emoji": "🏃",
-        "description": "锻炼身体,保持健康",
-        "progress": 0,
         "color": "#F57C00",
         "text_color": "#FFFFFF"
     },
@@ -120,9 +92,6 @@
         "start": "21:00",
         "end": "22:00",
         "task": "学习充电",
-        "emoji": "📚",
-        "description": "阅读、学习新技能",
-        "progress": 0,
         "color": "#7B1FA2",
         "text_color": "#FFFFFF"
     },
@@ -131,8 +100,6 @@
         "start": "22:00",
         "end": "23:00",
         "task": "休闲娱乐",
-        "emoji": "🎮",
-        "description": "看电影、玩游戏,放松心情",
         "color": "#1976D2",
         "text_color": "#FFFFFF"
     },
@@ -141,8 +108,6 @@
         "start": "23:00",
         "end": "23:59",
         "task": "洗漱准备",
-        "emoji": "🛁",
-        "description": "洗澡、护肤,准备就寝",
         "color": "#388E3C",
         "text_color": "#FFFFFF"
     }

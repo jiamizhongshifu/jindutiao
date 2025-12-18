@@ -282,7 +282,7 @@ class AuthDialog(QDialog):
         return widget
 
     def _on_signin_clicked(self):
-        """处理登录按钮点击"""
+        """处理登录按钮点击 - 异步版本，避免UI阻塞"""
         email = self.signin_email_input.text().strip()
         password = self.signin_password_input.text()
 
@@ -301,12 +301,24 @@ class AuthDialog(QDialog):
         signin_button.setEnabled(False)
         signin_button.setText(tr("auth.signin.logging_in"))
 
-        # 调用登录API
-        result = self.auth_client.signin(email, password)
+        # 保存按钮引用供回调使用
+        self._signin_button = signin_button
 
+        # ✅ 性能优化: 使用异步Worker避免UI卡顿
+        self._signin_worker = AsyncNetworkWorker(
+            self.auth_client.signin,
+            email,
+            password
+        )
+        self._signin_worker.success.connect(self._on_signin_success)
+        self._signin_worker.error.connect(self._on_signin_error)
+        self._signin_worker.start()
+
+    def _on_signin_success(self, result: dict):
+        """登录成功回调"""
         # 恢复按钮状态
-        signin_button.setEnabled(True)
-        signin_button.setText(tr("auth.signin.btn_login"))
+        self._signin_button.setEnabled(True)
+        self._signin_button.setText(tr("auth.signin.btn_login"))
 
         if result.get("success"):
             # 登录成功
@@ -324,25 +336,36 @@ class AuthDialog(QDialog):
         else:
             # 登录失败
             error_msg = result.get("error", tr("auth.error.login_failed_title"))
+            self._show_signin_error(error_msg)
 
-            # 检查是否是SSL错误
-            if "SSL" in error_msg or "ssl" in error_msg or tr("auth.error.connection_failed") in error_msg:
-                # SSL连接失败，提供详细的排查建议
-                QMessageBox.critical(
-                    self,
-                    tr("auth.error.connection_failed"),
-                    tr("auth.error.ssl_error_intro") +
-                    tr("auth.error.technical_details", error_msg=error_msg) +
-                    tr("auth.error.solutions_intro") +
-                    tr("auth.error.solution_check_network") +
-                    tr("auth.error.solution_no_proxy") +
-                    tr("auth.error.solution_disable_firewall") +
-                    tr("auth.error.solution_update_windows") +
-                    tr("auth.error.contact_support")
-                )
-            else:
-                # 其他错误，直接显示
-                QMessageBox.critical(self, tr("auth.error.login_failed_title"), tr("auth.error.login_failed", error_msg=error_msg))
+    def _on_signin_error(self, error_msg: str):
+        """登录API调用失败回调"""
+        # 恢复按钮状态
+        self._signin_button.setEnabled(True)
+        self._signin_button.setText(tr("auth.signin.btn_login"))
+
+        self._show_signin_error(error_msg)
+
+    def _show_signin_error(self, error_msg: str):
+        """显示登录错误信息"""
+        # 检查是否是SSL错误
+        if "SSL" in error_msg or "ssl" in error_msg or tr("auth.error.connection_failed") in error_msg:
+            # SSL连接失败，提供详细的排查建议
+            QMessageBox.critical(
+                self,
+                tr("auth.error.connection_failed"),
+                tr("auth.error.ssl_error_intro") +
+                tr("auth.error.technical_details", error_msg=error_msg) +
+                tr("auth.error.solutions_intro") +
+                tr("auth.error.solution_check_network") +
+                tr("auth.error.solution_no_proxy") +
+                tr("auth.error.solution_disable_firewall") +
+                tr("auth.error.solution_update_windows") +
+                tr("auth.error.contact_support")
+            )
+        else:
+            # 其他错误，直接显示
+            QMessageBox.critical(self, tr("auth.error.login_failed_title"), tr("auth.error.login_failed", error_msg=error_msg))
 
     def _on_signup_clicked(self):
         """处理注册按钮点击"""

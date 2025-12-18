@@ -119,8 +119,7 @@ class TestCreateAPIOrder:
     def test_create_api_order_success(self, mock_post, zpay_manager):
         """测试API方式创建订单成功"""
         # Arrange: Mock成功响应
-        mock_response = Mock()
-        mock_response.json.return_value = {
+        json_data = {
             "code": 1,
             "msg": "success",
             "trade_no": "ZPAY123456789",
@@ -129,6 +128,10 @@ class TestCreateAPIOrder:
             "qrcode": "https://pay.example.com/qr.png",
             "img": "data:image/png;base64,..."
         }
+        mock_response = Mock()
+        mock_response.json.return_value = json_data
+        mock_response.text = str(json_data)  # 添加 text 属性
+        mock_response.status_code = 200
         mock_post.return_value = mock_response
 
         # Act
@@ -151,11 +154,14 @@ class TestCreateAPIOrder:
     def test_create_api_order_failure(self, mock_post, zpay_manager):
         """测试API方式创建订单失败"""
         # Arrange: Mock失败响应
-        mock_response = Mock()
-        mock_response.json.return_value = {
+        json_data = {
             "code": -1,
             "msg": "商户不存在"
         }
+        mock_response = Mock()
+        mock_response.json.return_value = json_data
+        mock_response.text = str(json_data)  # 添加 text 属性
+        mock_response.status_code = 200
         mock_post.return_value = mock_response
 
         # Act
@@ -180,8 +186,7 @@ class TestQueryOrder:
     def test_query_order_by_out_trade_no(self, mock_get, zpay_manager):
         """测试通过商户订单号查询"""
         # Arrange: Mock查询成功响应
-        mock_response = Mock()
-        mock_response.json.return_value = {
+        json_data = {
             "code": 1,
             "msg": "success",
             "trade_no": "ZPAY123456789",
@@ -189,6 +194,10 @@ class TestQueryOrder:
             "money": "29.00",
             "status": "1"  # 1=已支付
         }
+        mock_response = Mock()
+        mock_response.json.return_value = json_data
+        mock_response.text = str(json_data)  # 添加 text 属性
+        mock_response.status_code = 200
         mock_get.return_value = mock_response
 
         # Act
@@ -203,13 +212,16 @@ class TestQueryOrder:
     def test_query_order_by_trade_no(self, mock_get, zpay_manager):
         """测试通过ZPAY订单号查询"""
         # Arrange
-        mock_response = Mock()
-        mock_response.json.return_value = {
+        json_data = {
             "code": 1,
             "msg": "success",
             "trade_no": "ZPAY123456789",
             "status": "1"
         }
+        mock_response = Mock()
+        mock_response.json.return_value = json_data
+        mock_response.text = str(json_data)  # 添加 text 属性
+        mock_response.status_code = 200
         mock_get.return_value = mock_response
 
         # Act
@@ -229,11 +241,14 @@ class TestQueryOrder:
     def test_query_order_not_found(self, mock_get, zpay_manager):
         """测试查询订单不存在"""
         # Arrange: Mock订单不存在响应
-        mock_response = Mock()
-        mock_response.json.return_value = {
+        json_data = {
             "code": -1,
             "msg": "订单不存在"
         }
+        mock_response = Mock()
+        mock_response.json.return_value = json_data
+        mock_response.text = str(json_data)  # 添加 text 属性
+        mock_response.status_code = 200
         mock_get.return_value = mock_response
 
         # Act
@@ -467,21 +482,24 @@ class TestGetPlanInfo:
         """测试获取月度订阅计划"""
         plan = zpay_manager.get_plan_info("pro_monthly")
 
-        assert plan["name"] == "GaiYa 高级版 月度会员"
+        # 名称来自 SubscriptionManager.PLANS
+        assert plan["name"] == "Pro月度订阅"
         assert plan["price"] == 29.0
 
     def test_get_yearly_plan_info(self, zpay_manager):
         """测试获取年度订阅计划"""
         plan = zpay_manager.get_plan_info("pro_yearly")
 
-        assert plan["name"] == "GaiYa 高级版 年度会员"
+        # 名称来自 SubscriptionManager.PLANS
+        assert plan["name"] == "Pro年度订阅"
         assert plan["price"] == 199.0
 
     def test_get_lifetime_plan_info(self, zpay_manager):
         """测试获取终身订阅计划"""
         plan = zpay_manager.get_plan_info("lifetime")
 
-        assert plan["name"] == "GaiYa 会员合伙人"
+        # 名称来自 SubscriptionManager.PLANS
+        assert plan["name"] == "终身会员"
         assert plan["price"] == 599.0
 
     def test_get_unknown_plan_info(self, zpay_manager):

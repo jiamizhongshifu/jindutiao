@@ -224,10 +224,11 @@ class TestSecurityConfig:
         os.environ.pop("DISABLE_SSL_VERIFY", None)
         assert Config.is_ssl_verify_disabled() is False
 
-    def test_ssl_verify_disabled(self):
-        """测试禁用SSL验证"""
+    def test_ssl_verify_always_enabled(self):
+        """测试SSL验证始终启用（安全修复：不再允许禁用）"""
+        # [SECURITY] SSL验证已强制启用，环境变量不再生效
         os.environ["DISABLE_SSL_VERIFY"] = "true"
-        assert Config.is_ssl_verify_disabled() is True
+        assert Config.is_ssl_verify_disabled() is False  # 始终返回False
         os.environ.pop("DISABLE_SSL_VERIFY", None)
 
 

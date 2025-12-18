@@ -38,6 +38,7 @@ from gaiya.utils.time_block_utils import generate_time_block_id, legacy_time_blo
 from gaiya.scene import SceneLoader, SceneRenderer, SceneEventManager, ResourceCache, SceneManager
 from gaiya.core.marker_presets import MarkerPresetManager
 from gaiya.core.danmaku_manager import DanmakuManager
+from gaiya.progress_bar import TrayManager
 from autostart_manager import AutoStartManager
 
 # i18n support
@@ -1273,134 +1274,38 @@ class TimeProgressBar(QWidget):
             QTimer.singleShot(2000, self.init_activity_tracker)
 
     def init_tray(self):
-        """初始化系统托盘图标"""
-        # 创建托盘图标
-        self.tray_icon = QSystemTrayIcon(self)
+        """初始化系统托盘图标 - 使用 TrayManager 模块化实现。"""
+        # ✅ Phase C.3 重构: 使用 TrayManager 模块
+        self._tray_manager = TrayManager(self, self.logger)
 
-        # 使用自定义图标
-        from PySide6.QtGui import QIcon
-        from gaiya.utils.path_utils import get_resource_path
+        # 设置回调函数
+        self._tray_manager.set_callbacks({
+            'toggle_edit_mode': self.toggle_edit_mode,
+            'save_edit_changes': self.save_edit_changes,
+            'cancel_edit': self.cancel_edit,
+            'open_config_gui': self.open_config_gui,
+            'show_time_review_window': self.show_time_review_window,
+            'start_focus_from_tray': self.start_focus_from_tray,
+            'adjust_focus_duration': self._adjust_focus_duration,
+            'end_focus_mode': self._end_focus_mode,
+            'skip_break': self._skip_break,
+            'show_statistics': self.show_statistics,
+            'open_scene_editor': self.open_scene_editor,
+            'reload_all': self.reload_all,
+        })
 
-        icon_path = get_resource_path("gaiya-logo2-wbk.png")
-        icon = QIcon(str(icon_path))
-        if icon.isNull():
-            # 如果自定义图标加载失败，使用Qt内置图标作为后备
-            icon = self.style().standardIcon(
-                self.style().StandardPixmap.SP_ComputerIcon
-            )
-        self.tray_icon.setIcon(icon)
-        self.tray_icon.setToolTip(tr('tray.tooltip'))
+        # 初始化托盘
+        self._tray_manager.init_tray()
 
-        # 创建右键菜单
-        tray_menu = QMenu()
-
-        # 优化托盘菜单样式（增加间距和内边距）
-        tray_menu.setStyleSheet("""
-            QMenu {
-                background-color: #FFFFFF;
-                border: 1px solid #E0E0E0;
-                border-radius: 6px;
-                padding: 6px 0;
-            }
-            QMenu::item {
-                padding: 8px 30px 8px 20px;
-                color: #333333;
-            }
-            QMenu::item:selected {
-                background-color: #F5F5F5;
-            }
-            QMenu::separator {
-                height: 1px;
-                background-color: #E0E0E0;
-                margin: 8px 12px;
-            }
-        """)
-
-        # Edit task time action (dynamic text)
-        self.edit_mode_action = QAction(tr('menu.edit_task_time'), self)
-        self.edit_mode_action.triggered.connect(self.toggle_edit_mode)
-        tray_menu.addAction(self.edit_mode_action)
-
-        # Save/Cancel actions (only visible in edit mode)
-        self.save_edit_action = QAction(tr('menu.save_changes'), self)
-        self.save_edit_action.triggered.connect(self.save_edit_changes)
-        self.save_edit_action.setVisible(False)
-        tray_menu.addAction(self.save_edit_action)
-
-        self.cancel_edit_action = QAction(tr('menu.cancel_edit'), self)
-        self.cancel_edit_action.triggered.connect(self.cancel_edit)
-        self.cancel_edit_action.setVisible(False)
-        tray_menu.addAction(self.cancel_edit_action)
-
-        tray_menu.addSeparator()
-
-        # Open config action
-        config_action = QAction(tr('menu.config'), self)
-        config_action.triggered.connect(self.open_config_gui)
-        tray_menu.addAction(config_action)
-
-        # Time review action
-        time_review_action = QAction("⏰ 今日时间回放", self)
-        time_review_action.triggered.connect(self.show_time_review_window)
-        tray_menu.addAction(time_review_action)
-
-        # Task completion review action
-        # 注释掉: 已集成到统计报告界面,不需要独立入口
-        # task_review_action = QAction("✅ 任务完成回顾", self)
-        # task_review_action.triggered.connect(self.show_today_task_review)
-        # tray_menu.addAction(task_review_action)
-
-        # Focus work action (红温专注仓)
-        self.focus_work_action = QAction("🔥 开启红温专注仓", self)
-        self.focus_work_action.triggered.connect(self.start_focus_from_tray)
-        tray_menu.addAction(self.focus_work_action)
-
-        # Focus mode controls (only visible when in focus mode)
-        self.adjust_focus_action = QAction("⏱️ 调整专注时长", self)
-        self.adjust_focus_action.triggered.connect(self._adjust_focus_duration)
-        self.adjust_focus_action.setVisible(False)
-        tray_menu.addAction(self.adjust_focus_action)
-
-        self.end_focus_action = QAction("⏹️ 结束专注", self)
-        self.end_focus_action.triggered.connect(self._end_focus_mode)
-        self.end_focus_action.setVisible(False)
-        tray_menu.addAction(self.end_focus_action)
-
-        self.skip_break_action = QAction("⏭️ 跳过休息", self)
-        self.skip_break_action.triggered.connect(self._skip_break)
-        self.skip_break_action.setVisible(False)
-        tray_menu.addAction(self.skip_break_action)
-
-        # Statistics report
-        statistics_action = QAction(tr('menu.statistics'), self)
-        statistics_action.triggered.connect(self.show_statistics)
-        tray_menu.addAction(statistics_action)
-
-        # Scene editor
-        scene_editor_action = QAction(tr('menu.scene_editor'), self)
-        scene_editor_action.triggered.connect(self.open_scene_editor)
-        tray_menu.addAction(scene_editor_action)
-
-        tray_menu.addSeparator()
-
-        # Reload config action
-        reload_action = QAction(tr('menu.reload_config'), self)
-        reload_action.triggered.connect(self.reload_all)
-        tray_menu.addAction(reload_action)
-
-        tray_menu.addSeparator()
-
-        # Quit action
-        quit_action = QAction(tr('menu.quit'), self)
-        quit_action.triggered.connect(QApplication.quit)
-        tray_menu.addAction(quit_action)
-
-        self.tray_icon.setContextMenu(tray_menu)
-
-        # 绑定左键点击事件：点击托盘图标打开配置管理器
-        self.tray_icon.activated.connect(self.on_tray_icon_activated)
-
-        self.tray_icon.show()
+        # 暴露属性以保持向后兼容
+        self.tray_icon = self._tray_manager.tray_icon
+        self.edit_mode_action = self._tray_manager.edit_mode_action
+        self.save_edit_action = self._tray_manager.save_edit_action
+        self.cancel_edit_action = self._tray_manager.cancel_edit_action
+        self.focus_work_action = self._tray_manager.focus_work_action
+        self.adjust_focus_action = self._tray_manager.adjust_focus_action
+        self.end_focus_action = self._tray_manager.end_focus_action
+        self.skip_break_action = self._tray_manager.skip_break_action
 
     def on_tray_icon_activated(self, reason):
         """

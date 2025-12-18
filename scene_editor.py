@@ -3304,8 +3304,8 @@ class SceneEditorWindow(QMainWindow):
                         try:
                             os.unlink(road_backup_path)
                             logger.debug(f"临时备份文件已清理: {road_backup_path}")
-                        except:
-                            pass
+                        except OSError as e:
+                            logger.warning(f"清理临时备份文件失败: {road_backup_path}, 错误: {e}")
                 else:
                     # 源文件不存在
                     logger.warning(f"道路层源文件不存在: {road_src}")
@@ -3321,8 +3321,8 @@ class SceneEditorWindow(QMainWindow):
                 if road_backup_path and Path(road_backup_path).exists():
                     try:
                         os.unlink(road_backup_path)
-                    except:
-                        pass
+                    except OSError as e:
+                        logger.warning(f"清理临时备份文件失败: {road_backup_path}, 错误: {e}")
 
             config["layers"]["road"] = {
                 "type": "tiled",

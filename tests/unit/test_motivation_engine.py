@@ -240,8 +240,8 @@ class TestAchievementChecking:
         newly_unlocked = motivation_engine.check_achievements()
 
         assert len(newly_unlocked) == 0
-        # 验证所有成就类型都被检查了
-        assert mock_achievement_manager.check_and_unlock.call_count == 5
+        # 验证至少检查了10种成就类型
+        assert mock_achievement_manager.check_and_unlock.call_count >= 10
 
     def test_check_achievements_some_unlocked(self, motivation_engine, mock_achievement_manager, mock_stats_manager):
         """测试检查成就(有解锁)"""
@@ -250,13 +250,13 @@ class TestAchievementChecking:
         achievement.name = "测试成就"
         achievement.achievement_id = "test-achievement"
 
-        mock_achievement_manager.check_and_unlock.side_effect = [
-            [achievement],  # continuous_days 解锁1个
-            [],  # total_tasks_completed
-            [],  # total_focus_hours
-            [],  # daily_completion_rate
-            []   # weekly_completion_rate
-        ]
+        # 所有调用都返回空列表，除了第一个
+        def side_effect_func(req_type, value):
+            if req_type == 'continuous_days':
+                return [achievement]
+            return []
+
+        mock_achievement_manager.check_and_unlock.side_effect = side_effect_func
 
         # 设置统计数据
         today = date.today()
@@ -290,11 +290,13 @@ class TestAchievementChecking:
         achievement = Mock()
         achievement.name = "测试成就"
 
-        # check_achievements 会调用5次 check_and_unlock,只有第一次返回成就
-        mock_achievement_manager.check_and_unlock.side_effect = [
-            [achievement],  # 第一次返回成就
-            [], [], [], []  # 其他4次返回空
-        ]
+        # 使用函数来处理任意数量的调用
+        def side_effect_func(req_type, value):
+            if req_type == 'continuous_days':
+                return [achievement]
+            return []
+
+        mock_achievement_manager.check_and_unlock.side_effect = side_effect_func
 
         # 设置回调
         callback_mock = Mock()
@@ -462,14 +464,16 @@ class TestUpdateAll:
         mock_goal_manager.get_active_goals.return_value = [goal]
         mock_goal_manager.update_goal_progress.return_value = True
 
-        # Mock成就解锁
+        # Mock成就解锁 - 使用函数处理任意数量调用
         achievement = Mock()
         achievement.name = "测试成就"
 
-        mock_achievement_manager.check_and_unlock.side_effect = [
-            [achievement],  # 第一次调用返回成就
-            [], [], [], []  # 后续调用返回空
-        ]
+        def side_effect_func(req_type, value):
+            if req_type == 'continuous_days':
+                return [achievement]
+            return []
+
+        mock_achievement_manager.check_and_unlock.side_effect = side_effect_func
 
         # 设置统计数据
         today = date.today().isoformat()

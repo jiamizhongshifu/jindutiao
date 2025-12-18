@@ -242,12 +242,16 @@ class TestOTPManagement:
         assert result["success"] is True
 
     def test_verify_otp_success(self, auth_manager, mock_supabase_client):
-        """测试OTP验证成功"""
+        """测试OTP验证成功（使用哈希存储）"""
+        from api.auth_manager import _hash_otp
+
         expires_at = (datetime.now(timezone.utc) + timedelta(minutes=10)).isoformat()
+        # [SECURITY] 模拟数据库中存储的是哈希后的OTP
+        hashed_code = _hash_otp("123456", "test@example.com")
 
         mock_response = Mock()
         mock_response.data = [{
-            "code": "123456",
+            "code": hashed_code,
             "purpose": "signup",
             "expires_at": expires_at,
             "attempts": 0
@@ -262,12 +266,16 @@ class TestOTPManagement:
         assert result["purpose"] == "signup"
 
     def test_verify_otp_wrong_code(self, auth_manager, mock_supabase_client):
-        """测试OTP验证失败"""
+        """测试OTP验证失败（错误验证码）"""
+        from api.auth_manager import _hash_otp
+
         expires_at = (datetime.now(timezone.utc) + timedelta(minutes=10)).isoformat()
+        # [SECURITY] 数据库存储的是"123456"的哈希
+        hashed_code = _hash_otp("123456", "test@example.com")
 
         mock_response = Mock()
         mock_response.data = [{
-            "code": "123456",
+            "code": hashed_code,
             "purpose": "signup",
             "expires_at": expires_at,
             "attempts": 0
@@ -276,6 +284,7 @@ class TestOTPManagement:
         mock_supabase_client.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_response
         mock_supabase_client.table.return_value.update.return_value.eq.return_value.execute.return_value = Mock()
 
+        # 用户输入错误的验证码"654321"
         result = auth_manager.verify_otp("test@example.com", "654321")
 
         assert result["success"] is False
@@ -283,11 +292,14 @@ class TestOTPManagement:
 
     def test_verify_otp_expired(self, auth_manager, mock_supabase_client):
         """测试过期的OTP"""
+        from api.auth_manager import _hash_otp
+
         expires_at = (datetime.now(timezone.utc) - timedelta(minutes=1)).isoformat()
+        hashed_code = _hash_otp("123456", "test@example.com")
 
         mock_response = Mock()
         mock_response.data = [{
-            "code": "123456",
+            "code": hashed_code,
             "purpose": "signup",
             "expires_at": expires_at,
             "attempts": 0
@@ -303,11 +315,14 @@ class TestOTPManagement:
 
     def test_verify_otp_max_attempts(self, auth_manager, mock_supabase_client):
         """测试OTP尝试次数超限"""
+        from api.auth_manager import _hash_otp
+
         expires_at = (datetime.now(timezone.utc) + timedelta(minutes=10)).isoformat()
+        hashed_code = _hash_otp("123456", "test@example.com")
 
         mock_response = Mock()
         mock_response.data = [{
-            "code": "123456",
+            "code": hashed_code,
             "purpose": "signup",
             "expires_at": expires_at,
             "attempts": 5  # 已达到最大尝试次数
@@ -334,9 +349,14 @@ class TestPasswordManagement:
         assert result["success"] is True
         assert "reset email sent" in result["message"].lower()
 
-    def test_update_password(self, auth_manager, mock_supabase_client):
+    @patch.dict('os.environ', {'SUPABASE_URL': 'https://test.supabase.co', 'SUPABASE_ANON_KEY': 'test-anon-key'})
+    @patch('api.auth_manager.requests.put')
+    def test_update_password(self, mock_put, auth_manager, mock_supabase_client):
         """测试更新密码"""
-        mock_supabase_client.auth.update_user.return_value = None
+        # Mock REST API 成功响应（因为 JWT 验证在测试环境会失败，走 REST API fallback）
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_put.return_value = mock_response
 
         result = auth_manager.update_password("test-access-token", "NewPassword123")
 

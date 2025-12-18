@@ -311,11 +311,20 @@ class TestEnhancedPaymentAmountValidation:
             assert "金额" in error
 
     def test_floating_point_tolerance(self):
-        """测试浮点误差容忍（0.01误差）"""
-        # 在误差范围内应该通过（注意：只能用2位小数，因为validate_amount限制）
-        # 29.01 与 29.0 的差异是 0.01，刚好在容差范围内
+        """测试严格金额验证（容差收紧到0.001）
+
+        [SECURITY] 2025-12-18 修复：
+        - 旧行为：允许0.01容差，29.01对29.00通过
+        - 新行为：严格验证，只允许0.001容差，防止金额欺诈
+        """
+        # 精确金额应该通过
+        is_valid, error = validate_payment_amount("pro_monthly", 29.0)
+        assert is_valid is True, "精确金额29.0应该通过"
+
+        # 0.01差异应该被拒绝（超出0.001容差）
         is_valid, error = validate_payment_amount("pro_monthly", 29.01)
-        assert is_valid is True, f"29.01应该在容差范围内通过"
+        assert is_valid is False, "29.01与29.0差异0.01应该被拒绝"
+        assert "金额不正确" in error
 
         # 超出误差范围应该拒绝
         is_valid, error = validate_payment_amount("pro_monthly", 29.02)
