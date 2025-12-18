@@ -132,7 +132,7 @@ class TimelineEditor(QWidget):
             if hours == 24 and minutes == 0:
                 return 1440
             return hours * 60 + minutes
-        except:
+        except (ValueError, AttributeError):
             return 0
 
     def apply_theme(self):

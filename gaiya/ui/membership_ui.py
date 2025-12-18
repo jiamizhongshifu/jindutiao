@@ -1401,7 +1401,7 @@ class MembershipDialog(QDialog):
                                 param_data = json.loads(param_str) if param_str else {}
                                 user_id = param_data.get("user_id")
                                 plan_type = param_data.get("plan_type")
-                            except:
+                            except (json.JSONDecodeError, ValueError, KeyError):
                                 user_id = plan_type = None
 
                         if user_id and plan_type:

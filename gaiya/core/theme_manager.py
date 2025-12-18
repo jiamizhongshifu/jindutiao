@@ -632,7 +632,7 @@ class ThemeManager(QObject):
                 try:
                     value = winreg.QueryValueEx(key, "AppsUseLightTheme")[0]
                     return "light" if value == 1 else "dark"
-                except:
+                except OSError:
                     return "light"
                 finally:
                     winreg.CloseKey(key)

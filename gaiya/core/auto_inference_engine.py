@@ -354,7 +354,7 @@ class AutoInferenceEngine(QObject):
             start_time = datetime.strptime(start_time_str, '%H:%M')
             diff = (start_time - end_time).total_seconds()
             return 0 <= diff <= 300  # 5分钟
-        except:
+        except ValueError:
             return False
 
     def _load_inference_rules(self) -> Dict:

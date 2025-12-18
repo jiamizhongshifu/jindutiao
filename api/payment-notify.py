@@ -196,7 +196,9 @@ class handler(BaseHTTPRequestHandler):
 
         except Exception as e:
             print(f"[PAYMENT-NOTIFY] Error checking order: {e}", file=sys.stderr)
-            return False
+            # ⚠️ 安全模式：异常时假设已处理，避免重复收款
+            # 宁可漏处理一笔（用户可重新支付），不可重复收款（需要退款）
+            return True
 
     def _create_payment_record(
         self,

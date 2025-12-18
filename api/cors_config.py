@@ -5,9 +5,12 @@ GaiYa每日进度条 - CORS安全配置
 import os
 from typing import List
 
+# 检测是否为生产环境
+_IS_PRODUCTION = os.getenv("VERCEL_ENV") == "production"
+
 # 允许的CORS源白名单
-# 生产环境应仅包含实际部署的域名
-ALLOWED_ORIGINS = [
+# 生产环境仅包含实际部署的域名
+ALLOWED_ORIGINS: List[str] = [
     # Vercel生产环境
     "https://jindutiao.vercel.app",
 
@@ -16,13 +19,16 @@ ALLOWED_ORIGINS = [
     "https://www.gaiya.app",
     "https://gaiyatime.com",
     "https://www.gaiyatime.com",
-
-    # 本地开发环境
-    "http://localhost:3000",
-    "http://localhost:5000",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:5000",
 ]
+
+# 非生产环境添加本地开发地址
+if not _IS_PRODUCTION:
+    ALLOWED_ORIGINS.extend([
+        "http://localhost:3000",
+        "http://localhost:5000",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5000",
+    ])
 
 # 开发模式：允许所有源（仅用于测试，生产环境禁用）
 DEV_MODE = os.getenv("CORS_DEV_MODE") == "true"

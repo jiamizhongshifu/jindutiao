@@ -5,9 +5,17 @@ GaiYa每日进度条 - 用户认证管理器
 import os
 from datetime import datetime, timedelta
 from typing import Dict, Optional
+from functools import lru_cache
 from supabase import create_client, Client
 import sys
 import requests
+import jwt  # PyJWT for secure token verification
+
+
+@lru_cache(maxsize=1)
+def _get_jwt_secret() -> str:
+    """缓存获取JWT密钥，避免重复读取环境变量"""
+    return os.getenv("SUPABASE_JWT_SECRET", "")
 
 # Supabase配置
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
@@ -41,6 +49,48 @@ class AuthManager:
                 print(f"Failed to initialize Supabase client: {e}", file=sys.stderr)
                 self.client = None
                 self.admin_client = None
+
+    def _verify_and_decode_token(self, access_token: str) -> Optional[str]:
+        """
+        安全验证并解码JWT token
+
+        Args:
+            access_token: Supabase JWT token
+
+        Returns:
+            user_id (sub claim) if valid, None otherwise
+        """
+        jwt_secret = _get_jwt_secret()
+        if not jwt_secret:
+            # 无密钥配置时，降级使用不安全解码（仅供向后兼容）
+            print("[AUTH] WARNING: JWT secret not configured, using insecure decode", file=sys.stderr)
+            try:
+                import base64
+                import json as jsonlib
+                parts = access_token.split(".")
+                if len(parts) >= 2:
+                    payload = parts[1] + "=" * (-len(parts[1]) % 4)
+                    data = jsonlib.loads(base64.urlsafe_b64decode(payload))
+                    return data.get("sub")
+            except Exception:
+                return None
+            return None
+
+        try:
+            # 使用PyJWT进行完整签名验证
+            payload = jwt.decode(
+                access_token,
+                jwt_secret,
+                algorithms=["HS256"],
+                audience="authenticated"
+            )
+            return payload.get("sub")
+        except jwt.ExpiredSignatureError:
+            print("[AUTH] Token expired", file=sys.stderr)
+            return None
+        except jwt.InvalidTokenError as e:
+            print(f"[AUTH] Invalid token: {e}", file=sys.stderr)
+            return None
 
     def sign_up_with_email(self, email: str, password: str, username: Optional[str] = None) -> Dict:
         """
@@ -575,20 +625,11 @@ class AuthManager:
             return {"success": False, "error": "Supabase not configured"}
 
         try:
-            # 优先使用 Admin API，避免客户端 session 丢失导致“Auth session missing”
+            # 优先使用 Admin API，避免客户端 session 丢失导致"Auth session missing"
             if self.admin_client:
                 try:
-                    # 从 access_token 解出 user_id（JWT payload 第2段）
-                    import base64
-                    import json as jsonlib
-
-                    parts = access_token.split(".")
-                    if len(parts) >= 2:
-                        payload = parts[1] + "=" * (-len(parts[1]) % 4)
-                        data = jsonlib.loads(base64.urlsafe_b64decode(payload))
-                        user_id = data.get("sub")
-                    else:
-                        user_id = None
+                    # 使用安全的JWT验证获取user_id
+                    user_id = self._verify_and_decode_token(access_token)
 
                     if user_id:
                         self.admin_client.auth.admin.update_user_by_id(
@@ -598,7 +639,7 @@ class AuthManager:
                         print("Password updated via admin API", file=sys.stderr)
                         return {"success": True}
                     else:
-                        print("Failed to parse user_id from token, fallback to bearer update", file=sys.stderr)
+                        print("Failed to verify token, fallback to bearer update", file=sys.stderr)
                 except Exception as admin_err:
                     print(f"[AUTH-UPDATE] admin update failed: {admin_err}", file=sys.stderr)
 

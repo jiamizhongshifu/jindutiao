@@ -2,3 +2,4 @@ requests==2.31.0
 supabase>=2.23.0
 resend>=0.8.0
 stripe>=7.0.0
+PyJWT>=2.8.0

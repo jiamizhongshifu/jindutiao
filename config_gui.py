@@ -9587,7 +9587,7 @@ class ConfigManager(QMainWindow):
             # 先断开 canceled 信号连接，防止 close() 触发取消消息
             try:
                 progress.canceled.disconnect(on_cancel)
-            except:
+            except RuntimeError:
                 pass  # 如果已经断开则忽略
 
             progress.close()

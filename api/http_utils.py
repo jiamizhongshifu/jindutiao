@@ -109,8 +109,8 @@ def send_success_response(
             handler.send_response(500)
             handler.end_headers()
             handler.wfile.write(b'{"success": false, "error": "Response generation failed"}')
-        except:
-            pass
+        except (OSError, BrokenPipeError):
+            pass  # 连接已关闭，无法发送响应
 
 
 def send_error_response(
@@ -171,8 +171,8 @@ def send_error_response(
             handler.send_response(500)
             handler.end_headers()
             handler.wfile.write(b'Internal Server Error')
-        except:
-            pass
+        except (OSError, BrokenPipeError):
+            pass  # 连接已关闭，无法发送响应
 
 
 def validate_required_fields(

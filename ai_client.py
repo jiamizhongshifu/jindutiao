@@ -4,6 +4,8 @@ GaiYa每日进度条 - AI Client
 客户端封装,用于在GUI中调用AI功能
 统一使用代理服务器，保护API密钥安全
 """
+import json
+import logging
 import os
 import requests
 from typing import Dict, List, Optional
@@ -96,7 +98,7 @@ class GaiyaAIClient:
                 try:
                     error_data = response.json()
                     error_msg = error_data.get('error', '未知错误')
-                except:
+                except (json.JSONDecodeError, ValueError):
                     error_msg = f"HTTP {response.status_code}: {response.text[:200]}"
 
                 logging.error(f"[AI API] 请求失败: {error_msg}")
@@ -275,7 +277,7 @@ class GaiyaAIClient:
                 try:
                     data = response.json()
                     self._show_quota_exceeded_dialog(data, parent_widget)
-                except:
+                except (json.JSONDecodeError, ValueError):
                     self._show_error_dialog("API配额已用尽，请稍后重试", parent_widget)
                 return None
 
@@ -291,7 +293,7 @@ class GaiyaAIClient:
                 try:
                     error_data = response.json()
                     error_msg = error_data.get('error', f'HTTP {response.status_code}')
-                except:
+                except (json.JSONDecodeError, ValueError):
                     error_msg = f"HTTP {response.status_code}: {response.text[:100]}"
 
                 self._show_error_dialog(

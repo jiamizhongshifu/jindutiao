@@ -736,6 +736,31 @@ class TimeProgressBar(QWidget):
         self.time_range_end = result['time_range_end']
         self.time_range_duration = result['time_range_duration']
 
+        # Phase 3.2: 预计算跨天信息，避免paintEvent中O(n²)
+        self._precompute_crossday_info()
+
+    def _precompute_crossday_info(self):
+        """预计算跨天任务信息，避免paintEvent中的O(n²)嵌套循环
+
+        在任务位置更新时调用一次，而不是每帧paintEvent都计算
+        """
+        if not hasattr(self, 'task_positions') or not self.task_positions:
+            return
+
+        for i, pos in enumerate(self.task_positions):
+            pos['has_crossday_after'] = False
+            pos['crossday_end'] = None
+
+            # 检查后续任务是否有跨天任务
+            for j in range(i + 1, len(self.task_positions)):
+                next_pos = self.task_positions[j]
+                next_start = next_pos.get('original_start', 0)
+                next_end = next_pos.get('original_end', 0)
+                if next_start > next_end:  # 发现跨天任务
+                    pos['has_crossday_after'] = True
+                    pos['crossday_end'] = next_end
+                    break
+
     def save_config(self):
         """Persist current configuration to config.json."""
         try:
@@ -3317,16 +3342,9 @@ class TimeProgressBar(QWidget):
                     # 2. 跨天任务结束后的早上(如09:08): 普通任务显示未开始(新一天)
                     # 3. 正常时段: 按秒数判断
 
-                    # 检测是否有后续的跨天任务
-                    has_crossday_task_after = False
-                    crossday_task_end = None
-                    for j in range(i + 1, len(self.task_positions)):
-                        next_task_start = self.task_positions[j]['original_start']
-                        next_task_end = self.task_positions[j]['original_end']
-                        if next_task_start > next_task_end:  # 发现后续跨天任务
-                            has_crossday_task_after = True
-                            crossday_task_end = next_task_end
-                            break
+                    # Phase 3.2: 使用预计算的跨天信息，避免O(n²)嵌套循环
+                    has_crossday_task_after = pos.get('has_crossday_after', False)
+                    crossday_task_end = pos.get('crossday_end')
 
                     # 判断任务状态
                     if has_crossday_task_after and current_seconds < task_start and current_seconds < task_end:
@@ -3929,6 +3947,15 @@ class TimeProgressBar(QWidget):
             if self.marker_frame_timer.isActive():
                 self.marker_frame_timer.stop()
             self.marker_frame_timer = None
+
+        # 清理遗漏的定时器 (Phase 3.1 修复)
+        for timer_name in ['focus_state_timer', 'topmost_timer',
+                           'danmaku_animation_timer', '_reload_timer']:
+            if hasattr(self, timer_name):
+                timer = getattr(self, timer_name)
+                if timer and timer.isActive():
+                    timer.stop()
+                setattr(self, timer_name, None)
 
         # 清理QMovie对象
         if hasattr(self, 'marker_movie') and self.marker_movie:

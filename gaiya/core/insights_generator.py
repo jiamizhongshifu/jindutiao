@@ -13,7 +13,7 @@ Version: 1.0
 """
 
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from datetime import date, datetime, timedelta
 from collections import defaultdict
 
@@ -40,7 +40,7 @@ class InsightsGenerator:
         self.stats_manager = stats_manager
         self.logger = logger or logging.getLogger(__name__)
 
-    def generate_weekly_insights(self, days: int = 7) -> Dict[str, any]:
+    def generate_weekly_insights(self, days: int = 7) -> Dict[str, Any]:
         """
         Generate comprehensive weekly insights
 
@@ -105,7 +105,7 @@ class InsightsGenerator:
         self.logger.info("Weekly insights generated successfully")
         return insights
 
-    def _analyze_productivity_trend(self, trend_data: List[Dict]) -> Dict[str, any]:
+    def _analyze_productivity_trend(self, trend_data: List[Dict]) -> Dict[str, Any]:
         """
         Analyze productivity trend (improving/declining/stable)
 
@@ -212,7 +212,7 @@ class InsightsGenerator:
 
         return top_categories
 
-    def _analyze_focus_patterns(self, trend_data: List[Dict]) -> Dict[str, any]:
+    def _analyze_focus_patterns(self, trend_data: List[Dict]) -> Dict[str, Any]:
         """
         Analyze focus time patterns
 

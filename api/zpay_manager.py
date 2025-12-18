@@ -4,10 +4,12 @@ GaiYa每日进度条 - ZPAY支付管理器
 """
 import os
 import hashlib
+import hmac
 import json
 import requests
+import threading
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Dict, Optional, Set
 import sys
 
 # ZPAY配置
@@ -16,6 +18,13 @@ import sys
 ZPAY_API_URL = "https://zpayz.cn"
 ZPAY_PID = os.getenv("ZPAY_PID")
 ZPAY_PKEY = os.getenv("ZPAY_PKEY")
+
+# 防重放攻击: Nonce缓存（线程安全）
+# 注意：Vercel Serverless环境中，每个实例有独立缓存
+# 建议后续迁移至Redis等分布式缓存
+_processed_nonces: Set[str] = set()
+_nonce_lock = threading.Lock()
+_NONCE_CACHE_MAX_SIZE = 10000  # 防止内存无限增长
 
 
 class ZPayManager:
@@ -376,6 +385,8 @@ class ZPayManager:
         Returns:
             签名是否有效
         """
+        global _processed_nonces
+
         try:
             # ✅ 安全检查1：签名必须存在
             received_sign = params.get("sign", "")
@@ -390,7 +401,20 @@ class ZPayManager:
                     print(f"[SECURITY] Required field '{field}' missing in payment callback", file=sys.stderr)
                     return False
 
-            # ✅ 安全检查3：时间戳验证（防止重放攻击）
+            # ✅ 安全检查3：Nonce去重（防止5分钟窗口内重放攻击）
+            # 使用 out_trade_no + trade_no 作为唯一标识
+            nonce = f"{params.get('out_trade_no')}:{params.get('trade_no')}"
+            with _nonce_lock:
+                if nonce in _processed_nonces:
+                    print(f"[SECURITY] Duplicate payment callback detected (nonce: {nonce[:20]}...)", file=sys.stderr)
+                    return False
+                # 缓存大小控制：超限时清空（简单策略，生产环境建议用LRU或Redis）
+                if len(_processed_nonces) >= _NONCE_CACHE_MAX_SIZE:
+                    print(f"[SECURITY] Nonce cache full, clearing (size: {len(_processed_nonces)})", file=sys.stderr)
+                    _processed_nonces.clear()
+                _processed_nonces.add(nonce)
+
+            # ✅ 安全检查4：时间戳验证（防止重放攻击）
             timestamp = params.get("timestamp")
             if timestamp:
                 try:
@@ -440,7 +464,10 @@ class ZPayManager:
             calculated_sign = self._generate_sign(verify_params)
 
             # 4. 对比签名（使用常量时间比较防止时序攻击）
-            is_valid = received_sign == calculated_sign
+            is_valid = hmac.compare_digest(
+                received_sign.encode('utf-8'),
+                calculated_sign.encode('utf-8')
+            )
 
             if is_valid:
                 print(f"[ZPAY-VERIFY] Signature valid for order: {params.get('out_trade_no')}", file=sys.stderr)
