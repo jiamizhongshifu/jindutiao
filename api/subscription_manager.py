@@ -179,13 +179,13 @@ class SubscriptionManager:
         Returns:
             订阅状态
         """
-        # ✅ 修复: 直接从users表读取tier字段 (不是user_tier!)
-        # 因为手动支付升级是直接更新users.tier,不创建subscriptions记录
+        # ✅ 修复: 直接从users表读取user_tier字段
+        # 数据库schema定义的字段是user_tier (不是tier!)
         try:
-            user_response = self.client.table("users").select("tier, subscription_expires_at").eq("id", user_id).execute()
+            user_response = self.client.table("users").select("user_tier, subscription_expires_at").eq("id", user_id).execute()
 
             if user_response.data and len(user_response.data) > 0:
-                tier = user_response.data[0].get("tier", "free")
+                tier = user_response.data[0].get("user_tier", "free")
                 expires_at = user_response.data[0].get("subscription_expires_at")
 
                 # 如果是pro或lifetime,认为是活跃会员

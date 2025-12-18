@@ -167,14 +167,14 @@ class handler(BaseHTTPRequestHandler):
                 }).execute()
 
                 print(f"[MANUAL-UPGRADE] RPC upgrade successful", file=sys.stderr)
-                updated_user = {"tier": tier, "subscription_expires_at": expires_at}
+                updated_user = {"user_tier": tier, "subscription_expires_at": expires_at}
 
             except Exception as rpc_error:
                 print(f"[MANUAL-UPGRADE] RPC not available, using direct update: {rpc_error}", file=sys.stderr)
 
                 # 方法2: 直接更新,显式指定字段
                 update_data = {
-                    "tier": tier,
+                    "user_tier": tier,
                     "updated_at": datetime.now().isoformat()
                 }
 
