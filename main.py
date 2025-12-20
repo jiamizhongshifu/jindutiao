@@ -2017,6 +2017,12 @@ class TimeProgressBar(QWidget):
         if hasattr(self, 'danmaku_manager'):
             self.danmaku_manager.reload_config(self.config)
 
+        # 重新加载任务完成调度器配置
+        if hasattr(self, 'task_completion_scheduler'):
+            scheduler_config = self.config.get('task_completion_scheduler', {})
+            self.task_completion_scheduler.reload_config(scheduler_config)
+            self.logger.info(f"[reload_all] 任务完成调度器配置已重载: {scheduler_config}")
+
         # 检查弹幕启用状态是否改变
         new_danmaku_enabled = False
         if hasattr(self, 'danmaku_manager'):

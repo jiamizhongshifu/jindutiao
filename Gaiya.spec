@@ -46,6 +46,7 @@ hidden_imports = [
     'certifi',  # SSL证书
     'socks',  # PySocks（SOCKS5代理支持）
     'socksio',  # httpx的SOCKS5支持
+    'psutil',  # 系统进程监控（行为识别需要）
     'PySide6.QtWidgets',
     'PySide6.QtCore',
     'PySide6.QtGui',

@@ -96,3 +96,9 @@ ssl_test.txt
 # 漫画脚本（本地创作，不推送）
 comics/
 .vercel
+
+# MCP Server Gemini
+mcp-server-gemini/node_modules/
+mcp-server-gemini/dist/
+mcp-server-gemini/.env
+mcp-server-gemini/gemini-images/

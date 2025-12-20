@@ -317,6 +317,7 @@ class TaskCompletionScheduler:
         """
         # 完全自动确认模式: 所有任务自动确认，不弹窗
         auto_confirm_all = self.config.get('auto_confirm_all', False)
+        logger.info(f"[自动确认] auto_confirm_all={auto_confirm_all}, 配置={self.config}")
         if auto_confirm_all:
             try:
                 unconfirmed = self.db.get_unconfirmed_task_completions(date)
