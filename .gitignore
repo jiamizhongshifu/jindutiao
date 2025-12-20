@@ -95,3 +95,4 @@ ssl_test.txt
 
 # 漫画脚本（本地创作，不推送）
 comics/
+.vercel

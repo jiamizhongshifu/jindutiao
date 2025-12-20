@@ -3620,6 +3620,27 @@ class ConfigManager(QMainWindow):
         quiet_group.setLayout(quiet_layout)
         layout.addWidget(quiet_group)
 
+        # 任务完成确认设置组
+        task_confirm_group = QGroupBox("✅ 任务完成确认")
+        task_confirm_group.setStyleSheet("QGroupBox::title { color: #666666; font-weight: bold; font-size: 14px; }")
+        task_confirm_layout = QFormLayout()
+
+        scheduler_config = self.config.get('task_completion_scheduler', {})
+
+        # 启用每日任务确认弹窗 (注意: auto_confirm_all=True 表示不弹窗，所以UI要反转)
+        self.task_confirm_popup_check = QCheckBox("每天21:00弹出任务完成确认窗口")
+        self.task_confirm_popup_check.setChecked(not scheduler_config.get('auto_confirm_all', False))
+        self.task_confirm_popup_check.setMinimumHeight(36)
+        task_confirm_layout.addRow(self.task_confirm_popup_check)
+
+        # 提示说明
+        task_confirm_hint = QLabel("关闭后，任务完成度将自动确认，不再弹出确认窗口")
+        task_confirm_hint.setStyleSheet("color: #888888; font-size: 8pt; font-style: italic;")
+        task_confirm_layout.addRow(task_confirm_hint)
+
+        task_confirm_group.setLayout(task_confirm_layout)
+        layout.addWidget(task_confirm_group)
+
         layout.addStretch()
         return widget
 
@@ -4437,6 +4458,17 @@ class ConfigManager(QMainWindow):
             if hasattr(self, 'ai_client') and self.ai_client:
                 self.ai_client.user_tier = user_tier
                 logging.info(f"[ACCOUNT] 已更新ai_client.user_tier: {user_tier}")
+
+            # ⚠️ 关键修复：同步更新主窗口的auth_client.user_info（修复进度条水印问题）
+            # 因为main.py和config_gui.py使用不同的AuthClient实例，需要手动同步
+            if self.main_window and hasattr(self.main_window, 'auth_client'):
+                # 重新从存储加载user_info（因为上面的get_subscription_status已经保存了最新数据）
+                self.main_window.auth_client._load_tokens()
+                new_tier = self.main_window.auth_client.get_user_tier()
+                logging.info(f"[ACCOUNT] 已同步更新main_window.auth_client.user_info: tier={new_tier}")
+                # 触发进度条重绘以移除水印
+                if hasattr(self.main_window, 'update'):
+                    self.main_window.update()
 
             # ⚠️ 关键修复：刷新任务管理tab中的配额显示(在重新加载account_tab之前)
             if hasattr(self, 'quota_label'):
@@ -8849,6 +8881,7 @@ class ConfigManager(QMainWindow):
             danmaku_cfg = self.config.get('danmaku', {})
             activity_cfg = self.config.get('activity_tracking', {})
             behavior_cfg = self.config.get('behavior_recognition', {})
+            scheduler_cfg = self.config.get('task_completion_scheduler', {})
 
             config = {
                 # 基础配置
@@ -8923,6 +8956,15 @@ class ConfigManager(QMainWindow):
                     "global_cooldown": self._get_ui_value('behavior_global_cooldown', behavior_cfg.get('global_cooldown', 30)),
                     "category_cooldown": self._get_ui_value('behavior_category_cooldown', behavior_cfg.get('category_cooldown', 60)),
                     "tone_cooldown": behavior_cfg.get('tone_cooldown', 120)
+                },
+                # 任务完成调度器配置
+                "task_completion_scheduler": {
+                    "enabled": scheduler_cfg.get('enabled', True),
+                    "trigger_time": scheduler_cfg.get('trigger_time', '21:00'),
+                    "trigger_on_startup": scheduler_cfg.get('trigger_on_startup', False),
+                    # auto_confirm_all: UI是"启用弹窗"，所以要反转
+                    "auto_confirm_all": not self._get_ui_value('task_confirm_popup_check', not scheduler_cfg.get('auto_confirm_all', False), 'isChecked'),
+                    "auto_confirm_threshold": scheduler_cfg.get('auto_confirm_threshold', 0)
                 }
             }
 
@@ -10335,7 +10377,11 @@ del /f /q "%~f0"
             self.ai_worker.deleteLater()
             self.ai_worker = None
 
-        # 停止支付轮询定时器
+        # 停止支付轮询定时器 (PaymentManager)
+        if hasattr(self, 'payment_manager') and self.payment_manager:
+            self.payment_manager.stop_payment_polling()
+
+        # 旧版兼容: 停止支付轮询定时器
         if hasattr(self, 'payment_timer') and self.payment_timer:
             if self.payment_timer.isActive():
                 self.payment_timer.stop()

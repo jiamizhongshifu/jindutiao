@@ -628,8 +628,12 @@ class PaymentManager(QObject):
         self.payment_timer.timeout.connect(partial(self._check_payment_status, out_trade_no, trade_no, auth_client))
         self.payment_timer.start()
 
-        # Show dialog
+        # Show dialog (blocks until closed)
         dialog.exec()
+
+        # Stop polling when dialog closes (cancel, close button, or any other reason)
+        self.stop_payment_polling()
+        logging.info("[PAYMENT] Payment dialog closed, polling stopped")
 
     def _download_qrcode(self, qrcode_url: str, qr_label: QLabel):
         """Download and display QR code image.
@@ -948,13 +952,19 @@ class PaymentManager(QObject):
             result: API response with payment status
         """
         from gaiya.core.auth_client import AuthClient
+        from gaiya.core.async_worker import AsyncNetworkWorker
 
         order = result.get("order", {})
         status = order.get("status")
 
         logging.info(f"[PAYMENT] Status check result: {status}")
 
-        # Try manual upgrade to bypass Vercel cache
+        # Skip if already upgrading
+        if self._manual_upgrade_worker and self._manual_upgrade_worker.isRunning():
+            logging.info("[PAYMENT] Manual upgrade already running, skipping...")
+            return
+
+        # Try manual upgrade to bypass Vercel cache (async)
         try:
             auth_client = AuthClient()
             user_id = auth_client.get_user_id()
@@ -964,42 +974,71 @@ class PaymentManager(QObject):
             plan_type = self.PLAN_TYPE_MAP.get(plan_name, "pro_monthly")
 
             if out_trade_no and user_id:
-                logging.info(f"[PAYMENT] Vercel query returned: {status}, trying manual upgrade to verify real status...")
-                upgrade_result = auth_client.manual_upgrade_subscription(
+                logging.info(f"[PAYMENT] Vercel query returned: {status}, trying manual upgrade async...")
+
+                # Store context for callback
+                self._manual_upgrade_context = {
+                    "plan_name": plan_name,
+                    "plan_type": plan_type,
+                    "out_trade_no": out_trade_no
+                }
+
+                # Create async worker for manual upgrade
+                self._manual_upgrade_worker = AsyncNetworkWorker(
+                    auth_client.manual_upgrade_subscription,
                     user_id=user_id,
                     plan_type=plan_type,
                     out_trade_no=out_trade_no
                 )
-
-                if upgrade_result.get("success"):
-                    # Payment confirmed!
-                    logging.info("[PAYMENT] Manual upgrade succeeded - payment is CONFIRMED!")
-                    self.stop_payment_polling()
-
-                    # Sync tier to AI client
-                    new_tier = upgrade_result.get("user_tier", "free")
-                    if self._ai_client:
-                        self._ai_client.set_user_tier(new_tier)
-                        logging.info(f"[AI Client] 会员升级后已同步tier: {new_tier}")
-
-                    QMessageBox.information(
-                        self._parent,
-                        "支付成功",
-                        f"{plan_name}已成功激活!\n\n会员状态已更新"
-                    )
-
-                    self.payment_success.emit(plan_name, new_tier)
-                    self.subscription_refreshed.emit()
-                else:
-                    # Not paid yet
-                    error_msg = upgrade_result.get('error', '')
-                    if 'not paid' in error_msg.lower() or 'unpaid' in error_msg.lower():
-                        logging.info("[PAYMENT] Manual upgrade confirms: order not paid yet, continue polling...")
-                    else:
-                        logging.warning(f"[PAYMENT] Manual upgrade failed: {error_msg}")
+                self._manual_upgrade_worker.success.connect(self._on_manual_upgrade_success)
+                self._manual_upgrade_worker.error.connect(self._on_manual_upgrade_error)
+                self._manual_upgrade_worker.start()
 
         except Exception as e:
             logging.error(f"[PAYMENT] Manual upgrade check error: {e}")
+
+    def _on_manual_upgrade_success(self, upgrade_result: dict):
+        """Callback for successful manual upgrade check.
+
+        Args:
+            upgrade_result: API response from manual upgrade
+        """
+        plan_name = self._manual_upgrade_context.get("plan_name", "Pro订阅")
+
+        if upgrade_result.get("success"):
+            # Payment confirmed!
+            logging.info("[PAYMENT] Manual upgrade succeeded - payment is CONFIRMED!")
+            self.stop_payment_polling()
+
+            # Sync tier to AI client
+            new_tier = upgrade_result.get("user_tier", "free")
+            if self._ai_client:
+                self._ai_client.set_user_tier(new_tier)
+                logging.info(f"[AI Client] 会员升级后已同步tier: {new_tier}")
+
+            QMessageBox.information(
+                self._parent,
+                "支付成功",
+                f"{plan_name}已成功激活!\n\n会员状态已更新"
+            )
+
+            self.payment_success.emit(plan_name, new_tier)
+            self.subscription_refreshed.emit()
+        else:
+            # Not paid yet
+            error_msg = upgrade_result.get('error', '')
+            if 'not paid' in error_msg.lower() or 'unpaid' in error_msg.lower():
+                logging.info("[PAYMENT] Manual upgrade confirms: order not paid yet, continue polling...")
+            else:
+                logging.warning(f"[PAYMENT] Manual upgrade failed: {error_msg}")
+
+    def _on_manual_upgrade_error(self, error_msg: str):
+        """Callback for manual upgrade error.
+
+        Args:
+            error_msg: Error message
+        """
+        logging.warning(f"[PAYMENT] Manual upgrade error (continuing polling): {error_msg}")
 
     def _on_payment_status_check_error(self, error_msg: str):
         """Callback for payment status check error (non-critical).
@@ -1154,12 +1193,29 @@ class PaymentManager(QObject):
         logging.info("[PAYMENT] Payment cancelled by user")
 
     def stop_payment_polling(self):
-        """Stop payment status polling."""
+        """Stop payment status polling and cleanup all workers."""
         if self.payment_timer:
             self.payment_timer.stop()
+            self.payment_timer = None
+
+        # Stop any running async workers
+        if self._status_check_worker:
+            try:
+                self._status_check_worker.disconnect()
+            except (RuntimeError, TypeError):
+                pass
+            self._status_check_worker = None
+
+        if self._manual_upgrade_worker:
+            try:
+                self._manual_upgrade_worker.disconnect()
+            except (RuntimeError, TypeError):
+                pass
+            self._manual_upgrade_worker = None
 
         if self.payment_polling_dialog:
             self.payment_polling_dialog.close()
+            self.payment_polling_dialog = None
 
     def on_plan_button_clicked(self, plan_id: str):
         """Handle plan button click - show payment method dialog.
