@@ -20,7 +20,7 @@
 
 **🌐 [访问官网](https://www.gaiyatime.com)** | **📥 [下载应用](https://github.com/jiamizhongshifu/jindutiao/releases/latest)** | **📖 [查看文档](#-文档导航)** | **🤝 [参与贡献](CONTRIBUTING.md)**
 
-当前版本: **v1.7.1** | 最后更新: 2025-12-18 | 🔒 **企业级安全认证** | 🌍 **全球支付支持**
+当前版本: **v1.7.0** | 最后更新: 2025-12-21 | 🔒 **企业级安全认证** | 🌍 **全球支付支持**
 
 </div>
 
@@ -521,6 +521,52 @@ datas=[
 ---
 
 ## 🔄 最新更新
+
+### v1.7.0 (2025-12-21) - 成就系统 & 新手引导优化 ✨
+
+#### 🏆 成就系统优化
+
+- ✅ **分类筛选按钮修复** - 点击分类时自动取消其他分类的选中状态
+  - 统一选中样式：蓝色背景 + 白色文字
+  - 悬停状态：蓝色描边
+  - 确保同时只有一个分类按钮处于选中状态
+  - 提升筛选体验，避免多选混淆
+
+#### 🎨 新手引导弹窗优化
+
+- ✅ **图标系统升级** - SVG图标替换为emoji显示
+  - 🎯 **任务进度** - 精准目标，一眼掌握进度
+  - 🤖 **AI智能规划** - 机器人助手，智能优化时间
+  - 🎨 **丰富主题** - 调色板，个性化界面
+  - ⏰ **智能提醒** - 闹钟，永不错过重要时刻
+  - 优势：更清晰直观、跨平台兼容性更好、不依赖外部文件
+
+#### 🔧 技术实现
+
+- 📁 **修复文件**:
+  - [config_gui.py](config_gui.py#L10632): 分类筛选按钮状态管理优化
+  - [feature_card.py](gaiya/ui/onboarding/feature_card.py#L60): SVG图标替换为emoji
+  - [welcome_dialog.py](gaiya/ui/onboarding/welcome_dialog.py#L64): 更新图标配置
+
+- 🎯 **关键修复**:
+  ```python
+  # 分类筛选 - 确保只有一个按钮选中
+  for btn_id, btn in self.achievement_filter_buttons.items():
+      is_selected = (btn_id == category if category else btn_id == 'all')
+      btn.setChecked(is_selected)
+      btn.setStyleSheet(self._get_filter_button_style(is_selected))
+
+  # emoji图标 - 使用专用字体
+  icon_font.setFamilies(["Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji"])
+  ```
+
+#### 💡 用户体验提升
+
+- 🏆 **成就筛选更清晰**: 单选模式避免混淆，快速定位目标成就
+- 🎨 **引导更直观**: emoji图标比SVG更清晰，加载更快
+- ⚡ **性能优化**: 减少图片资源依赖，降低内存占用
+
+---
 
 ### v1.7.1 (2025-12-18) - 性能优化 & Bug 修复 ⚡
 

@@ -3,7 +3,6 @@
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QLabel
 from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, Property, QRect
 from PySide6.QtGui import QFont, QPixmap, QPainter, QColor
-from PySide6.QtSvgWidgets import QSvgWidget
 import sys
 import os
 
@@ -17,15 +16,15 @@ class FeatureCard(QWidget):
     展示单个功能的图标、标题和描述,支持悬停动画效果。
 
     Args:
-        icon_name: 图标文件名(不含扩展名),如 'progress_bar'
+        emoji: emoji图标字符，如 '🎯'
         title: 功能标题
         description: 功能描述
         parent: 父级widget
     """
 
-    def __init__(self, icon_name: str, title: str, description: str, parent=None):
+    def __init__(self, emoji: str, title: str, description: str, parent=None):
         super().__init__(parent)
-        self._icon_name = icon_name
+        self._emoji = emoji
         self._title = title
         self._description = description
 
@@ -56,9 +55,15 @@ class FeatureCard(QWidget):
         layout.setContentsMargins(16, 12, 16, 12)
         layout.setSpacing(12)
 
-        # 图标区域 (SVG)
-        self.icon_widget = QSvgWidget(self.get_icon_path())
+        # Emoji图标区域
+        self.icon_widget = QLabel(self._emoji)
+        icon_font = QFont()
+        icon_font.setPointSize(32)  # emoji字号
+        icon_font.setFamilies(["Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji"])
+        self.icon_widget.setFont(icon_font)
         self.icon_widget.setFixedSize(48, 48)
+        self.icon_widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.icon_widget.setStyleSheet("background: transparent;")
         layout.addWidget(self.icon_widget)
 
         # 文字区域
@@ -90,15 +95,6 @@ class FeatureCard(QWidget):
         self.elevation_animation = QPropertyAnimation(self, b"elevation")
         self.elevation_animation.setDuration(200)
         self.elevation_animation.setEasingCurve(QEasingCurve.Type.OutCubic)
-
-    def get_icon_path(self) -> str:
-        """获取图标文件的完整路径"""
-        # 获取项目根目录
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
-        icon_path = os.path.join(project_root, 'assets', 'icons', f'{self._icon_name}.svg')
-
-        return icon_path
 
     def enterEvent(self, event):
         """鼠标进入时的动画效果"""
@@ -167,15 +163,15 @@ class FeatureCardList(QWidget):
         self.layout.setSpacing(12)
         self.layout.setContentsMargins(0, 0, 0, 0)
 
-    def add_feature(self, icon_name: str, title: str, description: str):
+    def add_feature(self, emoji: str, title: str, description: str):
         """添加一个功能卡片
 
         Args:
-            icon_name: 图标名称(不含扩展名)
+            emoji: emoji图标字符
             title: 功能标题
             description: 功能描述
         """
-        card = FeatureCard(icon_name, title, description, self)
+        card = FeatureCard(emoji, title, description, self)
         self.layout.addWidget(card)
 
     def clear_features(self):
@@ -194,8 +190,8 @@ if __name__ == '__main__':
 
     # 测试单个卡片
     card = FeatureCard(
-        icon_name='progress_bar',
-        title='📊 时间可视化',
+        emoji='🎯',
+        title='一眼掌握全天任务进度',
         description='实时追踪每日进度,让时间流逝清晰可见'
     )
     card.show()

@@ -335,11 +335,18 @@ class StatisticsWindow(QWidget):
     closed = Signal()  # 关闭信号
     inference_completed = Signal(bool, str)  # 推理完成信号 (success, error_msg)
 
-    def __init__(self, stats_manager: StatisticsManager, logger: logging.Logger, parent=None):
+    def __init__(self, stats_manager: StatisticsManager, logger: logging.Logger,
+                 config_manager=None, parent=None):
         super().__init__(parent)
         self.stats_manager = stats_manager
         self.logger = logger
+        self.config_manager = config_manager
+        self.main_window = None  # 由外部设置
         self._engine_connected = False  # 标记是否已连接自动推理引擎
+
+        # 行为识别定时器（懒加载时启动）
+        self.behavior_stats_timer = None
+        self.behavior_tab_widget = None
 
         # 初始化洞察生成器
         self.insights_generator = InsightsGenerator(stats_manager, logger)
@@ -518,7 +525,7 @@ class StatisticsWindow(QWidget):
         self.create_monthly_tab()
         self.create_tasks_tab()
         self.create_goals_tab()  # 添加目标管理页签
-        self.create_achievements_tab()  # 添加成就展示页签
+        self.create_behavior_tab()  # 添加行为识别页签
 
         main_layout.addWidget(self.tab_widget)
 
@@ -3393,8 +3400,8 @@ class StatisticsWindow(QWidget):
         layout = QHBoxLayout(card)
         layout.setSpacing(12)
 
-        # 图标 (添加emoji字体支持)
-        icon_label = QLabel(achievement.emoji if unlocked else "🔒")
+        # 图标 (始终显示实际emoji)
+        icon_label = QLabel(achievement.emoji)
 
         # 使用QFont设置emoji字体 (更可靠的方式)
         emoji_font = QFont()
@@ -3402,11 +3409,20 @@ class StatisticsWindow(QWidget):
         emoji_font.setFamilies(["Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji"])
         icon_label.setFont(emoji_font)
 
-        # 设置固定宽度但允许高度自适应,并添加内边距
-        icon_label.setMinimumSize(60, 60)  # 增大最小尺寸
-        icon_label.setMaximumSize(60, 60)  # 设置最大尺寸
+        # 未解锁时应用置灰效果 (半透明 + 灰色调)
+        if not unlocked:
+            from PySide6.QtWidgets import QGraphicsOpacityEffect
+            opacity_effect = QGraphicsOpacityEffect()
+            opacity_effect.setOpacity(0.35)  # 35%透明度
+            icon_label.setGraphicsEffect(opacity_effect)
+            icon_label.setStyleSheet("padding: 5px; color: #999999;")
+        else:
+            icon_label.setStyleSheet("padding: 5px;")
+
+        # 设置固定宽度但允许高度自适应
+        icon_label.setMinimumSize(60, 60)
+        icon_label.setMaximumSize(60, 60)
         icon_label.setAlignment(Qt.AlignCenter)
-        icon_label.setStyleSheet("padding: 5px;")  # 添加内边距防止裁剪
         layout.addWidget(icon_label)
 
         # 信息
@@ -3980,6 +3996,12 @@ class StatisticsWindow(QWidget):
                 self.achievement_notification_timer.stop()
                 self.logger.info("Achievement notification timer stopped")
 
+            # 停止行为统计定时器
+            if hasattr(self, 'behavior_stats_timer') and self.behavior_stats_timer:
+                self.behavior_stats_timer.stop()
+                self.behavior_stats_timer = None
+                self.logger.info("Behavior stats timer stopped")
+
             # 清空待显示队列
             if hasattr(self, 'pending_achievements'):
                 self.pending_achievements.clear()
@@ -4136,3 +4158,166 @@ class StatisticsWindow(QWidget):
         md += "*本报告由 GaiYa每日进度条 自动生成 | [https://www.gaiyatime.com](https://www.gaiyatime.com)*\n"
 
         return md
+
+    def create_behavior_tab(self):
+        """创建行为识别标签页 - 从配置界面迁移"""
+        from PySide6.QtWidgets import QScrollArea, QSplitter, QGroupBox, QFormLayout, QSpinBox, QDoubleSpinBox
+        from PySide6.QtCore import Qt
+        from gaiya.ui.style_manager import StyleManager
+
+        # 创建滚动区域
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+        content_widget = QWidget()
+        main_layout = QVBoxLayout(content_widget)
+        main_layout.setSpacing(15)
+        main_layout.setContentsMargins(20, 20, 20, 20)
+
+        # 标题
+        title_label = QLabel("🔍 行为识别设置")
+        title_font = title_label.font()
+        title_font.setPointSize(16)
+        title_font.setBold(True)
+        title_label.setFont(title_font)
+        title_label.setStyleSheet("color: #2c3e50; margin-bottom: 10px;")
+        main_layout.addWidget(title_label)
+
+        # 提示：功能移至统计报告
+        info_label = QLabel("✨ 行为识别功能现已整合到统计报告中，方便您在查看数据时直接调整设置。")
+        info_label.setWordWrap(True)
+        info_label.setStyleSheet("""
+            QLabel {
+                background-color: #e3f2fd;
+                border: 1px solid #90caf9;
+                border-radius: 4px;
+                padding: 12px;
+                color: #1976d2;
+                font-size: 11pt;
+            }
+        """)
+        main_layout.addWidget(info_label)
+
+        # 如果有config_manager，显示基本配置
+        if self.config_manager and hasattr(self.config_manager, 'get'):
+            # 创建水平分割器
+            splitter = QSplitter(Qt.Horizontal)
+
+            # 左侧：基本设置
+            left_widget = QWidget()
+            left_layout = QVBoxLayout(left_widget)
+
+            # 基本设置组
+            basic_group = QGroupBox("⚙️ 基本设置")
+            basic_layout = QFormLayout(basic_group)
+            activity_config = self.config_manager.get('activity_tracking', {})
+
+            # 行为追踪开关（可切换）
+            from PySide6.QtWidgets import QCheckBox
+            self.tracking_enabled_checkbox = QCheckBox()
+            self.tracking_enabled_checkbox.setChecked(activity_config.get('enabled', False))
+            self.tracking_enabled_checkbox.stateChanged.connect(self._on_tracking_enabled_changed)
+            basic_layout.addRow("行为追踪:", self.tracking_enabled_checkbox)
+
+            interval_label = QLabel(f"{activity_config.get('polling_interval', 5)} 秒")
+            basic_layout.addRow("采样间隔:", interval_label)
+
+            retention_label = QLabel(f"{activity_config.get('data_retention_days', 90)} 天")
+            basic_layout.addRow("数据保留:", retention_label)
+
+            left_layout.addWidget(basic_group)
+            left_layout.addStretch()
+
+            # 右侧：快速访问
+            right_widget = QWidget()
+            right_layout = QVBoxLayout(right_widget)
+
+            access_group = QGroupBox("📊 快速访问")
+            access_layout = QVBoxLayout(access_group)
+
+            # 查看今日回放按钮
+            today_replay_button = QPushButton("📊 查看今日回放")
+            today_replay_button.setMinimumHeight(40)
+            today_replay_button.setStyleSheet(StyleManager.button_primary())
+            today_replay_button.clicked.connect(self.open_today_replay_window)
+            access_layout.addWidget(today_replay_button)
+
+            # 打开应用分类设置按钮
+            app_settings_button = QPushButton("🔧 打开应用分类设置")
+            app_settings_button.setMinimumHeight(40)
+            app_settings_button.setStyleSheet(StyleManager.button_minimal())
+            app_settings_button.clicked.connect(self.open_activity_settings_window)
+            access_layout.addWidget(app_settings_button)
+
+            right_layout.addWidget(access_group)
+            right_layout.addStretch()
+
+            splitter.addWidget(left_widget)
+            splitter.addWidget(right_widget)
+            splitter.setSizes([400, 300])
+
+            main_layout.addWidget(splitter)
+        else:
+            # 无config_manager时的提示
+            warning_label = QLabel("⚠️ 配置管理器未加载，无法显示设置详情。")
+            warning_label.setStyleSheet("color: #f57c00; padding: 10px;")
+            main_layout.addWidget(warning_label)
+
+        main_layout.addStretch()
+        scroll_area.setWidget(content_widget)
+
+        self.tab_widget.addTab(scroll_area, "🔍 行为识别")
+
+    def open_activity_settings_window(self):
+        """打开应用分类设置窗口"""
+        try:
+            from gaiya.ui.activity_settings_window import ActivitySettingsWindow
+            settings_window = ActivitySettingsWindow(self)
+            settings_window.exec()
+        except Exception as e:
+            self.logger.error(f"打开应用分类设置窗口失败: {e}")
+            QMessageBox.critical(self, "错误", f"打开应用分类设置窗口失败: {e}")
+
+    def open_today_replay_window(self):
+        """打开今日时间回放窗口"""
+        try:
+            from gaiya.ui.time_review_window import TimeReviewWindow
+            replay_window = TimeReviewWindow(self)
+            replay_window.exec()
+        except Exception as e:
+            self.logger.error(f"打开今日时间回放窗口失败: {e}")
+            QMessageBox.critical(self, "错误", f"打开今日时间回放窗口失败: {e}")
+
+    def update_behavior_stats(self):
+        """更新行为识别统计信息"""
+        self.logger.debug("update_behavior_stats被调用（统计窗口版本）")
+
+    def _on_tracking_enabled_changed(self, state):
+        """行为追踪开关状态变化处理"""
+        try:
+            from PySide6.QtCore import Qt
+            enabled = (state == Qt.CheckState.Checked.value)
+
+            # 更新配置
+            if self.config_manager:
+                activity_config = self.config_manager.get('activity_tracking', {})
+                activity_config['enabled'] = enabled
+                self.config_manager.set('activity_tracking', activity_config)
+                self.config_manager.save_config()
+
+                self.logger.info(f"行为追踪已{'启用' if enabled else '禁用'}")
+
+                # 通知主窗口更新追踪状态
+                if self.main_window and hasattr(self.main_window, 'update_activity_tracking'):
+                    self.main_window.update_activity_tracking(enabled)
+
+                # 显示提示消息
+                from PySide6.QtWidgets import QMessageBox
+                QMessageBox.information(
+                    self,
+                    "设置已保存",
+                    f"行为追踪已{'启用' if enabled else '禁用'}，设置将在下次启动时生效。"
+                )
+        except Exception as e:
+            self.logger.error(f"切换行为追踪状态失败: {e}", exc_info=True)

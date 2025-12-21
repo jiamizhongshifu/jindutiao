@@ -61,25 +61,25 @@ class WelcomeDialog(QDialog):
         # 核心功能介绍 - 使用FeatureCard组件
         feature_list = FeatureCardList(self)
 
-        # 添加4个功能卡片
+        # 添加4个功能卡片 (使用emoji图标)
         features_data = [
             {
-                "icon": "progress_bar",
+                "emoji": "🎯",
                 "title": tr("welcome_dialog.features.task_progress"),
                 "desc": tr("welcome_dialog.features.task_progress_desc")
             },
             {
-                "icon": "ai_brain",
+                "emoji": "🤖",
                 "title": tr("welcome_dialog.features.ai_planning"),
                 "desc": tr("welcome_dialog.features.ai_planning_desc")
             },
             {
-                "icon": "palette",
+                "emoji": "🎨",
                 "title": tr("welcome_dialog.features.rich_themes"),
                 "desc": tr("welcome_dialog.features.rich_themes_desc")
             },
             {
-                "icon": "trophy",
+                "emoji": "⏰",
                 "title": tr("welcome_dialog.features.smart_reminder"),
                 "desc": tr("welcome_dialog.features.smart_reminder_desc")
             }
@@ -87,7 +87,7 @@ class WelcomeDialog(QDialog):
 
         for feature in features_data:
             feature_list.add_feature(
-                icon_name=feature["icon"],
+                emoji=feature["emoji"],
                 title=feature["title"],
                 description=feature["desc"]
             )

@@ -1842,6 +1842,7 @@ class TimeProgressBar(QWidget):
             self.statistics_window = StatisticsWindow(
                 self.statistics_manager,
                 self.logger,
+                config_manager=self.config,  # 传入config_manager
                 parent=None  # 设置为None,使其成为独立的顶层窗口
             )
 
