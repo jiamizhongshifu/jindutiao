@@ -21,14 +21,17 @@
     <meta property="og:title" content="关于GaiYa - 时间可视化管理的开源项目">
     <meta property="og:description" content="GaiYa源于希腊神话大地女神，象征时间永恒流动。我们相信时间管理应该简单直观，帮助每个人清晰感知时间的流逝。">
     <meta property="og:url" content="https://www.gaiyatime.com/about.html">
-    <meta property="og:image" content="https://www.gaiyatime.com/images/logo-large.png">
+    <meta property="og:image" content="https://www.gaiyatime.com/images/og-image.webp">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:type" content="image/webp">
     <meta property="og:locale" content="zh_CN">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="关于GaiYa - 开源时间管理工具">
     <meta name="twitter:description" content="让时间管理像进度条一样简单直观。开源MIT协议，Python+PySide6开发。">
-    <meta name="twitter:image" content="https://www.gaiyatime.com/images/logo-large.png">
+    <meta name="twitter:image" content="https://www.gaiyatime.com/images/og-image.webp">
 
     <link rel="stylesheet" href="css/styles.css">
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
@@ -265,6 +268,34 @@
             }
         }
     </style>
+
+    <!-- Schema.org 结构化数据 - Organization -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "GaiYa每日进度条",
+      "alternateName": "GaiYa",
+      "url": "https://www.gaiyatime.com",
+      "logo": "https://www.gaiyatime.com/images/logo-large.webp",
+      "description": "用进度条让时间流逝清晰可见的桌面工具，帮助程序员、学生、自由职业者高效管理每一天。",
+      "foundingDate": "2024",
+      "founders": [
+        {
+          "@type": "Person",
+          "name": "GaiYa开发团队"
+        }
+      ],
+      "sameAs": [
+        "https://github.com/jiamizhongshifu/jindutiao"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "Customer Support",
+        "email": "support@gaiyatime.com"
+      }
+    }
+    </script>
 </head>
 <body>
     <!-- 导航栏 -->
