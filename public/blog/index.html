@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- SEO基础标签 -->
+    <title>GaiYa博客 - 时间管理与生产力工具指南</title>
+    <meta name="description" content="GaiYa官方博客，提供AI时间管理工具评测、番茄工作法教程、生产力提升技巧。包含GaiYa vs RescueTime对比、AI工具指南、番茄钟推荐等深度文章。">
+    <meta name="keywords" content="时间管理博客, 生产力工具, AI时间管理, 番茄工作法, GaiYa教程, 效率提升指南, 工作效率, 时间规划">
+    <link rel="canonical" href="https://www.gaiyatime.com/blog/">
+
+    <!-- Open Graph标签 -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="GaiYa每日进度条">
+    <meta property="og:title" content="GaiYa博客 - 时间管理与生产力工具指南">
+    <meta property="og:description" content="深度解析AI时间管理、番茄工作法、生产力工具，助你高效管理每一天">
+    <meta property="og:url" content="https://www.gaiyatime.com/blog/">
+    <meta property="og:image" content="https://www.gaiyatime.com/images/og-image.webp">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:type" content="image/webp">
+
+    <!-- Twitter Card标签 -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="GaiYa博客 - 时间管理与生产力工具指南">
+    <meta name="twitter:description" content="AI时间管理、番茄工作法、生产力工具深度评测">
+    <meta name="twitter:image" content="https://www.gaiyatime.com/images/og-image.webp">
+
+    <!-- Hreflang双语标签 -->
+    <link rel="alternate" hreflang="zh-CN" href="https://www.gaiyatime.com/blog/?lang=zh_CN">
+    <link rel="alternate" hreflang="en-US" href="https://www.gaiyatime.com/blog/?lang=en_US">
+    <link rel="alternate" hreflang="x-default" href="https://www.gaiyatime.com/blog/">
+
+    <!-- Blog结构化数据 -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Blog",
+      "name": "GaiYa博客",
+      "description": "时间管理与生产力工具指南",
+      "url": "https://www.gaiyatime.com/blog/",
+      "publisher": {
+        "@type": "Organization",
+        "name": "GaiYa每日进度条",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://www.gaiyatime.com/images/logo.webp"
+        }
+      }
+    }
+    </script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f9fafb;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 42px;
+            margin-bottom: 16px;
+        }
+
+        .header p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        .breadcrumb {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .breadcrumb a {
+            color: #4F46E5;
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .category-filter {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            border: 2px solid #e5e7eb;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            border-color: #4F46E5;
+            color: #4F46E5;
+        }
+
+        .filter-btn.active {
+            background: #4F46E5;
+            color: white;
+            border-color: #4F46E5;
+        }
+
+        .articles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 60px;
+        }
+
+        .article-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .article-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+        }
+
+        .article-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 48px;
+        }
+
+        .article-content {
+            padding: 24px;
+        }
+
+        .article-category {
+            display: inline-block;
+            background: #EEF2FF;
+            color: #4F46E5;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .article-title {
+            font-size: 22px;
+            color: #111;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .article-title a {
+            color: #111;
+            text-decoration: none;
+        }
+
+        .article-title a:hover {
+            color: #4F46E5;
+        }
+
+        .article-excerpt {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.7;
+            margin-bottom: 16px;
+        }
+
+        .article-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: #999;
+            padding-top: 16px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .read-more {
+            color: #4F46E5;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .read-more:hover {
+            text-decoration: underline;
+        }
+
+        .cta-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+            border-radius: 12px;
+            margin-bottom: 60px;
+        }
+
+        .cta-section h2 {
+            font-size: 32px;
+            margin-bottom: 16px;
+        }
+
+        .cta-section p {
+            font-size: 18px;
+            margin-bottom: 24px;
+            opacity: 0.9;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: white;
+            color: #667eea;
+            padding: 14px 40px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            transition: transform 0.2s;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .footer a {
+            color: #4F46E5;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 28px;
+            }
+
+            .header p {
+                font-size: 16px;
+            }
+
+            .articles-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .cta-section h2 {
+                font-size: 24px;
+            }
+
+            .cta-section p {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📚 GaiYa博客</h1>
+        <p>时间管理与生产力工具指南</p>
+    </div>
+
+    <div class="breadcrumb">
+        <a href="../index.html">首页</a> / 博客
+    </div>
+
+    <div class="container">
+        <div class="category-filter">
+            <button class="filter-btn active" data-category="all">全部文章</button>
+            <button class="filter-btn" data-category="comparison">工具对比</button>
+            <button class="filter-btn" data-category="guide">完全指南</button>
+            <button class="filter-btn" data-category="recommendation">工具推荐</button>
+        </div>
+
+        <div class="articles-grid">
+            <!-- Article 1: GaiYa vs RescueTime -->
+            <div class="article-card" data-category="comparison">
+                <div class="article-image">🆚</div>
+                <div class="article-content">
+                    <span class="article-category">工具对比</span>
+                    <h2 class="article-title">
+                        <a href="gaiya-vs-rescuetime.html">GaiYa vs RescueTime：哪个更适合程序员？</a>
+                    </h2>
+                    <p class="article-excerpt">
+                        深度对比GaiYa与RescueTime两款时间追踪工具，从功能、价格、隐私保护、适用场景等8个维度分析，帮助程序员选择最适合的时间管理工具。免费vs付费、本地vs云端、主动vs被动追踪全面解析。
+                    </p>
+                    <div class="article-meta">
+                        <span>📅 2025-12-21 · ⏱️ 10分钟阅读</span>
+                        <a href="gaiya-vs-rescuetime.html" class="read-more">阅读全文 →</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Article 2: AI时间管理工具指南 -->
+            <div class="article-card" data-category="guide">
+                <div class="article-image">🤖</div>
+                <div class="article-content">
+                    <span class="article-category">完全指南</span>
+                    <h2 class="article-title">
+                        <a href="ai-time-management-tools-guide-2025.html">AI时间管理工具完全指南（2025）</a>
+                    </h2>
+                    <p class="article-excerpt">
+                        2025年最全面的AI时间管理工具指南，深度解析10款智能生产力工具（GaiYa、Motion、Reclaim等），功能对比矩阵、价格分析、适用场景推荐、AI未来趋势预测，助你提升工作效率300%。
+                    </p>
+                    <div class="article-meta">
+                        <span>📅 2025-12-21 · ⏱️ 12分钟阅读</span>
+                        <a href="ai-time-management-tools-guide-2025.html" class="read-more">阅读全文 →</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Article 3: 番茄工作法工具推荐 -->
+            <div class="article-card" data-category="recommendation">
+                <div class="article-image">🍅</div>
+                <div class="article-content">
+                    <span class="article-category">工具推荐</span>
+                    <h2 class="article-title">
+                        <a href="pomodoro-timer-tools-top5.html">番茄工作法桌面工具推荐TOP 5（2025）</a>
+                    </h2>
+                    <p class="article-excerpt">
+                        深度评测5款最佳番茄钟工具（GaiYa、Focus To-Do、Pomotodo、Be Focused、Forest），功能对比、免费/付费版本分析、适用场景推荐、番茄工作法实战技巧，帮你找到最适合的专注计时器。
+                    </p>
+                    <div class="article-meta">
+                        <span>📅 2025-12-21 · ⏱️ 8分钟阅读</span>
+                        <a href="pomodoro-timer-tools-top5.html" class="read-more">阅读全文 →</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cta-section">
+            <h2>体验GaiYa - 让时间流逝清晰可见</h2>
+            <p>免费开源的AI时间管理工具，支持进度条可视化、番茄工作法、智能任务规划</p>
+            <a href="../download.html" class="cta-button">免费下载 Windows版</a>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>&copy; 2025 GaiYa每日进度条 · <a href="../about.html">关于我们</a> · <a href="../help.html">帮助中心</a> · <a href="../index.html">返回首页</a></p>
+    </div>
+
+    <script>
+        // 分类筛选功能
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const articleCards = document.querySelectorAll('.article-card');
+
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // 移除所有active状态
+                filterBtns.forEach(b => b.classList.remove('active'));
+                // 添加当前按钮active状态
+                btn.classList.add('active');
+
+                const category = btn.dataset.category;
+
+                // 筛选文章
+                articleCards.forEach(card => {
+                    if (category === 'all' || card.dataset.category === category) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
