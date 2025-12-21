@@ -36,48 +36,12 @@
     <priority>0.7</priority>
   </url>
 
-  <!-- 次要页面 - 中等优先级 -->
-  <url>
-    <loc>https://www.gaiyatime.com/community.html</loc>
-    <lastmod>2025-12-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-
-  <url>
-    <loc>https://www.gaiyatime.com/changelog.html</loc>
-    <lastmod>2025-12-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-
-  <url>
-    <loc>https://www.gaiyatime.com/partner.html</loc>
-    <lastmod>2025-12-21</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-
-  <url>
-    <loc>https://www.gaiyatime.com/contact.html</loc>
-    <lastmod>2025-12-21</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-
   <!-- 功能页面 - 低优先级 -->
   <url>
     <loc>https://www.gaiyatime.com/checkout.html</loc>
     <lastmod>2025-12-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
-  </url>
-
-  <url>
-    <loc>https://www.gaiyatime.com/privacy.html</loc>
-    <lastmod>2025-12-21</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
   </url>
 
   <!-- 支付结果页面 - 最低优先级 -->
