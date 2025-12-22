@@ -164,6 +164,13 @@ class TaskCompletionScheduler:
                 logger.info(f"自动确认: {auto_confirmed_count} 个高置信度任务")
 
             # 5. 触发批量确认UI (如果有未确认的任务)
+            # 🔥 如果启用了完全自动确认,则永远不触发UI弹窗
+            auto_confirm_all = self.config.get('auto_confirm_all', False)
+            if auto_confirm_all:
+                logger.info("✅ 完全自动确认模式已启用,所有任务已自动处理,不触发确认弹窗")
+                return  # 直接返回,不触发UI
+
+            # 否则,检查是否有未确认的任务需要人工确认
             unconfirmed_count = self._get_unconfirmed_count(date)
             if unconfirmed_count > 0:
                 logger.info(f"待确认任务: {unconfirmed_count} 个,触发批量确认UI")
