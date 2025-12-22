@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="GaiYa每日进度条Cookie政策 - 详细说明Cookie使用类型、用途、管理方式及隐私保护措施。透明的Cookie使用规则。">
+    <meta name="keywords" content="GaiYa Cookie政策,Cookie使用,浏览器Cookie,隐私保护,数据追踪,Cookie管理">
+    <title>Cookie政策 - GaiYa每日进度条 | Cookie Policy</title>
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://www.gaiyatime.com/cookie.html">
+
+    <!-- Hreflang 双语标签 -->
+    <link rel="alternate" hreflang="zh-CN" href="https://www.gaiyatime.com/cookie.html?lang=zh_CN">
+    <link rel="alternate" hreflang="en-US" href="https://www.gaiyatime.com/cookie.html?lang=en_US">
+    <link rel="alternate" hreflang="x-default" href="https://www.gaiyatime.com/cookie.html">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="GaiYa每日进度条">
+    <meta property="og:title" content="Cookie政策 - GaiYa每日进度条">
+    <meta property="og:description" content="GaiYa Cookie政策，明确Cookie使用和管理方式，保护您的隐私。">
+    <meta property="og:url" content="https://www.gaiyatime.com/cookie.html">
+    <meta property="og:image" content="https://www.gaiyatime.com/images/og-image.webp">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:type" content="image/webp">
+    <meta property="og:locale" content="zh_CN">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Cookie政策 - GaiYa每日进度条">
+    <meta name="twitter:description" content="GaiYa Cookie政策，透明的Cookie使用规则。">
+    <meta name="twitter:image" content="https://www.gaiyatime.com/images/og-image.webp">
+
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <style>
+        .legal-container {
+            max-width: 900px;
+            margin: 100px auto 60px;
+            padding: 0 24px;
+        }
+        .legal-header {
+            text-align: center;
+            margin-bottom: 48px;
+            padding-bottom: 32px;
+            border-bottom: 2px solid var(--gray-200);
+        }
+        .legal-header h1 {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+        .legal-meta {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+        .legal-content {
+            line-height: 1.8;
+            color: var(--text-secondary);
+        }
+        .legal-content h2 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-top: 48px;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        .legal-content h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-top: 32px;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+        .legal-content p {
+            margin-bottom: 16px;
+            font-size: 16px;
+        }
+        .legal-content ul, .legal-content ol {
+            margin-left: 28px;
+            margin-bottom: 20px;
+        }
+        .legal-content li {
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+        .legal-content strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        .legal-content a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        .legal-content a:hover {
+            text-decoration: underline;
+        }
+        .highlight-box {
+            background: #f8f9fa;
+            border-left: 4px solid var(--primary-color);
+            padding: 20px 24px;
+            margin: 24px 0;
+            border-radius: 4px;
+        }
+        .highlight-box p {
+            margin-bottom: 0;
+        }
+        .cookie-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 24px 0;
+        }
+        .cookie-table th, .cookie-table td {
+            padding: 16px;
+            border: 1px solid var(--gray-200);
+            text-align: left;
+        }
+        .cookie-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .cookie-table .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .cookie-table .badge-required {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .cookie-table .badge-functional {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .cookie-table .badge-analytics {
+            background: #e0e7ff;
+            color: #4338ca;
+        }
+        .browser-guide {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 24px 0;
+        }
+        .browser-card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .browser-card:hover {
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-md);
+        }
+        .browser-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+        .browser-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        .browser-shortcut {
+            font-size: 14px;
+            color: var(--text-secondary);
+            background: #f8f9fa;
+            padding: 6px 12px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        @media (max-width: 768px) {
+            .legal-header h1 {
+                font-size: 32px;
+            }
+            .legal-content h2 {
+                font-size: 24px;
+            }
+            .legal-content h3 {
+                font-size: 18px;
+            }
+            .cookie-table {
+                font-size: 14px;
+            }
+            .cookie-table th, .cookie-table td {
+                padding: 12px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="index.html" class="navbar-logo">
+                <picture>
+                    <source srcset="images/logo.webp" type="image/webp">
+                    <img src="images/logo.png" alt="GaiYa Logo" style="height: 36px; width: 36px; border-radius: 8px;">
+                </picture>
+                <span style="font-weight: 700; color: var(--text-primary); margin-left: 8px;">GaiYa每日进度条</span>
+            </a>
+            <ul class="navbar-menu">
+                <li><a href="features.html" data-i18n="nav.features">功能</a></li>
+                <li><a href="pricing.html" data-i18n="nav.pricing">定价</a></li>
+                <li><a href="index.html#testimonials" data-i18n="nav.testimonials">评价</a></li>
+                <li><a href="help.html" data-i18n="nav.help">帮助</a></li>
+                <li><a href="about.html" data-i18n="nav.about">关于</a></li>
+                <li><a href="download.html" data-i18n="nav.download">下载</a></li>
+            </ul>
+            <div class="navbar-actions">
+                <!-- Language Switcher -->
+                <div class="language-switcher">
+                    <button class="lang-btn" data-lang-switch="zh_CN" onclick="switchLanguage('zh_CN')">中</button>
+                    <button class="lang-btn" data-lang-switch="en_US" onclick="switchLanguage('en_US')">EN</button>
+                </div>
+                <a href="https://github.com/jiamizhongshifu/jindutiao" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-small">GitHub</a>
+                <a href="download.html" class="btn btn-primary btn-small" data-i18n="hero.download_btn">立即下载</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 法律文档容器 -->
+    <div class="legal-container">
+        <div class="legal-header">
+            <h1>Cookie 政策</h1>
+            <p class="legal-meta">最后更新：2025年12月22日 | 生效日期：2025年12月22日</p>
+        </div>
+
+        <div class="legal-content">
+            <div class="highlight-box">
+                <p><strong>本 Cookie 政策解释了我们如何使用 Cookie 和类似技术。</strong>通过使用 GaiYa每日进度条的网站和服务，您同意我们按照本政策使用 Cookie。本政策是我们 <a href="privacy.html">隐私政策</a> 的一部分。</p>
+            </div>
+
+            <h2>1. 什么是 Cookie？</h2>
+            <p>Cookie 是网站或应用在您的设备（计算机、手机或其他设备）上存储的小型文本文件。Cookie 广泛用于让网站正常工作、提高效率，并向网站所有者提供信息。</p>
+
+            <h3>1.1 Cookie 的作用</h3>
+            <ul>
+                <li><strong>记住您的登录状态</strong>：避免每次访问都需要重新登录</li>
+                <li><strong>保存您的偏好设置</strong>：如语言选择、主题设置等</li>
+                <li><strong>分析网站使用情况</strong>：帮助我们了解用户如何使用网站，以便改进</li>
+                <li><strong>提供个性化体验</strong>：根据您的使用习惯提供定制化内容</li>
+            </ul>
+
+            <h3>1.2 Cookie 的类型</h3>
+            <p>根据有效期，Cookie 分为两种：</p>
+            <ul>
+                <li><strong>会话 Cookie（Session Cookies）</strong>：临时存储，浏览器关闭后自动删除</li>
+                <li><strong>持久 Cookie（Persistent Cookies）</strong>：存储在您的设备上直到过期或被手动删除</li>
+            </ul>
+
+            <h2>2. 我们使用的 Cookie</h2>
+            <p>GaiYa每日进度条使用以下 Cookie：</p>
+
+            <table class="cookie-table">
+                <thead>
+                    <tr>
+                        <th>Cookie名称</th>
+                        <th>类型</th>
+                        <th>有效期</th>
+                        <th>用途</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>session_token</strong></td>
+                        <td><span class="badge badge-required">必要</span></td>
+                        <td>7天</td>
+                        <td>保持您的登录状态，识别已登录用户</td>
+                    </tr>
+                    <tr>
+                        <td><strong>user_id</strong></td>
+                        <td><span class="badge badge-required">必要</span></td>
+                        <td>7天</td>
+                        <td>关联您的账户和会员信息</td>
+                    </tr>
+                    <tr>
+                        <td><strong>language</strong></td>
+                        <td><span class="badge badge-functional">功能</span></td>
+                        <td>1年</td>
+                        <td>记住您的语言偏好（中文/英文）</td>
+                    </tr>
+                    <tr>
+                        <td><strong>theme_preference</strong></td>
+                        <td><span class="badge badge-functional">功能</span></td>
+                        <td>1年</td>
+                        <td>记住您选择的主题（浅色/深色模式）</td>
+                    </tr>
+                    <tr>
+                        <td><strong>_ga</strong></td>
+                        <td><span class="badge badge-analytics">分析</span></td>
+                        <td>2年</td>
+                        <td>Google Analytics 用于统计访问量（可选）</td>
+                    </tr>
+                    <tr>
+                        <td><strong>_gid</strong></td>
+                        <td><span class="badge badge-analytics">分析</span></td>
+                        <td>24小时</td>
+                        <td>Google Analytics 用于区分用户（可选）</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2>3. Cookie 类型说明</h2>
+
+            <h3>3.1 必要 Cookie</h3>
+            <p>这些 Cookie 对于网站的基本功能至关重要，无法禁用。如果没有这些 Cookie，我们无法提供某些服务。</p>
+            <p><strong>用途</strong>：</p>
+            <ul>
+                <li>验证您的登录状态</li>
+                <li>处理会员订阅和支付</li>
+                <li>提供账户管理功能</li>
+            </ul>
+            <p><strong>注意</strong>：禁用必要 Cookie 将导致您无法登录或使用核心功能。</p>
+
+            <h3>3.2 功能 Cookie</h3>
+            <p>这些 Cookie 用于记住您的选择和设置，提供增强的个性化功能。</p>
+            <p><strong>用途</strong>：</p>
+            <ul>
+                <li>记住您的语言偏好</li>
+                <li>保存主题和界面设置</li>
+                <li>记住您的自定义配置</li>
+            </ul>
+            <p><strong>影响</strong>：禁用功能 Cookie 不会影响网站的基本使用，但每次访问时您需要重新设置偏好。</p>
+
+            <h3>3.3 分析 Cookie</h3>
+            <p>这些 Cookie 帮助我们了解访客如何使用网站，以便改进用户体验。</p>
+            <p><strong>用途</strong>：</p>
+            <ul>
+                <li>统计访问量和页面浏览量</li>
+                <li>分析用户行为和使用模式</li>
+                <li>识别热门功能和页面</li>
+                <li>检测技术问题和错误</li>
+            </ul>
+            <p><strong>注意</strong>：分析 Cookie 收集的数据是匿名的，不会识别您的个人身份。您可以选择禁用这些 Cookie。</p>
+
+            <h2>4. 第三方 Cookie</h2>
+            <p>我们的网站可能包含第三方服务提供商设置的 Cookie：</p>
+
+            <h3>4.1 Google Analytics</h3>
+            <p>我们使用 Google Analytics 分析网站使用情况。Google Analytics 使用 Cookie 收集匿名的访问数据。</p>
+            <ul>
+                <li><strong>数据类型</strong>：页面浏览量、访问时长、地理位置（国家/地区）、设备类型</li>
+                <li><strong>隐私政策</strong>：<a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google 隐私政策</a></li>
+                <li><strong>退出方式</strong>：安装 <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer">Google Analytics 退出插件</a></li>
+            </ul>
+
+            <h3>4.2 支付服务提供商</h3>
+            <p>当您进行支付时，第三方支付平台（如支付宝、微信支付、Stripe）可能设置 Cookie 以处理交易。</p>
+            <ul>
+                <li>这些 Cookie 由支付平台控制，我们无法访问</li>
+                <li>请参阅支付平台的隐私政策了解详情</li>
+            </ul>
+
+            <h2>5. 如何管理 Cookie</h2>
+            <p>您可以通过以下方式管理或删除 Cookie：</p>
+
+            <h3>5.1 浏览器设置</h3>
+            <p>大多数浏览器允许您控制 Cookie 的使用。以下是常见浏览器的快捷方式：</p>
+
+            <div class="browser-guide">
+                <div class="browser-card">
+                    <div class="browser-icon">🌐</div>
+                    <div class="browser-name">Chrome</div>
+                    <div class="browser-shortcut">Ctrl+Shift+Delete</div>
+                </div>
+                <div class="browser-card">
+                    <div class="browser-icon">🦊</div>
+                    <div class="browser-name">Firefox</div>
+                    <div class="browser-shortcut">Ctrl+Shift+Delete</div>
+                </div>
+                <div class="browser-card">
+                    <div class="browser-icon">🧭</div>
+                    <div class="browser-name">Safari</div>
+                    <div class="browser-shortcut">⌘+Shift+Delete</div>
+                </div>
+                <div class="browser-card">
+                    <div class="browser-icon">⚡</div>
+                    <div class="browser-name">Edge</div>
+                    <div class="browser-shortcut">Ctrl+Shift+Delete</div>
+                </div>
+            </div>
+
+            <h3>5.2 详细操作指南</h3>
+            <p><strong>Chrome 浏览器</strong>：</p>
+            <ol>
+                <li>点击右上角的"三个点"图标 → 设置</li>
+                <li>点击"隐私和安全" → "Cookie 及其他网站数据"</li>
+                <li>选择"查看所有 Cookie 和网站数据"</li>
+                <li>搜索"gaiyatime.com"并删除相关 Cookie</li>
+            </ol>
+
+            <p><strong>Firefox 浏览器</strong>：</p>
+            <ol>
+                <li>点击右上角的"三条横线"图标 → 设置</li>
+                <li>点击"隐私与安全"</li>
+                <li>在"Cookie 和网站数据"部分，点击"管理数据"</li>
+                <li>搜索"gaiyatime.com"并移除</li>
+            </ol>
+
+            <p><strong>Safari 浏览器（Mac）</strong>：</p>
+            <ol>
+                <li>Safari → 偏好设置 → 隐私</li>
+                <li>点击"管理网站数据"</li>
+                <li>搜索"gaiyatime.com"并移除</li>
+            </ol>
+
+            <h3>5.3 禁用 Cookie 的影响</h3>
+            <p>如果您选择禁用 Cookie，可能会遇到以下情况：</p>
+            <ul>
+                <li>无法保持登录状态，每次访问都需要重新登录</li>
+                <li>语言和主题设置无法保存</li>
+                <li>某些功能可能无法正常工作</li>
+                <li>网站体验可能变差</li>
+            </ul>
+
+            <h2>6. Do Not Track（勿追踪）</h2>
+            <p>一些浏览器提供"Do Not Track"（DNT）功能，允许您向网站发送不希望被追踪的信号。</p>
+            <p>目前，我们不响应 DNT 信号，因为行业内还没有统一的 DNT 标准。但您可以通过浏览器设置禁用分析 Cookie 来阻止追踪。</p>
+
+            <h2>7. Cookie 政策的更新</h2>
+            <p>我们可能会不时更新本 Cookie 政策，以反映我们使用 Cookie 的变化或法律法规的要求。</p>
+            <p>更新后的政策将在以下位置发布：</p>
+            <ul>
+                <li>官方网站：<a href="https://www.gaiyatime.com/cookie.html">www.gaiyatime.com/cookie.html</a></li>
+                <li>更新日期将显示在页面顶部</li>
+            </ul>
+            <p>我们建议您定期查看本政策，以了解我们如何使用 Cookie。</p>
+
+            <h2>8. 联系我们</h2>
+            <p>如果您对本 Cookie 政策有任何疑问或需要帮助，请通过以下方式联系我们：</p>
+            <ul>
+                <li><strong>电子邮件</strong>：support@gaiyatime.com</li>
+                <li><strong>GitHub Issues</strong>：<a href="https://github.com/jiamizhongshifu/jindutiao/issues" target="_blank" rel="noopener noreferrer">提交问题</a></li>
+                <li><strong>官方网站</strong>：<a href="https://www.gaiyatime.com">www.gaiyatime.com</a></li>
+            </ul>
+
+            <div class="highlight-box" style="margin-top: 48px;">
+                <p><strong>感谢您阅读我们的 Cookie 政策！</strong>我们致力于以透明的方式使用 Cookie，并尊重您的隐私选择。如有任何疑问，欢迎随时联系我们。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-grid">
+                <div class="footer-column">
+                    <h4 data-i18n="footer.product">产品</h4>
+                    <ul>
+                        <li><a href="features.html" data-i18n="footer.features_link">功能特性</a></li>
+                        <li><a href="pricing.html" data-i18n="footer.pricing_link">会员定价</a></li>
+                        <li><a href="download.html" data-i18n="footer.download_link">下载中心</a></li>
+                        <li><a href="https://github.com/jiamizhongshifu/jindutiao/releases" data-i18n="footer.changelog" rel="noopener noreferrer">更新日志</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4 data-i18n="footer.support">支持</h4>
+                    <ul>
+                        <li><a href="help.html" data-i18n="footer.help_center">帮助中心</a></li>
+                        <li><a href="help.html#faq" data-i18n="footer.faq_link">常见问题</a></li>
+                        <li><a href="https://github.com/jiamizhongshifu/jindutiao/issues" data-i18n="footer.feedback" rel="noopener noreferrer">反馈问题</a></li>
+                        <li><a href="https://github.com/jiamizhongshifu/jindutiao" data-i18n="footer.docs" rel="noopener noreferrer">查看文档</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4 data-i18n="footer.about_section">关于</h4>
+                    <ul>
+                        <li><a href="about.html" data-i18n="footer.about_us">关于我们</a></li>
+                        <li><a href="about.html#team" data-i18n="footer.team">团队介绍</a></li>
+                        <li><a href="https://github.com/jiamizhongshifu/jindutiao" data-i18n="footer.open_source" rel="noopener noreferrer">开源项目</a></li>
+                        <li><a href="help.html#contact" data-i18n="footer.contact">联系我们</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4 data-i18n="footer.legal">法律</h4>
+                    <ul>
+                        <li><a href="terms.html" data-i18n="footer.terms">用户协议</a></li>
+                        <li><a href="privacy.html" data-i18n="footer.privacy">隐私政策</a></li>
+                        <li><a href="refund.html" data-i18n="footer.refund">退款政策</a></li>
+                        <li><a href="cookie.html" data-i18n="footer.cookie">Cookie政策</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p data-i18n="footer.copyright">© 2025 GaiYa每日进度条 团队 | 开源于 GitHub | MIT License</p>
+                <p style="margin-top: 8px;" data-i18n="footer.made_with_love">Made with love by GaiYa Team</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- i18n Internationalization -->
+    <script src="js/i18n.js"></script>
+</body>
+</html>
