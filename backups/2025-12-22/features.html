@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>功能详解 - GaiYa每日进度条 | 全面了解强大功能</title>
+    <meta name="description" content="详细了解GaiYa的九大核心功能：桌面进度条、AI任务规划、番茄时钟、场景系统、成就系统、新手引导、行为识别弹幕等，让时间管理更高效。">
+    <meta name="keywords" content="GaiYa功能, 桌面进度条, AI任务规划, 番茄钟, 场景编辑器, 成就系统, 新手引导, 行为识别, 时间管理工具">
+    <link rel="canonical" href="https://www.gaiyatime.com/features.html">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="GaiYa每日进度条">
+    <meta property="og:title" content="功能详解 - GaiYa每日进度条">
+    <meta property="og:description" content="详细了解GaiYa的九大核心功能，让时间管理更高效">
+    <meta property="og:url" content="https://www.gaiyatime.com/features.html">
+    <meta property="og:image" content="https://www.gaiyatime.com/images/og-image.webp">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="功能详解 - GaiYa每日进度条">
+    <meta name="twitter:description" content="详细了解GaiYa的九大核心功能">
+    <meta name="twitter:image" content="https://www.gaiyatime.com/images/og-image.webp">
+
+    <!-- Hreflang -->
+    <link rel="alternate" hreflang="zh-CN" href="https://www.gaiyatime.com/features.html?lang=zh_CN">
+    <link rel="alternate" hreflang="en-US" href="https://www.gaiyatime.com/features.html?lang=en_US">
+    <link rel="alternate" hreflang="x-default" href="https://www.gaiyatime.com/features.html">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="images/logo.png">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="index.html" class="navbar-logo">
+                <img src="images/logo.png" alt="GaiYa Logo" style="height: 36px; width: 36px; border-radius: 8px;">
+                <span style="font-weight: 700; color: var(--text-primary); margin-left: 8px;">GaiYa每日进度条</span>
+            </a>
+            <ul class="navbar-menu">
+                <li><a href="index.html" data-i18n="nav.home">首页</a></li>
+                <li><a href="features.html" class="active" data-i18n="nav.features">功能</a></li>
+                <li><a href="download.html" data-i18n="nav.download">下载</a></li>
+                <li><a href="pricing.html" data-i18n="nav.pricing">定价</a></li>
+                <li><a href="help.html" data-i18n="nav.help">帮助</a></li>
+                <li><a href="about.html" data-i18n="nav.about">关于</a></li>
+            </ul>
+            <div class="navbar-actions">
+                <!-- Language Switcher -->
+                <div class="language-switcher">
+                    <button class="lang-btn" data-lang-switch="zh_CN" onclick="switchLanguage('zh_CN')">中</button>
+                    <button class="lang-btn" data-lang-switch="en_US" onclick="switchLanguage('en_US')">EN</button>
+                </div>
+                <a href="download.html" class="btn btn-primary btn-small" data-i18n="nav.download">下载</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 英雄区 -->
+    <section class="hero-section features-hero">
+        <h1>GaiYa 强大功能一览</h1>
+        <p class="hero-subtitle">九大核心功能，让时间管理更智能、更高效、更有趣</p>
+    </section>
+
+    <!-- 功能详解区 -->
+    <section class="features-detail-section">
+        <div class="container">
+
+            <!-- 功能1: 桌面进度条 -->
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h2>桌面进度条</h2>
+                <p class="feature-intro">透明置顶、实时更新，让时间流逝清晰可见</p>
+                <div class="feature-details">
+                    <h3>核心特性</h3>
+                    <ul>
+                        <li><strong>透明置顶</strong> - 悬浮在所有窗口之上，不遮挡工作区域</li>
+                        <li><strong>实时更新</strong> - 按秒刷新当前任务进度</li>
+                        <li><strong>悬停提示</strong> - 鼠标悬停显示详细时间信息</li>
+                        <li><strong>点击穿透</strong> - 不影响底层窗口的正常操作</li>
+                    </ul>
+                    <h3>适用场景</h3>
+                    <ul>
+                        <li>程序员编码时实时了解工作时长</li>
+                        <li>学生学习时掌握专注时间分布</li>
+                        <li>自由职业者管理灵活作息</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 功能2: AI智能任务规划 -->
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <h2>AI智能任务规划</h2>
+                <p class="feature-intro">自然语言生成任务表，智能配色推荐</p>
+                <div class="feature-details">
+                    <h3>核心特性</h3>
+                    <ul>
+                        <li><strong>自然语言生成</strong> - 用一句话描述，AI自动规划完整任务表</li>
+                        <li><strong>智能配色推荐</strong> - AI根据任务类型推荐色彩方案</li>
+                        <li><strong>配额管理</strong> - 免费版3次/天，会员无限次</li>
+                        <li><strong>云服务驱动</strong> - 基于Vercel，无需本地配置</li>
+                    </ul>
+                    <h3>使用示例</h3>
+                    <ul>
+                        <li>输入："程序员，朝九晚六，中午休息1小时"</li>
+                        <li>AI输出：09:00-12:00 深度编码，12:00-13:00 午餐休息...</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 功能3: 番茄时钟 -->
+            <div class="feature-card">
+                <div class="feature-icon">🍅</div>
+                <h2>番茄时钟</h2>
+                <p class="feature-intro">科学时间管理，保持专注节奏</p>
+                <div class="feature-details">
+                    <h3>核心特性</h3>
+                    <ul>
+                        <li><strong>自定义时长</strong> - 15/25/45/60分钟可选</li>
+                        <li><strong>智能通知</strong> - 番茄钟结束时桌面提醒</li>
+                        <li><strong>免打扰模式</strong> - 专注时段关闭通知</li>
+                        <li><strong>进度条联动</strong> - 番茄钟时段在进度条高亮显示</li>
+                    </ul>
+                    <h3>适用场景</h3>
+                    <ul>
+                        <li>需要高度专注的深度工作</li>
+                        <li>学习备考冲刺阶段</li>
+                        <li>写作、设计等创作型任务</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 功能4: 主题系统 -->
+            <div class="feature-card">
+                <div class="feature-icon">🎨</div>
+                <h2>主题系统</h2>
+                <p class="feature-intro">6种预设主题 + AI配色 + 完全自定义</p>
+                <div class="feature-details">
+                    <h3>核心特性</h3>
+                    <ul>
+                        <li><strong>6种预设主题</strong> - 商务、活力、自然、温暖、海洋、紫罗兰</li>
+                        <li><strong>AI主题生成</strong> - 描述风格偏好，AI自动配色</li>
+                        <li><strong>完全自定义</strong> - 背景色、透明度、任务颜色任意调整</li>
+                        <li><strong>实时预览</strong> - 修改后立即在进度条生效</li>
+                    </ul>
+                    <h3>配色示例</h3>
+                    <ul>
+                        <li>商务风格：蓝灰色调，稳重专业</li>
+                        <li>活力风格：橙黄色调，充满能量</li>
+                        <li>自然风格：绿色调，清新舒适</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 功能5: 场景系统 -->
+            <div class="feature-card">
+                <div class="feature-icon">🎬</div>
+                <h2>场景系统</h2>
+                <p class="feature-intro">可视化场景编辑器，打造专属桌面</p>
+                <div class="feature-details">
+                    <h3>核心特性</h3>
+                    <ul>
+                        <li><strong>可视化编辑器</strong> - 拖拽式设计，所见即所得</li>
+                        <li><strong>画布预览</strong> - 实时查看场景效果</li>
+                        <li><strong>元素管理</strong> - 添加、移动、缩放、删除场景元素</li>
+                        <li><strong>道路层配置</strong> - 独立的道路层设置（平铺、偏移、缩放）</li>
+                        <li><strong>场景导入导出</strong> - 分享和备份自己的场景作品</li>
+                    </ul>
+                    <h3>预设场景</h3>
+                    <ul>
+                        <li>森林步道 - 自然清新的森林小径</li>
+                        <li>更多场景持续更新中...</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 功能6: 数据统计分析 -->
+            <div class="feature-card">
+                <div class="feature-icon">📈</div>
+                <h2>数据统计分析</h2>
+                <p class="feature-intro">多维度分析，了解时间去向</p>
+                <div class="feature-details">
+                    <h3>核心特性</h3>
+                    <ul>
+                        <li><strong>任务完成跟踪</strong> - 自动记录每日任务完成情况</li>
+                        <li><strong>多维度分析</strong> - 本周/本月/任务分类统计</li>
+                        <li><strong>数据可视化</strong> - 图表展示时间分布趋势</li>
+                        <li><strong>数据导出</strong> - 会员功能，导出CSV/Excel</li>
+                    </ul>
+                    <h3>统计内容</h3>
+                    <ul>
+                        <li>工作时长统计</li>
+                        <li>学习时长统计</li>
+                        <li>休息时长统计</li>
+                        <li>专注度分析</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 功能7: 成就系统（v1.7.0新增） -->
+            <div class="feature-card">
+                <div class="feature-icon">🏆</div>
+                <h2>成就系统</h2>
+                <p class="feature-intro">游戏化时间管理，激励持续进步</p>
+                <div class="feature-details">
+                    <h3>核心特性</h3>
+                    <ul>
+                        <li><strong>5大类别</strong> - 时间掌控、效率达人、毅力挑战、探索精神、社区贡献</li>
+                        <li><strong>分类筛选</strong> - 单选模式快速定位目标成就</li>
+                        <li><strong>完整展示</strong> - 未解锁成就也能看到解锁条件</li>
+                        <li><strong>实时解锁</strong> - 达成条件自动触发成就弹窗</li>
+                    </ul>
+                    <h3>成就示例</h3>
+                    <ul>
+                        <li>时间掌控：连续7天完成所有任务</li>
+                        <li>效率达人：单日专注时长超过8小时</li>
+                        <li>毅力挑战：连续30天使用GaiYa</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 功能8: 新手引导（v1.7.0新增） -->
+            <div class="feature-card">
+                <div class="feature-icon">🚀</div>
+                <h2>新手引导</h2>
+                <p class="feature-intro">6步向导流程，快速上手</p>
+                <div class="feature-details">
+                    <h3>核心特性</h3>
+                    <ul>
+                        <li><strong>6步向导</strong> - 欢迎页 → 功能介绍 → 任务设置 → 主题选择 → 场景配置 → 完成</li>
+                        <li><strong>emoji图标</strong> - 直观清晰，跨平台兼容</li>
+                        <li><strong>实时预览</strong> - 设置后立即在进度条显示</li>
+                        <li><strong>可跳过</strong> - 老用户可选择跳过引导</li>
+                    </ul>
+                    <h3>引导内容</h3>
+                    <ul>
+                        <li>🎯 任务进度 - 精准目标，一眼掌握进度</li>
+                        <li>🤖 AI智能规划 - 机器人助手，智能优化时间</li>
+                        <li>🎨 丰富主题 - 调色板，个性化界面</li>
+                        <li>⏰ 智能提醒 - 闹钟，永不错过重要时刻</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 功能9: 行为识别弹幕（v1.6.12新增） -->
+            <div class="feature-card">
+                <div class="feature-icon">💬</div>
+                <h2>行为识别弹幕</h2>
+                <p class="feature-intro">智能检测摸鱼行为，幽默提醒回归正轨</p>
+                <div class="feature-details">
+                    <h3>核心特性</h3>
+                    <ul>
+                        <li><strong>实时活动追踪</strong> - 后台采集应用使用情况（5秒间隔）</li>
+                        <li><strong>5种行为趋势</strong> - 专注稳定、摸鱼开始、摸鱼稳定、模式切换、任务切换</li>
+                        <li><strong>450+行为弹幕</strong> - 根据行为触发个性化弹幕</li>
+                        <li><strong>智能触发机制</strong> - 概率触发（30-50%），三级冷却（30/60/120秒）</li>
+                    </ul>
+                    <h3>弹幕示例</h3>
+                    <ul>
+                        <li>专注稳定："已经专注工作2小时了，继续保持！"</li>
+                        <li>摸鱼开始："咦？开始刷B站了？"</li>
+                        <li>摸鱼稳定："已经在B站摸了15分钟了，要不要回去工作？"</li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- 底部CTA -->
+    <section class="cta-section">
+        <h2>立即体验 GaiYa 的强大功能</h2>
+        <p>免费下载，3分钟快速上手</p>
+        <a href="download.html" class="btn btn-primary">立即下载</a>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-grid">
+                <div class="footer-column">
+                    <h4>产品</h4>
+                    <ul>
+                        <li><a href="index.html">功能特性</a></li>
+                        <li><a href="features.html">功能详解</a></li>
+                        <li><a href="pricing.html">定价方案</a></li>
+                        <li><a href="download.html">下载应用</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>支持</h4>
+                    <ul>
+                        <li><a href="help.html">帮助中心</a></li>
+                        <li><a href="about.html">关于我们</a></li>
+                        <li><a href="mailto:drmrzhong@gmail.com">联系我们</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>社区</h4>
+                    <ul>
+                        <li><a href="https://github.com/jiamizhongshifu/jindutiao" target="_blank">GitHub</a></li>
+                        <li><a href="https://twitter.com/drmrzhong" target="_blank">Twitter</a></li>
+                        <li>微信: drmrzhong</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 GaiYa 团队 · MIT License · Made with ❤️ in China</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- i18n Internationalization -->
+    <script src="js/i18n.js"></script>
+</body>
+</html>

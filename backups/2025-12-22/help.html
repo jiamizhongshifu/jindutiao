@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="GaiYa帮助中心：安装使用指南、功能说明、会员权益、常见问题解答。从下载安装到AI任务规划、番茄钟使用、主题自定义，全面帮助您掌握时间管理利器。">
+    <meta name="keywords" content="GaiYa帮助,使用教程,安装指南,常见问题,FAQ,会员激活,AI任务规划教程,番茄钟使用,技术支持">
+    <title>帮助中心 - GaiYa使用指南 | 常见问题解答 | 新手教程</title>
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://www.gaiyatime.com/help.html">
+
+    <!-- Hreflang 双语标签 -->
+    <link rel="alternate" hreflang="zh-CN" href="https://www.gaiyatime.com/help.html?lang=zh_CN">
+    <link rel="alternate" hreflang="en-US" href="https://www.gaiyatime.com/help.html?lang=en_US">
+    <link rel="alternate" hreflang="x-default" href="https://www.gaiyatime.com/help.html">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="GaiYa每日进度条">
+    <meta property="og:title" content="GaiYa帮助中心 - 使用指南与常见问题">
+    <meta property="og:description" content="安装使用指南、功能说明、会员权益、常见问题解答。全面帮助您掌握GaiYa时间管理工具。">
+    <meta property="og:url" content="https://www.gaiyatime.com/help.html">
+    <meta property="og:image" content="https://www.gaiyatime.com/images/og-image.webp">
+    <meta property="og:locale" content="zh_CN">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="GaiYa帮助中心 - 使用指南与FAQ">
+    <meta name="twitter:description" content="从安装到高级功能，解答所有使用疑问。">
+    <meta name="twitter:image" content="https://www.gaiyatime.com/images/og-image.webp">
+
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <style>
+        .help-container {
+            max-width: 900px;
+            margin: 100px auto 60px;
+            padding: 0 24px;
+        }
+        .help-header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        .help-header h1 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+        .help-header p {
+            font-size: 16px;
+            color: var(--text-secondary);
+        }
+        .search-box {
+            max-width: 600px;
+            margin: 0 auto 48px;
+            position: relative;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 16px 48px 16px 20px;
+            border: 2px solid var(--gray-300);
+            border-radius: var(--radius);
+            font-size: 15px;
+            transition: all 0.2s;
+        }
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+        .search-box button {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 8px;
+        }
+        .faq-section {
+            margin-bottom: 48px;
+        }
+        .faq-category {
+            margin-bottom: 32px;
+        }
+        .faq-category-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .faq-item {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            margin-bottom: 12px;
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+        .faq-item:hover {
+            border-color: var(--gray-300);
+            box-shadow: var(--shadow-sm);
+        }
+        .faq-question {
+            padding: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        .faq-question:hover {
+            color: var(--primary-color);
+        }
+        .faq-arrow {
+            transition: transform 0.3s;
+            font-size: 18px;
+            color: var(--text-tertiary);
+        }
+        .faq-item.active .faq-arrow {
+            transform: rotate(180deg);
+        }
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            padding: 0 20px;
+        }
+        .faq-item.active .faq-answer {
+            max-height: 500px;
+            padding: 0 20px 20px;
+        }
+        .faq-answer p {
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 12px;
+        }
+        .faq-answer ul {
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-left: 20px;
+        }
+        .faq-answer code {
+            background: var(--gray-100);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+        }
+        .contact-cta {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            text-align: center;
+            margin-top: 48px;
+        }
+        .contact-cta h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+        .contact-cta p {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="index.html" class="navbar-logo">
+                <img src="images/logo.png" alt="GaiYa Logo" style="height: 36px; width: 36px; border-radius: 8px;">
+                <span style="font-weight: 700; color: var(--text-primary); margin-left: 8px;">GaiYa每日进度条</span>
+            </a>
+            <ul class="navbar-menu">
+                <li><a href="features.html" data-i18n="nav.features">功能</a></li>
+                <li><a href="index.html#pricing" data-i18n="nav.pricing">定价</a></li>
+                <li><a href="index.html#testimonials" data-i18n="nav.testimonials">评价</a></li>
+                <li><a href="index.html#faq" data-i18n="nav.help">帮助</a></li>
+                <li><a href="index.html#about" data-i18n="nav.about">关于</a></li>
+                <li><a href="index.html#download" data-i18n="nav.download">下载</a></li>
+            </ul>
+                        <div class="navbar-actions">
+                <!-- Language Switcher -->
+                <div class="language-switcher">
+                    <button class="lang-btn" data-lang-switch="zh_CN" onclick="switchLanguage('zh_CN')">中</button>
+                    <button class="lang-btn" data-lang-switch="en_US" onclick="switchLanguage('en_US')">EN</button>
+                </div>
+                <a href="https://github.com/jiamizhongshifu/jindutiao" target="_blank" class="btn btn-secondary btn-small">GitHub</a>
+                <a href="index.html#download" class="btn btn-primary btn-small" data-i18n="hero.download_btn">立即下载</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="help-container">
+        <!-- 页面头部 -->
+        <div class="help-header">
+            <h1 data-i18n="help_page.title">💡 帮助中心</h1>
+            <p data-i18n="help_page.subtitle">快速找到您需要的答案，让 GaiYa 使用更顺畅</p>
+        </div>
+
+        <!-- 搜索框 -->
+        <div class="search-box">
+            <input type="text" id="searchInput" data-i18n-placeholder="help_page.search_placeholder" placeholder="搜索您的问题...">
+            <button>🔍</button>
+        </div>
+
+        <!-- FAQ 内容 -->
+        <div class="faq-section">
+            <!-- 入门使用 -->
+            <div class="faq-category">
+                <h2 class="faq-category-title" data-i18n="help_page.getting_started">🚀 入门使用</h2>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>如何开始使用 GaiYa？</span>
+                        <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>开始使用 GaiYa 非常简单：</p>
+                        <ul>
+                            <li>1. 从<a href="download.html" style="color: var(--primary-color);">下载页面</a>下载 Windows 安装包</li>
+                            <li>2. 双击安装程序，按照向导完成安装</li>
+                            <li>3. 启动 GaiYa，进度条会自动显示在屏幕顶部</li>
+                            <li>4. 右键点击进度条，选择"配置"开始个性化设置</li>
+                        </ul>
+                        <p>首次使用建议先试用 AI 任务规划功能（免费 3 次/天），快速生成适合您的时间表。</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>GaiYa 支持哪些操作系统？</span>
+                        <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>目前 GaiYa 支持：</p>
+                        <ul>
+                            <li>✅ Windows 10（64位）</li>
+                            <li>✅ Windows 11（64位）</li>
+                        </ul>
+                        <p>暂不支持 Windows 7/8 和 32 位系统。macOS 和 Linux 版本正在开发中，敬请期待。</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>为什么看不到进度条？</span>
+                        <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>如果进度条没有显示，请检查以下几点：</p>
+                        <ul>
+                            <li>确认 GaiYa 已经启动（查看系统托盘图标）</li>
+                            <li>检查进度条位置设置（顶部/底部），可能在屏幕边缘</li>
+                            <li>尝试按 <code>Ctrl+Alt+P</code> 快捷键切换显示/隐藏</li>
+                            <li>检查是否被全屏应用遮挡（某些游戏会覆盖置顶窗口）</li>
+                            <li>重启应用程序</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI 功能 -->
+            <div class="faq-category">
+                <h2 class="faq-category-title">🤖 AI 智能规划</h2>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>如何使用 AI 任务规划功能？</span>
+                        <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>使用 AI 任务规划非常简单：</p>
+                        <ul>
+                            <li>1. 打开配置界面，点击"AI 智能规划"按钮</li>
+                            <li>2. 用自然语言描述您的一天，例如："程序员，朝九晚六，中午休息1小时"</li>
+                            <li>3. 点击"生成任务"，AI 会自动创建完整的时间表</li>
+                            <li>4. 可以手动调整生成的任务，满意后保存即可</li>
+                        </ul>
+                        <p><strong>提示：</strong>描述越具体，AI 生成的任务越准确。免费用户每天有 3 次使用机会。</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>免费版每天只有 3 次 AI 规划，用完了怎么办？</span>
+                        <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>如果免费额度用完，您有以下选择：</p>
+                        <ul>
+                            <li>等待第二天自动恢复 3 次使用机会（每天 00:00 重置）</li>
+                            <li>手动添加和编辑任务（完全免费，不受限制）</li>
+                            <li>升级到 Pro 会员，享受 20 次/天的 AI 规划额度</li>
+                        </ul>
+                        <p>GaiYa 的核心功能（桌面进度条、番茄时钟等）完全免费，不受 AI 额度限制。</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>AI 生成的任务不符合预期怎么办？</span>
+                        <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>您可以：</p>
+                        <ul>
+                            <li>修改描述后重新生成（更详细的描述通常效果更好）</li>
+                            <li>手动调整生成的任务（时间、名称、颜色都可修改）</li>
+                            <li>删除不需要的任务，添加新的任务</li>
+                            <li>保存为模板，以后直接复用</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 功能使用 -->
+            <div class="faq-category">
+                <h2 class="faq-category-title">⚙️ 功能使用</h2>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>如何自定义进度条的位置和样式？</span>
+                        <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>右键点击进度条，选择"配置"，您可以调整：</p>
+                        <ul>
+                            <li><strong>位置：</strong>屏幕顶部或底部</li>
+                            <li><strong>尺寸：</strong>高度、宽度、圆角</li>
+                            <li><strong>主题：</strong>9种预设主题或自定义颜色</li>
+                            <li><strong>透明度：</strong>背景透明度调节</li>
+                            <li><strong>交互：</strong>点击穿透、悬停提示等</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>番茄时钟怎么用？</span>
+                        <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>GaiYa 内置了番茄工作法计时器：</p>
+                        <ul>
+                            <li>1. 在配置界面切换到"番茄时钟"标签</li>
+                            <li>2. 设置专注时长（默认 25 分钟）和休息时长（默认 5 分钟）</li>
+                            <li>3. 点击"开始番茄"按钮</li>
+                            <li>4. 时间到了会有桌面通知提醒</li>
+                        </ul>
+                        <p>番茄时钟与进度条独立，可以同时使用。</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>场景系统是什么？如何使用？</span>
+                        <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>场景系统让您的进度条更有趣（会员专享功能）：</p>
+                        <ul>
+                            <li>可视化编辑器：拖拽式设计背景图案</li>
+                            <li>动画效果：添加动态元素（如浮动图标、粒子效果）</li>
+                            <li>场景导入导出：分享您的创意场景</li>
+                            <li>自动切换：根据时间段自动切换场景</li>
+                        </ul>
+                        <p>场景会与进度条融合显示，让时间管理充满乐趣。</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>如何查看统计数据？</span>
+                        <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>在配置界面的"统计"标签中可以查看：</p>
+                        <ul>
+                            <li>每日任务完成情况</li>
+                            <li>专注时长趋势</li>
+                            <li>番茄钟使用统计</li>
+                            <li>周/月效率报告</li>
+                        </ul>
+                        <p>会员用户可以导出详细的统计报表（Excel/PDF 格式）。</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 会员与付费 -->
+            <div class="faq-category">
+                <h2 class="faq-category-title">💳 会员与付费</h2>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>免费版和会员版有什么区别？</span>
+                        <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p><strong>免费版功能：</strong></p>
+                        <ul>
+                            <li>✅ 桌面进度条（完整功能）</li>
+                            <li>✅ 番茄时钟</li>
+                            <li>✅ 手动任务管理</li>
+                            <li>✅ AI 任务规划（3次/天）</li>
+                            <li>✅ 基础统计数据</li>
+                        </ul>
+                        <p><strong>Pro 会员额外功能：</strong></p>
+                        <ul>
+                            <li>⭐ AI 任务规划（20次/天）</li>
+                            <li>⭐ 去除进度条水印</li>
+                            <li>⭐ 场景系统（可视化编辑器）</li>
+                            <li>⭐ 数据云同步</li>
+                            <li>⭐ 详细统计报告（可导出）</li>
+                            <li>⭐ 优先客服支持</li>
+                        </ul>
+                        <p>查看完整对比请访问<a href="pricing.html" style="color: var(--primary-color);">定价页面</a>。</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>如何购买 Pro 会员？</span>
+                        <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>购买流程：</p>
+                        <ul>
+                            <li>1. 访问<a href="pricing.html" style="color: var(--primary-color);">定价页面</a>选择合适的套餐</li>
+                            <li>2. 点击"立即购买"按钮</li>
+                            <li>3. 注册/登录账户（需要邮箱验证）</li>
+                            <li>4. 选择支付方式（微信支付/支付宝/国际信用卡）</li>
+                            <li>5. 完成支付后，重启应用即可激活会员功能</li>
+                        </ul>
+                        <p>支持月度、年度订阅，年度套餐可省 30% 费用。</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>支持退款吗？</span>
+                        <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>我们提供 7 天无理由退款保证：</p>
+                        <ul>
+                            <li>购买后 7 天内未使用或使用不满意，可全额退款</li>
+                            <li>联系客服说明原因即可处理</li>
+                            <li>退款通常 3-5 个工作日到账</li>
+                        </ul>
+                        <p>超过 7 天或已大量使用会员功能的订单不支持退款。</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>会员订阅会自动续费吗？</span>
+                        <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p><strong>不会自动续费。</strong>GaiYa 采用手动续费模式：</p>
+                        <ul>
+                            <li>订阅到期前 7 天会收到续费提醒</li>
+                            <li>到期后会员功能自动停用，但数据不会丢失</li>
+                            <li>可随时在应用内或官网续费</li>
+                            <li>续费后数据和设置会立即恢复</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 技术问题 -->
+            <div class="faq-category">
+                <h2 class="faq-category-title">🔧 技术问题</h2>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>GaiYa 占用多少系统资源？</span>
+                        <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>GaiYa 经过深度优化，资源占用非常低：</p>
+                        <ul>
+                            <li><strong>内存：</strong>约 50-80 MB（后台运行）</li>
+                            <li><strong>CPU：</strong>闲置时 <1%，动画播放时 2-5%</li>
+                            <li><strong>磁盘：</strong>安装包约 82 MB，安装后约 150 MB</li>
+                        </ul>
+                        <p>即使在低配置电脑上也能流畅运行，不影响其他软件性能。</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>数据存储在哪里？安全吗？</span>
+                        <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p><strong>本地数据：</strong></p>
+                        <ul>
+                            <li>所有配置和任务数据默认存储在本地（<code>%APPDATA%\GaiYa</code>）</li>
+                            <li>不会上传到服务器（除非开启云同步功能）</li>
+                        </ul>
+                        <p><strong>云同步数据（会员专享）：</strong></p>
+                        <ul>
+                            <li>加密传输和存储（AES-256）</li>
+                            <li>仅用于多设备同步，不会用于其他用途</li>
+                            <li>可随时关闭云同步并删除云端数据</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>遇到 Bug 或崩溃怎么办？</span>
+                        <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>请按以下步骤操作：</p>
+                        <ul>
+                            <li>1. 检查是否是最新版本（帮助 → 检查更新）</li>
+                            <li>2. 查看日志文件：<code>%APPDATA%\GaiYa\gaiya.log</code></li>
+                            <li>3. 尝试重启应用或重新安装</li>
+                            <li>4. 如果问题依然存在，请联系我们并提供：
+                                <ul>
+                                    <li>操作系统版本</li>
+                                    <li>GaiYa 版本号</li>
+                                    <li>问题复现步骤</li>
+                                    <li>日志文件（如有）</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>支持多显示器吗？</span>
+                        <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>完全支持！您可以：</p>
+                        <ul>
+                            <li>选择进度条显示在哪个显示器上</li>
+                            <li>每个显示器显示不同的进度条（需要启动多个实例）</li>
+                            <li>在配置中选择"主显示器"或"当前显示器"</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 其他问题 -->
+            <div class="faq-category">
+                <h2 class="faq-category-title">❓ 其他问题</h2>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>GaiYa 是开源的吗？</span>
+                        <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>是的！GaiYa 采用 MIT 开源协议：</p>
+                        <ul>
+                            <li>源代码托管在 GitHub</li>
+                            <li>任何人都可以查看、使用和修改代码</li>
+                            <li>欢迎提交 Issue 和 Pull Request</li>
+                            <li>商业使用也无需授权</li>
+                        </ul>
+                        <p>访问 <a href="about.html" style="color: var(--primary-color);">关于页面</a> 查看 GitHub 链接。</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>如何卸载 GaiYa？</span>
+                        <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>卸载方法：</p>
+                        <ul>
+                            <li><strong>方法 1：</strong>Windows 设置 → 应用 → 找到 GaiYa → 卸载</li>
+                            <li><strong>方法 2：</strong>控制面板 → 程序和功能 → 卸载 GaiYa</li>
+                            <li><strong>方法 3：</strong>运行卸载程序（安装目录下的 uninstall.exe）</li>
+                        </ul>
+                        <p>卸载后，配置文件会保留在 <code>%APPDATA%\GaiYa</code>，可手动删除。</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>可以在工作电脑上使用吗？</span>
+                        <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>完全可以！GaiYa 非常适合办公场景：</p>
+                        <ul>
+                            <li>无需管理员权限即可运行</li>
+                            <li>不会干扰其他软件运行</li>
+                            <li>点击穿透功能不影响正常操作</li>
+                            <li>可设置为开机自启动</li>
+                        </ul>
+                        <p>很多用户反馈在工作中使用 GaiYa 后，时间管理效率显著提升。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 联系我们 CTA -->
+        <div class="contact-cta">
+            <h3>没有找到您的问题？</h3>
+            <p>我们随时准备帮助您</p>
+            <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                <a href="mailto:drmrzhong@gmail.com" class="btn btn-primary">发送邮件</a>
+                <a href="https://github.com/jiamizhongshifu/jindutiao/issues" class="btn btn-secondary" target="_blank">GitHub Issues</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-grid">
+                <div class="footer-column">
+                    <h4>产品</h4>
+                    <ul>
+                        <li><a href="index.html#features">功能特性</a></li>
+                        <li><a href="pricing.html">定价方案</a></li>
+                        <li><a href="download.html">下载应用</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>支持</h4>
+                    <ul>
+                        <li><a href="help.html">帮助中心</a></li>
+                        <li><a href="about.html">关于我们</a></li>
+                        <li><a href="#">隐私政策</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>社区</h4>
+                    <ul>
+                        <li><a href="https://github.com/jiamizhongshifu/jindutiao" target="_blank" rel="noopener">GitHub</a></li>
+                        <li><a href="https://twitter.com/drmrzhong" target="_blank" rel="noopener">Twitter</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2025 GaiYa 团队 · MIT License · Made with ❤️ in China</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // FAQ 折叠/展开
+        function toggleFaq(element) {
+            const item = element.closest('.faq-item');
+            const allItems = document.querySelectorAll('.faq-item');
+
+            // 关闭其他已打开的项
+            allItems.forEach(other => {
+                if (other !== item && other.classList.contains('active')) {
+                    other.classList.remove('active');
+                }
+            });
+
+            // 切换当前项
+            item.classList.toggle('active');
+        }
+
+        // 搜索功能
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const faqItems = document.querySelectorAll('.faq-item');
+
+            faqItems.forEach(item => {
+                const question = item.querySelector('.faq-question span').textContent.toLowerCase();
+                const answer = item.querySelector('.faq-answer').textContent.toLowerCase();
+
+                if (question.includes(searchTerm) || answer.includes(searchTerm)) {
+                    item.style.display = 'block';
+                    if (searchTerm.length > 0) {
+                        item.classList.add('active');
+                    }
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            // 如果搜索为空，显示所有项并关闭所有展开
+            if (searchTerm.length === 0) {
+                faqItems.forEach(item => {
+                    item.style.display = 'block';
+                    item.classList.remove('active');
+                });
+            }
+        });
+    </script>
+
+    <!-- i18n Internationalization -->
+    <script src="js/i18n.js"></script>
+
+    <!-- Schema.org 结构化数据 - FAQPage -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "GaiYa支持哪些操作系统？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "目前GaiYa支持Windows 10（64位）和Windows 11（64位）。暂不支持Windows 7/8和32位系统。macOS和Linux版本正在开发中，敬请期待。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "如何使用AI任务规划功能？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "使用AI任务规划非常简单：1. 打开配置界面，点击'AI智能规划'按钮；2. 用自然语言描述您的一天，例如：'程序员，朝九晚六，中午休息1小时'；3. 点击'生成任务'，AI会自动创建完整的时间表；4. 可以手动调整生成的任务，满意后保存即可。免费用户每天有3次使用机会。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "免费版每天只有3次AI规划，用完了怎么办？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "如果免费额度用完，您可以：等待第二天自动恢复3次使用机会（每天00:00重置）；手动添加和编辑任务（完全免费，不受限制）；升级到Pro会员，享受20次/天的AI规划额度。GaiYa的核心功能（桌面进度条、番茄时钟等）完全免费，不受AI额度限制。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "免费版和会员版有什么区别？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "免费版包含：桌面进度条（完整功能）、番茄时钟、手动任务管理、AI任务规划（3次/天）、基础统计数据。Pro会员额外功能：AI任务规划（20次/天）、去除进度条水印、场景系统（可视化编辑器）、数据云同步、详细统计报告（可导出）、优先客服支持。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "如何购买Pro会员？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "购买流程：1. 访问定价页面选择合适的套餐；2. 点击'立即购买'按钮；3. 注册/登录账户（需要邮箱验证）；4. 选择支付方式（微信支付/支付宝/国际信用卡）；5. 完成支付后，重启应用即可激活会员功能。支持月度、年度订阅，年度套餐可省30%费用。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "支持退款吗？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "我们提供7天无理由退款保证：购买后7天内未使用或使用不满意，可全额退款；联系客服说明原因即可处理；退款通常3-5个工作日到账。超过7天或已大量使用会员功能的订单不支持退款。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "数据存储在哪里？安全吗？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "本地数据：所有配置和任务数据默认存储在本地（%APPDATA%\\GaiYa），不会上传到服务器（除非开启云同步功能）。云同步数据（会员专享）：加密传输和存储（AES-256），仅用于多设备同步，不会用于其他用途，可随时关闭云同步并删除云端数据。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "GaiYa是开源的吗？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "是的！GaiYa采用MIT开源协议：源代码托管在GitHub，任何人都可以查看、使用和修改代码，欢迎提交Issue和Pull Request，商业使用也无需授权。"
+          }
+        }
+      ]
+    }
+    </script>
+</body>
+</html>

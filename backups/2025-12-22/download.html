@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="下载GaiYa v1.7.0 - 免费Windows桌面时间管理工具。支持Windows 10/11，透明进度条、AI任务规划、番茄钟、6种主题。开源MIT协议，82MB安装包，立即下载体验。">
+    <meta name="keywords" content="GaiYa下载,Windows时间管理工具下载,桌面进度条下载,AI任务规划软件,免费时间管理软件,开源进度条工具">
+    <title>下载GaiYa - Windows桌面时间管理工具 | v1.7.0免费版</title>
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://www.gaiyatime.com/download.html">
+
+    <!-- Hreflang 双语标签 -->
+    <link rel="alternate" hreflang="zh-CN" href="https://www.gaiyatime.com/download.html?lang=zh_CN">
+    <link rel="alternate" hreflang="en-US" href="https://www.gaiyatime.com/download.html?lang=en_US">
+    <link rel="alternate" hreflang="x-default" href="https://www.gaiyatime.com/download.html">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="GaiYa每日进度条">
+    <meta property="og:title" content="下载GaiYa - 免费Windows桌面时间管理工具">
+    <meta property="og:description" content="v1.7.0最新版本，支持Windows 10/11，透明进度条、AI任务规划、番茄钟。完全免费，开源MIT协议。">
+    <meta property="og:url" content="https://www.gaiyatime.com/download.html">
+    <meta property="og:image" content="https://www.gaiyatime.com/images/og-image.webp">
+    <meta property="og:locale" content="zh_CN">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="下载GaiYa - Windows时间管理工具 v1.7.0">
+    <meta name="twitter:description" content="免费开源，透明进度条让时间流逝清晰可见。支持AI任务规划、番茄钟。">
+    <meta name="twitter:image" content="https://www.gaiyatime.com/images/og-image.webp">
+
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <style>
+        /* 动画效果 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Hero区域 */
+        .download-hero {
+            margin-top: 64px;
+            padding: var(--spacing-2xl) var(--spacing-md);
+            background: linear-gradient(180deg, #f8fdf9 0%, #ffffff 100%);
+            text-align: center;
+        }
+
+        .download-hero-icon {
+            font-size: 80px;
+            margin-bottom: var(--spacing-md);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .download-hero h1 {
+            font-size: 42px;
+            margin-bottom: var(--spacing-md);
+            color: var(--text-primary);
+            opacity: 0;
+            animation: fadeInUp 0.8s ease-out 0.2s forwards;
+        }
+
+        .version-badge {
+            display: inline-block;
+            padding: 10px 20px;
+            background: var(--primary-light);
+            color: var(--primary-color);
+            border-radius: var(--radius-full);
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-lg);
+            opacity: 0;
+            animation: fadeIn 0.8s ease-out 0.4s forwards;
+        }
+
+        /* 下载卡片 */
+        .download-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            padding: var(--spacing-xl);
+            max-width: 600px;
+            margin: -40px auto var(--spacing-2xl);
+            position: relative;
+            z-index: 10;
+            opacity: 0;
+            animation: fadeInUp 0.8s ease-out 0.6s forwards;
+        }
+
+        .download-options {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+
+        .download-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .download-btn:hover {
+            border-color: var(--primary-color);
+            background: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .download-btn-primary {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+        .download-btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(76, 175, 80, 0.2);
+        }
+
+        .download-btn-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .download-btn-icon {
+            font-size: 32px;
+        }
+
+        .download-btn-text h3 {
+            margin: 0 0 4px 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .download-btn-text p {
+            margin: 0;
+            font-size: 13px;
+            opacity: 0.8;
+        }
+
+        .download-btn-right {
+            font-size: 24px;
+        }
+
+        .download-info {
+            margin-top: var(--spacing-lg);
+            padding-top: var(--spacing-lg);
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .download-info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--spacing-md);
+        }
+
+        .download-info-item {
+            text-align: center;
+        }
+
+        .download-info-label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .download-info-value {
+            display: block;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* 系统要求卡片 */
+        .requirements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-lg);
+            margin-top: var(--spacing-xl);
+        }
+
+        .requirement-card {
+            background: white;
+            padding: var(--spacing-lg);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s;
+        }
+
+        .requirement-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .requirement-card-icon {
+            font-size: 36px;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .requirement-card h4 {
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-sm);
+            font-size: 16px;
+        }
+
+        .requirement-card ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .requirement-card li {
+            padding: 6px 0;
+            font-size: 14px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .requirement-card li::before {
+            content: "✓";
+            color: var(--primary-color);
+            font-weight: bold;
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+
+        /* 安装步骤 */
+        .install-steps {
+            max-width: 800px;
+            margin: var(--spacing-xl) auto 0;
+            counter-reset: step;
+        }
+
+        .install-step {
+            background: white;
+            padding: var(--spacing-lg);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: var(--spacing-md);
+            position: relative;
+            padding-left: 80px;
+            transition: all 0.3s;
+        }
+
+        .install-step:hover {
+            transform: translateX(4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .install-step::before {
+            counter-increment: step;
+            content: counter(step);
+            position: absolute;
+            left: 24px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        .install-step h4 {
+            margin: 0 0 8px 0;
+            color: var(--text-primary);
+            font-size: 18px;
+        }
+
+        .install-step p {
+            margin: 0;
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* FAQ项 */
+        .faq-item {
+            background: white;
+            padding: var(--spacing-lg);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .faq-item h4 {
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-sm);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .faq-item h4::before {
+            content: "❓";
+            font-size: 20px;
+        }
+
+        .faq-item p {
+            margin: 0;
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .faq-item strong {
+            color: var(--text-primary);
+        }
+
+        /* 警告提示 */
+        .alert-box {
+            background: #fff9e6;
+            border-left: 4px solid #ffb700;
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+            margin: var(--spacing-lg) 0;
+        }
+
+        .alert-box h4 {
+            color: #856404;
+            margin: 0 0 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .alert-box p {
+            margin: 0;
+            color: #856404;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .download-hero h1 {
+                font-size: 32px;
+            }
+
+            .download-info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .install-step {
+                padding-left: 70px;
+            }
+
+            .install-step::before {
+                width: 36px;
+                height: 36px;
+                font-size: 16px;
+                left: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="index.html" class="navbar-logo">
+                <img src="images/logo.png" alt="GaiYa Logo" style="height: 36px; width: 36px; border-radius: 8px;">
+                <span style="font-weight: 700; color: var(--text-primary); margin-left: 8px;">GaiYa每日进度条</span>
+            </a>
+            <ul class="navbar-menu">
+                <li><a href="features.html" data-i18n="nav.features">功能</a></li>
+                <li><a href="index.html#pricing" data-i18n="nav.pricing">定价</a></li>
+                <li><a href="index.html#testimonials" data-i18n="nav.testimonials">评价</a></li>
+                <li><a href="index.html#faq" data-i18n="nav.help">帮助</a></li>
+                <li><a href="index.html#about" data-i18n="nav.about">关于</a></li>
+                <li><a href="index.html#download" data-i18n="nav.download">下载</a></li>
+            </ul>
+            <div class="navbar-actions">
+                <!-- Language Switcher -->
+                <div class="language-switcher">
+                    <button class="lang-btn" data-lang-switch="zh_CN" onclick="switchLanguage('zh_CN')">中</button>
+                    <button class="lang-btn" data-lang-switch="en_US" onclick="switchLanguage('en_US')">EN</button>
+                </div>
+                <a href="https://github.com/jiamizhongshifu/jindutiao" target="_blank" class="btn btn-secondary btn-small">GitHub</a>
+                <a href="#download-section" class="btn btn-primary btn-small" data-i18n="hero.download_btn">立即下载</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero 下载区域 -->
+    <section class="download-hero">
+        <div class="download-hero-icon">💻</div>
+        <h1 data-i18n="download.hero_title">下载 GaiYa</h1>
+        <div class="version-badge" data-i18n="download.version_badge">
+            ⭐ 最新版本 v1.7.0 | 完全免费 | 开源 MIT License
+        </div>
+    </section>
+
+    <!-- 主下载卡片 -->
+    <div class="container" id="download-section">
+        <div class="download-card">
+            <div class="download-options">
+                <!-- GitHub Releases 下载 -->
+                <a href="https://github.com/jiamizhongshifu/jindutiao/releases/latest"
+                   target="_blank"
+                   class="download-btn download-btn-primary">
+                    <div class="download-btn-left">
+                        <div class="download-btn-icon">🚀</div>
+                        <div class="download-btn-text">
+                            <h3 data-i18n="download.github_download">从 GitHub 下载</h3>
+                            <p data-i18n="download.github_download_desc">推荐 · 最新版本 · 安全可靠</p>
+                        </div>
+                    </div>
+                    <div class="download-btn-right">→</div>
+                </a>
+
+                <!-- 备用下载 -->
+                <a href="https://github.com/jiamizhongshifu/jindutiao/releases"
+                   target="_blank"
+                   class="download-btn">
+                    <div class="download-btn-left">
+                        <div class="download-btn-icon">📦</div>
+                        <div class="download-btn-text">
+                            <h3 data-i18n="download.history_versions">历史版本下载</h3>
+                            <p data-i18n="download.history_versions_desc">查看所有版本和更新日志</p>
+                        </div>
+                    </div>
+                    <div class="download-btn-right">→</div>
+                </a>
+            </div>
+
+            <div class="download-info">
+                <div class="download-info-grid">
+                    <div class="download-info-item">
+                        <span class="download-info-label" data-i18n="download.version">版本号</span>
+                        <span class="download-info-value">v1.7.0</span>
+                    </div>
+                    <div class="download-info-item">
+                        <span class="download-info-label" data-i18n="download.file_size">文件大小</span>
+                        <span class="download-info-value" data-i18n="download.file_size_value">约 82 MB</span>
+                    </div>
+                    <div class="download-info-item">
+                        <span class="download-info-label" data-i18n="download.platform">支持平台</span>
+                        <span class="download-info-value" data-i18n="download.platform_value">Windows 10/11</span>
+                    </div>
+                    <div class="download-info-item">
+                        <span class="download-info-label" data-i18n="download.update_date">更新日期</span>
+                        <span class="download-info-value" data-i18n="download.update_date_value">2025-01-20</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert-box">
+                <h4 data-i18n="download.security_alert_title">🛡️ 安全提示</h4>
+                <p>
+                    <span data-i18n="download.security_alert_content">部分杀毒软件可能会误报。这是因为软件使用了 PyInstaller 打包，且涉及系统窗口置顶等功能。</span>
+                    <br><br>
+                    <strong data-i18n="download.security_guarantee">我们保证：</strong><span data-i18n="download.security_guarantee_desc">GaiYa 是完全开源的软件，不包含任何恶意代码。您可以在 GitHub 查看完整源代码。</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 系统要求 -->
+    <section class="section bg-light">
+        <div class="container">
+            <h2 class="section-title" data-i18n="download.system_requirements">💻 系统要求</h2>
+            <p class="section-subtitle" data-i18n="download.system_requirements_desc">确保您的设备满足以下最低配置要求</p>
+
+            <div class="requirements-grid">
+                <div class="requirement-card">
+                    <div class="requirement-card-icon">🖥️</div>
+                    <h4>操作系统</h4>
+                    <ul>
+                        <li>Windows 10 (64位) 或更高版本</li>
+                        <li>Windows 11 (64位) 推荐</li>
+                    </ul>
+                </div>
+
+                <div class="requirement-card">
+                    <div class="requirement-card-icon">⚙️</div>
+                    <h4>硬件配置</h4>
+                    <ul>
+                        <li>处理器：Intel Core i3 或同等性能</li>
+                        <li>内存：4 GB RAM（推荐 8 GB）</li>
+                        <li>磁盘空间：至少 100 MB 可用空间</li>
+                    </ul>
+                </div>
+
+                <div class="requirement-card">
+                    <div class="requirement-card-icon">🖼️</div>
+                    <h4>显示要求</h4>
+                    <ul>
+                        <li>屏幕分辨率：1280×720 或更高</li>
+                        <li>支持多显示器配置</li>
+                        <li>支持高 DPI 缩放</li>
+                    </ul>
+                </div>
+
+                <div class="requirement-card">
+                    <div class="requirement-card-icon">🌐</div>
+                    <h4>网络要求</h4>
+                    <ul>
+                        <li>初次使用需联网激活</li>
+                        <li>AI 功能需要网络连接</li>
+                        <li>云同步功能需要网络连接</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 安装指南 -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title" data-i18n="download.install_guide">📖 安装指南</h2>
+            <p class="section-subtitle" data-i18n="download.install_guide_desc">简单 4 步，快速开始使用</p>
+
+            <div class="install-steps">
+                <div class="install-step">
+                    <h4>下载安装包</h4>
+                    <p>点击上方"从 GitHub 下载"按钮，前往 GitHub Releases 页面，下载最新版本的 GaiYa-v1.7.0.exe 安装包</p>
+                </div>
+
+                <div class="install-step">
+                    <h4>运行安装程序</h4>
+                    <p>双击下载的 .exe 文件。如果 Windows SmartScreen 提示"无法识别的应用"，点击"更多信息" → "仍要运行"</p>
+                </div>
+
+                <div class="install-step">
+                    <h4>完成安装</h4>
+                    <p>安装程序会自动完成所有配置。安装完成后，桌面会自动生成 GaiYa 快捷方式</p>
+                </div>
+
+                <div class="install-step">
+                    <h4>首次运行</h4>
+                    <p>双击桌面快捷方式启动 GaiYa。首次运行会显示欢迎向导，按照提示完成初始配置即可开始使用</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 常见问题 -->
+    <section class="section bg-light">
+        <div class="container">
+            <h2 class="section-title" data-i18n="download.faq_title">常见问题</h2>
+
+            <div style="max-width: 800px; margin: 0 auto;">
+                <div class="faq-item">
+                    <h4>为什么杀毒软件报毒？</h4>
+                    <p>
+                        这是误报。GaiYa 使用 PyInstaller 打包，部分杀毒软件会将其标记为"未知应用"。
+                        我们的软件完全开源，不包含任何恶意代码。
+                        <br><br>
+                        <strong>解决方法：</strong>在杀毒软件中将 GaiYa 添加到白名单，或者暂时关闭杀毒软件进行安装。
+                    </p>
+                </div>
+
+                <div class="faq-item">
+                    <h4>Windows SmartScreen 阻止运行怎么办？</h4>
+                    <p>
+                        这是因为软件没有购买微软的代码签名证书（费用较高）。
+                        <br><br>
+                        <strong>解决方法：</strong>点击"更多信息" → "仍要运行"即可正常安装。
+                    </p>
+                </div>
+
+                <div class="faq-item">
+                    <h4>支持 Mac 或 Linux 吗？</h4>
+                    <p>
+                        目前 GaiYa 仅支持 Windows 平台。
+                        <br><br>
+                        我们正在评估跨平台版本的可行性，敬请期待未来的更新。
+                    </p>
+                </div>
+
+                <div class="faq-item">
+                    <h4>安装后无法启动怎么办？</h4>
+                    <p>
+                        可能的原因和解决方法：
+                        <br><br>
+                        <strong>1. 系统版本过低：</strong>请确保您使用的是 Windows 10 (64位) 或更高版本
+                        <br>
+                        <strong>2. 缺少运行库：</strong>请安装 Microsoft Visual C++ Redistributable
+                        <br>
+                        <strong>3. 权限问题：</strong>右键点击快捷方式 → "以管理员身份运行"
+                        <br>
+                        <strong>4. 杀毒软件拦截：</strong>检查杀毒软件日志，将 GaiYa 添加到白名单
+                    </p>
+                </div>
+
+                <div class="faq-item">
+                    <h4>GitHub 下载速度慢怎么办？</h4>
+                    <p>
+                        如果 GitHub 下载速度较慢，您可以：
+                        <br><br>
+                        <strong>1. 使用加速服务：</strong>尝试使用 GitHub 镜像站点或加速工具
+                        <br>
+                        <strong>2. 换个时间下载：</strong>避开网络高峰期，选择凌晨或清晨下载
+                        <br>
+                        <strong>3. 联系我们：</strong>如果持续无法下载，可以通过 GitHub Issues 联系开发团队获取备用下载方式
+                    </p>
+                </div>
+
+                <div class="faq-item">
+                    <h4>如何更新到最新版本？</h4>
+                    <p>
+                        GaiYa 会自动检测新版本并提示更新。
+                        <br><br>
+                        您也可以手动下载最新版本，直接覆盖安装即可，所有配置和数据会自动保留。
+                    </p>
+                </div>
+
+                <div class="faq-item">
+                    <h4>如何卸载 GaiYa？</h4>
+                    <p>
+                        <strong>方法一：</strong>打开 Windows 设置 → 应用 → 应用和功能 → 找到 GaiYa → 卸载
+                        <br>
+                        <strong>方法二：</strong>运行安装目录下的 uninstall.exe
+                        <br><br>
+                        卸载后，用户配置文件会保留在 %APPDATA%\GaiYa 目录，如需彻底删除请手动删除该文件夹。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA 区域 -->
+    <section class="section">
+        <div class="container text-center">
+            <h2 class="section-title">🚀 准备好开始了吗？</h2>
+            <p class="section-subtitle">下载 GaiYa，让时间管理变得简单高效</p>
+            <div class="hero-actions">
+                <a href="https://github.com/jiamizhongshifu/jindutiao/releases/latest" target="_blank" class="btn btn-primary btn-large">📥 立即下载</a>
+                <a href="help.html" class="btn btn-secondary btn-large">📚 查看帮助文档</a>
+            </div>
+            <p style="margin-top: 24px; color: var(--text-secondary); font-size: 14px;">
+                ⭐ 完全免费 | 开源 MIT License | GitHub 5000+ Stars
+            </p>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-grid">
+                <div class="footer-column">
+                    <h4>产品</h4>
+                    <ul>
+                        <li><a href="index.html#features">功能特性</a></li>
+                        <li><a href="pricing.html">会员定价</a></li>
+                        <li><a href="download.html">下载中心</a></li>
+                        <li><a href="https://github.com/jiamizhongshifu/jindutiao/releases">更新日志</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>支持</h4>
+                    <ul>
+                        <li><a href="help.html">帮助中心</a></li>
+                        <li><a href="help.html#getting-started">使用教程</a></li>
+                        <li><a href="help.html#faq">常见问题</a></li>
+                        <li><a href="https://github.com/jiamizhongshifu/jindutiao/issues">反馈问题</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>关于</h4>
+                    <ul>
+                        <li><a href="about.html">关于我们</a></li>
+                        <li><a href="about.html#story">团队介绍</a></li>
+                        <li><a href="https://github.com/jiamizhongshifu/jindutiao">开源项目</a></li>
+                        <li><a href="about.html#contact">联系我们</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>法律</h4>
+                    <ul>
+                        <li><a href="#">用户协议</a></li>
+                        <li><a href="#">隐私政策</a></li>
+                        <li><a href="#">退款政策</a></li>
+                        <li><a href="#">Cookie政策</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2025 GaiYa 团队 | 开源于 GitHub | MIT License</p>
+                <p style="margin-top: 8px;">Made with ❤️ by GaiYa Team</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- i18n Internationalization -->
+    <script src="js/i18n.js"></script>
+</body>
+</html>

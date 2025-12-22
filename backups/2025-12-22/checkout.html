@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- 基础Meta标签 -->
+    <title data-i18n-page-title="page_title.checkout">结账 - GaiYa每日进度条</title>
+    <meta name="description" content="安全快捷完成GaiYa Pro会员购买 - 支持支付宝/微信/Stripe国际支付，7天内未使用可全额退款，所有支付信息经过加密传输。">
+    <meta name="keywords" content="GaiYa购买,GaiYa会员,时间管理工具付费,在线支付,支付宝支付,微信支付,Stripe支付,安全支付">
+    <link rel="canonical" href="https://www.gaiyatime.com/checkout.html">
+
+    <!-- Hreflang标签 - 双语支持 -->
+    <link rel="alternate" hreflang="zh-CN" href="https://www.gaiyatime.com/checkout.html?lang=zh_CN">
+    <link rel="alternate" hreflang="en-US" href="https://www.gaiyatime.com/checkout.html?lang=en_US">
+    <link rel="alternate" hreflang="x-default" href="https://www.gaiyatime.com/checkout.html">
+
+    <!-- Open Graph标签 - 社交分享优化 -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="GaiYa每日进度条">
+    <meta property="og:title" content="购买GaiYa Pro会员 - 解锁AI智能规划与高级功能">
+    <meta property="og:description" content="安全快捷完成GaiYa Pro会员购买，支持支付宝/微信/Stripe国际支付，7天内未使用可全额退款。">
+    <meta property="og:url" content="https://www.gaiyatime.com/checkout.html">
+    <meta property="og:image" content="https://www.gaiyatime.com/images/og-image.webp">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:type" content="image/webp">
+
+    <!-- Twitter Card标签 -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="购买GaiYa Pro会员 - 解锁AI智能规划">
+    <meta name="twitter:description" content="安全快捷完成GaiYa Pro会员购买，支持多种支付方式，7天内可全额退款。">
+    <meta name="twitter:image" content="https://www.gaiyatime.com/images/og-image.webp">
+
+    <!-- 阻止搜索引擎索引结账页面 -->
+    <meta name="robots" content="noindex, nofollow">
+
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <style>
+        .checkout-container {
+            max-width: 900px;
+            margin: 100px auto 60px;
+            padding: 0 24px;
+        }
+        .checkout-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 48px;
+            position: relative;
+        }
+        .checkout-steps::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #e0e0e0;
+            z-index: 0;
+        }
+        .checkout-step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #e0e0e0;
+            margin: 0 auto 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #999;
+        }
+        .checkout-step.active .step-circle {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+        .checkout-step.completed .step-circle {
+            background: #4CAF50;
+            border-color: #4CAF50;
+            color: white;
+        }
+        .checkout-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+        }
+        .form-group {
+            margin-bottom: var(--spacing-md);
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+        .payment-option {
+            border: 2px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .payment-option:hover {
+            border-color: var(--primary-color);
+        }
+        .payment-option.selected {
+            border-color: var(--primary-color);
+            background: rgba(76, 175, 80, 0.05);
+        }
+        .payment-option.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: var(--gray-50);
+        }
+        .order-summary {
+            background: var(--gray-50);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+        }
+        .error-message {
+            color: #d32f2f;
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+        .error-message.show {
+            display: block;
+        }
+        .form-group input.error {
+            border-color: #d32f2f;
+        }
+        .success-message {
+            color: #2e7d32;
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+        .success-message.show {
+            display: block;
+        }
+        .info-message {
+            color: #666;
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+        .info-message.show {
+            display: block;
+        }
+        .password-hints {
+            background: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 8px;
+            font-size: 12px;
+            display: none;
+        }
+        .password-hints.show {
+            display: block;
+        }
+        .password-hint-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+        .password-hint-item:last-child {
+            margin-bottom: 0;
+        }
+        .password-hint-item .icon {
+            width: 16px;
+            height: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .password-hint-item.valid {
+            color: #2e7d32;
+        }
+        .password-hint-item.invalid {
+            color: #999;
+        }
+        /* Toast notification styles */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            pointer-events: none;
+        }
+        .toast {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            min-width: 300px;
+            max-width: 400px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            pointer-events: auto;
+            animation: slideIn 0.3s ease-out;
+            border-left: 4px solid #2e7d32;
+        }
+        .toast.success {
+            border-left-color: #2e7d32;
+        }
+        .toast.info {
+            border-left-color: #1976d2;
+        }
+        .toast.warning {
+            border-left-color: #f57c00;
+        }
+        .toast.error {
+            border-left-color: #d32f2f;
+        }
+        .toast-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        .toast-content {
+            flex: 1;
+        }
+        .toast-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+        .toast-message {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.5;
+        }
+        .toast-close {
+            cursor: pointer;
+            font-size: 20px;
+            color: #999;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+        .toast-close:hover {
+            color: #333;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .summary-row.total {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--primary-color);
+            padding-top: 12px;
+            border-top: 2px solid var(--gray-300);
+            margin-top: 12px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Toast notification container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="index.html" class="navbar-logo">
+                <img src="images/logo.png" alt="GaiYa Logo" style="height: 36px; width: 36px; border-radius: 8px;">
+                <span style="font-weight: 700; color: var(--text-primary); margin-left: 8px;" data-i18n="brand.name">GaiYa每日进度条</span>
+            </a>
+            <ul class="navbar-menu">
+                <li><a href="features.html" data-i18n="nav.features">功能</a></li>
+                <li><a href="index.html#pricing" data-i18n="nav.pricing">定价</a></li>
+                <li><a href="index.html#testimonials" data-i18n="nav.testimonials">评价</a></li>
+                <li><a href="index.html#faq" data-i18n="nav.help">帮助</a></li>
+                <li><a href="index.html#about" data-i18n="nav.about">关于</a></li>
+                <li><a href="index.html#download" data-i18n="nav.download">下载</a></li>
+            </ul>
+            <div class="navbar-actions">
+                <!-- Language Switcher -->
+                <div class="language-switcher">
+                    <button class="lang-btn" data-lang-switch="zh_CN" onclick="switchLanguage('zh_CN')">中</button>
+                    <button class="lang-btn" data-lang-switch="en_US" onclick="switchLanguage('en_US')">EN</button>
+                </div>
+                <a href="https://github.com/jiamizhongshifu/jindutiao" target="_blank" class="btn btn-secondary btn-small">GitHub</a>
+                <a href="index.html#download" class="btn btn-primary btn-small" data-i18n="hero.download_btn">立即下载</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="checkout-container">
+        <!-- 进度指示器 -->
+        <div class="checkout-steps">
+            <div class="checkout-step completed">
+                <div class="step-circle">1</div>
+                <div data-i18n="checkout.step_select_plan">选择套餐</div>
+            </div>
+            <div class="checkout-step active">
+                <div class="step-circle">2</div>
+                <div data-i18n="checkout.step_login">登录账户</div>
+            </div>
+            <div class="checkout-step">
+                <div class="step-circle">3</div>
+                <div data-i18n="checkout.step_payment">支付</div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 350px; gap: 24px;">
+            <!-- 左侧：登录表单 -->
+            <div>
+                <div class="checkout-card">
+                    <h2 style="margin-bottom: 24px;" data-i18n="checkout.login_or_register">登录或注册</h2>
+
+                    <div class="form-group">
+                        <label for="email" data-i18n="checkout.email_label">邮箱地址 *</label>
+                        <input type="email" id="email" data-i18n-placeholder="checkout.email_placeholder" placeholder="请输入邮箱地址" required>
+                        <div class="error-message" id="email-error">请输入有效的邮箱地址</div>
+                        <div class="success-message" id="email-success">✓ 该邮箱可以注册</div>
+                        <div class="info-message" id="email-checking">正在检查邮箱可用性...</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password" data-i18n="checkout.password_label">密码 *</label>
+                        <input type="password" id="password" data-i18n-placeholder="checkout.password_placeholder" placeholder="请输入密码（新用户将自动注册）" required>
+                        <div class="error-message" id="password-error">密码至少8位,必须包含大小写字母和数字</div>
+                        <div class="password-hints" id="password-hints">
+                            <div class="password-hint-item" id="hint-length">
+                                <span class="icon">○</span>
+                                <span>至少8个字符</span>
+                            </div>
+                            <div class="password-hint-item" id="hint-uppercase">
+                                <span class="icon">○</span>
+                                <span>包含大写字母 (A-Z)</span>
+                            </div>
+                            <div class="password-hint-item" id="hint-lowercase">
+                                <span class="icon">○</span>
+                                <span>包含小写字母 (a-z)</span>
+                            </div>
+                            <div class="password-hint-item" id="hint-number">
+                                <span class="icon">○</span>
+                                <span>包含数字 (0-9)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div style="display: flex; align-items: flex-start; gap: 8px;">
+                            <input type="checkbox" id="agree-terms" required style="width: auto; margin: 4px 0 0 0;">
+                            <label for="agree-terms" style="margin: 0; font-weight: normal; font-size: 14px;">
+                                <span data-i18n="checkout.agree_terms_prefix">我已阅读并同意</span> <a href="https://github.com/jiamizhongshifu/jindutiao#license" target="_blank" rel="noopener" style="color: var(--primary-color);">《开源协议 (MIT License)》</a>
+                            </label>
+                        </div>
+                        <div class="error-message" id="terms-error" style="margin-left: 28px;">请阅读并同意用户协议和隐私政策</div>
+                    </div>
+
+                    <p style="font-size: 12px; color: #999; margin-bottom: 16px;" data-i18n="checkout.email_verification_notice">
+                        💡 新用户注册后需验证邮箱，验证链接将发送至您的邮箱
+                    </p>
+
+                    <button class="btn btn-primary" id="login-submit-btn" style="width: 100%;" onclick="handleLoginAndPay()" data-i18n="checkout.login_button">
+                        登录/注册并继续支付
+                    </button>
+                </div>
+
+                <!-- 支付方式 -->
+                <div class="checkout-card" style="margin-top: 24px;">
+                    <h2 style="margin-bottom: 24px;" data-i18n="checkout.choose_payment_method">选择支付方式</h2>
+
+                    <div class="payment-option selected" onclick="selectPayment('alipay')">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <input type="radio" name="payment" value="alipay" id="pay-alipay" checked>
+                            <div style="flex: 1;">
+                                <h3 style="margin: 0; font-size: 16px;" data-i18n="checkout.alipay_pay">💙 支付宝（推荐）</h3>
+                                <p style="margin: 4px 0 0; font-size: 12px; color: #666;" data-i18n="checkout.alipay_pay_desc">安全快捷，支持花呗分期</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="payment-option" onclick="selectPayment('wechat')">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <input type="radio" name="payment" value="wechat" id="pay-wechat">
+                            <div style="flex: 1;">
+                                <h3 style="margin: 0; font-size: 16px;" data-i18n="checkout.wechat_pay">💚 微信支付</h3>
+                                <p style="margin: 4px 0 0; font-size: 12px; color: #666;" data-i18n="checkout.wechat_pay_desc">扫码支付，安全便捷</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="payment-option" onclick="selectPayment('stripe')">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <input type="radio" name="payment" value="stripe" id="pay-stripe">
+                            <div style="flex: 1;">
+                                <h3 style="margin: 0; font-size: 16px;" data-i18n="checkout.stripe_pay">💳 Stripe 国际支付</h3>
+                                <p style="margin: 4px 0 0; font-size: 12px; color: #666;" data-i18n="checkout.stripe_cards_supported">支持Visa/Mastercard等国际信用卡</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p style="margin-top: 16px; padding: 12px; background: #e8f5e9; border-radius: 8px; font-size: 13px; color: #2e7d32;" data-i18n-html="checkout.payment_success_tip">
+                        💡 <strong>提示：</strong>支付成功后，会员权益将自动激活，无需重启应用
+                    </p>
+                </div>
+            </div>
+
+            <!-- 右侧：订单摘要 -->
+            <div>
+                <div class="checkout-card order-summary">
+                    <h3 style="margin-bottom: 16px;" data-i18n="checkout.order_summary">订单摘要</h3>
+
+                    <div class="summary-row">
+                        <span data-i18n="checkout.plan">套餐</span>
+                        <span id="plan-name">Pro 年度</span>
+                    </div>
+
+                    <div class="summary-row">
+                        <span data-i18n="checkout.validity">有效期</span>
+                        <span id="plan-validity">365天</span>
+                    </div>
+
+                    <div style="margin: 16px 0; padding: 12px; background: white; border-radius: 8px;">
+                        <p style="font-size: 13px; margin: 0; color: #666;" data-i18n="checkout.feature_ai_planning">✓ 20次/天 AI智能规划</p>
+                        <p style="font-size: 13px; margin: 4px 0 0; color: #666;" data-i18n="checkout.feature_no_watermark">✓ 去除进度条水印</p>
+                        <p style="font-size: 13px; margin: 4px 0 0; color: #666;" data-i18n="checkout.feature_analytics">✓ 统计报告分析</p>
+                        <p style="font-size: 13px; margin: 4px 0 0; color: #666;" data-i18n="checkout.feature_cloud_sync">✓ 数据云同步</p>
+                        <p style="font-size: 13px; margin: 4px 0 0; color: #666;" data-i18n="checkout.feature_scenes">✓ 场景系统</p>
+                        <p style="font-size: 13px; margin: 4px 0 0; color: #666;" data-i18n="checkout.feature_vip_group">✓ 加入VIP会员群</p>
+                    </div>
+
+                    <div class="summary-row total">
+                        <span data-i18n="checkout.total">总计</span>
+                        <span id="plan-price">¥199</span>
+                    </div>
+
+                    <p style="margin-top: 16px; font-size: 12px; color: #999; text-align: center;" data-i18n="checkout.no_auto_renewal">
+                        到期后不会自动续费
+                    </p>
+                </div>
+
+                <div style="margin-top: 16px; padding: 12px; background: #fff3cd; border-radius: 8px; font-size: 12px; color: #856404;">
+                    <span data-i18n-html="checkout.security_title">🔒 <strong>安全保障</strong></span><br>
+                    <span data-i18n="checkout.security_encryption">• 所有支付信息经过加密传输</span><br>
+                    <span data-i18n="checkout.security_refund">• 7天内未使用可全额退款</span><br>
+                    <span data-i18n="checkout.security_privacy">• 完整的隐私保护承诺</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 从URL获取套餐信息
+        const urlParams = new URLSearchParams(window.location.search);
+        const planId = urlParams.get('plan') || 'pro_yearly';
+
+        const plans = {
+            'pro_monthly': { nameKey: 'checkout.plan_pro_monthly', price: '¥29', validityKey: 'checkout.validity_30days', planType: 'pro_monthly' },
+            'pro_yearly': { nameKey: 'checkout.plan_pro_yearly', price: '¥199', validityKey: 'checkout.validity_365days', planType: 'pro_yearly' },
+            'lifetime': { nameKey: 'checkout.plan_lifetime', price: '¥599', validityKey: 'checkout.validity_forever', planType: 'lifetime' }
+        };
+
+        const plan = plans[planId];
+        if (plan) {
+            // Only set price here, name/validity will be translated by i18n script below
+            document.getElementById('plan-price').textContent = plan.price;
+        }
+
+        // Backend API URL
+        const API_URL = 'https://api.gaiyatime.com';
+
+        // Form validation functions
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        function validatePassword(password) {
+            if (password.length < 8) return false;
+            // Must contain uppercase letter
+            if (!/[A-Z]/.test(password)) return false;
+            // Must contain lowercase letter
+            if (!/[a-z]/.test(password)) return false;
+            // Must contain number
+            if (!/[0-9]/.test(password)) return false;
+            return true;
+        }
+
+        // Toast notification system
+        function showToast(title, message, type = 'success', duration = 5000) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+
+            const icons = {
+                success: '✓',
+                info: 'ℹ',
+                warning: '⚠',
+                error: '✕'
+            };
+
+            toast.innerHTML = `
+                <div class="toast-icon">${icons[type] || icons.success}</div>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+                <div class="toast-close" onclick="this.parentElement.remove()">×</div>
+            `;
+
+            container.appendChild(toast);
+
+            // Auto remove after duration
+            if (duration > 0) {
+                setTimeout(() => {
+                    toast.style.animation = 'slideOut 0.3s ease-out';
+                    setTimeout(() => toast.remove(), 300);
+                }, duration);
+            }
+
+            return toast;
+        }
+
+        // Update password hints in real-time
+        function updatePasswordHints(password) {
+            const hintsContainer = document.getElementById('password-hints');
+            const hintLength = document.getElementById('hint-length');
+            const hintUppercase = document.getElementById('hint-uppercase');
+            const hintLowercase = document.getElementById('hint-lowercase');
+            const hintNumber = document.getElementById('hint-number');
+
+            // Show hints when user starts typing
+            if (password.length > 0) {
+                hintsContainer.classList.add('show');
+            } else {
+                hintsContainer.classList.remove('show');
+                return;
+            }
+
+            // Check length
+            if (password.length >= 8) {
+                hintLength.classList.add('valid');
+                hintLength.classList.remove('invalid');
+                hintLength.querySelector('.icon').textContent = '✓';
+            } else {
+                hintLength.classList.add('invalid');
+                hintLength.classList.remove('valid');
+                hintLength.querySelector('.icon').textContent = '○';
+            }
+
+            // Check uppercase
+            if (/[A-Z]/.test(password)) {
+                hintUppercase.classList.add('valid');
+                hintUppercase.classList.remove('invalid');
+                hintUppercase.querySelector('.icon').textContent = '✓';
+            } else {
+                hintUppercase.classList.add('invalid');
+                hintUppercase.classList.remove('valid');
+                hintUppercase.querySelector('.icon').textContent = '○';
+            }
+
+            // Check lowercase
+            if (/[a-z]/.test(password)) {
+                hintLowercase.classList.add('valid');
+                hintLowercase.classList.remove('invalid');
+                hintLowercase.querySelector('.icon').textContent = '✓';
+            } else {
+                hintLowercase.classList.add('invalid');
+                hintLowercase.classList.remove('valid');
+                hintLowercase.querySelector('.icon').textContent = '○';
+            }
+
+            // Check number
+            if (/[0-9]/.test(password)) {
+                hintNumber.classList.add('valid');
+                hintNumber.classList.remove('invalid');
+                hintNumber.querySelector('.icon').textContent = '✓';
+            } else {
+                hintNumber.classList.add('invalid');
+                hintNumber.classList.remove('valid');
+                hintNumber.querySelector('.icon').textContent = '○';
+            }
+        }
+
+        // Check email availability (debounced)
+        let emailCheckTimeout = null;
+        async function checkEmailAvailability(email) {
+            // Clear previous timeout
+            if (emailCheckTimeout) {
+                clearTimeout(emailCheckTimeout);
+            }
+
+            // Hide all email messages first
+            document.getElementById('email-error').classList.remove('show');
+            document.getElementById('email-success').classList.remove('show');
+            document.getElementById('email-checking').classList.remove('show');
+
+            // Validate email format first
+            if (!email || !validateEmail(email)) {
+                return;
+            }
+
+            // Show checking message
+            document.getElementById('email-checking').classList.add('show');
+
+            // Debounce: wait 500ms before checking
+            emailCheckTimeout = setTimeout(async () => {
+                try {
+                    // Try to sign in with a fake password to check if email exists
+                    const response = await fetch(`${API_URL}/api/auth-signin.py`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            email: email,
+                            password: 'FakePassword123' // Fake password to trigger error
+                        })
+                    });
+
+                    document.getElementById('email-checking').classList.remove('show');
+
+                    if (response.status === 400) {
+                        // 400 = Invalid credentials = Email exists
+                        document.getElementById('email-error').textContent = '该邮箱已注册，请直接登录';
+                        document.getElementById('email-error').classList.add('show');
+                    } else if (response.status === 404 || response.status === 401) {
+                        // 404/401 = User not found = Email available
+                        document.getElementById('email-success').classList.add('show');
+                    } else {
+                        // Other errors, don't show anything
+                        console.log('Email check returned status:', response.status);
+                    }
+                } catch (error) {
+                    console.error('Email availability check failed:', error);
+                    document.getElementById('email-checking').classList.remove('show');
+                }
+            }, 500);
+        }
+
+        function showError(fieldId, show) {
+            const errorEl = document.getElementById(fieldId + '-error');
+            const inputEl = document.getElementById(fieldId);
+
+            if (!errorEl) {
+                console.error(`Error element not found: ${fieldId}-error`);
+                return;
+            }
+
+            if (show) {
+                errorEl.classList.add('show');
+                if (inputEl && inputEl.classList) {
+                    inputEl.classList.add('error');
+                }
+            } else {
+                errorEl.classList.remove('show');
+                if (inputEl && inputEl.classList) {
+                    inputEl.classList.remove('error');
+                }
+            }
+        }
+
+        function validateForm() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const agreeTerms = document.getElementById('agree-terms').checked;
+
+            let isValid = true;
+
+            // Validate email
+            if (!email || !validateEmail(email)) {
+                showError('email', true);
+                isValid = false;
+            } else {
+                showError('email', false);
+            }
+
+            // Validate password
+            if (!password || !validatePassword(password)) {
+                showError('password', true);
+                isValid = false;
+            } else {
+                showError('password', false);
+            }
+
+            // Validate terms agreement
+            if (!agreeTerms) {
+                showError('terms', true);
+                isValid = false;
+            } else {
+                showError('terms', false);
+            }
+
+            return isValid;
+        }
+
+        // Payment method selection
+        function selectPayment(method) {
+            // Remove selected class from all options
+            document.querySelectorAll('.payment-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            // Add selected class to clicked option
+            event.currentTarget.classList.add('selected');
+            // Check the radio button
+            document.getElementById('pay-' + method).checked = true;
+        }
+
+        // Main login and payment flow
+        async function handleLoginAndPay() {
+            // Step 1: Validate form
+            if (!validateForm()) {
+                return;
+            }
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const submitBtn = document.getElementById('login-submit-btn');
+
+            // Disable button and show loading
+            submitBtn.disabled = true;
+            submitBtn.textContent = '正在处理...';
+
+            try {
+                // Step 2: Try to register/login
+                const authResponse = await fetch(`${API_URL}/api/auth-signup.py`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const authData = await authResponse.json();
+
+                let isNewUser = false; // Track if this is a new registration
+
+                if (!authData.success) {
+                    // If signup fails, try login
+                    submitBtn.textContent = '正在登录...';
+
+                    const loginResponse = await fetch(`${API_URL}/api/auth-signin.py`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ email, password })
+                    });
+
+                    const loginData = await loginResponse.json();
+                    if (!loginData.success) {
+                        alert('登录失败: ' + (loginData.error || '请检查邮箱和密码'));
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = '登录/注册并继续支付';
+                        return;
+                    }
+
+                    // Store token
+                    localStorage.setItem('access_token', loginData.access_token);
+                    localStorage.setItem('user_id', loginData.user_id);
+
+                    // Show login success message
+                    submitBtn.textContent = '✓ 登录成功，正在跳转支付...';
+                    console.log('User logged in successfully:', email);
+
+                    // Show toast notification
+                    showToast(
+                        '登录成功',
+                        '欢迎回来！即将跳转到支付页面...',
+                        'success',
+                        3000
+                    );
+                } else {
+                    // Registration success, store token
+                    localStorage.setItem('access_token', authData.access_token);
+                    localStorage.setItem('user_id', authData.user_id);
+                    isNewUser = true;
+
+                    // Show registration success message with email verification reminder
+                    submitBtn.textContent = '✓ 注册成功，正在跳转支付...';
+                    console.log('New user registered:', email);
+
+                    // Show toast notification with email verification reminder
+                    showToast(
+                        '注册成功！',
+                        `验证邮件已发送至 ${email}。支付完成后，请及时查看邮箱并完成验证，以激活所有会员功能。（邮件可能在垃圾箱中）`,
+                        'success',
+                        8000
+                    );
+                }
+
+                // Step 3: Move to payment step
+                const currentStep = document.querySelector('.checkout-step.active');
+                if (currentStep) {
+                    currentStep.classList.remove('active');
+                    currentStep.classList.add('completed');
+                }
+                const paymentStep = document.querySelectorAll('.checkout-step')[2];
+                if (paymentStep) {
+                    paymentStep.classList.add('active');
+                }
+
+                // Step 4: Create payment order
+                await createPaymentOrder();
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('处理失败: ' + error.message);
+                submitBtn.disabled = false;
+                submitBtn.textContent = '登录/注册并继续支付';
+            }
+        }
+
+        function submitPaymentForm(url, params) {
+            // Create a hidden form to submit payment parameters
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = url;
+            form.style.display = 'none';
+
+            // Add all parameters as hidden inputs
+            for (const [key, value] of Object.entries(params)) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = value;
+                form.appendChild(input);
+            }
+
+            // Append form to body and submit
+            document.body.appendChild(form);
+            console.log('Submitting payment form to:', url);
+            console.log('Parameters:', Object.keys(params));
+            form.submit();
+        }
+
+        async function createPaymentOrder() {
+            const userId = localStorage.getItem('user_id');
+            const userEmail = document.getElementById('email').value.trim();
+            const planType = plan.planType;
+            const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+
+            const submitBtn = document.getElementById('login-submit-btn');
+            submitBtn.textContent = '正在创建支付订单...';
+
+            try {
+                let paymentUrl;
+
+                if (paymentMethod === 'stripe') {
+                    // Stripe payment
+                    const response = await fetch(`${API_URL}/api/stripe-create-checkout.py`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            user_id: userId,
+                            user_email: userEmail,
+                            plan_type: planType
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        paymentUrl = data.checkout_url;
+                    } else {
+                        throw new Error(data.error || 'Stripe支付创建失败');
+                    }
+                } else {
+                    // Alipay or WeChat - 使用跳转模式
+                    const payType = paymentMethod === 'alipay' ? 'alipay' : 'wxpay';
+                    const response = await fetch(`${API_URL}/api/payment-create-order.py`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            user_id: userId,
+                            plan_type: planType,
+                            pay_type: payType,
+                            mode: 'redirect'  // 官网使用跳转模式
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        // For ZPAY (Alipay/WeChat), submit form with params
+                        if (data.params) {
+                            submitPaymentForm(data.payment_url, data.params);
+                            return; // Don't continue, form will auto-submit
+                        } else {
+                            paymentUrl = data.payment_url;
+                        }
+                    } else {
+                        throw new Error(data.error || '支付订单创建失败');
+                    }
+                }
+
+                // Redirect to payment page (for Stripe or simple redirects)
+                if (paymentUrl) {
+                    window.location.href = paymentUrl;
+                } else {
+                    throw new Error('未获取到支付链接');
+                }
+
+            } catch (error) {
+                console.error('Payment error:', error);
+                alert('支付失败: ' + error.message);
+                submitBtn.disabled = false;
+                submitBtn.textContent = '登录/注册并继续支付';
+            }
+        }
+    </script>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-bottom">
+                <p>© 2025 GaiYa 团队 | <span data-i18n="checkout.need_help">需要帮助？</span><a href="help.html" style="color: var(--primary-color); margin-left: 8px;" data-i18n="checkout.view_help_center">查看帮助中心</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- i18n Internationalization -->
+    <script src="js/i18n.js"></script>
+    <script>
+        // Update plan info after i18n is ready
+        function updatePlanInfo() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const planId = urlParams.get('plan') || 'pro_yearly';
+            const plans = {
+                'pro_monthly': { nameKey: 'checkout.plan_pro_monthly', price: '¥29', validityKey: 'checkout.validity_30days' },
+                'pro_yearly': { nameKey: 'checkout.plan_pro_yearly', price: '¥199', validityKey: 'checkout.validity_365days' },
+                'lifetime': { nameKey: 'checkout.plan_lifetime', price: '¥599', validityKey: 'checkout.validity_forever' }
+            };
+            const plan = plans[planId];
+            if (plan && window.i18n && typeof window.i18n.t === 'function') {
+                const name = window.i18n.t(plan.nameKey);
+                const validity = window.i18n.t(plan.validityKey);
+                // Only update if translation was found (not returning the key)
+                if (name !== plan.nameKey) {
+                    document.getElementById('plan-name').textContent = name;
+                    document.getElementById('plan-validity').textContent = validity;
+                } else {
+                    setTimeout(updatePlanInfo, 100);
+                    return;
+                }
+                document.getElementById('plan-price').textContent = plan.price;
+            } else {
+                setTimeout(updatePlanInfo, 100);
+            }
+        }
+        // Wait for DOMContentLoaded + i18n init
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(updatePlanInfo, 300);
+
+            // Setup email and password input listeners
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+
+            // Email availability check on input
+            if (emailInput) {
+                emailInput.addEventListener('input', (e) => {
+                    checkEmailAvailability(e.target.value.trim());
+                });
+
+                // Also check on blur (when user leaves the field)
+                emailInput.addEventListener('blur', (e) => {
+                    checkEmailAvailability(e.target.value.trim());
+                });
+            }
+
+            // Password hints on input
+            if (passwordInput) {
+                passwordInput.addEventListener('input', (e) => {
+                    updatePasswordHints(e.target.value);
+                });
+
+                // Hide hints when password field loses focus and is empty
+                passwordInput.addEventListener('blur', (e) => {
+                    if (e.target.value.length === 0) {
+                        document.getElementById('password-hints').classList.remove('show');
+                    }
+                });
+            }
+        });
+
+        // Listen for language change events and update plan info
+        document.addEventListener('i18n:update', () => {
+            updatePlanInfo();
+        });
+    </script>
+</body>
+</html>

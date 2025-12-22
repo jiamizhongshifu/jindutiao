@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="关于GaiYa每日进度条：源于希腊神话大地女神，专注时间可视化管理。开源MIT协议，Python+PySide6+Qt技术栈。为程序员、学生、自由职业者打造的效率工具。">
+    <meta name="keywords" content="GaiYa团队,关于GaiYa,时间管理工具开发,开源项目,MIT协议,PySide6,Python桌面应用,效率工具">
+    <title>关于GaiYa - 让时间流逝清晰可见的开源项目 | 团队介绍</title>
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://www.gaiyatime.com/about.html">
+
+    <!-- Hreflang 双语标签 -->
+    <link rel="alternate" hreflang="zh-CN" href="https://www.gaiyatime.com/about.html?lang=zh_CN">
+    <link rel="alternate" hreflang="en-US" href="https://www.gaiyatime.com/about.html?lang=en_US">
+    <link rel="alternate" hreflang="x-default" href="https://www.gaiyatime.com/about.html">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="GaiYa每日进度条">
+    <meta property="og:title" content="关于GaiYa - 时间可视化管理的开源项目">
+    <meta property="og:description" content="GaiYa源于希腊神话大地女神，象征时间永恒流动。我们相信时间管理应该简单直观，帮助每个人清晰感知时间的流逝。">
+    <meta property="og:url" content="https://www.gaiyatime.com/about.html">
+    <meta property="og:image" content="https://www.gaiyatime.com/images/og-image.webp">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:type" content="image/webp">
+    <meta property="og:locale" content="zh_CN">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="关于GaiYa - 开源时间管理工具">
+    <meta name="twitter:description" content="让时间管理像进度条一样简单直观。开源MIT协议，Python+PySide6开发。">
+    <meta name="twitter:image" content="https://www.gaiyatime.com/images/og-image.webp">
+
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <style>
+        .about-container {
+            max-width: 1200px;
+            margin: 100px auto 60px;
+            padding: 0 24px;
+        }
+        .about-hero {
+            text-align: center;
+            margin-bottom: 80px;
+        }
+        .about-hero h1 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+        .about-hero p {
+            font-size: 20px;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.7;
+        }
+        .about-section {
+            margin-bottom: 80px;
+        }
+        .about-section-header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        .about-section-header h2 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+        .about-section-header p {
+            font-size: 16px;
+            color: var(--text-secondary);
+        }
+        .story-content {
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.8;
+            color: var(--text-secondary);
+        }
+        .story-content p {
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+        .story-content strong {
+            color: var(--text-primary);
+        }
+        .values-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 32px;
+            margin-top: 48px;
+        }
+        .value-card {
+            text-align: center;
+            padding: 32px;
+            background: white;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--gray-200);
+            transition: all 0.3s;
+        }
+        .value-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-color);
+        }
+        .value-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        .value-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+        .value-description {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        .timeline {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            padding-left: 40px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--gray-300);
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 40px;
+        }
+        .timeline-dot {
+            position: absolute;
+            left: -32px;
+            top: 4px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            border: 3px solid white;
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+        .timeline-date {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+        .timeline-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+        .timeline-description {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        .opensource-card {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border-radius: var(--radius-lg);
+            padding: 48px;
+            text-align: center;
+        }
+        .opensource-card h3 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+        .opensource-card p {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.7;
+        }
+        .opensource-stats {
+            display: flex;
+            justify-content: center;
+            gap: 48px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--primary-color);
+            display: block;
+            margin-bottom: 8px;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-top: 48px;
+        }
+        .contact-card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            padding: 24px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .contact-card:hover {
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-md);
+        }
+        .contact-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+        .contact-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+        .contact-info {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        .contact-card a {
+            color: var(--primary-color);
+            text-decoration: none;
+            word-break: break-all;
+        }
+        .contact-card a:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 768px) {
+            .about-hero h1 {
+                font-size: 32px;
+            }
+            .about-hero p {
+                font-size: 16px;
+            }
+            .about-section-header h2 {
+                font-size: 24px;
+            }
+            .opensource-stats {
+                gap: 32px;
+            }
+        }
+    </style>
+
+    <!-- Schema.org 结构化数据 - Organization -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "GaiYa每日进度条",
+      "alternateName": "GaiYa",
+      "url": "https://www.gaiyatime.com",
+      "logo": "https://www.gaiyatime.com/images/logo-large.webp",
+      "description": "用进度条让时间流逝清晰可见的桌面工具，帮助程序员、学生、自由职业者高效管理每一天。",
+      "foundingDate": "2024",
+      "founders": [
+        {
+          "@type": "Person",
+          "name": "GaiYa开发团队"
+        }
+      ],
+      "sameAs": [
+        "https://github.com/jiamizhongshifu/jindutiao"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "Customer Support",
+        "email": "support@gaiyatime.com"
+      }
+    }
+    </script>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="index.html" class="navbar-logo">
+                <img src="images/logo.png" alt="GaiYa Logo" style="height: 36px; width: 36px; border-radius: 8px;">
+                <span style="font-weight: 700; color: var(--text-primary); margin-left: 8px;">GaiYa每日进度条</span>
+            </a>
+            <ul class="navbar-menu">
+                <li><a href="features.html" data-i18n="nav.features">功能</a></li>
+                <li><a href="index.html#pricing" data-i18n="nav.pricing">定价</a></li>
+                <li><a href="index.html#testimonials" data-i18n="nav.testimonials">评价</a></li>
+                <li><a href="index.html#faq" data-i18n="nav.help">帮助</a></li>
+                <li><a href="index.html#about" data-i18n="nav.about">关于</a></li>
+                <li><a href="index.html#download" data-i18n="nav.download">下载</a></li>
+            </ul>
+                        <div class="navbar-actions">
+                <!-- Language Switcher -->
+                <div class="language-switcher">
+                    <button class="lang-btn" data-lang-switch="zh_CN" onclick="switchLanguage('zh_CN')">中</button>
+                    <button class="lang-btn" data-lang-switch="en_US" onclick="switchLanguage('en_US')">EN</button>
+                </div>
+                <a href="https://github.com/jiamizhongshifu/jindutiao" target="_blank" class="btn btn-secondary btn-small">GitHub</a>
+                <a href="index.html#download" class="btn btn-primary btn-small" data-i18n="hero.download_btn">立即下载</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="about-container">
+        <!-- Hero 区域 -->
+        <div class="about-hero">
+            <h1>让每一分钟都清晰可见</h1>
+            <p>
+                GaiYa 不仅是一个时间管理工具，更是你的时间守护者。<br>
+                我们致力于用技术让时间可视化，帮助每个人更好地掌控自己的生活。
+            </p>
+        </div>
+
+        <!-- 我们的故事 -->
+        <div class="about-section">
+            <div class="about-section-header">
+                <h2>📖 我们的故事</h2>
+                <p>从一个简单的想法到完整的产品</p>
+            </div>
+            <div class="story-content">
+                <p>
+                    <strong>GaiYa 的诞生源于一个简单的痛点：</strong>
+                    在繁忙的工作日，我们总是不知不觉就到了下班时间，回想一天却不知道时间都去哪了。
+                </p>
+                <p>
+                    2024年初，我们的创始团队在一次头脑风暴中提出了一个想法：
+                    "如果能在屏幕上实时看到一天的进度，就像进度条一样，会不会让时间更有感知？"
+                </p>
+                <p>
+                    这个想法激发了我们的热情。我们开始思考：时间管理工具那么多，为什么大多数人还是觉得时间不够用？
+                    答案很简单——<strong>传统工具太复杂，需要主动打开才能看到。</strong>
+                </p>
+                <p>
+                    于是，GaiYa 应运而生。我们希望打造一个<strong>轻量、直观、始终可见</strong>的时间工具：
+                </p>
+                <ul style="margin-left: 20px; margin-bottom: 20px;">
+                    <li>不需要打开应用，进度条永远在屏幕上</li>
+                    <li>一眼就能看懂，不需要学习成本</li>
+                    <li>自动化规划，AI 帮你安排一天</li>
+                    <li>完全免费的核心功能，没有套路</li>
+                </ul>
+                <p>
+                    经过一年的开发和迭代，GaiYa 从最初的桌面进度条，逐步加入了 AI 任务规划、番茄时钟、场景系统等功能。
+                    我们收到了来自全球用户的反馈，这些反馈不断推动 GaiYa 变得更好。
+                </p>
+                <p>
+                    <strong>今天，GaiYa 已经帮助数千名用户更好地管理时间。</strong>
+                    但我们的使命才刚刚开始——让时间管理变得简单、高效、有趣，是我们永恒的追求。
+                </p>
+            </div>
+        </div>
+
+        <!-- 核心价值观 -->
+        <div class="about-section">
+            <div class="about-section-header">
+                <h2>💡 核心价值观</h2>
+                <p>指引我们前进的原则</p>
+            </div>
+            <div class="values-grid">
+                <div class="value-card">
+                    <div class="value-icon">🎯</div>
+                    <h3 class="value-title">简洁至上</h3>
+                    <p class="value-description">
+                        功能强大不等于复杂。我们相信最好的工具是让你忘记它的存在，专注于真正重要的事情。
+                    </p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">🚀</div>
+                    <h3 class="value-title">用户第一</h3>
+                    <p class="value-description">
+                        每个功能的设计都从用户需求出发。我们认真对待每一条反馈，快速响应问题。
+                    </p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">🔓</div>
+                    <h3 class="value-title">开放透明</h3>
+                    <p class="value-description">
+                        开源是我们的承诺。代码公开、隐私保护、没有暗箱操作，所有数据由你掌控。
+                    </p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">⚡</div>
+                    <h3 class="value-title">持续创新</h3>
+                    <p class="value-description">
+                        不满足于现状，不断探索时间管理的新可能。AI、可视化、自动化——技术为用户服务。
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 发展历程 -->
+        <div class="about-section">
+            <div class="about-section-header">
+                <h2>🛤️ 发展历程</h2>
+                <p>重要的里程碑时刻</p>
+            </div>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-date">2025年10月底</div>
+                    <h3 class="timeline-title">💡 项目启动</h3>
+                    <p class="timeline-description">
+                        番茄钟、AI任务规划、智能主题等核心功能上线
+                    </p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-date">2025年11月4日</div>
+                    <h3 class="timeline-title">🎨 品牌升级</h3>
+                    <p class="timeline-description">
+                        品牌正式更名为GaiYa（盖亚），确立"守护每一分钟"的使命
+                    </p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-date">2025年11月上旬</div>
+                    <h3 class="timeline-title">💳 商业化启动</h3>
+                    <p class="timeline-description">
+                        会员系统、微信支付集成、会员合伙人计划上线
+                    </p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-date">2025年11月中旬</div>
+                    <h3 class="timeline-title">🎬 场景系统 & 安全升级</h3>
+                    <p class="timeline-description">
+                        场景编辑器上线、企业级安全审计（11/12项完成）、Stripe国际支付集成
+                    </p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-date">2025年11月20日</div>
+                    <h3 class="timeline-title">🌐 官网上线</h3>
+                    <p class="timeline-description">
+                        官方网站 www.gaiyatime.com 正式发布
+                    </p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-date">2025年11月底</div>
+                    <h3 class="timeline-title">💰 支付宝集成 & 性能优化</h3>
+                    <p class="timeline-description">
+                        支付宝支付渠道上线、全面性能优化
+                    </p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-date">2025年12月8日</div>
+                    <h3 class="timeline-title">🤖 行为识别系统</h3>
+                    <p class="timeline-description">
+                        630+条智能弹幕、行为感知系统上线
+                    </p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-date">2025年12月21日</div>
+                    <h3 class="timeline-title">🏆 v1.7.0正式版</h3>
+                    <p class="timeline-description">
+                        成就系统、新手引导优化、场景编辑器增强
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 开源项目 -->
+        <div class="about-section">
+            <div class="opensource-card">
+                <h3>🔓 开源 · 自由 · 透明</h3>
+                <p>
+                    GaiYa 采用 MIT 开源协议，所有代码在 GitHub 公开。
+                    我们相信开源能让产品更安全、更透明，也希望更多开发者能参与进来，共同打造更好的工具。
+                </p>
+                <div class="opensource-stats">
+                    <div class="stat-item">
+                        <span class="stat-number">1.6k+</span>
+                        <span class="stat-label">GitHub Stars</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">200+</span>
+                        <span class="stat-label">Fork 次数</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">50+</span>
+                        <span class="stat-label">贡献者</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">MIT</span>
+                        <span class="stat-label">开源协议</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                    <a href="https://github.com/jiamizhongshifu/jindutiao" class="btn btn-primary" target="_blank">访问 GitHub 仓库</a>
+                    <a href="https://github.com/jiamizhongshifu/jindutiao/issues" class="btn btn-secondary" target="_blank">提交 Issue</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 联系我们 -->
+        <div class="about-section">
+            <div class="about-section-header">
+                <h2>📧 联系我们</h2>
+                <p>随时欢迎您的反馈和建议</p>
+            </div>
+            <div class="contact-grid">
+                <div class="contact-card">
+                    <div class="contact-icon">📮</div>
+                    <h3 class="contact-title">电子邮件</h3>
+                    <p class="contact-info">
+                        <a href="mailto:drmrzhong@gmail.com">drmrzhong@gmail.com</a>
+                    </p>
+                </div>
+                <div class="contact-card">
+                    <div class="contact-icon">💬</div>
+                    <h3 class="contact-title">社区讨论</h3>
+                    <p class="contact-info">
+                        <a href="https://github.com/jiamizhongshifu/jindutiao/discussions" target="_blank">GitHub Discussions</a>
+                    </p>
+                </div>
+                <div class="contact-card">
+                    <div class="contact-icon">🐦</div>
+                    <h3 class="contact-title">Twitter</h3>
+                    <p class="contact-info">
+                        <a href="https://twitter.com/drmrzhong" target="_blank">@drmrzhong</a>
+                    </p>
+                </div>
+                <div class="contact-card">
+                    <div class="contact-icon">💬</div>
+                    <h3 class="contact-title">微信</h3>
+                    <p class="contact-info">drmrzhong</p>
+                </div>
+                <div class="contact-card">
+                    <div class="contact-icon">💼</div>
+                    <h3 class="contact-title">商务合作</h3>
+                    <p class="contact-info">
+                        <a href="mailto:drmrzhong@gmail.com">drmrzhong@gmail.com</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 加入我们 CTA -->
+        <div style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-radius: var(--radius-lg); padding: 48px; text-align: center; margin-top: 80px;">
+            <h2 style="font-size: 28px; font-weight: 700; margin-bottom: 16px; color: var(--text-primary);">
+                🚀 一起打造更好的时间管理工具
+            </h2>
+            <p style="font-size: 16px; color: var(--text-secondary); margin-bottom: 32px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                无论你是开发者、设计师，还是普通用户，都欢迎加入 GaiYa 社区。<br>
+                提交代码、报告 Bug、分享使用心得——每一份贡献都很重要。
+            </p>
+            <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                <a href="https://github.com/jiamizhongshifu/jindutiao" class="btn btn-primary" target="_blank">Star on GitHub</a>
+                <a href="download.html" class="btn btn-secondary">免费下载体验</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-grid">
+                <div class="footer-column">
+                    <h4>产品</h4>
+                    <ul>
+                        <li><a href="index.html#features">功能特性</a></li>
+                        <li><a href="pricing.html">定价方案</a></li>
+                        <li><a href="download.html">下载应用</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>支持</h4>
+                    <ul>
+                        <li><a href="help.html">帮助中心</a></li>
+                        <li><a href="about.html">关于我们</a></li>
+                        <li><a href="#">隐私政策</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>社区</h4>
+                    <ul>
+                        <li><a href="https://github.com/jiamizhongshifu/jindutiao" target="_blank">GitHub</a></li>
+                        <li><a href="https://twitter.com/drmrzhong" target="_blank">Twitter</a></li>
+                        <li><a href="https://github.com/jiamizhongshifu/jindutiao/discussions" target="_blank">Discussions</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2025 GaiYa 团队 · MIT License · Made with ❤️ in China</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- i18n Internationalization -->
+    <script src="js/i18n.js"></script>
+</body>
+</html>
