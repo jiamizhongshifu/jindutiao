@@ -10,11 +10,11 @@ GaiYa每日进度条 - 版本信息
 # 版本信息
 # ========================================
 
-__version__ = "1.7.0"
+__version__ = "1.7.1"
 __app_name__ = "GaiYa"
 __app_name_zh__ = "盖亚"
 __slogan__ = "让每一天都清晰可见"
-__release_date__ = "2025-12-13"
+__release_date__ = "2025-12-23"
 __build_type__ = "release"  # release / debug / beta
 
 # ========================================
@@ -24,7 +24,7 @@ __build_type__ = "release"  # release / debug / beta
 # 版本号组成部分
 VERSION_MAJOR = 1
 VERSION_MINOR = 7
-VERSION_PATCH = 0
+VERSION_PATCH = 1
 
 # 完整版本字符串
 VERSION_STRING = f"{__app_name__} v{__version__}"
